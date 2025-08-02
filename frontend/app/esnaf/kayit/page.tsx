@@ -401,7 +401,7 @@ export default function EsnafKayitPage() {
       formData.append('password', password);
       formData.append('password2', password2);
       formData.append('business_type', selectedType);
-      formData.append('service_area', selectedService);
+             formData.append('service_area', selectedService);
       selectedCategories.forEach(cat => formData.append('categories', cat));
       formData.append('company_title', companyInfo.title);
       formData.append('tax_office', companyInfo.taxOffice);
