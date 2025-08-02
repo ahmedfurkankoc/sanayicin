@@ -114,6 +114,16 @@ export const apiClient = axios.create({
 
 // Request interceptor - her istekte token ekle
 apiClient.interceptors.request.use((config) => {
+  // Arama endpoint'leri herkese açık olmalı - token kontrolü yapma
+  const isPublicEndpoint = config.url?.includes('/vendors/search/') || 
+                          config.url?.includes('/vendors/') && config.url?.includes('/slug/') ||
+                          config.url?.includes('/services/') ||
+                          config.url?.includes('/categories/');
+  
+  if (isPublicEndpoint) {
+    return config; // Token ekleme, herkese açık
+  }
+  
   // Role'ü URL'den tahmin et - avatar upload için özel kontrol
   const isVendor = config.url?.includes('/vendors/') || 
                    config.url?.includes('/esnaf/') || 
@@ -132,6 +142,16 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Arama endpoint'leri herkese açık olmalı - logout yapma
+      const isPublicEndpoint = error.config?.url?.includes('/vendors/search/') || 
+                              error.config?.url?.includes('/vendors/') && error.config?.url?.includes('/slug/') ||
+                              error.config?.url?.includes('/services/') ||
+                              error.config?.url?.includes('/categories/');
+      
+      if (isPublicEndpoint) {
+        return Promise.reject(error); // Logout yapma, sadece hatayı döndür
+      }
+      
       // Token geçersiz, logout yap
       if (typeof window !== "undefined") {
         // Role'ü URL'den tahmin et - avatar upload için özel kontrol
