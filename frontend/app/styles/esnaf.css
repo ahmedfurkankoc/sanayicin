@@ -1,0 +1,2450 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
+
+:root {
+  --yellow: #ffd600;
+  --black: #111111;
+  --light-black: #191b1d;
+  --white: #fff;
+  --gray: #f9f9f9;
+  --red: #ff4757;
+  --font-main: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+}
+
+body, html, .esnaf-panel-layout {
+  font-family: var(--font-main);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.text-black {
+  color: var(--black) !important;
+}
+
+/* Navbar Loading State */
+.sanayicin-btn-vendor.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Esnaf Paneli & Kayıt */
+
+.esnaf-panel-logo-icon {
+  background: var(--yellow);
+  padding: 6px; 
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+}
+
+.esnaf-register-main {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.esnaf-register-main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23333" stroke-width="0.5" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  opacity: 0.1;
+}
+
+.esnaf-register-container {
+  background: var(--white);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding: 48px 40px;
+  max-width: 600px;
+  width: 100%;
+  margin: 60px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.esnaf-register-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--black);
+  margin-bottom: 32px;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+.esnaf-register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.esnaf-register-label {
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+
+.esnaf-register-input {
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 2px solid #e8e8e8;
+  font-size: 16px;
+  background: white;
+  color: var(--black);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.esnaf-register-input:focus {
+  outline: none;
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 4px rgba(255, 214, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.esnaf-business-types,
+.esnaf-service-areas,
+.esnaf-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.esnaf-business-type-option,
+.esnaf-service-area-option,
+.esnaf-category-option {
+  background: var(--gray);
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.esnaf-business-type-option.selected,
+.esnaf-service-area-option.selected,
+.esnaf-category-option.selected {
+  border: 1.5px solid var(--yellow);
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.esnaf-register-step-btns {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.esnaf-register-next-btn,
+.esnaf-register-submit-btn {
+  background: linear-gradient(135deg, var(--yellow) 0%, #e6c200 100%);
+  color: var(--black);
+  border: none;
+  border-radius: 12px;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.esnaf-register-next-btn:hover,
+.esnaf-register-submit-btn:hover {
+  background: linear-gradient(135deg, #e6c200 0%, var(--yellow) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 214, 0, 0.4);
+}
+
+.esnaf-register-back-btn {
+  background: var(--gray);
+  color: var(--black);
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex: 1;
+}
+.esnaf-register-next-btn:disabled {
+  background: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.esnaf-register-error {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #fcc;
+}
+
+.esnaf-photo-filename {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+.esnaf-register-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--black);
+  cursor: pointer;
+}
+
+.esnaf-register-success {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.esnaf-register-success h2 {
+  color: var(--black);
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+
+.esnaf-register-success p {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.esnaf-panel-layout {
+  min-height: 100vh;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
+}
+
+.esnaf-panel-header {
+  background: var(--white);
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 0;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  z-index: 100;
+}
+
+.esnaf-panel-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.esnaf-panel-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--black);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.esnaf-panel-logo:hover {
+  color: var(--yellow);
+}
+
+.esnaf-panel-logo-sub {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #666;
+  margin-left: 8px;
+}
+
+.esnaf-panel-logout-btn {
+  background: var(--yellow);
+  color: var(--black);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.esnaf-panel-logout-btn:hover {
+  background: #e6c200;
+}
+
+.esnaf-panel-main-content {
+  flex: 1;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: 0;
+}
+
+/* Dashboard Styles */
+.esnaf-dashboard {
+  display: flex;
+  min-height: 100vh;
+  background: var(--white);
+}
+
+.esnaf-mobile-nav {
+  display: none;
+}
+
+/* Sidebar */
+.esnaf-sidebar {
+  background: var(--light-black);
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  border-radius: 0 20px 20px 0;
+}
+
+.esnaf-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2rem 1.5rem 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+.esnaf-logo-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.esnaf-logo-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.esnaf-logo-text {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.esnaf-logo-subtitle {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--yellow);
+  letter-spacing: 0.3px;
+  line-height: 1;
+}
+
+
+
+/* Navigation */
+.esnaf-nav {
+  flex: 1;
+  padding: 0 0 120px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.esnaf-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  color: var(--white);
+  font-size: 16px;
+  text-decoration: none;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.esnaf-nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--white);
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.esnaf-nav-item.active {
+  color: var(--yellow);
+  background: transparent;
+  position: relative;
+}
+
+.esnaf-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: var(--yellow);
+  border-radius: 0 10px 10px 0;
+}
+
+.esnaf-nav-item.active .esnaf-nav-icon {
+  color: var(--yellow) !important;
+}
+
+.esnaf-nav-item.active .esnaf-nav-text {
+  color: var(--yellow);
+}
+
+.esnaf-nav-icon {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.esnaf-nav-text {
+  flex: 1;
+}
+
+.esnaf-nav-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--black);
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+/* User Profile */
+.esnaf-user-profile {
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.esnaf-user-profile:hover {
+  background: var(--yellow);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 0 0 14px 0;
+}
+
+.esnaf-user-profile-clickable {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.esnaf-user-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--yellow);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--black);
+  font-size: 16px;
+  overflow: hidden;
+}
+
+.esnaf-user-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.esnaf-user-avatar-initial {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--black);
+  font-size: 16px;
+}
+
+.esnaf-user-info {
+  flex: 1;
+}
+
+.esnaf-user-name {
+  font-weight: 600;
+  color: var(--white);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.esnaf-user-email {
+  font-size: 12px;
+  color: #666;
+  font-weight: 400;
+}
+
+/* Login Page */
+.esnaf-login-main {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.esnaf-login-main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23333" stroke-width="0.5" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+  opacity: 0.1;
+}
+
+.esnaf-login-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  padding: 48px 40px;
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.esnaf-login-header {
+  display: flex;
+  background: var(--yellow);
+  height: 80px;
+  text-align: center;
+  justify-content: space-between;
+  align-items: center;
+  align-self: center;
+  margin-bottom: 40px;
+  padding: 0 60px 0 60px;
+}
+
+.esnaf-login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.esnaf-login-logo img {
+  width: 48px;
+  height: 48px;
+  margin-right: 12px;
+}
+
+.esnaf-login-logo-text {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--black);
+  letter-spacing: -0.5px;
+}
+
+.esnaf-login-subtitle {
+  color: var(--black);
+  font-size: 16px;
+  font-weight: 400;
+  margin-left: 24px;
+}
+
+.esnaf-login-title {
+  text-align: center;
+  margin-bottom: 32px;
+  color: var(--black);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.esnaf-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.esnaf-input-group {
+  position: relative;
+}
+
+.esnaf-login-label {
+  font-weight: 600;
+  color: var(--black);
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.esnaf-login-input {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: white;
+  color: var(--black);
+  box-sizing: border-box;
+}
+
+.esnaf-login-input:focus {
+  outline: none;
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 4px rgba(255, 214, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.esnaf-login-input::placeholder {
+  color: #999;
+}
+
+.esnaf-login-btn {
+  background: linear-gradient(135deg, var(--yellow) 0%, #e6c200 100%);
+  color: var(--black);
+  border: none;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.esnaf-login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.esnaf-login-btn:hover::before {
+  left: 100%;
+}
+
+.esnaf-login-btn:hover {
+  background: linear-gradient(135deg, #e6c200 0%, var(--yellow) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 214, 0, 0.4);
+}
+
+.esnaf-login-btn:active {
+  transform: translateY(0);
+}
+
+.esnaf-login-btn:disabled {
+  background: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.esnaf-login-btn:disabled::before {
+  display: none;
+}
+
+.esnaf-login-error {
+  background: linear-gradient(135deg, #fee 0%, #fcc 100%);
+  color: #c33;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  border: 1px solid #faa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.esnaf-login-error::before {
+  content: '⚠️';
+  font-size: 16px;
+}
+
+.esnaf-login-footer {
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--black);
+}
+
+.esnaf-login-footer a {
+  color: var(--yellow);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.esnaf-login-footer a:hover {
+  color: #e6c200;
+  text-decoration: underline;
+}
+
+/* Login Responsive */
+@media (max-width: 480px) {
+  .esnaf-login-container {
+    padding: 32px 24px;
+    margin: 16px;
+    border-radius: 16px;
+  }
+  
+  .esnaf-login-logo-text {
+    font-size: 24px;
+  }
+  
+  .esnaf-login-logo img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .esnaf-login-title {
+    font-size: 18px;
+  }
+  
+  .esnaf-login-input {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+  
+  .esnaf-login-btn {
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+}
+
+/* Register Responsive */
+@media (max-width: 480px) {
+  .esnaf-register-container {
+    padding: 32px 24px;
+    margin: 16px;
+    border-radius: 16px;
+  }
+  
+  .esnaf-register-title {
+    font-size: 20px;
+  }
+  
+  .esnaf-register-input {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+  
+  .esnaf-register-next-btn,
+  .esnaf-register-submit-btn {
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+}
+
+/* Main Content */
+.esnaf-main-content {
+  flex: 1;
+  margin-left: 280px;
+  margin-top: 0;
+  padding: 0;
+  background: var(--white);
+}
+
+.esnaf-content-header {
+  padding: 32px 32px 24px 60px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.esnaf-page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--black);
+  margin: 0;
+}
+
+/* Action Bar */
+.esnaf-action-bar {
+  padding: 24px 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: var(--white);
+}
+
+.esnaf-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--black);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.esnaf-action-btn:hover {
+  border-color: var(--yellow);
+  background: #fefefe;
+}
+
+.esnaf-action-icon {
+  font-size: 16px;
+}
+
+.esnaf-search-container {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.esnaf-search-input {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--white);
+  color: var(--black);
+}
+
+.esnaf-search-input:focus {
+  outline: none;
+  border-color: var(--yellow);
+}
+
+.esnaf-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 16px;
+}
+
+.esnaf-dashboard-count {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+/* Dashboard Stats List */
+.esnaf-dashboard-list {
+  padding: 24px 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.esnaf-dashboard-card {
+  background: var(--white);
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.esnaf-dashboard-card:hover {
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  border-color: var(--yellow);
+  transform: translateY(-2px);
+}
+
+.esnaf-dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--yellow), #ffed4a);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.esnaf-dashboard-card:hover::before {
+  opacity: 1;
+}
+
+.esnaf-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.esnaf-stat-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.esnaf-stat-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--yellow);
+  border-radius: 50%;
+}
+
+.esnaf-stat-name {
+  font-weight: 600;
+  color: var(--black);
+  font-size: 14px;
+}
+
+.esnaf-stat-period {
+  font-size: 12px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.esnaf-dashboard-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--black);
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.esnaf-dashboard-description {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.esnaf-dashboard-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.esnaf-stat-tag {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: var(--black);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.esnaf-stat-tag:hover {
+  background: linear-gradient(135deg, var(--yellow) 0%, #ffed4a 100%);
+  color: var(--black);
+  transform: translateY(-1px);
+}
+
+.esnaf-dashboard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.esnaf-stat-count {
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Yellow Theme for Dashboard Cards */
+.esnaf-yellow-card {
+  background: linear-gradient(135deg, var(--yellow) 0%, #ffed4a 100%);
+  border-color: var(--yellow);
+  color: var(--black);
+}
+
+.esnaf-yellow-card:hover {
+  box-shadow: 0 8px 25px rgba(255, 214, 0, 0.3);
+  border-color: #e6c200;
+}
+
+.esnaf-yellow-card .esnaf-dashboard-title {
+  color: var(--black);
+}
+
+.esnaf-yellow-card .esnaf-dashboard-description {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.esnaf-yellow-dot {
+  background: var(--black) !important;
+}
+
+.esnaf-yellow-period {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: var(--black) !important;
+}
+
+.esnaf-yellow-tag {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: var(--black) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.esnaf-yellow-tag:hover {
+  background: rgba(0, 0, 0, 0.2) !important;
+  color: var(--black) !important;
+}
+
+/* Loading */
+.esnaf-panel-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--white);
+}
+
+.esnaf-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e0e0e0;
+  border-top: 3px solid var(--yellow);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .esnaf-sidebar {
+    display: none;
+  }
+
+  /* Mobil Yatay Menü */
+  .esnaf-mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-top: 1px solid #e0e0e0;
+    padding: 12px 16px;
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .esnaf-mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+    text-decoration: none;
+    color: var(--black);
+    font-size: 12px;
+    font-weight: 500;
+    position: relative;
+    transition: color 0.2s ease;
+  }
+  
+  .esnaf-mobile-nav-item.active {
+    color: var(--yellow);
+    background: transparent;
+    font-weight: 600;
+    border-radius: 10px;
+    position: relative;
+  }
+
+  .esnaf-mobile-nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    width: 60%;
+    height: 3px;
+    background: var(--yellow);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .esnaf-mobile-nav-item.active .esnaf-mobile-nav-icon {
+    color: var(--yellow);
+  }
+
+  .esnaf-mobile-nav-item.active .esnaf-mobile-nav-text {
+    color: var(--black);
+  }
+
+  .esnaf-mobile-nav-icon {
+    font-size: 20px;
+    position: relative;
+  }
+  
+  .esnaf-mobile-nav-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff4757;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 4px;
+    border-radius: 8px;
+    min-width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid white;
+  }
+  
+  .esnaf-mobile-nav-text {
+    text-align: center;
+    line-height: 1.2;
+  }
+  
+  /* Ana içeriği mobilde yukarı kaydır */
+  .esnaf-main-content {
+    margin-left: 0;
+    padding-bottom: 80px;
+  }
+  
+  .esnaf-action-bar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .esnaf-search-container {
+    max-width: none;
+    order: 3;
+  }
+
+  .esnaf-search-input {
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 480px) {
+  .esnaf-content-header {
+    padding: 24px 20px 20px 20px;
+  }
+  
+  .esnaf-action-bar {
+    padding: 20px;
+  }
+  
+  .esnaf-dashboard-list {
+    padding: 20px;
+    grid-template-columns: 1fr;
+  }
+  
+  .esnaf-dashboard-card {
+    padding: 20px;
+  }
+  
+  .esnaf-page-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* Footer Styles */
+.esnaf-footer {
+  background: var(--black);
+  width: 100%;
+  color: var(--white);
+  padding: 40px 0 20px 0;
+  margin-top: auto;
+}
+
+.esnaf-footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.esnaf-footer-link-groups {
+  display: flex;
+  gap: 60px;
+}
+
+.esnaf-footer-link-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.esnaf-footer-link-group-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.esnaf-footer-link {
+  color: #ccc;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.esnaf-footer-link:hover {
+  color: var(--yellow);
+}
+
+.esnaf-footer-socials {
+  display: flex;
+  gap: 16px;
+}
+
+.esnaf-footer-social-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--gray);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.esnaf-footer-social-icon:hover {
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.esnaf-footer-copyright {
+  text-align: center;
+  padding: 20px 0;
+  border-top: 1px solid #333;
+  margin-top: 40px;
+  color: #999;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .esnaf-footer-inner {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .esnaf-footer-link-groups {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 600px) {
+  .esnaf-footer-inner {
+    padding: 0 20px;
+  }
+
+  .esnaf-footer-link-group-title {
+    font-size: 0.9rem;
+  }
+
+  .esnaf-footer-link {
+    font-size: 0.8rem;
+  }
+
+  .esnaf-footer-social-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .esnaf-footer-copyright {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .esnaf-panel-header-inner {
+    padding: 0 20px;
+  }
+
+  .esnaf-panel-logo {
+    font-size: 1.25rem;
+  }
+
+
+  .esnaf-panel-logout-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .esnaf-register-container {
+    margin: 0 20px;
+    padding: 30px 24px 24px 24px;
+  }
+
+  .esnaf-register-title {
+    font-size: 1.25rem;
+  }
+
+  .esnaf-register-form {
+    gap: 12px;
+  }
+
+  .esnaf-register-step-btns {
+    flex-direction: column;
+  }
+}
+
+.esnaf-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+.esnaf-modal-centered {
+  align-items: center;
+  justify-content: center;
+}
+
+.esnaf-modal-popup {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.esnaf-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.esnaf-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.esnaf-modal-label {
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+
+.esnaf-modal-input {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #e0e0e0;
+  font-size: 1rem;
+  background: var(--gray);
+  color: var(--black);
+  transition: border 0.2s;
+}
+
+.esnaf-modal-input:focus {
+  border: 1.5px solid var(--yellow);
+  outline: none;
+}
+
+.esnaf-modal-error {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #fcc;
+}
+
+.esnaf-modal-success {
+  background: #efe;
+  color: #363;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #cfc;
+}
+
+.esnaf-modal-btn {
+  background: var(--yellow);
+  color: var(--black);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+
+.esnaf-modal-btn:hover {
+  background: #e6c200;
+}
+
+.esnaf-modal-btn:disabled {
+  background: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .esnaf-modal-popup {
+    padding: 24px;
+    margin: 20px;
+  }
+}
+
+/* Profile Styles */
+.esnaf-profile-container {
+  max-width: 100%;
+  margin: 0;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 4rem;
+}
+
+.esnaf-profile-title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 2rem 0;
+  padding: 0 2rem;
+}
+
+.esnaf-profile-form {
+  padding: 0 2rem 2rem;
+}
+
+.esnaf-profile-section {
+  margin-bottom: 3rem;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 15px;
+  border: 1px solid #e9ecef;
+}
+
+.esnaf-section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #ffd700;
+}
+
+.esnaf-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.esnaf-form-group label {
+  display: block;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.esnaf-input,
+.esnaf-textarea,
+.esnaf-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.esnaf-input:focus,
+.esnaf-textarea:focus,
+.esnaf-select:focus {
+  outline: none;
+  border-color: #ffd700;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.esnaf-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.esnaf-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.esnaf-photo-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.esnaf-file-input {
+  padding: 1rem;
+  border: 2px dashed #dee2e6;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.esnaf-file-input:hover {
+  border-color: #ffd700;
+  background: #fffbf0;
+}
+
+.esnaf-photo-preview {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ffd700;
+}
+
+.esnaf-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.esnaf-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.esnaf-checkbox-label:hover {
+  border-color: #ffd700;
+  background: #fffbf0;
+}
+
+.esnaf-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #ffd700;
+}
+
+
+
+.esnaf-working-day {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.esnaf-day-header {
+  flex: 1;
+}
+
+.esnaf-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.esnaf-time-input {
+  padding: 8px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.esnaf-form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.esnaf-save-btn {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.esnaf-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.esnaf-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.esnaf-cancel-btn {
+  padding: 12px 32px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.esnaf-cancel-btn:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+/* Responsive Profile */
+@media (max-width: 768px) {
+  .esnaf-profile-container {
+    margin: 1rem;
+    border-radius: 15px;
+  }
+  
+  .esnaf-profile-form {
+    padding: 0 1rem 1rem;
+  }
+  
+  .esnaf-profile-section {
+    padding: 1.5rem;
+  }
+  
+  .esnaf-form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .esnaf-categories-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .esnaf-working-day {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .esnaf-form-actions {
+    flex-direction: column;
+  }
+}
+
+/* Ayarlar Sayfası Stilleri */
+.esnaf-ayarlar-container {
+  min-height: 0px;
+    min-width: 0px;
+    display: flex;
+    -webkit-box-align: stretch;
+    align-items: stretch;
+    flex: 1 1 auto;
+    flex-flow: column;
+    -webkit-box-flex: 1;
+    -webkit-box-pack: start;
+    justify-content: flex-start;
+}
+
+.esnaf-ayarlar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.esnaf-ayarlar-title-section {
+  flex: 1;
+}
+
+.esnaf-ayarlar-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+}
+
+.esnaf-ayarlar-greeting {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0;
+}
+
+.esnaf-ayarlar-avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 2rem;
+  margin-left: 2rem;
+}
+
+.esnaf-ayarlar-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.esnaf-ayarlar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.esnaf-ayarlar-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.esnaf-ayarlar-item:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.esnaf-ayarlar-item-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.esnaf-ayarlar-item-content {
+  flex: 1;
+}
+
+.esnaf-ayarlar-item-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 0.25rem 0;
+}
+
+.esnaf-ayarlar-item-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.esnaf-ayarlar-item-arrow {
+  font-size: 1.2rem;
+  color: #999;
+  font-weight: 300;
+}
+
+/* Responsive Ayarlar */
+@media (max-width: 768px) {
+  .esnaf-ayarlar-container {
+    padding: 1.5rem;
+  }
+  
+  .esnaf-ayarlar-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .esnaf-ayarlar-avatar {
+    margin-left: 0;
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+  }
+  
+  .esnaf-ayarlar-title {
+    font-size: 2rem;
+  }
+  
+  .esnaf-ayarlar-item {
+    padding: 1rem;
+  }
+  
+  .esnaf-ayarlar-item-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+  }
+}
+
+/* Profile View Styles */
+.esnaf-profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.esnaf-profile-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--black);
+  margin: 0;
+}
+
+.esnaf-edit-btn {
+  background: var(--yellow);
+  color: var(--black);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 214, 0, 0.3);
+}
+
+.esnaf-edit-btn:hover {
+  background: #ffed4a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 214, 0, 0.4);
+}
+
+.esnaf-profile-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.esnaf-profile-info {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.esnaf-profile-photo {
+  flex-shrink: 0;
+}
+
+.esnaf-photo-display {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid var(--yellow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+}
+
+.esnaf-photo-display img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.esnaf-photo-placeholder {
+  font-size: 48px;
+  color: #ccc;
+}
+
+.esnaf-info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  flex: 1;
+}
+
+.esnaf-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.esnaf-info-item label {
+  font-weight: 600;
+  color: var(--black);
+  font-size: 14px;
+}
+
+.esnaf-info-item span {
+  color: #666;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.esnaf-info-item a {
+  color: #007bff;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.esnaf-info-item a:hover {
+  text-decoration: underline;
+}
+
+.esnaf-working-hours {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.esnaf-working-day-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid var(--yellow);
+}
+
+.esnaf-day-name {
+  font-weight: 600;
+  color: var(--black);
+}
+
+.esnaf-day-hours {
+  color: #666;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .esnaf-profile-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .esnaf-profile-info {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .esnaf-working-hours {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .esnaf-working-day-display {
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .esnaf-day-name {
+    font-size: 14px;
+  }
+  
+  .esnaf-day-hours {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .esnaf-working-hours {
+    gap: 6px;
+  }
+  
+  .esnaf-working-day-display {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  
+  .esnaf-day-name {
+    font-size: 13px;
+  }
+  
+  .esnaf-day-hours {
+    font-size: 12px;
+  }
+  
+  .esnaf-no-data {
+    font-size: 13px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .esnaf-working-day-display {
+    padding: 6px 8px;
+  }
+  
+  .esnaf-day-name {
+    font-size: 12px;
+  }
+  
+  .esnaf-day-hours {
+    font-size: 11px;
+  }
+}
+
+/* Çalışma saatleri için ek stiller */
+.esnaf-day-label {
+  font-weight: 500;
+  color: var(--black);
+  margin-left: 8px;
+}
+
+.esnaf-time-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--black);
+  min-width: 60px;
+}
+
+.esnaf-help-text {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.esnaf-no-data {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.esnaf-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.esnaf-time-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 100px;
+}
+
+/* Responsive çalışma saatleri */
+@media (max-width: 768px) {
+  .esnaf-working-day {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .esnaf-day-header {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .esnaf-time-inputs {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  
+  .esnaf-time-label {
+    min-width: 50px;
+    font-size: 13px;
+  }
+  
+  .esnaf-time-input {
+    min-width: 80px;
+    flex: 1;
+  }
+  
+  .esnaf-day-label {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .esnaf-working-day {
+    padding: 12px;
+  }
+  
+  .esnaf-time-inputs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+
+  
+  .esnaf-time-label {
+    min-width: auto;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  
+  .esnaf-day-label {
+    font-size: 14px;
+  }
+  
+  .esnaf-help-text {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .esnaf-working-day {
+    padding: 10px;
+  }
+  
+  .esnaf-day-header {
+    margin-bottom: 8px;
+  }
+  
+  .esnaf-time-inputs {
+    gap: 6px;
+  }
+  
+  .esnaf-time-input {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  
+  .esnaf-day-label {
+    font-size: 13px;
+  }
+}
+
+/* Email Verification Styles */
+.email-verification-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.email-verification-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+}
+
+.email-verification-header h2 {
+  color: #333;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.email-verification-subtitle {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.email-verification-form {
+  margin-bottom: 32px;
+}
+
+.verification-code-input {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.verification-code-input label {
+  display: block;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.verification-code-input input {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 4px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.verification-code-input input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.verification-code-input input.error {
+  border-color: #e74c3c;
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 14px;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.verify-button {
+  width: 100%;
+  background: var(--yellow);
+  color: var(--black);
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 24px;
+}
+
+.verify-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.verify-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.resend-section {
+  margin-top: 24px;
+}
+
+.resend-button {
+  background: transparent;
+  color: var(--black);
+  border: 2px solid var(--yellow);
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.resend-button:hover:not(:disabled) {
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.resend-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.countdown {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  margin-top: 8px;
+  font-weight: 500;
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.email-verification-footer {
+  border-top: 1px solid #e1e5e9;
+  padding-top: 24px;
+}
+
+.email-verification-footer p {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .email-verification-container {
+    padding: 16px;
+  }
+  
+  .email-verification-card {
+    padding: 24px;
+  }
+  
+  .email-verification-header h2 {
+    font-size: 24px;
+  }
+  
+  .verification-code-input input {
+    font-size: 16px;
+    padding: 14px;
+  }
+}
+
+/* Email Verification Overlay Styles */
+.email-verification-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.email-verification-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.email-verification-content h2 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.email-verification-content p {
+  color: #666;
+  margin-bottom: 25px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.verify-email-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.verify-email-btn:hover {
+  transform: translateY(-2px);
+} 
