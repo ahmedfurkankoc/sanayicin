@@ -11,3 +11,4 @@ sqlparse==0.5.3
 celery==5.3.4
 redis==5.0.1
 dj-database-url==2.1.0
+python-dotenv==1.0.0
