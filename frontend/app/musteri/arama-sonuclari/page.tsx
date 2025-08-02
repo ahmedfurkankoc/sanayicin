@@ -106,7 +106,7 @@ function AramaSonuclariContent() {
     if (selectedDistrict) params.set('district', selectedDistrict);
     if (selectedService) params.set('service', selectedService);
     if (selectedCategory) params.set('category', selectedCategory);
-    router.push(`/customer/arama-sonuclari?${params.toString()}`);
+    router.push(`/musteri/arama-sonuclari?${params.toString()}`);
   };
 
   // Seçili hizmet alanına göre kategorileri filtrele
