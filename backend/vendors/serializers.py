@@ -196,17 +196,12 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
                 user.delete()
                 raise serializers.ValidationError("Profil fotoğrafı işlenirken hata oluştu.")
         
-        # Email verification gönder - başarısız olsa bile kullanıcıyı silme
-        try:
-            email_sent = user.send_verification_email()
-            if not email_sent:
-                # Email gönderilemezse sadece uyarı ver, kullanıcıyı silme
-                print(f"Warning: Email verification failed for user {user.email}")
-        except Exception as e:
-            # Email gönderimi sırasında hata olsa bile kullanıcıyı silme
-            print(f"Error sending email verification: {e}")
-        
-        return profile
+        # Email verification gönder - başarısız olursa kullanıcı ve profili sil
+        email_sent = user.send_verification_email()
+        if not email_sent:
+            # Email gönderilemezse kullanıcı ve profili sil
+            user.delete()  # Bu VendorProfile'ı da silecek (CASCADE)
+            raise serializers.ValidationError("Email doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.")
         
         return profile
 

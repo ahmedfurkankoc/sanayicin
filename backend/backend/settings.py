@@ -22,7 +22,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-03ujh&)k@shryc8do7_eqt8$5hb%(7h#=l5d88v-6#$3z+&)mm')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
@@ -60,9 +60,9 @@ RESEND_SMTP_HOST = 'smtp.resend.com'
 # Email Backend - Development
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-# Celery Configuration
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+# Celery Configuration - Development (Local Memory)
+CELERY_BROKER_URL = 'memory://'
+CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -171,21 +171,12 @@ if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
     DATABASES['default'] = dj_database_url.parse(DATABASE_URL)
 
 # Cache Configuration - Development (Local Memory)
-REDIS_URL = os.environ.get('REDIS_URL')
-if REDIS_URL:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': REDIS_URL,
-        }
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
     }
-else:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'unique-snowflake',
-        }
-    }
+}
 
 # Email Verification Settings
 EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = int(os.environ.get('EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES', '15'))
