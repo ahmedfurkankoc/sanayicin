@@ -78,20 +78,7 @@ section[aria-label="Notifications alt+T"] {
   gap: 10px;
 }
 .sanayicin-logo-icon {
-  width: 36px;
-  height: 36px;
-  font-weight: bold;
-  font-size: 1.6rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.sanayicin-logo-text {
-  font-size: 1.3rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--black);
+  width: 180px;
 }
 .sanayicin-menu-links {
   display: flex;
@@ -608,7 +595,7 @@ footer {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.sanayicin-navbar.sticky-navbar .sanayicin-logo-text,
+.sanayicin-navbar.sticky-navbar,
 .sanayicin-navbar.sticky-navbar .sanayicin-menu-links a {
   color: var(--black);
 }

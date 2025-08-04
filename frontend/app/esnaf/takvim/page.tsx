@@ -145,14 +145,7 @@ export default function EsnafTakvimPage() {
     // Gün isimleri
     for (let i = 0; i < 7; i++) {
       days.push(
-        <div key={`header-${i}`} style={{
-          padding: '12px',
-          textAlign: 'center',
-          fontWeight: '600',
-          color: '#666',
-          fontSize: '14px',
-          borderBottom: '1px solid #e0e0e0'
-        }}>
+        <div key={`header-${i}`} className="esnaf-calendar-day-header">
           {dayNames[i]}
         </div>
       );
@@ -161,12 +154,7 @@ export default function EsnafTakvimPage() {
     // Boş günler (ayın başından önce)
     for (let i = 0; i < startingDay; i++) {
       days.push(
-        <div key={`empty-${i}`} style={{
-          padding: '8px',
-          minHeight: '80px',
-          border: '1px solid #f0f0f0',
-          background: '#fafafa'
-        }} />
+        <div key={`empty-${i}`} className="esnaf-calendar-day-empty" />
       );
     }
 
@@ -179,36 +167,21 @@ export default function EsnafTakvimPage() {
       const isSelected = selectedDate && selectedDate.toDateString() === date.toDateString();
 
       days.push(
-        <div key={day} style={{
-          padding: '8px',
-          minHeight: '80px',
-          border: '1px solid #e0e0e0',
-          background: isSelected ? '#fff7e6' : isToday ? '#f0f9ff' : 'white',
-          cursor: 'pointer',
-          position: 'relative'
-        }} onClick={() => handleDateSelect(date)}>
-          <div style={{
-            fontWeight: isToday ? '700' : '500',
-            color: isToday ? '#ffd600' : '#333',
-            fontSize: '14px',
-            marginBottom: '4px'
-          }}>
+        <div 
+          key={day} 
+          className={`esnaf-calendar-day ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}`}
+          onClick={() => handleDateSelect(date)}
+        >
+          <div className={`esnaf-calendar-day-number ${isToday ? 'today' : ''}`}>
             {day}
           </div>
           
-          {dayEvents.map((event, index) => (
-            <div key={event.id} style={{
-              background: getStatusColor(event.status),
-              color: 'white',
-              padding: '2px 6px',
-              borderRadius: '4px',
-              fontSize: '10px',
-              marginBottom: '2px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              cursor: 'pointer'
-            }} title={`${event.customer_name} - ${event.service_description}`}>
+          {dayEvents.map((event) => (
+            <div 
+              key={event.id} 
+              className={`esnaf-calendar-event ${event.status}`}
+              title={`${event.customer_name} - ${event.service_description}`}
+            >
               {event.appointment_time} {event.customer_name}
             </div>
           ))}
@@ -217,72 +190,43 @@ export default function EsnafTakvimPage() {
     }
 
     return days;
-  }, [currentDate, events, selectedDate, handleDateSelect, getStatusColor]);
+  }, [currentDate, events, selectedDate, handleDateSelect]);
 
   return (
     <EsnafPanelLayout activePage="takvim" title="Takvim">
       {/* Header */}
-      <div style={{ padding: '24px 32px', borderBottom: '1px solid #e0e0e0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="esnaf-calendar-header">
+        <div className="esnaf-calendar-header-inner">
           <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#111111', margin: '0 0 8px 0' }}>
+            <h1 className="esnaf-calendar-title">
               Takvim
             </h1>
-            <p style={{ color: '#666', margin: '0' }}>
+            <p className="esnaf-calendar-subtitle">
               {monthName} • {events.length} randevu
             </p>
           </div>
           
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div className="esnaf-calendar-controls">
             <button 
               onClick={() => handleMonthChange('prev')}
-              style={{
-                background: 'transparent',
-                color: '#666',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
+              className="esnaf-calendar-btn"
             >
               <Icon name="chevron-left" size={16} />
-              Önceki
+              Önceki Ay
             </button>
             
             <button 
               onClick={handleTodayClick}
-              style={{
-                background: '#ffd600',
-                color: '#111111',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}
+              className="esnaf-calendar-btn-today"
             >
               Bugün
             </button>
             
             <button 
               onClick={() => handleMonthChange('next')}
-              style={{
-                background: 'transparent',
-                color: '#666',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
+              className="esnaf-calendar-btn"
             >
-              Sonraki
+              Sonraki Ay
               <Icon name="chevron-right" size={16} />
             </button>
           </div>
@@ -290,79 +234,63 @@ export default function EsnafTakvimPage() {
       </div>
 
       {/* Calendar and Events */}
-      <div style={{ padding: '24px 32px', display: 'flex', gap: '24px', minHeight: '600px' }}>
+      <div className="esnaf-calendar-container">
         {loading ? (
-          <div style={{ flex: '1', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ textAlign: 'center', color: '#666' }}>
-              <div style={{ fontSize: '18px', marginBottom: '8px' }}>Yükleniyor...</div>
+          <div className="esnaf-calendar-loading">
+            <div className="esnaf-calendar-loading-content">
+              <div className="esnaf-calendar-loading-text">Yükleniyor...</div>
               <div>Randevular yükleniyor</div>
             </div>
           </div>
         ) : error ? (
-          <div style={{ flex: '1', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ textAlign: 'center', color: '#ef4444' }}>
-              <div style={{ fontSize: '18px', marginBottom: '8px' }}>Hata!</div>
+          <div className="esnaf-calendar-error">
+            <div className="esnaf-calendar-error-content">
+              <div className="esnaf-calendar-error-title">Hata!</div>
               <div>{error}</div>
             </div>
           </div>
         ) : (
           <>
             {/* Calendar */}
-            <div style={{ flex: '1', background: 'white', borderRadius: '12px', border: '1px solid #e0e0e0', overflow: 'hidden' }}>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                borderBottom: '1px solid #e0e0e0'
-              }}>
+            <div className="esnaf-calendar-main">
+              <div className="esnaf-calendar-grid">
                 {renderCalendar()}
               </div>
             </div>
 
             {/* Right Panel - Selected Date Events and Upcoming Events */}
-            <div style={{ width: '350px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="esnaf-calendar-sidebar">
               {/* Selected Date Events */}
-              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e0e0e0', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#111111' }}>
+              <div className="esnaf-calendar-panel">
+                <h3 className="esnaf-calendar-panel-title">
                   {selectedDate ? formatDate(selectedDate) : 'Tarih Seçin'}
                 </h3>
                 
                 {selectedDateEvents.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666' }}>
+                  <div className="esnaf-calendar-empty-state">
                     <Icon name="calendar" size={32} />
-                    <p style={{ margin: '8px 0 0 0' }}>
+                    <p>
                       {selectedDate ? 'Bu tarihte randevu bulunmuyor' : 'Takvimden bir tarih seçin'}
                     </p>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className="esnaf-calendar-events-list">
                     {selectedDateEvents.map((event) => (
-                      <div key={event.id} style={{
-                        padding: '12px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        background: '#f9f9f9'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                          <h4 style={{ margin: '0', fontSize: '14px', fontWeight: '600', color: '#111111' }}>
+                      <div key={event.id} className="esnaf-calendar-event-card">
+                        <div className="esnaf-calendar-event-header">
+                          <h4 className="esnaf-calendar-event-title">
                             {event.customer_name}
                           </h4>
-                          <span style={{
-                            background: getStatusColor(event.status),
-                            color: 'white',
-                            padding: '2px 6px',
-                            borderRadius: '8px',
-                            fontSize: '10px',
-                            fontWeight: '600'
-                          }}>
+                          <span className={`esnaf-calendar-event-status ${event.status}`}>
                             {getStatusText(event.status)}
                           </span>
                         </div>
                         
-                        <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#666' }}>
+                        <p className="esnaf-calendar-event-description">
                           {event.service_description}
                         </p>
                         
-                        <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>
+                        <p className="esnaf-calendar-event-meta">
                           {event.appointment_time} • {event.notes || 'Not yok'}
                         </p>
                       </div>
@@ -372,65 +300,51 @@ export default function EsnafTakvimPage() {
               </div>
 
               {/* Upcoming Events */}
-              <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e0e0e0', padding: '20px' }}>
-                <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#111111' }}>
+              <div className="esnaf-calendar-panel">
+                <h3 className="esnaf-calendar-panel-title">
                   Yaklaşan Randevular
                 </h3>
                 
                 {upcomingEvents.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                  <div className="esnaf-calendar-empty-state upcoming">
                     <Icon name="clock" size={24} />
-                    <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                    <p>
                       Önümüzdeki 7 günde randevu bulunmuyor
                     </p>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="esnaf-calendar-upcoming-list">
                     {upcomingEvents.slice(0, 5).map((event) => {
                       const eventDate = new Date(event.appointment_date);
                       const today = new Date();
                       const daysUntil = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                       
                       return (
-                        <div key={event.id} style={{
-                          padding: '10px',
-                          border: '1px solid #e0e0e0',
-                          borderRadius: '6px',
-                          background: '#f8f9fa',
-                          cursor: 'pointer'
-                        }} onClick={() => handleDateSelect(eventDate)}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                            <h4 style={{ margin: '0', fontSize: '13px', fontWeight: '600', color: '#111111' }}>
+                        <div 
+                          key={event.id} 
+                          className="esnaf-calendar-upcoming-card"
+                          onClick={() => handleDateSelect(eventDate)}
+                        >
+                          <div className="esnaf-calendar-upcoming-header">
+                            <h4 className="esnaf-calendar-upcoming-title">
                               {event.customer_name}
                             </h4>
-                            <span style={{
-                              background: getStatusColor(event.status),
-                              color: 'white',
-                              padding: '1px 4px',
-                              borderRadius: '4px',
-                              fontSize: '9px',
-                              fontWeight: '600'
-                            }}>
+                            <span className={`esnaf-calendar-upcoming-status ${event.status}`}>
                               {getStatusText(event.status)}
                             </span>
                           </div>
                           
-                          <p style={{ margin: '0 0 2px 0', fontSize: '12px', color: '#666' }}>
+                          <p className="esnaf-calendar-upcoming-description">
                             {event.service_description}
                           </p>
                           
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <p style={{ margin: '0', fontSize: '11px', color: '#999' }}>
+                          <div className="esnaf-calendar-upcoming-footer">
+                            <p className="esnaf-calendar-upcoming-meta">
                               {event.appointment_time} • {eventDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
                             </p>
-                            <span style={{
-                              background: daysUntil === 0 ? '#ef4444' : daysUntil <= 2 ? '#f59e0b' : '#10b981',
-                              color: 'white',
-                              padding: '1px 4px',
-                              borderRadius: '4px',
-                              fontSize: '9px',
-                              fontWeight: '600'
-                            }}>
+                            <span className={`esnaf-calendar-upcoming-days ${
+                              daysUntil === 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : ''
+                            }`}>
                               {daysUntil === 0 ? 'Bugün' : daysUntil === 1 ? 'Yarın' : `${daysUntil} gün`}
                             </span>
                           </div>
@@ -439,7 +353,7 @@ export default function EsnafTakvimPage() {
                     })}
                     
                     {upcomingEvents.length > 5 && (
-                      <div style={{ textAlign: 'center', padding: '8px', color: '#666', fontSize: '12px' }}>
+                      <div className="esnaf-calendar-more-events">
                         +{upcomingEvents.length - 5} randevu daha
                       </div>
                     )}
