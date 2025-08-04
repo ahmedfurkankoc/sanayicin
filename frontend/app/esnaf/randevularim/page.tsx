@@ -141,13 +141,7 @@ export default function EsnafRandevularimPage() {
   if (loading) {
     return (
       <EsnafPanelLayout activePage="randevularim" title="Randevularım">
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '400px',
-          color: '#666'
-        }}>
+        <div className="esnaf-appointments-loading">
           Yükleniyor...
         </div>
       </EsnafPanelLayout>
@@ -158,38 +152,19 @@ export default function EsnafRandevularimPage() {
     <EsnafPanelLayout activePage="randevularim" title="Randevularım">
       {/* Çalışma Saatleri Uyarısı */}
       {showWorkingHoursWarning && (
-        <div style={{
-          background: '#fff3cd',
-          border: '1px solid #ffeaa7',
-          borderRadius: '8px',
-          padding: '16px 24px',
-          margin: '24px 32px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <Icon name="alert-triangle" size={20} color="#856404" />
-          <div>
-            <h4 style={{ margin: '0 0 4px 0', color: '#856404', fontSize: '16px', fontWeight: '600' }}>
+        <div className="esnaf-appointments-warning">
+          <Icon name="alert-triangle" size={20} className="esnaf-appointments-warning-icon" />
+          <div className="esnaf-appointments-warning-content">
+            <h4 className="esnaf-appointments-warning-title">
               Çalışma Saatleri Belirlenmemiş
             </h4>
-            <p style={{ margin: '0', color: '#856404', fontSize: '14px' }}>
+            <p className="esnaf-appointments-warning-text">
               Müşterilerin randevu talebi oluşturabilmesi için önce çalışma saatlerinizi belirlemeniz gerekmektedir.
             </p>
           </div>
           <button 
             onClick={() => window.location.href = '/esnaf/ayarlar/calisma-saatleri'}
-            style={{
-              background: '#856404',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              marginLeft: 'auto'
-            }}
+            className="esnaf-appointments-warning-btn"
           >
             Çalışma Saatlerini Belirle
           </button>
@@ -197,11 +172,11 @@ export default function EsnafRandevularimPage() {
       )}
 
       {/* Header */}
-      <div style={{ padding: '24px 32px', borderBottom: '1px solid #e0e0e0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+      <div className="esnaf-appointments-header">
+        <div className="esnaf-appointments-header-inner">
           <div>
-            
-            <p style={{ color: '#666', margin: '0' }}>
+            <h1 className="esnaf-page-title">Randevularım</h1>
+            <p className="esnaf-appointments-stats">
               Toplam {appointments.length} randevu • {appointments.filter(a => a.status === 'pending').length} bekleyen
             </p>
           </div>
@@ -209,31 +184,18 @@ export default function EsnafRandevularimPage() {
       </div>
 
       {/* Filters */}
-      <div style={{ padding: '20px 32px', borderBottom: '1px solid #e0e0e0', background: '#f9f9f9' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="esnaf-appointments-filters">
+        <div className="esnaf-appointments-filters-inner">
           {/* Search */}
-          <div style={{ position: 'relative', flex: '1', maxWidth: '400px' }}>
+          <div className="esnaf-appointments-search-container">
             <input
               type="text"
               placeholder="Müşteri adı veya hizmet ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px 12px 40px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                background: 'white'
-              }}
+              className="esnaf-appointments-search-input"
             />
-            <div style={{ 
-              position: 'absolute', 
-              left: '12px', 
-              top: '50%', 
-              transform: 'translateY(-50%)',
-              color: '#666'
-            }}>
+            <div className="esnaf-appointments-search-icon">
               <Icon name="search" size={16} />
             </div>
           </div>
@@ -242,14 +204,7 @@ export default function EsnafRandevularimPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            style={{
-              padding: '12px 16px',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              fontSize: '14px',
-              background: 'white',
-              cursor: 'pointer'
-            }}
+            className="esnaf-appointments-status-filter"
           >
             <option value="all">Tüm Durumlar</option>
             <option value="pending">Beklemede</option>
@@ -262,105 +217,68 @@ export default function EsnafRandevularimPage() {
       </div>
 
       {/* Appointments List */}
-      <div style={{ padding: '24px 32px' }}>
+      <div className="esnaf-appointments-list">
         {filteredAppointments.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '60px 20px',
-            color: '#666'
-          }}>
-            <div style={{ color: '#ccc', marginBottom: '16px' }}>
+          <div className="esnaf-appointments-empty">
+            <div className="esnaf-appointments-empty-icon">
               <Icon name="calendar" size={48} />
             </div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>Randevu Bulunamadı</h3>
-            <p style={{ margin: '0' }}>Arama kriterlerinize uygun randevu bulunmuyor.</p>
+            <h3 className="esnaf-appointments-empty-title">Randevu Bulunamadı</h3>
+            <p className="esnaf-appointments-empty-text">Arama kriterlerinize uygun randevu bulunmuyor.</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="esnaf-appointments-cards">
             {filteredAppointments.map((appointment) => (
-              <div key={appointment.id} style={{
-                background: 'white',
-                border: '1px solid #e0e0e0',
-                borderRadius: '12px',
-                padding: '24px',
-                transition: 'all 0.2s ease'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                  <div>
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', fontWeight: '700', color: '#111111' }}>
-                      {appointment.customer_name}
-                    </h3>
-                    <p style={{ margin: '0 0 4px 0', color: '#666', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
-                      <Icon name="phone" size={14} />
-                      <span style={{ marginLeft: '6px' }}>{appointment.customer_phone}</span>
+              <div key={appointment.id} className="esnaf-appointment-card">
+                <div className="esnaf-appointment-header">
+                  <div className="esnaf-appointment-customer-info">
+                    <h3>{appointment.customer_name}</h3>
+                    <p className="esnaf-appointment-contact-info">
+                      <Icon name="phone" size={14} className="esnaf-appointment-contact-icon" />
+                      <span>{appointment.customer_phone}</span>
                     </p>
-                    <p style={{ margin: '0', color: '#666', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
-                      <Icon name="mail" size={14} />
-                      <span style={{ marginLeft: '6px' }}>{appointment.customer_email}</span>
+                    <p className="esnaf-appointment-contact-info">
+                      <Icon name="mail" size={14} className="esnaf-appointment-contact-icon" />
+                      <span>{appointment.customer_email}</span>
                     </p>
                   </div>
                   
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{
-                      background: getStatusColor(appointment.status),
-                      color: 'white',
-                      padding: '6px 12px',
-                      borderRadius: '16px',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}>
+                  <div className="esnaf-appointment-status-section">
+                    <span className={`esnaf-appointment-status ${appointment.status}`}>
                       {getStatusText(appointment.status)}
                     </span>
-                    <div style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
+                    <div className="esnaf-appointment-date-time">
                       {new Date(appointment.appointment_date).toLocaleDateString('tr-TR')} • {appointment.appointment_time}
                     </div>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '16px' }}>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600', color: '#111111' }}>
+                <div className="esnaf-appointment-service-section">
+                  <h4 className="esnaf-appointment-service-title">
                     Hizmet Talebi
                   </h4>
-                  <p style={{ margin: '0', color: '#666', fontSize: '14px', lineHeight: '1.5' }}>
+                  <p className="esnaf-appointment-service-description">
                     {appointment.service_description}
                   </p>
                   {appointment.notes && (
-                    <p style={{ margin: '8px 0 0 0', color: '#999', fontSize: '13px', fontStyle: 'italic' }}>
+                    <p className="esnaf-appointment-notes">
                       Not: {appointment.notes}
                     </p>
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <div className="esnaf-appointment-actions">
                   {appointment.status === 'pending' && (
                     <>
                       <button 
                         onClick={() => handleAppointmentAction(appointment.id, 'confirm')}
-                        style={{
-                          background: '#10b981',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '8px 16px',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          cursor: 'pointer'
-                        }}
+                        className="esnaf-appointment-btn esnaf-appointment-btn-confirm"
                       >
                         Onayla
                       </button>
                       <button 
                         onClick={() => handleAppointmentAction(appointment.id, 'reject')}
-                        style={{
-                          background: '#ef4444',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '8px 16px',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          cursor: 'pointer'
-                        }}
+                        className="esnaf-appointment-btn esnaf-appointment-btn-reject"
                       >
                         Reddet
                       </button>
@@ -372,32 +290,12 @@ export default function EsnafRandevularimPage() {
                       {isAppointmentTimePassed(appointment) ? (
                         <button 
                           onClick={() => handleAppointmentAction(appointment.id, 'complete')}
-                          style={{
-                            background: '#3b82f6',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '8px 16px',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                          }}
+                          className="esnaf-appointment-btn esnaf-appointment-btn-complete"
                         >
                           Tamamlandı Olarak İşaretle
                         </button>
                       ) : (
-                        <div style={{
-                          background: '#fef3c7',
-                          color: '#92400e',
-                          border: '1px solid #f59e0b',
-                          borderRadius: '6px',
-                          padding: '8px 16px',
-                          fontSize: '14px',
-                          fontWeight: '600',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
+                        <div className="esnaf-appointment-time-warning">
                           <Icon name="clock" size={14} />
                           Randevu saati henüz gelmedi
                         </div>
@@ -408,16 +306,7 @@ export default function EsnafRandevularimPage() {
                   {(appointment.status === 'pending' || appointment.status === 'confirmed') && (
                     <button 
                       onClick={() => handleAppointmentAction(appointment.id, 'cancel')}
-                      style={{
-                        background: 'transparent',
-                        color: '#ef4444',
-                        border: '1px solid #ef4444',
-                        borderRadius: '6px',
-                        padding: '8px 16px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
+                      className="esnaf-appointment-btn esnaf-appointment-btn-cancel"
                     >
                       İptal Et
                     </button>
