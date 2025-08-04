@@ -17,7 +17,6 @@ interface Vendor {
       closed?: boolean;
     };
   };
-  unavailable_dates?: string[];
 }
 
 interface AppointmentForm {
@@ -165,16 +164,7 @@ export default function CustomerAppointmentPage() {
     today.setHours(0, 0, 0, 0);
     
     // Geçmiş tarihleri devre dışı bırak
-    if (selectedDate < today) {
-      return true;
-    }
-    
-    // Vendor'ın müsait olmayan tarihlerini kontrol et
-    if (vendor?.unavailable_dates && vendor.unavailable_dates.includes(date)) {
-      return true;
-    }
-    
-    return false;
+    return selectedDate < today;
   };
 
   if (loading) {
@@ -455,23 +445,6 @@ export default function CustomerAppointmentPage() {
                         fontSize: '16px'
                       }}
                     />
-                    {formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date) && (
-                      <div style={{
-                        marginTop: '8px',
-                        padding: '12px 16px',
-                        backgroundColor: '#fef2f2',
-                        border: '1px solid #fecaca',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '14px',
-                        color: '#dc2626'
-                      }}>
-                        <span style={{ fontSize: '16px' }}>⚠️</span>
-                        <span>Bu tarih doludur. Lütfen başka bir tarih seçiniz.</span>
-                      </div>
-                    )}
                   </div>
                   
                   <div>
@@ -487,39 +460,22 @@ export default function CustomerAppointmentPage() {
                       name="appointment_time"
                       value={formData.appointment_time}
                       onChange={handleInputChange}
-                      disabled={!!(formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date))}
                       style={{
                         width: '100%',
                         padding: '12px 16px',
                         border: '1px solid #e0e0e0',
                         borderRadius: '8px',
-                        fontSize: '16px',
-                        backgroundColor: formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date) ? '#f5f5f5' : 'white',
-                        color: formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date) ? '#999' : '#333'
+                        fontSize: '16px'
                       }}
                     >
-                      <option value="">
-                        {formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date) 
-                          ? 'Bu tarih tatil günü' 
-                          : 'Saat seçin'}
-                      </option>
-                      {formData.appointment_date && !vendor?.unavailable_dates?.includes(formData.appointment_date) && getAvailableTimes().map((time) => (
+                      <option value="">Saat seçin</option>
+                      {formData.appointment_date && getAvailableTimes().map((time) => (
                         <option key={time} value={time}>
                           {time}
                         </option>
                       ))}
                     </select>
-                    {formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date) && (
-                      <p style={{ 
-                        margin: '8px 0 0 0', 
-                        color: '#dc2626', 
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}>
-                        ⚠️ Bu tarih doludur. Lütfen başka bir tarih seçiniz.
-                      </p>
-                    )}
-                    {formData.appointment_date && !vendor?.unavailable_dates?.includes(formData.appointment_date) && getAvailableTimes().length === 0 && (
+                    {formData.appointment_date && getAvailableTimes().length === 0 && (
                       <p style={{ 
                         margin: '8px 0 0 0', 
                         color: '#ef4444', 
@@ -584,20 +540,19 @@ export default function CustomerAppointmentPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || !!(formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date))}
+                  disabled={submitting}
                   style={{
-                    backgroundColor: submitting || (formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date)) ? '#ccc' : '#ffd600',
+                    backgroundColor: submitting ? '#ccc' : '#ffd600',
                     color: '#111111',
                     border: 'none',
                     padding: '12px 24px',
                     borderRadius: '8px',
-                    cursor: submitting || (formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date)) ? 'not-allowed' : 'pointer',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
                     fontSize: '16px',
                     fontWeight: '600'
                   }}
                 >
-                  {submitting ? 'Gönderiliyor...' : 
-                   (formData.appointment_date && vendor?.unavailable_dates?.includes(formData.appointment_date)) ? 'Tatil Günü Seçili' : 'Randevu Talebi Oluştur'}
+                  {submitting ? 'Gönderiliyor...' : 'Randevu Talebi Oluştur'}
                 </button>
               </div>
             </div>

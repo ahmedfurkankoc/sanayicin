@@ -39,7 +39,6 @@ interface Vendor {
       closed?: boolean;
     };
   };
-  unavailable_dates?: string[];
 }
 
 function VendorDetailContent() {
@@ -460,66 +459,6 @@ function VendorDetailContent() {
                         }}>
                           {hours.closed ? 'Kapalı' : `${hours.open} - ${hours.close}`}
                         </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tatil Günleri */}
-            {vendor.unavailable_dates && vendor.unavailable_dates.length > 0 && (
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={{ 
-                  fontSize: '20px', 
-                  fontWeight: 'bold', 
-                  margin: '0 0 16px 0',
-                  color: '#333',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {React.createElement(iconMapping.calendar, { 
-                    size: 24, 
-                    color: '#dc2626'
-                  })}
-                  Tatil Günleri
-                </h3>
-                <div style={{ 
-                  backgroundColor: '#fef2f2', 
-                  padding: '20px', 
-                  borderRadius: '8px',
-                  border: '1px solid #fecaca'
-                }}>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#dc2626',
-                    margin: '0 0 16px 0',
-                    fontWeight: '500'
-                  }}>
-                    Bu tarihlerde esnaf çalışmamaktadır:
-                  </p>
-                  <div style={{ 
-                    display: 'grid', 
-                    gap: '8px',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))'
-                  }}>
-                    {vendor.unavailable_dates.map((date, index) => (
-                      <div key={index} style={{
-                        padding: '8px 12px',
-                        backgroundColor: 'white',
-                        border: '1px solid #fecaca',
-                        borderRadius: '6px',
-                        fontSize: '14px',
-                        color: '#dc2626',
-                        fontWeight: '500',
-                        textAlign: 'center'
-                      }}>
-                        {new Date(date).toLocaleDateString('tr-TR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
                       </div>
                     ))}
                   </div>

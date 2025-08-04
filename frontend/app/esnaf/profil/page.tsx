@@ -12,6 +12,17 @@ export default function EsnafProfilPage() {
   const router = useRouter();
   const { user } = useEsnaf();
 
+  // İşletme türünü Türkçe'ye çevir
+  const getBusinessTypeName = (businessType: string) => {
+    const businessTypes: { [key: string]: string } = {
+      "sahis": "Şahıs Şirketi",
+      "limited": "Limited Şirketi", 
+      "anonim": "Anonim Şirketi",
+      "esnaf": "Esnaf"
+    };
+    return businessTypes[businessType] || businessType;
+  };
+
   const getDayName = (day: string) => {
     const dayNames: { [key: string]: string } = {
       'monday': 'Pazartesi',
@@ -78,7 +89,7 @@ export default function EsnafProfilPage() {
 
               <div className="esnaf-info-item">
                 <label>İşletme Türü:</label>
-                <span>{user.business_type || "Belirtilmemiş"}</span>
+                <span>{user.business_type ? getBusinessTypeName(user.business_type) : "Belirtilmemiş"}</span>
               </div>
 
               <div className="esnaf-info-item">
