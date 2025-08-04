@@ -2449,7 +2449,7 @@ body, html, .esnaf-panel-layout {
   transform: translateY(-2px);
 } 
 
-/* Takvim Sayfası Stilleri */
+/* Takvim/Calendar */
 .esnaf-calendar-header {
   padding: 24px 32px;
   border-bottom: 1px solid #e0e0e0;
@@ -2850,7 +2850,7 @@ body, html, .esnaf-panel-layout {
   margin-bottom: 8px;
 }
 
-/* Responsive Takvim */
+/* Takvim/Calendar Responsive */
 @media (max-width: 1200px) {
   .esnaf-calendar-container {
     flex-direction: column;
@@ -3026,3 +3026,591 @@ body, html, .esnaf-panel-layout {
     font-size: 13px;
   }
 } 
+
+/* Randevularım Sayfası Stilleri */
+.esnaf-appointments-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  color: #666;
+}
+
+.esnaf-appointments-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 16px 24px;
+  margin: 24px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.esnaf-appointments-warning-icon {
+  color: #856404;
+}
+
+.esnaf-appointments-warning-content {
+  flex: 1;
+}
+
+.esnaf-appointments-warning-title {
+  margin: 0 0 4px 0;
+  color: #856404;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.esnaf-appointments-warning-text {
+  margin: 0;
+  color: #856404;
+  font-size: 14px;
+}
+
+.esnaf-appointments-warning-btn {
+  background: #856404;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s ease;
+}
+
+.esnaf-appointments-warning-btn:hover {
+  background: #6b4c00;
+  transform: translateY(-1px);
+}
+
+.esnaf-appointments-header {
+  padding: 24px 32px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.esnaf-appointments-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.esnaf-appointments-stats {
+  color: #666;
+  margin: 0;
+}
+
+.esnaf-appointments-filters {
+  padding: 20px 32px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f9f9f9;
+}
+
+.esnaf-appointments-filters-inner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.esnaf-appointments-search-container {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+  min-width: 250px;
+}
+
+.esnaf-appointments-search-input {
+  width: 100%;
+  padding: 12px 16px 12px 40px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.esnaf-appointments-search-input:focus {
+  outline: none;
+  border-color: #ffd600;
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.1);
+}
+
+.esnaf-appointments-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.esnaf-appointments-status-filter {
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.esnaf-appointments-status-filter:focus {
+  outline: none;
+  border-color: #ffd600;
+}
+
+.esnaf-appointments-list {
+  padding: 24px 32px;
+}
+
+.esnaf-appointments-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.esnaf-appointments-empty-icon {
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.esnaf-appointments-empty-title {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.esnaf-appointments-empty-text {
+  margin: 0;
+}
+
+.esnaf-appointments-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.esnaf-appointment-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.esnaf-appointment-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #ffd600;
+}
+
+.esnaf-appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.esnaf-appointment-customer-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111111;
+}
+
+.esnaf-appointment-contact-info {
+  margin: 0 0 4px 0;
+  color: #666;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.esnaf-appointment-contact-info:last-child {
+  margin: 0;
+}
+
+.esnaf-appointment-contact-icon {
+  margin-right: 6px;
+}
+
+.esnaf-appointment-status-section {
+  text-align: right;
+}
+
+.esnaf-appointment-status {
+  background: #10b981;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.esnaf-appointment-status.pending {
+  background: #f59e0b;
+}
+
+.esnaf-appointment-status.completed {
+  background: #3b82f6;
+}
+
+.esnaf-appointment-status.cancelled,
+.esnaf-appointment-status.rejected {
+  background: #ef4444;
+}
+
+.esnaf-appointment-date-time {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.esnaf-appointment-service-section {
+  margin-bottom: 16px;
+}
+
+.esnaf-appointment-service-title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111111;
+}
+
+.esnaf-appointment-service-description {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.esnaf-appointment-notes {
+  margin: 8px 0 0 0;
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.esnaf-appointment-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.esnaf-appointment-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.esnaf-appointment-btn:hover {
+  transform: translateY(-1px);
+}
+
+.esnaf-appointment-btn-confirm {
+  background: #10b981;
+  color: white;
+}
+
+.esnaf-appointment-btn-confirm:hover {
+  background: #059669;
+}
+
+.esnaf-appointment-btn-reject {
+  background: #ef4444;
+  color: white;
+}
+
+.esnaf-appointment-btn-reject:hover {
+  background: #dc2626;
+}
+
+.esnaf-appointment-btn-complete {
+  background: #3b82f6;
+  color: white;
+}
+
+.esnaf-appointment-btn-complete:hover {
+  background: #2563eb;
+}
+
+.esnaf-appointment-btn-cancel {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.esnaf-appointment-btn-cancel:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.esnaf-appointment-time-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive Randevularım */
+@media (max-width: 900px) {
+  .esnaf-appointments-header {
+    padding: 20px 24px;
+  }
+  
+  .esnaf-appointments-header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .esnaf-appointments-filters {
+    padding: 16px 24px;
+  }
+  
+  .esnaf-appointments-filters-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+  
+  .esnaf-appointments-search-container {
+    max-width: none;
+    min-width: auto;
+  }
+  
+  .esnaf-appointments-status-filter {
+    min-width: auto;
+  }
+  
+  .esnaf-appointments-list {
+    padding: 20px 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .esnaf-appointments-warning {
+    margin: 16px 20px;
+    padding: 12px 16px;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .esnaf-appointments-warning-btn {
+    margin-left: 0;
+    margin-top: 12px;
+  }
+  
+  .esnaf-appointments-header {
+    padding: 16px 20px;
+  }
+  
+  .esnaf-appointments-filters {
+    padding: 12px 20px;
+  }
+  
+  .esnaf-appointments-filters-inner {
+    flex-direction: row;
+    gap: 8px;
+  }
+  
+  .esnaf-appointments-search-container {
+    flex: 0.6;
+    min-width: 0;
+  }
+  
+  .esnaf-appointments-status-filter {
+    flex: 0.4;
+    min-width: 0;
+  }
+  
+  .esnaf-appointments-list {
+    padding: 16px 20px;
+  }
+  
+  .esnaf-appointment-card {
+    padding: 16px;
+  }
+  
+  .esnaf-appointment-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .esnaf-appointment-status-section {
+    text-align: left;
+  }
+  
+  .esnaf-appointment-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .esnaf-appointment-btn {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .esnaf-appointments-warning {
+    margin: 12px 16px;
+    padding: 10px 12px;
+  }
+  
+  .esnaf-appointments-warning-title {
+    font-size: 14px;
+  }
+  
+  .esnaf-appointments-warning-text {
+    font-size: 13px;
+  }
+  
+  .esnaf-appointments-warning-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .esnaf-appointments-header {
+    padding: 12px 16px;
+  }
+  
+  .esnaf-appointments-filters {
+    padding: 10px 16px;
+  }
+  
+  .esnaf-appointments-filters-inner {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .esnaf-appointments-search-container {
+    width: 100%;
+    min-width: 0;
+  }
+  
+  .esnaf-appointments-status-filter {
+    width: 100%;
+    min-width: 0;
+  }
+  
+  .esnaf-appointments-search-input {
+    padding: 8px 12px 8px 32px;
+    font-size: 12px;
+  }
+  
+  .esnaf-appointments-status-filter {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .esnaf-appointments-list {
+    padding: 12px 16px;
+  }
+  
+  .esnaf-appointment-card {
+    padding: 12px;
+  }
+  
+  .esnaf-appointment-customer-info h3 {
+    font-size: 1rem;
+  }
+  
+  .esnaf-appointment-contact-info {
+    font-size: 13px;
+  }
+  
+  .esnaf-appointment-service-title {
+    font-size: 14px;
+  }
+  
+  .esnaf-appointment-service-description {
+    font-size: 13px;
+  }
+  
+  .esnaf-appointment-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .esnaf-appointment-time-warning {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .esnaf-appointments-warning {
+    margin: 8px 12px;
+    padding: 8px 10px;
+  }
+  
+  .esnaf-appointments-warning-title {
+    font-size: 13px;
+  }
+  
+  .esnaf-appointments-warning-text {
+    font-size: 12px;
+  }
+  
+  .esnaf-appointments-header {
+    padding: 10px 12px;
+  }
+  
+  .esnaf-appointments-filters {
+    padding: 8px 12px;
+  }
+  
+  .esnaf-appointments-list {
+    padding: 10px 12px;
+  }
+  
+  .esnaf-appointment-card {
+    padding: 10px;
+  }
+  
+  .esnaf-appointment-customer-info h3 {
+    font-size: 0.9rem;
+  }
+  
+  .esnaf-appointment-contact-info {
+    font-size: 12px;
+  }
+  
+  .esnaf-appointment-service-title {
+    font-size: 13px;
+  }
+  
+  .esnaf-appointment-service-description {
+    font-size: 12px;
+  }
+  
+  .esnaf-appointment-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  
+  .esnaf-appointment-time-warning {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+}
