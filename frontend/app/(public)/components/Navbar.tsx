@@ -92,8 +92,7 @@ const Navbar = () => {
       <div className="sanayicin-navbar-inner">
         <div className="sanayicin-logo-section">
           <Link href="/" className="sanayicin-logo-link">
-            <img src="/sanayicin-icon.png" alt="Sanayicin Logo" className="sanayicin-logo-icon" />
-            <span className="sanayicin-logo-text">SANAYİCİN</span>
+            <img src="/sanayicin-logo.png" alt="Sanayicin Logo" className="sanayicin-logo-icon" />
           </Link>
         </div>
         <button
