@@ -2448,3 +2448,581 @@ body, html, .esnaf-panel-layout {
 .verify-email-btn:hover {
   transform: translateY(-2px);
 } 
+
+/* Takvim Sayfası Stilleri */
+.esnaf-calendar-header {
+  padding: 24px 32px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.esnaf-calendar-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.esnaf-calendar-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111111;
+  margin: 0 0 8px 0;
+}
+
+.esnaf-calendar-subtitle {
+  color: #666;
+  margin: 0;
+}
+
+.esnaf-calendar-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.esnaf-calendar-btn {
+  background: transparent;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.esnaf-calendar-btn:hover {
+  background: #f8f9fa;
+  border-color: #ffd600;
+}
+
+.esnaf-calendar-btn-today {
+  background: #ffd600;
+  color: #111111;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.esnaf-calendar-btn-today:hover {
+  background: #e6c200;
+  transform: translateY(-1px);
+}
+
+.esnaf-calendar-container {
+  padding: 24px 32px;
+  display: flex;
+  gap: 24px;
+  min-height: 600px;
+}
+
+.esnaf-calendar-main {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+}
+
+.esnaf-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.esnaf-calendar-day-header {
+  padding: 12px;
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.esnaf-calendar-day-empty {
+  padding: 8px;
+  min-height: 80px;
+  border: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.esnaf-calendar-day {
+  padding: 8px;
+  min-height: 80px;
+  border: 1px solid #e0e0e0;
+  background: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.esnaf-calendar-day:hover {
+  background: #f8f9fa;
+}
+
+.esnaf-calendar-day.today {
+  background: #f0f9ff;
+}
+
+.esnaf-calendar-day.selected {
+  background: #fff7e6;
+}
+
+.esnaf-calendar-day-number {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.esnaf-calendar-day-number.today {
+  font-weight: 700;
+  color: #ffd600;
+}
+
+.esnaf-calendar-event {
+  background: #10b981;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.esnaf-calendar-event:hover {
+  transform: scale(1.02);
+}
+
+.esnaf-calendar-event.pending {
+  background: #f59e0b;
+}
+
+.esnaf-calendar-event.completed {
+  background: #3b82f6;
+}
+
+.esnaf-calendar-event.cancelled {
+  background: #ef4444;
+}
+
+.esnaf-calendar-sidebar {
+  width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.esnaf-calendar-panel {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  padding: 20px;
+}
+
+.esnaf-calendar-panel-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111111;
+}
+
+.esnaf-calendar-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.esnaf-calendar-empty-state.upcoming {
+  padding: 20px;
+}
+
+.esnaf-calendar-empty-state.upcoming p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+}
+
+.esnaf-calendar-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.esnaf-calendar-event-card {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+  transition: all 0.2s ease;
+}
+
+.esnaf-calendar-event-card:hover {
+  background: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.esnaf-calendar-event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.esnaf-calendar-event-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111111;
+}
+
+.esnaf-calendar-event-status {
+  background: #10b981;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.esnaf-calendar-event-status.pending {
+  background: #f59e0b;
+}
+
+.esnaf-calendar-event-status.completed {
+  background: #3b82f6;
+}
+
+.esnaf-calendar-event-status.cancelled {
+  background: #ef4444;
+}
+
+.esnaf-calendar-event-description {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.esnaf-calendar-event-meta {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+}
+
+.esnaf-calendar-upcoming-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.esnaf-calendar-upcoming-card {
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.esnaf-calendar-upcoming-card:hover {
+  background: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.esnaf-calendar-upcoming-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.esnaf-calendar-upcoming-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111111;
+}
+
+.esnaf-calendar-upcoming-status {
+  background: #10b981;
+  color: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.esnaf-calendar-upcoming-status.pending {
+  background: #f59e0b;
+}
+
+.esnaf-calendar-upcoming-status.completed {
+  background: #3b82f6;
+}
+
+.esnaf-calendar-upcoming-status.cancelled {
+  background: #ef4444;
+}
+
+.esnaf-calendar-upcoming-description {
+  margin: 0 0 2px 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.esnaf-calendar-upcoming-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.esnaf-calendar-upcoming-meta {
+  margin: 0;
+  font-size: 11px;
+  color: #999;
+}
+
+.esnaf-calendar-upcoming-days {
+  background: #10b981;
+  color: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.esnaf-calendar-upcoming-days.today {
+  background: #ef4444;
+}
+
+.esnaf-calendar-upcoming-days.tomorrow {
+  background: #f59e0b;
+}
+
+.esnaf-calendar-more-events {
+  text-align: center;
+  padding: 8px;
+  color: #666;
+  font-size: 12px;
+}
+
+.esnaf-calendar-loading {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.esnaf-calendar-loading-content {
+  text-align: center;
+  color: #666;
+}
+
+.esnaf-calendar-loading-text {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.esnaf-calendar-error {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.esnaf-calendar-error-content {
+  text-align: center;
+  color: #ef4444;
+}
+
+.esnaf-calendar-error-title {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+/* Responsive Takvim */
+@media (max-width: 1200px) {
+  .esnaf-calendar-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .esnaf-calendar-sidebar {
+    width: 100%;
+    flex-direction: row;
+    gap: 16px;
+  }
+  
+  .esnaf-calendar-panel {
+    flex: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .esnaf-calendar-header {
+    padding: 20px 24px;
+  }
+  
+  .esnaf-calendar-header-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .esnaf-calendar-title {
+    font-size: 1.5rem;
+  }
+  
+  .esnaf-calendar-controls {
+    justify-content: center;
+  }
+  
+  .esnaf-calendar-container {
+    padding: 20px 24px;
+  }
+  
+  .esnaf-calendar-sidebar {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .esnaf-calendar-header {
+    padding: 16px 20px;
+  }
+  
+  .esnaf-calendar-container {
+    padding: 16px 20px;
+  }
+  
+  .esnaf-calendar-day {
+    min-height: 60px;
+    padding: 6px;
+  }
+  
+  .esnaf-calendar-day-number {
+    font-size: 12px;
+  }
+  
+  .esnaf-calendar-event {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  
+  .esnaf-calendar-panel {
+    padding: 16px;
+  }
+  
+  .esnaf-calendar-panel-title {
+    font-size: 16px;
+  }
+  
+  .esnaf-calendar-event-card {
+    padding: 10px;
+  }
+  
+  .esnaf-calendar-upcoming-card {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .esnaf-calendar-header {
+    padding: 12px 16px;
+  }
+  
+  .esnaf-calendar-container {
+    padding: 12px 16px;
+  }
+  
+  .esnaf-calendar-title {
+    font-size: 1.25rem;
+  }
+  
+  .esnaf-calendar-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .esnaf-calendar-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .esnaf-calendar-btn-today {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .esnaf-calendar-day {
+    min-height: 50px;
+    padding: 4px;
+  }
+  
+  .esnaf-calendar-day-number {
+    font-size: 11px;
+  }
+  
+  .esnaf-calendar-event {
+    font-size: 7px;
+    padding: 1px 3px;
+  }
+  
+  .esnaf-calendar-panel {
+    padding: 12px;
+  }
+  
+  .esnaf-calendar-panel-title {
+    font-size: 14px;
+  }
+  
+  .esnaf-calendar-event-card {
+    padding: 8px;
+  }
+  
+  .esnaf-calendar-upcoming-card {
+    padding: 6px;
+  }
+  
+  .esnaf-calendar-event-title {
+    font-size: 12px;
+  }
+  
+  .esnaf-calendar-upcoming-title {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .esnaf-calendar-day {
+    min-height: 45px;
+    padding: 3px;
+  }
+  
+  .esnaf-calendar-day-number {
+    font-size: 10px;
+  }
+  
+  .esnaf-calendar-event {
+    font-size: 6px;
+    padding: 1px 2px;
+  }
+  
+  .esnaf-calendar-panel {
+    padding: 10px;
+  }
+  
+  .esnaf-calendar-panel-title {
+    font-size: 13px;
+  }
+} 
