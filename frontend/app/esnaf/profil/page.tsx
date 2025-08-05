@@ -142,6 +142,16 @@ export default function EsnafProfilPage() {
                   }
                 </span>
               </div>
+
+              <div className="esnaf-info-item">
+                <label>Araba Markaları:</label>
+                <span>
+                  {user.car_brands && user.car_brands.length > 0 
+                    ? user.car_brands.map((brand: any) => brand.name).join(", ")
+                    : "Belirtilmemiş"
+                  }
+                </span>
+              </div>
             </div>
           </div>
 
