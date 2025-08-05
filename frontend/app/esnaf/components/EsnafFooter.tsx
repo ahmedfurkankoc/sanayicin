@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "@/app/components/ui/Icon";
 
 export default function EsnafFooter() {
   return (
@@ -23,11 +24,21 @@ export default function EsnafFooter() {
           </div>
         </div>
         <div className="esnaf-footer-socials">
-          <a href="#" className="esnaf-footer-social-icon" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" stroke="#111" strokeWidth="2"/><circle cx="12" cy="12" r="5" stroke="#111" strokeWidth="2"/><circle cx="17" cy="7" r="1.2" fill="#111"/></svg></a>
-          <a href="#" className="esnaf-footer-social-icon" aria-label="X"><svg width="18" height="18" viewBox="0 0 300 271" xmlns="http://www.w3.org/2000/svg"><path d="m236 0h46l-101 115 118 156h-92.6l-72.5-94.8-83 94.8h-46l107-123-113-148h94.9l65.5 86.6zm-16.1 244h25.5l-165-218h-27.4z"/></svg></a>
-          <a href="#" className="esnaf-footer-social-icon" aria-label="YouTube"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="4" stroke="#111" strokeWidth="2"/><path d="M10 9.5v5l5-2.5-5-2.5z" fill="#111"/></svg></a>
-          <a href="#" className="esnaf-footer-social-icon" aria-label="Facebook"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" stroke="#111" strokeWidth="2"/><path d="M16 8h-2a2 2 0 0 0-2 2v2h4v2h-4v6h-2v-6H8v-2h2v-2a4 4 0 0 1 4-4h2v2z" fill="#111"/></svg></a>
-          <a href="#" className="esnaf-footer-social-icon" aria-label="LinkedIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" stroke="#111" strokeWidth="2"/><path d="M7 10v7M7 7v.01M12 17v-4a2 2 0 1 1 4 0v4" stroke="#111" strokeWidth="2" strokeLinecap="round"/></svg></a>
+          <a href="#" className="esnaf-footer-social-icon" aria-label="Instagram">
+            <Icon name="instagram" size={18} color="#111" />
+          </a>
+          <a href="#" className="esnaf-footer-social-icon" aria-label="X">
+            <Icon name="x-social" size={18} color="#111" />
+          </a>
+          <a href="#" className="esnaf-footer-social-icon" aria-label="YouTube">
+            <Icon name="youtube" size={18} color="#111" />
+          </a>
+          <a href="#" className="esnaf-footer-social-icon" aria-label="Facebook">
+            <Icon name="facebook" size={18} color="#111" />
+          </a>
+          <a href="#" className="esnaf-footer-social-icon" aria-label="LinkedIn">
+            <Icon name="linkedin" size={18} color="#111" />
+          </a>
         </div>
       </div>
       <div className="esnaf-footer-copyright">
