@@ -118,7 +118,8 @@ apiClient.interceptors.request.use((config) => {
   const isPublicEndpoint = config.url?.includes('/vendors/search/') || 
                           config.url?.includes('/vendors/') && config.url?.includes('/slug/') ||
                           config.url?.includes('/services/') ||
-                          config.url?.includes('/categories/');
+                          config.url?.includes('/categories/') ||
+                          config.url?.includes('/vendors/car-brands/');
   
   if (isPublicEndpoint) {
     return config; // Token ekleme, herkese açık
@@ -147,6 +148,7 @@ apiClient.interceptors.response.use(
                               error.config?.url?.includes('/vendors/') && error.config?.url?.includes('/slug/') ||
                               error.config?.url?.includes('/services/') ||
                               error.config?.url?.includes('/categories/');
+                              error.config?.url?.includes('/vendors/car-brands/')
       
       if (isPublicEndpoint) {
         return Promise.reject(error); // Logout yapma, sadece hatayı döndür

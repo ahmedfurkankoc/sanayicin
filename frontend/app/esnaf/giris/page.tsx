@@ -78,7 +78,7 @@ export default function EsnafGirisPage() {
   if (isAuthenticated) {
     return (
       <>
-      <EsnafAuthHeader title={'Esnaf Giriş'} />
+      <EsnafAuthHeader title={'Esnaf Giriş'} currentPage="login" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <div className="esnaf-login-loading">
@@ -93,7 +93,7 @@ export default function EsnafGirisPage() {
 
   return (
     <>
-    <EsnafAuthHeader title={'Esnaf Giriş'} />
+    <EsnafAuthHeader title={'Esnaf Giriş'} currentPage="login" />
     <main className="esnaf-login-main">
       <div className="esnaf-login-container">
         {/* Header */}
