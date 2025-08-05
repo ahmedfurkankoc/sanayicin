@@ -574,23 +574,55 @@ body, html, .esnaf-panel-layout {
 }
 
 .esnaf-login-logo img {
-  width: 48px;
-  height: 48px;
+  width: 220px;
   margin-right: 12px;
 }
 
-.esnaf-login-logo-text {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--black);
-  letter-spacing: -0.5px;
-}
 
 .esnaf-login-subtitle {
   color: var(--black);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
-  margin-left: 24px;
+  margin-left: 12px;
+}
+
+
+.esnaf-auth-buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.esnaf-auth-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.esnaf-auth-btn-register {
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.esnaf-auth-btn-register:hover {
+  background: #e6c200;
+  transform: translateY(-1px);
+}
+
+.esnaf-auth-btn-login {
+  background: transparent;
+  color: var(--black);
+  border: 2px solid var(--yellow);
+}
+
+.esnaf-auth-btn-login:hover {
+  background: var(--yellow);
+  transform: translateY(-1px);
 }
 
 .esnaf-login-title {
@@ -718,6 +750,10 @@ body, html, .esnaf-panel-layout {
   border-top: 1px solid var(--black);
 }
 
+.esnaf-login-footer p {
+  margin-bottom: 2rem;
+}
+
 .esnaf-login-footer a {
   color: var(--yellow);
   text-decoration: none;
@@ -737,14 +773,12 @@ body, html, .esnaf-panel-layout {
     margin: 16px;
     border-radius: 16px;
   }
-  
-  .esnaf-login-logo-text {
-    font-size: 24px;
+  .esnaf-login-header {
+    padding: 0 24px 0 24px;
   }
   
   .esnaf-login-logo img {
-    width: 40px;
-    height: 40px;
+    width: 140px;
   }
   
   .esnaf-login-title {

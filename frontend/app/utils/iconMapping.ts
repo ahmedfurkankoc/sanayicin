@@ -112,6 +112,7 @@ export const iconMapping = {
   // Sosyal medya ikonları
   'instagram': Instagram,
   'twitter': Twitter,
+  'x-social': Twitter, // Gerçek X (Twitter) ikonu
   'youtube': Youtube,
   'facebook': Facebook,
   'linkedin': Linkedin,
