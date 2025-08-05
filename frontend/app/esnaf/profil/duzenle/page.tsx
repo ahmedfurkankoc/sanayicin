@@ -17,21 +17,26 @@ export default function EsnafProfilDuzenlePage() {
   const [profile, setProfile] = useState<any>(null);
   const [serviceAreas, setServiceAreas] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [carBrands, setCarBrands] = useState<any[]>([]);
   const [selectedServiceArea, setSelectedServiceArea] = useState("");
   const [availableCategories, setAvailableCategories] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [carBrandsDropdownOpen, setCarBrandsDropdownOpen] = useState(false);
+  const [carBrandSearch, setCarBrandSearch] = useState("");
 
   // Profil ve veri yükleme
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [areasRes, categoriesRes] = await Promise.all([
+        const [areasRes, categoriesRes, carBrandsRes] = await Promise.all([
           api.getServiceAreas(),
-          api.getCategories()
+          api.getCategories(),
+          api.getCarBrands()
         ]);
         
         setServiceAreas(areasRes.data);
         setCategories(categoriesRes.data);
+        setCarBrands(carBrandsRes.data);
       } catch (error) {
         console.error("Veri yüklenirken hata:", error);
       } finally {
@@ -189,6 +194,16 @@ export default function EsnafProfilDuzenlePage() {
         });
       }
       
+      // Araba markalarını gönder
+      console.log("Gönderilecek araba markaları:", profile.car_brands);
+      if (profile.car_brands && profile.car_brands.length > 0) {
+        profile.car_brands.forEach((brand: any) => {
+          const brandId = typeof brand === 'object' ? brand.id : brand;
+          formData.append("car_brands_ids", brandId.toString());
+          console.log("Araba markası ID eklendi:", brandId);
+        });
+      }
+      
       // JSON alanlar
       formData.append("social_media", JSON.stringify(profile.social_media || {}));
       formData.append("working_hours", JSON.stringify(profile.working_hours || {}));
@@ -232,6 +247,28 @@ export default function EsnafProfilDuzenlePage() {
       setSaving(false);
     }
   };
+
+  const filteredCarBrands = carBrands.filter(brand => 
+    brand.name.toLowerCase().includes(carBrandSearch.toLowerCase())
+  );
+
+  // Dropdown dışına tıklandığında kapat
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.esnaf-multi-select-container')) {
+        setCarBrandsDropdownOpen(false);
+      }
+    };
+
+    if (carBrandsDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [carBrandsDropdownOpen]);
 
   if (loading || dataLoading || !profile) {
     return <LoadingSpinner />;
@@ -374,6 +411,124 @@ export default function EsnafProfilDuzenlePage() {
                       Önce hizmet alanı seçiniz.
                     </p>
                   )}
+                </div>
+
+                <div className="esnaf-form-group">
+                  <label>Hizmet Verilen Araba Markaları</label>
+                  <div className="esnaf-multi-select-container">
+                    <div className="esnaf-multi-select-header" onClick={() => setCarBrandsDropdownOpen(!carBrandsDropdownOpen)}>
+                      <span className="esnaf-multi-select-placeholder">
+                        {profile.car_brands && profile.car_brands.length > 0 
+                          ? `${profile.car_brands.length} marka seçildi` 
+                          : "Araba markaları seçin"}
+                      </span>
+                      <svg 
+                        className={`esnaf-multi-select-arrow ${carBrandsDropdownOpen ? 'open' : ''}`}
+                        width="12" 
+                        height="12" 
+                        viewBox="0 0 12 12"
+                      >
+                        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                      </svg>
+                    </div>
+                    
+                    {carBrandsDropdownOpen && (
+                      <div className="esnaf-multi-select-dropdown">
+                        <div className="esnaf-multi-select-search">
+                          <input
+                            type="text"
+                            placeholder="Marka ara..."
+                            value={carBrandSearch}
+                            onChange={(e) => setCarBrandSearch(e.target.value)}
+                            className="esnaf-multi-select-search-input"
+                          />
+                        </div>
+                        
+                        <div className="esnaf-multi-select-options">
+                          {filteredCarBrands.map((brand) => (
+                            <label key={brand.id} className="esnaf-multi-select-option">
+                              <input
+                                type="checkbox"
+                                checked={profile.car_brands && profile.car_brands.some((carBrand: any) => {
+                                  const brandId = typeof carBrand === 'object' ? carBrand.id : carBrand;
+                                  return brandId === brand.id;
+                                })}
+                                onChange={(e) => {
+                                  const currentCarBrands = profile.car_brands || [];
+                                  if (e.target.checked) {
+                                    // Yeni marka ekle
+                                    const newCarBrands = [...currentCarBrands, brand.id];
+                                    handleInputChange("car_brands", newCarBrands);
+                                  } else {
+                                    // Markayı çıkar
+                                    const newCarBrands = currentCarBrands.filter((carBrand: any) => {
+                                      const brandId = typeof carBrand === 'object' ? carBrand.id : carBrand;
+                                      return brandId !== brand.id;
+                                    });
+                                    handleInputChange("car_brands", newCarBrands);
+                                  }
+                                }}
+                                className="esnaf-multi-select-checkbox"
+                              />
+                              <div className="esnaf-multi-select-option-content">
+                                {brand.logo && (
+                                  <img 
+                                    src={brand.logo} 
+                                    alt={brand.name} 
+                                    className="esnaf-multi-select-brand-logo"
+                                  />
+                                )}
+                                <span>{brand.name}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                        
+                        {filteredCarBrands.length === 0 && (
+                          <div className="esnaf-multi-select-no-results">
+                            Marka bulunamadı
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Seçilen markaları göster */}
+                    {profile.car_brands && profile.car_brands.length > 0 && (
+                      <div className="esnaf-selected-brands">
+                        {profile.car_brands.map((selectedBrand: any) => {
+                          const brandId = typeof selectedBrand === 'object' ? selectedBrand.id : selectedBrand;
+                          const brand = carBrands.find(b => b.id === brandId);
+                          if (!brand) return null;
+                          
+                          return (
+                            <div key={brand.id} className="esnaf-selected-brand-tag">
+                              {brand.logo && (
+                                <img 
+                                  src={brand.logo} 
+                                  alt={brand.name} 
+                                  className="esnaf-selected-brand-logo"
+                                />
+                              )}
+                              <span>{brand.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newCarBrands = profile.car_brands.filter((carBrand: any) => {
+                                    const brandId = typeof carBrand === 'object' ? carBrand.id : carBrand;
+                                    return brandId !== brand.id;
+                                  });
+                                  handleInputChange("car_brands", newCarBrands);
+                                }}
+                                className="esnaf-selected-brand-remove"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

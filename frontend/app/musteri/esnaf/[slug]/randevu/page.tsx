@@ -211,6 +211,9 @@ export default function CustomerAppointmentPage() {
     );
   }
 
+  // Esnafın çalışma saatleri var mı kontrol et
+  const hasWorkingHours = vendor.working_hours && Object.keys(vendor.working_hours).length > 0;
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
       {/* Header */}
@@ -283,8 +286,61 @@ export default function CustomerAppointmentPage() {
             </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} style={{ padding: '32px' }}>
+          {/* Çalışma Saatleri Kontrolü */}
+          {!hasWorkingHours ? (
+            <div style={{ 
+              padding: '32px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: '8px',
+                padding: '24px',
+                marginBottom: '24px'
+              }}>
+                <div style={{
+                  fontSize: '48px',
+                  marginBottom: '16px'
+                }}>
+                  ⚠️
+                </div>
+                <h3 style={{
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  color: '#dc2626',
+                  margin: '0 0 12px 0'
+                }}>
+                  Esnaf Kapalı
+                </h3>
+                <p style={{
+                  fontSize: '16px',
+                  color: '#6b7280',
+                  margin: '0 0 20px 0',
+                  lineHeight: '1.5'
+                }}>
+                  Bu esnaf henüz çalışma saatlerini belirlememiş. 
+                  Randevu alabilmek için esnafın çalışma saatlerini ayarlaması gerekmektedir.
+                </p>
+                <button
+                  onClick={() => router.back()}
+                  style={{
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '600'
+                  }}
+                >
+                  Geri Dön
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ padding: '32px' }}>
             <div style={{ display: 'grid', gap: '24px' }}>
               {/* Müşteri Bilgileri */}
               <div>
@@ -411,152 +467,157 @@ export default function CustomerAppointmentPage() {
                 </div>
               </div>
 
-              {/* Randevu Bilgileri */}
-              <div>
-                <h3 style={{ 
-                  fontSize: '18px', 
-                  fontWeight: 'bold', 
-                  margin: '0 0 16px 0',
-                  color: '#333'
-                }}>
-                  Randevu Bilgileri
-                </h3>
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px', 
-                      fontWeight: '600',
-                      color: '#333'
-                    }}>
-                      Tarih *
-                    </label>
-                    <input
-                      type="date"
-                      name="appointment_date"
-                      value={formData.appointment_date}
-                      onChange={handleInputChange}
-                      min={new Date().toISOString().split('T')[0]}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        fontSize: '16px'
-                      }}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px', 
-                      fontWeight: '600',
-                      color: '#333'
-                    }}>
-                      Saat *
-                    </label>
-                    <select
-                      name="appointment_time"
-                      value={formData.appointment_time}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        fontSize: '16px'
-                      }}
-                    >
-                      <option value="">Saat seçin</option>
-                      {formData.appointment_date && getAvailableTimes().map((time) => (
-                        <option key={time} value={time}>
-                          {time}
-                        </option>
-                      ))}
-                    </select>
-                    {formData.appointment_date && getAvailableTimes().length === 0 && (
-                      <p style={{ 
-                        margin: '8px 0 0 0', 
-                        color: '#ef4444', 
-                        fontSize: '14px' 
+              {/* Randevu Bilgileri - Sadece çalışma saatleri varsa göster */}
+              {hasWorkingHours ? (
+                <div>
+                  <h3 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: 'bold', 
+                    margin: '0 0 16px 0',
+                    color: '#333'
+                  }}>
+                    Randevu Bilgileri
+                  </h3>
+                  <div style={{ display: 'grid', gap: '16px' }}>
+                    <div>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '8px', 
+                        fontWeight: '600',
+                        color: '#333'
                       }}>
-                        Bu tarihte müsait saat bulunmuyor. Esnafın çalışma saatlerini kontrol edin.
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px', 
-                      fontWeight: '600',
-                      color: '#333'
-                    }}>
-                      Notlar
-                    </label>
-                    <textarea
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      rows={3}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        fontSize: '16px',
-                        resize: 'vertical'
-                      }}
-                      placeholder="Ek bilgiler, özel istekler..."
-                    />
+                        Tarih *
+                      </label>
+                      <input
+                        type="date"
+                        name="appointment_date"
+                        value={formData.appointment_date}
+                        onChange={handleInputChange}
+                        min={new Date().toISOString().split('T')[0]}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                          fontSize: '16px'
+                        }}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '8px', 
+                        fontWeight: '600',
+                        color: '#333'
+                      }}>
+                        Saat *
+                      </label>
+                      <select
+                        name="appointment_time"
+                        value={formData.appointment_time}
+                        onChange={handleInputChange}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                          fontSize: '16px'
+                        }}
+                      >
+                        <option value="">Saat seçin</option>
+                        {formData.appointment_date && getAvailableTimes().map((time) => (
+                          <option key={time} value={time}>
+                            {time}
+                          </option>
+                        ))}
+                      </select>
+                      {formData.appointment_date && getAvailableTimes().length === 0 && (
+                        <p style={{ 
+                          margin: '8px 0 0 0', 
+                          color: '#ef4444', 
+                          fontSize: '14px' 
+                        }}>
+                          ⚠️ Bu tarihte esnaf kapalı. Lütfen başka bir tarih seçin.
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label style={{ 
+                        display: 'block', 
+                        marginBottom: '8px', 
+                        fontWeight: '600',
+                        color: '#333'
+                      }}>
+                        Notlar
+                      </label>
+                      <textarea
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        rows={3}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                          fontSize: '16px',
+                          resize: 'vertical'
+                        }}
+                        placeholder="Ek bilgiler, özel istekler..."
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
-              {/* Submit Button */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '16px', 
-                justifyContent: 'flex-end',
-                paddingTop: '24px',
-                borderTop: '1px solid #f0f0f0'
-              }}>
-                <button
-                  type="button"
-                  onClick={() => router.back()}
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: '#666',
-                    border: '1px solid #e0e0e0',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: '600'
-                  }}
-                >
-                  İptal
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  style={{
-                    backgroundColor: submitting ? '#ccc' : '#ffd600',
-                    color: '#111111',
-                    border: 'none',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    cursor: submitting ? 'not-allowed' : 'pointer',
-                    fontSize: '16px',
-                    fontWeight: '600'
-                  }}
-                >
-                  {submitting ? 'Gönderiliyor...' : 'Randevu Talebi Oluştur'}
-                </button>
-              </div>
+              {/* Submit Button - Sadece çalışma saatleri varsa göster */}
+              {hasWorkingHours && (
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '16px', 
+                  justifyContent: 'flex-end',
+                  paddingTop: '24px',
+                  borderTop: '1px solid #f0f0f0'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => router.back()}
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: '#666',
+                      border: '1px solid #e0e0e0',
+                      padding: '12px 24px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    İptal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    style={{
+                      backgroundColor: submitting ? '#ccc' : '#ffd600',
+                      color: '#111111',
+                      border: 'none',
+                      padding: '12px 24px',
+                      borderRadius: '8px',
+                      cursor: submitting ? 'not-allowed' : 'pointer',
+                      fontSize: '16px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    {submitting ? 'Gönderiliyor...' : 'Randevu Talebi Oluştur'}
+                  </button>
+                </div>
+              )}
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>
