@@ -114,4 +114,19 @@ class Category(models.Model):
     def __str__(self):
         return f"{self.name} ({self.service_area.name})"
 
+class CarBrand(models.Model):
+    """Araba markaları için model"""
+    name = models.CharField(max_length=100, unique=True)
+    logo = models.ImageField(upload_to="car_brand_logos/", blank=True, null=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
 

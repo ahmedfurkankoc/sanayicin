@@ -1,6 +1,6 @@
 from django.db import models
 from core.models import CustomUser
-from core.models import ServiceArea, Category
+from core.models import ServiceArea, Category, CarBrand
 from core.utils import avatar_upload_path
 import uuid
 import os
@@ -20,6 +20,7 @@ class VendorProfile(models.Model):
     business_type = models.CharField(max_length=16, choices=BUSINESS_TYPE_CHOICES)
     service_areas = models.ManyToManyField(ServiceArea, blank=True)
     categories = models.ManyToManyField(Category, blank=True)
+    car_brands = models.ManyToManyField(CarBrand, verbose_name="Hizmet Verilen Araba Markaları", blank=True)
     company_title = models.CharField(max_length=150)
     tax_office = models.CharField(max_length=100)
     tax_no = models.CharField(max_length=20)

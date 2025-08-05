@@ -190,6 +190,9 @@ export const api = {
   getCategoriesByServiceArea: (serviceAreaId: string) => 
     apiClient.get(`/categories/?service_area=${serviceAreaId}`),
   
+  // Araba markaları
+  getCarBrands: () => apiClient.get('/vendors/car-brands/'),
+  
   // Vendor arama sonuçları
   searchVendors: (params: { city?: string; district?: string; service?: string; category?: string }) => 
     apiClient.get('/vendors/search/', { params }),

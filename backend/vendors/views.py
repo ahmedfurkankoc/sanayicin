@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
-from .serializers import VendorProfileSerializer, VendorRegisterSerializer, AppointmentSerializer, AppointmentCreateSerializer
+from .serializers import VendorProfileSerializer, VendorRegisterSerializer, AppointmentSerializer, AppointmentCreateSerializer, CarBrandDetailSerializer
 from core.models import CustomUser
 from .models import VendorProfile, Appointment
-from core.models import ServiceArea
+from core.models import ServiceArea, CarBrand
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
@@ -417,3 +417,12 @@ class CustomerAppointmentView(APIView):
             
         except Exception as e:
             print(f"Async email gönderme hatası: {e}")
+
+class CarBrandListView(APIView):
+    """Aktif araba markalarını listele"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        car_brands = CarBrand.objects.filter(is_active=True)
+        serializer = CarBrandDetailSerializer(car_brands, many=True)
+        return Response(serializer.data)

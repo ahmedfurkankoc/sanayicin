@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import VendorProfile, Appointment
-from core.models import ServiceArea, Category
+from core.models import ServiceArea, Category, CarBrand
 
 
 class ServiceAreaDetailSerializer(serializers.ModelSerializer):
@@ -15,6 +15,12 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'description', 'service_area')
 
 
+class CarBrandDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CarBrand
+        fields = ('id', 'name', 'logo', 'description', 'is_active')
+
+
 class VendorRegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True, min_length=6)
@@ -22,6 +28,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
     business_type = serializers.ChoiceField(choices=VendorProfile.BUSINESS_TYPE_CHOICES)
     service_area = serializers.PrimaryKeyRelatedField(queryset=ServiceArea.objects.all())
     categories = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), many=True)
+
     company_title = serializers.CharField()
     tax_office = serializers.CharField()
     tax_no = serializers.CharField()
@@ -209,9 +216,17 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
 class VendorProfileSerializer(serializers.ModelSerializer):
     service_areas = ServiceAreaDetailSerializer(many=True, read_only=True)
     categories = CategoryDetailSerializer(many=True, read_only=True)
+    car_brands = CarBrandDetailSerializer(many=True, read_only=True)
     categories_ids = serializers.PrimaryKeyRelatedField(
         source='categories',
         queryset=Category.objects.all(),
+        many=True,
+        required=False,
+        write_only=True
+    )
+    car_brands_ids = serializers.PrimaryKeyRelatedField(
+        source='car_brands',
+        queryset=CarBrand.objects.filter(is_active=True),
         many=True,
         required=False,
         write_only=True
@@ -221,7 +236,8 @@ class VendorProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = VendorProfile
         fields = (
-            'id', 'slug', 'user', 'business_type', 'service_areas', 'categories', 'categories_ids', 'company_title', 'tax_office', 'tax_no',
+            'id', 'slug', 'user', 'business_type', 'service_areas', 'categories', 'categories_ids', 
+            'car_brands', 'car_brands_ids', 'company_title', 'tax_office', 'tax_no',
             'display_name', 'about', 'profile_photo', 'avatar', 'phone', 'city', 'district', 'subdistrict', 'address',
             'social_media', 'working_hours', 'unavailable_dates',
             'manager_name', 'manager_birthdate', 'manager_tc', 'manager_phone'
@@ -269,6 +285,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         # Many-to-many alanları için özel işlem
         service_areas = validated_data.pop('service_areas', None)
         categories = validated_data.pop('categories', None)
+        car_brands = validated_data.pop('car_brands', None)
         
         # Ana alanları güncelle
         for attr, value in validated_data.items():
@@ -281,6 +298,9 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         
         if categories is not None:
             instance.categories.set(categories)
+        
+        if car_brands is not None:
+            instance.car_brands.set(car_brands)
         
         return instance 
 

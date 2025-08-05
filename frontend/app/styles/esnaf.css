@@ -1589,19 +1589,39 @@ body, html, .esnaf-panel-layout {
 .esnaf-categories-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.esnaf-car-brands-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.esnaf-car-brand-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.esnaf-car-brand-logo {
+  border-radius: 4px;
+  background: #f5f5f5;
+  padding: 2px;
 }
 
 .esnaf-checkbox-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: white;
-  border: 1px solid #e9ecef;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  background: white;
 }
 
 .esnaf-checkbox-label:hover {
@@ -3613,4 +3633,231 @@ body, html, .esnaf-panel-layout {
     padding: 5px 10px;
     font-size: 11px;
   }
+}
+
+/* Multi-Select Styles */
+.esnaf-multi-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.esnaf-multi-select-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+}
+
+.esnaf-multi-select-header:hover {
+  border-color: #ffd600;
+}
+
+.esnaf-multi-select-placeholder {
+  color: #666;
+  font-size: 14px;
+}
+
+.esnaf-multi-select-arrow {
+  transition: transform 0.2s ease;
+  color: #666;
+}
+
+.esnaf-multi-select-arrow.open {
+  transform: rotate(180deg);
+}
+
+.esnaf-multi-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 300px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.esnaf-multi-select-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.esnaf-multi-select-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.esnaf-multi-select-search-input:focus {
+  border-color: #ffd600;
+}
+
+.esnaf-multi-select-options {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.esnaf-multi-select-option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f8f8f8;
+  gap: 12px;
+  flex-direction: row;
+}
+
+.esnaf-multi-select-option:hover {
+  background-color: #f8f8f8;
+}
+
+.esnaf-multi-select-option:last-child {
+  border-bottom: none;
+}
+
+.esnaf-multi-select-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #ffd600;
+  flex-shrink: 0;
+  margin: 0;
+  display: inline-block;
+}
+
+.esnaf-multi-select-option-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.esnaf-multi-select-option label {
+  display: flex !important;
+  align-items: center !important;
+  width: 100%;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  flex-direction: row !important;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.esnaf-multi-select-option label > * {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+.esnaf-multi-select-option input[type="checkbox"] {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin: 0 !important;
+  float: none !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+}
+
+.esnaf-multi-select-option .esnaf-multi-select-option-content {
+  display: inline-flex !important;
+  align-items: center !important;
+  vertical-align: middle !important;
+  margin: 10px !important;
+  padding: 0 !important;
+}
+
+.esnaf-multi-select-brand-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  margin-right: 8px;
+  border-radius: 4px;
+  background: #f5f5f5;
+  padding: 2px;
+}
+
+.esnaf-multi-select-no-results {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.esnaf-selected-brands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.esnaf-selected-brand-tag {
+  display: flex;
+  align-items: center;
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #333;
+}
+
+.esnaf-selected-brand-logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: white;
+  padding: 1px;
+}
+
+.esnaf-selected-brand-remove {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.esnaf-selected-brand-remove:hover {
+  background: #ff4757;
+  color: white;
+}
+
+.esnaf-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
 }
