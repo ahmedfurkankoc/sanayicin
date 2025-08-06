@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useEsnaf } from '../context/EsnafContext';
 import EsnafPanelLayout from '../components/EsnafPanelLayout';
 import Icon from '@/app/components/ui/Icon';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 interface Request {
   id: string;
@@ -149,11 +150,9 @@ export default function TaleplerimPage() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          height: '400px',
-          fontSize: '18px',
-          color: '#666'
+          height: '400px'
         }}>
-          Yükleniyor...
+          <LoadingSpinner message="Talepler yükleniyor..." size="large" />
         </div>
       </EsnafPanelLayout>
     );
@@ -225,18 +224,19 @@ export default function TaleplerimPage() {
             flex: '1',
             minWidth: '250px'
           }}>
-            <Icon 
-              name="search" 
-              size="sm" 
-              color="#666"
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 1
-              }}
-            />
+            <div style={{
+              position: 'absolute',
+              left: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 1
+            }}>
+              <Icon 
+                name="search" 
+                size="sm" 
+                color="#666"
+              />
+            </div>
             <input
               type="text"
               placeholder="Müşteri, hizmet veya konum ara..."
@@ -251,8 +251,8 @@ export default function TaleplerimPage() {
                 outline: 'none',
                 transition: 'border-color 0.2s'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#ffd600'}
-              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+              onFocus={(e) => (e.target as HTMLInputElement).style.borderColor = '#ffd600'}
+              onBlur={(e) => (e.target as HTMLInputElement).style.borderColor = '#e0e0e0'}
             />
           </div>
 
@@ -286,7 +286,9 @@ export default function TaleplerimPage() {
             padding: '60px 20px',
             color: '#666'
           }}>
-            <Icon name="file" size="lg" color="#ccc" style={{ marginBottom: '16px' }} />
+            <div style={{ marginBottom: '16px' }}>
+              <Icon name="file" size="lg" color="#ccc" />
+            </div>
             <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>
               Talep Bulunamadı
             </h3>
@@ -439,8 +441,8 @@ export default function TaleplerimPage() {
                         cursor: 'pointer',
                         transition: 'background-color 0.2s'
                       }}
-                      onMouseOver={(e) => e.target.style.backgroundColor = '#059669'}
-                      onMouseOut={(e) => e.target.style.backgroundColor = '#10b981'}
+                                             onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#059669'}
+                       onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#10b981'}
                     >
                       Kabul Et
                     </button>
@@ -458,8 +460,8 @@ export default function TaleplerimPage() {
                         cursor: 'pointer',
                         transition: 'background-color 0.2s'
                       }}
-                      onMouseOver={(e) => e.target.style.backgroundColor = '#dc2626'}
-                      onMouseOut={(e) => e.target.style.backgroundColor = '#ef4444'}
+                      onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#dc2626'}
+                      onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#ef4444'}
                     >
                       Reddet
                     </button>
@@ -485,8 +487,8 @@ export default function TaleplerimPage() {
                         cursor: 'pointer',
                         transition: 'background-color 0.2s'
                       }}
-                      onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
-                      onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                      onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'}
+                      onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#3b82f6'}
                     >
                       Tamamlandı
                     </button>
