@@ -130,7 +130,7 @@ function EmailDogrulaContent() {
   if (verifying) {
     return (
       <>
-        <EsnafAuthHeader title="Email Doğrulama" />
+        <EsnafAuthHeader title={'Email Doğrulama'} currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -150,7 +150,7 @@ function EmailDogrulaContent() {
   if (success) {
     return (
       <>
-        <EsnafAuthHeader title="Email Doğrulama" />
+        <EsnafAuthHeader title={'Email Doğrulama'} currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -169,7 +169,7 @@ function EmailDogrulaContent() {
 
   return (
     <>
-      <EsnafAuthHeader title="Email Doğrulama" />
+      <EsnafAuthHeader title={'Email Doğrulama'} currentPage="register" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -225,7 +225,7 @@ export default function EmailDogrulaPage() {
   return (
     <Suspense fallback={
       <>
-        <EsnafAuthHeader title="Email Doğrulama" />
+        <EsnafAuthHeader title={'Email Doğrulama'} currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>

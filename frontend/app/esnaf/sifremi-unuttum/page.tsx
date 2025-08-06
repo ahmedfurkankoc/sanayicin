@@ -37,7 +37,7 @@ export default function SifremiUnuttumPage() {
   if (success) {
     return (
       <>
-        <EsnafAuthHeader title="Şifremi Unuttum" />
+        <EsnafAuthHeader title={'Şifremi Unuttum'} currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -73,7 +73,7 @@ export default function SifremiUnuttumPage() {
 
   return (
     <>
-      <EsnafAuthHeader title="Şifremi Unuttum" />
+      <EsnafAuthHeader title={'Şifremi Unuttum'} currentPage="register" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <h1 className="esnaf-login-title">Şifrenizi mi Unuttunuz?</h1>

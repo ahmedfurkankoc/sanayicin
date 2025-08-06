@@ -63,7 +63,7 @@ export default function SifreYenilePage() {
   if (!tokenValid) {
     return (
       <>
-        <EsnafAuthHeader title="Şifre Yenileme" />
+        <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -98,7 +98,7 @@ export default function SifreYenilePage() {
   if (success) {
     return (
       <>
-        <EsnafAuthHeader title="Şifre Yenileme" />
+        <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -131,7 +131,7 @@ export default function SifreYenilePage() {
 
   return (
     <>
-      <EsnafAuthHeader title="Şifre Yenileme" />
+      <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <h1 className="esnaf-login-title">Yeni Şifrenizi Belirleyin</h1>
