@@ -17,8 +17,8 @@ const UstaAriyorumPage = () => {
               Size En Yakın Ustayı Hemen Bulun
             </h1>
             <p className="hero-description">
-              Türkiye'nin her yerinden güvenilir ve kaliteli ustalara kolayca ulaşın. 
-              Evinizdeki her türlü iş için profesyonel çözümler.
+              Türkiye'nin her yerinden güvenilir ve kaliteli oto sanayi ustalarına kolayca ulaşın. 
+              Aracınızın her türlü bakım ve onarım ihtiyacı için profesyonel çözümler.
             </p>
             <div className="hero-search">
               <SearchBar />
@@ -30,7 +30,7 @@ const UstaAriyorumPage = () => {
       {/* Hizmet Kategorileri */}
       <section className="services-section">
         <div className="container">
-          <h2 className="section-title">Hangi Hizmete İhtiyacınız Var?</h2>
+          <h2 className="section-title">Aracınız İçin Hangi Hizmete İhtiyacınız Var?</h2>
           <div className="services-grid">
             <div className="service-card">
               <div className="service-icon">
@@ -107,12 +107,12 @@ const UstaAriyorumPage = () => {
             <div className="step-card">
               <div className="step-number">1</div>
               <h3>Hizmet Seçin</h3>
-              <p>İhtiyacınız olan hizmeti kategorilerden seçin veya arama yapın</p>
+              <p>Aracınız için ihtiyacınız olan hizmeti kategorilerden seçin veya arama yapın</p>
             </div>
             <div className="step-card">
               <div className="step-number">2</div>
               <h3>Konum Belirleyin</h3>
-              <p>Adresinizi girin, size en yakın ustaları görelim</p>
+              <p>Adresinizi girin, size en yakın oto sanayi ustalarını görelim</p>
             </div>
             <div className="step-card">
               <div className="step-number">3</div>
@@ -122,7 +122,7 @@ const UstaAriyorumPage = () => {
             <div className="step-card">
               <div className="step-number">4</div>
               <h3>İşi Tamamlayın</h3>
-              <p>Ustanızla iletişime geçin ve işinizi halledin</p>
+              <p>Ustanızla iletişime geçin ve aracınızın bakımını halledin</p>
             </div>
           </div>
         </div>
@@ -137,29 +137,29 @@ const UstaAriyorumPage = () => {
               <div className="advantage-icon">
                 <Icon name="star" size={32} />
               </div>
-              <h3>Güvenilir Ustalar</h3>
-              <p>Tüm ustalarımız özenle seçilir ve değerlendirilir</p>
+              <h3>Güvenilir Oto Sanayi Ustaları</h3>
+              <p>Tüm oto sanayi ustalarımız özenle seçilir ve değerlendirilir</p>
             </div>
             <div className="advantage-card">
               <div className="advantage-icon">
                 <Icon name="trending-down" size={32} />
               </div>
               <h3>Uygun Fiyatlar</h3>
-              <p>Rekabetçi fiyatlarla kaliteli hizmet alın</p>
+              <p>Rekabetçi fiyatlarla kaliteli araç bakım hizmeti alın</p>
             </div>
             <div className="advantage-card">
               <div className="advantage-icon">
                 <Icon name="zap" size={32} />
               </div>
               <h3>Hızlı Hizmet</h3>
-              <p>En kısa sürede size en yakın ustaya ulaşın</p>
+              <p>En kısa sürede size en yakın oto sanayi ustasına ulaşın</p>
             </div>
             <div className="advantage-card">
               <div className="advantage-icon">
                 <Icon name="shield-check" size={32} />
               </div>
               <h3>Güvenli Ödeme</h3>
-              <p>İş tamamlandıktan sonra güvenle ödeme yapın</p>
+              <p>Araç bakımı tamamlandıktan sonra güvenle ödeme yapın</p>
             </div>
           </div>
         </div>
