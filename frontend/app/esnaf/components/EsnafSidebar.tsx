@@ -76,10 +76,9 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
     <>
       <div className="esnaf-sidebar">
         {/* Logo */}
-        <div className="esnaf-sidebar-logo">
-          <img src="/sanayicin-icon.png" alt="Sanayicin" className="esnaf-logo-icon" />
+        <div className="esnaf-sidebar-logo" onClick={() => router.push("/esnaf/panel")}>
+          <img src="/sanayicin-esnaf-logo.png" alt="Sanayicin Logo" className="esnaf-logo" />
           <div className="esnaf-logo-text-container">
-            <a className="esnaf-logo-text" href="/esnaf/panel">SANAYİCİN</a>
             <span className="esnaf-logo-subtitle">Esnaf Paneli</span>
           </div>
         </div>
@@ -120,14 +119,28 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
              <span className="esnaf-nav-text">Profilim</span>
              {activePage === "profil" && <span className="esnaf-nav-dot"></span>}
            </a>
+           <a href="/esnaf/giris" className="esnaf-nav-item esnaf-logout-item" onClick={handleLogout}>
+             <Icon name="logout" className="esnaf-nav-icon" color="white" />
+             <span className="esnaf-nav-text">Çıkış Yap</span>
+           </a>
          </nav>
         
-        {/* User Profile */}
+        {/* Ana Sayfaya Dön Butonu */}
         <div 
-          className="esnaf-user-profile"
-          onClick={() => router.push("/esnaf/ayarlar")}
+          className="esnaf-home-button"
+          onClick={() => router.push("/")}
+          title="Ana Sayfaya Dön"
         >
-          <div className="esnaf-user-profile-clickable">
+          <Icon name="home" size="sm" color="black" />
+          <span className="esnaf-home-button-text">Ana Sayfaya Dön</span>
+        </div>
+
+        {/* User Profile */}
+        <div className="esnaf-user-profile">
+          <div 
+            className="esnaf-user-profile-clickable"
+            onClick={() => router.push("/esnaf/ayarlar")}
+          >
             <div className="esnaf-user-avatar">
               {currentUser?.avatar ? (
                 <img 
