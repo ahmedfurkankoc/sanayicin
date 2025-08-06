@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useCallback, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/app/utils/api";
+import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 
 interface Vendor {
   id: number;
@@ -22,7 +23,7 @@ interface Vendor {
   profile_photo?: string;
   service_areas?: any[];
   categories?: any[];
-  slug: string; // Added slug to the interface
+  slug: string;
 }
 
 interface SearchResponse {
@@ -30,9 +31,169 @@ interface SearchResponse {
   results: Vendor[];
 }
 
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Memoized vendor card component
+const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
+  const router = useRouter();
+  
+  return (
+    <div 
+      onClick={() => router.push(`/musteri/esnaf/${vendor.slug}`)}
+      style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '20px',
+        border: '1px solid #e0e0e0',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        marginBottom: '16px'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+        {/* Avatar */}
+        <div style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          backgroundColor: '#ffd600',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '24px',
+          fontWeight: 'bold',
+          color: '#111111',
+          flexShrink: 0
+        }}>
+          {vendor.display_name.charAt(0).toUpperCase()}
+        </div>
+
+        {/* Content */}
+        <div style={{ flex: 1 }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            margin: '0 0 8px 0',
+            color: '#111111'
+          }}>
+            {vendor.display_name}
+          </h3>
+          
+          <p style={{
+            fontSize: '14px',
+            color: '#666',
+            margin: '0 0 12px 0'
+          }}>
+            {vendor.business_type}
+          </p>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            fontSize: '13px',
+            color: '#666'
+          }}>
+            <span>📍 {vendor.district}, {vendor.city}</span>
+            <span>📞 {vendor.phone}</span>
+          </div>
+
+          {vendor.about && (
+            <p style={{
+              fontSize: '14px',
+              color: '#444',
+              margin: '12px 0 0 0',
+              lineHeight: '1.4',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden'
+            }}>
+              {vendor.about}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+VendorCard.displayName = 'VendorCard';
+
+// Memoized filter components
+const FilterSelect = React.memo(({ 
+  label, 
+  value, 
+  onChange, 
+  options, 
+  disabled = false,
+  placeholder 
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  disabled?: boolean;
+  placeholder?: string;
+}) => (
+  <div style={{ marginBottom: '20px' }}>
+    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+      {label}
+    </label>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      style={{
+        width: '100%',
+        padding: '8px 12px',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        backgroundColor: disabled ? '#f5f5f5' : 'white'
+      }}
+    >
+      <option value="">{placeholder || `Tüm ${label}ler`}</option>
+      {options.map(option => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </div>
+));
+
+FilterSelect.displayName = 'FilterSelect';
+
 function AramaSonuclariContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { cities, loadTurkeyData, getDistricts } = useTurkeyData();
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
   const city = searchParams.get("city") || "";
   const district = searchParams.get("district") || "";
   const service = searchParams.get("service") || "";
@@ -47,50 +208,150 @@ function AramaSonuclariContent() {
   const [selectedCategory, setSelectedCategory] = useState(category);
   const [selectedCity, setSelectedCity] = useState(city);
   const [selectedDistrict, setSelectedDistrict] = useState(district);
+  const [districts, setDistricts] = useState<string[]>([]);
 
-  // Hizmet alanlarını çek
+  // Debounced values for API calls
+  const debouncedCity = useDebounce(selectedCity, 300);
+  const debouncedDistrict = useDebounce(selectedDistrict, 300);
+  const debouncedService = useDebounce(selectedService, 300);
+  const debouncedCategory = useDebounce(selectedCategory, 300);
+
+  // Memoized options
+  const cityOptions = useMemo(() => 
+    cities.map(city => ({ value: city, label: city })), 
+    [cities]
+  );
+
+  const districtOptions = useMemo(() => 
+    districts.map(district => ({ value: district, label: district })), 
+    [districts]
+  );
+
+  const serviceOptions = useMemo(() => 
+    services.map(service => ({ value: service.id, label: service.name })), 
+    [services]
+  );
+
+  const categoryOptions = useMemo(() => {
+    const filtered = selectedService 
+      ? categories.filter(cat => cat.service_area == selectedService)
+      : categories;
+    return filtered.map(cat => ({ value: cat.id, label: cat.name }));
+  }, [categories, selectedService]);
+
+  // Şehir verisini yükle
   useEffect(() => {
-    api.getServiceAreas()
-      .then(res => setServices(res.data))
-      .catch(() => setServices([]));
-  }, []);
+    loadTurkeyData();
+  }, [loadTurkeyData]);
 
-  // Kategorileri API'den çek
+  // URL'den gelen değerleri işle
   useEffect(() => {
-    api.getCategories()
-      .then(res => setCategories(res.data))
-      .catch(() => setCategories([]));
-  }, []);
+    if (city && cities.length > 0) {
+      setSelectedCity(city);
+      if (district) {
+        const cityDistricts = getDistricts(city);
+        if (cityDistricts.includes(district)) {
+          setSelectedDistrict(district);
+        }
+      }
+    }
+  }, [city, district, cities, getDistricts]);
 
+  // İl değişince ilçeleri güncelle
+  useEffect(() => {
+    if (selectedCity) {
+      const newDistricts = getDistricts(selectedCity);
+      setDistricts(newDistricts);
+      if (selectedDistrict && !newDistricts.includes(selectedDistrict)) {
+        setSelectedDistrict("");
+      }
+    } else {
+      setDistricts([]);
+      setSelectedDistrict("");
+    }
+  }, [selectedCity, getDistricts]);
+
+  // Hizmet alanlarını çek (cache ile)
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await api.getServiceAreas();
+        setServices(response.data);
+      } catch (error) {
+        console.error('Hizmet alanları yüklenemedi:', error);
+        setServices([]);
+      }
+    };
+
+    if (services.length === 0) {
+      fetchServices();
+    }
+  }, [services.length]);
+
+  // Kategorileri API'den çek (cache ile)
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.getCategories();
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Kategoriler yüklenemedi:', error);
+        setCategories([]);
+      }
+    };
+
+    if (categories.length === 0) {
+      fetchCategories();
+    }
+  }, [categories.length]);
+
+  // Debounced search
   useEffect(() => {
     const searchVendors = async () => {
+      // Önceki isteği iptal et
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Yeni abort controller oluştur
+      abortControllerRef.current = new AbortController();
+
       try {
         setLoading(true);
         setError("");
         
         const response = await api.searchVendors({
-          city: selectedCity,
-          district: selectedDistrict,
-          service: selectedService,
-          category: selectedCategory
+          city: debouncedCity,
+          district: debouncedDistrict,
+          service: debouncedService,
+          category: debouncedCategory
         });
         
         const data: SearchResponse = response.data;
         setVendors(data.results || []);
       } catch (err: any) {
-        console.error("Vendor arama hatası:", err);
-        setError("Arama sırasında bir hata oluştu. Lütfen tekrar deneyin.");
+        if (err.name !== 'AbortError') {
+          console.error("Vendor arama hatası:", err);
+          setError("Arama sırasında bir hata oluştu. Lütfen tekrar deneyin.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    if (selectedCity || selectedDistrict || selectedService || selectedCategory) {
+    if (debouncedCity || debouncedDistrict || debouncedService || debouncedCategory) {
       searchVendors();
     }
-  }, [selectedCity, selectedDistrict, selectedService, selectedCategory]);
 
-  const handleFilterChange = (type: string, value: string) => {
+    // Cleanup
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [debouncedCity, debouncedDistrict, debouncedService, debouncedCategory]);
+
+  const handleFilterChange = useCallback((type: string, value: string) => {
     if (type === 'city') setSelectedCity(value);
     if (type === 'district') setSelectedDistrict(value);
     if (type === 'service') {
@@ -98,25 +359,28 @@ function AramaSonuclariContent() {
       setSelectedCategory(""); // Hizmet değişince kategoriyi sıfırla
     }
     if (type === 'category') setSelectedCategory(value);
-  };
+  }, []);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
     if (selectedCity) params.set('city', selectedCity);
     if (selectedDistrict) params.set('district', selectedDistrict);
     if (selectedService) params.set('service', selectedService);
     if (selectedCategory) params.set('category', selectedCategory);
-    router.push(`/customer/arama-sonuclari?${params.toString()}`);
-  };
+    router.push(`/musteri/arama-sonuclari?${params.toString()}`);
+  }, [selectedCity, selectedDistrict, selectedService, selectedCategory, router]);
 
-  // Seçili hizmet alanına göre kategorileri filtrele
-  const filteredCategories = selectedService 
-    ? categories.filter(cat => cat.service_area == selectedService)
-    : categories;
+  // Memoized vendor list
+  const vendorList = useMemo(() => 
+    vendors.map(vendor => (
+      <VendorCard key={vendor.id} vendor={vendor} />
+    )), 
+    [vendors]
+  );
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Upwork Benzeri Header */}
+      {/* Header */}
       <header style={{ 
         backgroundColor: 'white', 
         borderBottom: '1px solid #e0e0e0',
@@ -126,9 +390,7 @@ function AramaSonuclariContent() {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        {/* Sol Kısım - Logo ve Navigation */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-          {/* Logo */}
           <div 
             onClick={() => router.push('/')}
             style={{
@@ -140,63 +402,8 @@ function AramaSonuclariContent() {
           >
             Sanayicin
           </div>
-
-          {/* Navigation Menüleri */}
-          <nav style={{ display: 'flex', gap: '24px' }}>
-            <div style={{ position: 'relative' }}>
-              <button style={{
-                background: 'none',
-                border: 'none',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                color: '#333',
-                fontWeight: '500'
-              }}>
-                Hizmet Ara
-                <span style={{ fontSize: '12px' }}>▼</span>
-              </button>
-            </div>
-            
-            <div style={{ position: 'relative' }}>
-              <button style={{
-                background: 'none',
-                border: 'none',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                color: '#333',
-                fontWeight: '500'
-              }}>
-                Hizmet Ver
-                <span style={{ fontSize: '12px' }}>▼</span>
-              </button>
-            </div>
-            
-            <div style={{ position: 'relative' }}>
-              <button style={{
-                background: 'none',
-                border: 'none',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                color: '#333',
-                fontWeight: '500'
-              }}>
-                Mesajlar
-                <span style={{ fontSize: '12px' }}>▼</span>
-              </button>
-            </div>
-          </nav>
         </div>
 
-        {/* Orta Kısım - Arama Çubuğu */}
         <div style={{ flex: 1, maxWidth: '600px', margin: '0 32px' }}>
           <div style={{ position: 'relative' }}>
             <input
@@ -245,9 +452,7 @@ function AramaSonuclariContent() {
           </div>
         </div>
 
-        {/* Sağ Kısım - User Menu */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Yardım */}
           <button style={{
             background: 'none',
             border: 'none',
@@ -257,70 +462,6 @@ function AramaSonuclariContent() {
             padding: '8px'
           }}>
             ?
-          </button>
-
-          {/* Bildirimler */}
-          <button style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '18px',
-            color: '#666',
-            cursor: 'pointer',
-            padding: '8px',
-            position: 'relative'
-          }}>
-            🔔
-            <span style={{
-              position: 'absolute',
-              top: '4px',
-              right: '4px',
-              backgroundColor: '#ff4444',
-              color: 'white',
-              borderRadius: '50%',
-              width: '8px',
-              height: '8px',
-              fontSize: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              3
-            </span>
-          </button>
-
-          {/* Ayarlar */}
-          <button style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '18px',
-            color: '#666',
-            cursor: 'pointer',
-            padding: '8px'
-          }}>
-            ⚙️
-          </button>
-
-          {/* User Avatar */}
-          <button style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px'
-          }}>
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: '#ffd600',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#111111',
-              fontWeight: 'bold',
-              fontSize: '14px'
-            }}>
-              U
-            </div>
           </button>
         </div>
       </header>
@@ -335,97 +476,39 @@ function AramaSonuclariContent() {
         }}>
           <h3 style={{ marginBottom: '20px', color: '#333' }}>Filtreler</h3>
           
-          {/* Şehir Filtresi */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-              Şehir
-            </label>
-            <input
-              type="text"
-              value={selectedCity}
-              onChange={(e) => handleFilterChange('city', e.target.value)}
-              placeholder="Şehir seçin"
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-            />
-          </div>
+          <FilterSelect
+            label="Şehir"
+            value={selectedCity}
+            onChange={(value) => handleFilterChange('city', value)}
+            options={cityOptions}
+            placeholder="İl seçiniz"
+          />
 
-          {/* İlçe Filtresi */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-              İlçe
-            </label>
-            <input
-              type="text"
-              value={selectedDistrict}
-              onChange={(e) => handleFilterChange('district', e.target.value)}
-              placeholder="İlçe seçin"
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-            />
-          </div>
+          <FilterSelect
+            label="İlçe"
+            value={selectedDistrict}
+            onChange={(value) => handleFilterChange('district', value)}
+            options={districtOptions}
+            disabled={!selectedCity}
+            placeholder="İlçe seçiniz"
+          />
 
-          {/* Hizmet Filtresi */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-              Hizmet Alanı
-            </label>
-            <select
-              value={selectedService}
-              onChange={(e) => handleFilterChange('service', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-            >
-              <option value="">Tüm Hizmetler</option>
-              {services.map(service => (
-                <option key={service.id} value={service.id}>
-                  {service.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <FilterSelect
+            label="Hizmet Alanı"
+            value={selectedService}
+            onChange={(value) => handleFilterChange('service', value)}
+            options={serviceOptions}
+            placeholder="Hizmet seçiniz"
+          />
 
-          {/* Kategori Filtresi */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-              Kategori
-            </label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}
-              disabled={!selectedService}
-            >
-              <option value="">Tüm Kategoriler</option>
-              {filteredCategories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            {!selectedService && (
-              <small style={{ color: '#666', fontSize: '12px' }}>
-                Önce hizmet alanı seçin
-              </small>
-            )}
-          </div>
+          <FilterSelect
+            label="Kategori"
+            value={selectedCategory}
+            onChange={(value) => handleFilterChange('category', value)}
+            options={categoryOptions}
+            disabled={!selectedService}
+            placeholder="Kategori seçiniz"
+          />
 
           {/* Sonuç Sayısı */}
           <div style={{ 
@@ -449,126 +532,12 @@ function AramaSonuclariContent() {
               <div>{error}</div>
             </div>
           ) : vendors.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <h3>Sonuç bulunamadı</h3>
-              <p>Seçtiğiniz kriterlere uygun usta bulunamadı. Lütfen farklı kriterler deneyin.</p>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+              <div>Sonuç bulunamadı</div>
             </div>
           ) : (
             <div>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <h2 style={{ margin: 0, color: '#333' }}>Arama Sonuçları</h2>
-                <div style={{ color: '#666' }}>
-                  <strong>{vendors.length}</strong> sonuç
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {vendors.map(vendor => (
-                  <div key={vendor.id} style={{ 
-                    backgroundColor: 'white',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    padding: '20px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ flex: 1 }}>
-                        <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>
-                          {vendor.display_name}
-                        </h3>
-                        <p style={{ margin: '0 0 8px 0', color: '#666' }}>
-                          <strong>Şirket:</strong> {vendor.company_title}
-                        </p>
-                        <p style={{ margin: '0 0 8px 0', color: '#666' }}>
-                          <strong>Konum:</strong> {vendor.city}/{vendor.district}
-                        </p>
-                        <p style={{ margin: '0 0 8px 0', color: '#666' }}>
-                          <strong>Telefon:</strong> {vendor.phone}
-                        </p>
-                        {vendor.about && (
-                          <p style={{ margin: '0 0 12px 0', color: '#666', lineHeight: '1.5' }}>
-                            {vendor.about}
-                          </p>
-                        )}
-                        
-                        {/* Hizmet Alanları */}
-                        {vendor.service_areas && vendor.service_areas.length > 0 && (
-                          <div style={{ marginBottom: '12px' }}>
-                            <strong style={{ color: '#333' }}>Hizmet Alanları:</strong>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                              {vendor.service_areas.map((service: any) => (
-                                <span key={service.id} style={{
-                                  backgroundColor: '#f0f0f0',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
-                                  color: '#666'
-                                }}>
-                                  {service.name}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Kategoriler */}
-                        {vendor.categories && vendor.categories.length > 0 && (
-                          <div style={{ marginBottom: '12px' }}>
-                            <strong style={{ color: '#333' }}>Kategoriler:</strong>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                              {vendor.categories.map((category: any) => (
-                                <span key={category.id} style={{
-                                  backgroundColor: '#e8f4fd',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
-                                  color: '#0066cc',
-                                  border: '1px solid #b3d9ff'
-                                }}>
-                                  {category.name}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <button style={{
-                          backgroundColor: '#ffd600',
-                          color: '#111111',
-                          border: 'none',
-                          padding: '8px 16px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontWeight: 'bold',
-                          fontSize: '14px'
-                        }}>
-                          İletişime Geç
-                        </button>
-                        <button 
-                          onClick={() => router.push(`/musteri/esnaf/${vendor.slug}`)}
-                          style={{
-                          backgroundColor: 'transparent',
-                          color: '#666',
-                          border: '1px solid #ddd',
-                          padding: '6px 12px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}>
-                          Profili Görüntüle
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {vendorList}
             </div>
           )}
         </div>
@@ -579,7 +548,18 @@ function AramaSonuclariContent() {
 
 export default function AramaSonuclari() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px',
+        color: '#666'
+      }}>
+        Yükleniyor...
+      </div>
+    }>
       <AramaSonuclariContent />
     </Suspense>
   );
