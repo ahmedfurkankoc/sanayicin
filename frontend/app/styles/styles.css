@@ -664,7 +664,6 @@ footer {
     width: 100%;
     min-width: 0;
     margin: 0 auto;
-    padding: 18px 8px 14px 8px;
   }
   .vendorImg {
     margin-bottom: 10px;
@@ -1101,6 +1100,8 @@ footer {
   padding: 0 24px;
   position: relative;
   z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .howitworks-num-2col {
@@ -1366,13 +1367,21 @@ footer {
     font-size: 16px;
   }
 
+  .howitworks-2col-grid {
+    padding: 0 16px;
+    max-width: 100%;
+  }
+
   .howitworks-cards-2col {
-    gap: 40px;
+    gap: 60px;
   }
 
   .howitworks-card-2col {
     padding: 25px;
-    width: 48%;
+    width: 100%;
+    margin-bottom: 40px;
+    min-height: 200px;
+    box-sizing: border-box;
   }
 
   .howitworks-card-number {
@@ -1392,11 +1401,11 @@ footer {
   }
 
   .howitworks-card-title-2col {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .howitworks-card-desc-2col {
-    font-size: 13px;
+    font-size: 14px;
   }
 }
 
@@ -1413,13 +1422,21 @@ footer {
     font-size: 14px;
   }
 
+  .howitworks-2col-grid {
+    padding: 0 12px;
+    max-width: 100%;
+  }
+
   .howitworks-cards-2col {
-    gap: 30px;
+    gap: 80px;
   }
 
   .howitworks-card-2col {
     padding: 20px;
-    width: 45%;
+    width: 100%;
+    margin-bottom: 30px;
+    min-height: 180px;
+    box-sizing: border-box;
   }
 
   .howitworks-card-number {
@@ -1439,65 +1456,15 @@ footer {
   }
 
   .howitworks-card-title-2col {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .howitworks-card-desc-2col {
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 
-/* How It Works Zigzag Layout */
-.howitworks-zigzag-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 50px;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 24px;
-  position: relative;
-  z-index: 2;
-}
 
-.howitworks-zigzag-row {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 30px;
-  align-items: center;
-  position: relative;
-}
-
-.howitworks-zigzag-row.reverse {
-  grid-template-columns: 1fr 120px;
-}
-
-.howitworks-zigzag-row.reverse .howitworks-card-2col {
-  order: 1;
-}
-
-.howitworks-zigzag-row.reverse .howitworks-zigzag-barcol {
-  order: 2;
-}
-
-.howitworks-zigzag-barcol {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  position: relative;
-}
-
-.howitworks-zigzag-barcol::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 2px;
-  height: 100px;
-  background: linear-gradient(to bottom, #ffd600, transparent);
-  transform: translateX(-50%);
-  z-index: -1;
-}
 
 .howitworks-title {
   text-align: center;
