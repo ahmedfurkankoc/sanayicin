@@ -93,8 +93,8 @@ const HowItWorks = () => {
         });
       },
       { 
-        threshold: 0.6,
-        rootMargin: '-30% 0px -30% 0px'
+        threshold: isMobile ? 0.4 : 0.6,
+        rootMargin: isMobile ? '-20% 0px -20% 0px' : '-30% 0px -30% 0px'
       }
     );
     
@@ -103,7 +103,7 @@ const HowItWorks = () => {
     });
     
     return () => observer.disconnect();
-  }, []);
+  }, [isMobile]);
 
   return (
     <section className="howitworks-section">
@@ -114,68 +114,31 @@ const HowItWorks = () => {
           <p>Aracınızın bakım ve onarım ihtiyaçlarını karşılamak için sadece 3 adım</p>
         </div>
 
-        {/* Desktop Layout - 2 Column Grid */}
-        {!isMobile && (
-          <div className="howitworks-2col-grid">
-            {/* Cards Column with Numbers */}
-            <div className="howitworks-cards-2col">
-              {steps.map((step, i) => (
-                <div
-                  key={step.title}
-                  ref={el => { stepRefs.current[i] = el; }}
-                  className={`howitworks-card-2col ${activeStep === i ? 'active' : ''}`}
-                  style={{
-                    opacity: visibleSteps.includes(i) ? 1 : 0,
-                    transform: visibleSteps.includes(i) ? 'translateY(0)' : 'translateY(30px)',
-                    transition: `all 0.6s ease ${i * 0.2}s`
-                  }}
-                >
-                  <div className="howitworks-card-number">
-                    <div className={`howitworks-num-2col ${activeStep === i ? 'active' : ''}`}>
-                      <span>{i + 1}</span>
-                    </div>
-                  </div>
-                  <div className="howitworks-card-content-2col">
-                    <div className="howitworks-icon-bg" style={{ backgroundColor: step.bgColor }}>
-                      <Icon name={step.icon} size={28} color={step.color} />
-                    </div>
-                    <div className="howitworks-card-text">
-                      <h3 className="howitworks-card-title-2col">{step.title}</h3>
-                      <p className="howitworks-card-desc-2col">{step.desc}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Mobile Layout - Zigzag */}
-        {isMobile && (
-          <div className="howitworks-zigzag-grid">
+        {/* Unified Layout - 2 Column Grid for both Desktop and Mobile */}
+        <div className="howitworks-2col-grid">
+          {/* Cards Column with Numbers */}
+          <div className="howitworks-cards-2col">
             {steps.map((step, i) => (
               <div
                 key={step.title}
                 ref={el => { stepRefs.current[i] = el; }}
-                className={`howitworks-zigzag-row ${i % 2 === 1 ? 'reverse' : ''}`}
+                className={`howitworks-card-2col ${activeStep === i ? 'active' : ''}`}
                 style={{
                   opacity: visibleSteps.includes(i) ? 1 : 0,
                   transform: visibleSteps.includes(i) ? 'translateY(0)' : 'translateY(30px)',
                   transition: `all 0.6s ease ${i * 0.2}s`
                 }}
               >
-                <div className="howitworks-zigzag-barcol">
-                  <div className="howitworks-num-2col active">
+                <div className="howitworks-card-number">
+                  <div className={`howitworks-num-2col ${activeStep === i ? 'active' : ''}`}>
                     <span>{i + 1}</span>
                   </div>
-                  <div className="howitworks-bar-line-2col active"></div>
                 </div>
-                
-                <div className="howitworks-card-2col">
+                <div className="howitworks-card-content-2col">
                   <div className="howitworks-icon-bg" style={{ backgroundColor: step.bgColor }}>
-                    <Icon name={step.icon} size={24} color={step.color} />
+                    <Icon name={step.icon} size={28} color={step.color} />
                   </div>
-                  <div className="howitworks-card-content-2col">
+                  <div className="howitworks-card-text">
                     <h3 className="howitworks-card-title-2col">{step.title}</h3>
                     <p className="howitworks-card-desc-2col">{step.desc}</p>
                   </div>
@@ -183,7 +146,7 @@ const HowItWorks = () => {
               </div>
             ))}
           </div>
-        )}
+        </div>
       </div>
     </section>
   );
