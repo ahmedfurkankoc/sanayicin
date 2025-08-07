@@ -25,7 +25,6 @@ export default function TaleplerimPage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data - gerçek API'den gelecek
   useEffect(() => {
     const mockRequests: Request[] = [
       {
@@ -60,17 +59,6 @@ export default function TaleplerimPage() {
         status: 'completed',
         createdAt: '2024-01-13T09:15:00Z',
         urgency: 'low'
-      },
-      {
-        id: '4',
-        customerName: 'Ayşe Özkan',
-        customerPhone: '+90 535 111 22 33',
-        service: 'Klima Bakımı',
-        description: 'Klima soğutmuyor, bakım yapılması gerekiyor.',
-        location: 'Bakırköy, İstanbul',
-        status: 'rejected',
-        createdAt: '2024-01-12T16:45:00Z',
-        urgency: 'medium'
       }
     ];
 
@@ -89,41 +77,41 @@ export default function TaleplerimPage() {
   });
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return '#f59e0b';
-      case 'accepted': return '#10b981';
-      case 'rejected': return '#ef4444';
-      case 'completed': return '#3b82f6';
-      default: return '#6b7280';
-    }
+    const colors = {
+      pending: '#f59e0b',
+      accepted: '#10b981',
+      rejected: '#ef4444',
+      completed: '#3b82f6'
+    };
+    return colors[status as keyof typeof colors] || '#6b7280';
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Beklemede';
-      case 'accepted': return 'Kabul Edildi';
-      case 'rejected': return 'Reddedildi';
-      case 'completed': return 'Tamamlandı';
-      default: return 'Bilinmiyor';
-    }
+    const texts = {
+      pending: 'Beklemede',
+      accepted: 'Kabul Edildi',
+      rejected: 'Reddedildi',
+      completed: 'Tamamlandı'
+    };
+    return texts[status as keyof typeof texts] || 'Bilinmiyor';
   };
 
   const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#6b7280';
-    }
+    const colors = {
+      high: '#ef4444',
+      medium: '#f59e0b',
+      low: '#10b981'
+    };
+    return colors[urgency as keyof typeof colors] || '#6b7280';
   };
 
   const getUrgencyText = (urgency: string) => {
-    switch (urgency) {
-      case 'high': return 'Acil';
-      case 'medium': return 'Orta';
-      case 'low': return 'Düşük';
-      default: return 'Bilinmiyor';
-    }
+    const texts = {
+      high: 'Acil',
+      medium: 'Orta',
+      low: 'Düşük'
+    };
+    return texts[urgency as keyof typeof texts] || 'Bilinmiyor';
   };
 
   const formatDate = (dateString: string) => {
@@ -190,23 +178,17 @@ export default function TaleplerimPage() {
           
           <div style={{
             display: 'flex',
-            gap: '12px',
-            alignItems: 'center'
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 16px',
+            backgroundColor: '#f9f9f9',
+            borderRadius: '8px',
+            border: '1px solid #e0e0e0'
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              backgroundColor: '#f9f9f9',
-              borderRadius: '8px',
-              border: '1px solid #e0e0e0'
-            }}>
-              <Icon name="filter" size="sm" color="#666" />
-              <span style={{ fontSize: '14px', color: '#666' }}>
-                {filteredRequests.length} talep
-              </span>
-            </div>
+            <Icon name="filter" size="sm" color="#666" />
+            <span style={{ fontSize: '14px', color: '#666' }}>
+              {filteredRequests.length} talep
+            </span>
           </div>
         </div>
 
@@ -231,11 +213,7 @@ export default function TaleplerimPage() {
               transform: 'translateY(-50%)',
               zIndex: 1
             }}>
-              <Icon 
-                name="search" 
-                size="sm" 
-                color="#666"
-              />
+              <Icon name="search" size="sm" color="#666" />
             </div>
             <input
               type="text"
@@ -441,8 +419,8 @@ export default function TaleplerimPage() {
                         cursor: 'pointer',
                         transition: 'background-color 0.2s'
                       }}
-                                             onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#059669'}
-                       onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#10b981'}
+                      onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#059669'}
+                      onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#10b981'}
                     >
                       Kabul Et
                     </button>
