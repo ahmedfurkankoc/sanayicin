@@ -105,7 +105,7 @@ export default function EsnafKayitPage() {
   const [managerError, setManagerError] = useState("");
 
   // 5. adım - Doğrulama seçimi state
-  const [verificationMethod, setVerificationMethod] = useState<'email' | 'sms' | null>(null);
+  const [verificationMethod, setVerificationMethod] = useState<'email' | 'sms' | null>('email');
   const [verificationError, setVerificationError] = useState("");
 
   // 6. adım - Email doğrulama state
@@ -334,6 +334,10 @@ export default function EsnafKayitPage() {
   const handleBackStep4 = () => setStep(3);
   
   const handleVerificationMethodSelect = (method: 'email' | 'sms') => {
+    // SMS seçeneği devre dışı, sadece email seçilebilir
+    if (method === 'sms') {
+      return; // SMS seçimini engelle
+    }
     setVerificationMethod(method);
     setVerificationError("");
   };
@@ -361,18 +365,9 @@ export default function EsnafKayitPage() {
           setVerificationError("Email gönderilemedi. Lütfen tekrar deneyin.");
         }
       } else if (verificationMethod === 'sms') {
-        // SMS doğrulama gönder
-        const response = await api.sendSMSVerification({
-          email: managerInfo.email,
-          phone_number: managerInfo.phone
-        });
-        
-        if (response.status === 200) {
-          // SMS doğrulama sayfasına yönlendir
-          router.push(`/esnaf/sms-dogrula?email=${encodeURIComponent(managerInfo.email)}&phone=${encodeURIComponent(managerInfo.phone)}`);
-        } else {
-          setVerificationError("SMS gönderilemedi. Lütfen tekrar deneyin.");
-        }
+        // SMS doğrulama devre dışı
+        setVerificationError("SMS doğrulama şu anda kullanılamıyor. Lütfen email doğrulama seçin.");
+        return;
       }
     } catch (err: any) {
       console.log(err);
@@ -856,7 +851,14 @@ export default function EsnafKayitPage() {
               
               <label 
                 className={`esnaf-business-type-option${verificationMethod === 'sms' ? " selected" : ""}`}
-                style={{ flex: 1, textAlign: 'center', padding: '20px' }}
+                style={{ 
+                  flex: 1, 
+                  textAlign: 'center', 
+                  padding: '20px',
+                  opacity: 0.5,
+                  cursor: 'not-allowed',
+                  position: 'relative'
+                }}
               >
                 <input
                   type="radio"
@@ -865,12 +867,22 @@ export default function EsnafKayitPage() {
                   checked={verificationMethod === 'sms'}
                   onChange={() => handleVerificationMethodSelect('sms')}
                   required
+                  disabled
+                  style={{ cursor: 'not-allowed' }}
                 />
                 <div style={{ marginTop: '8px' }}>
                   <div style={{ fontSize: '24px', marginBottom: '8px' }}>📱</div>
                   <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>SMS ile Doğrulama</div>
                   <div style={{ fontSize: '14px', color: '#666' }}>
                     {managerInfo.phone} numarasına doğrulama kodu gönderilir
+                  </div>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: '#ff6b6b', 
+                    marginTop: '8px',
+                    fontWeight: 'bold'
+                  }}>
+                    ⚠️ Yakında Aktif Olacak
                   </div>
                 </div>
               </label>
