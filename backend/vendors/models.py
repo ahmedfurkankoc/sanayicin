@@ -28,7 +28,7 @@ class VendorProfile(models.Model):
     about = models.TextField(blank=True)
     profile_photo = models.ImageField(upload_to="vendor_photos/", blank=True, null=True)
     avatar = models.ImageField(upload_to=avatar_upload_path, null=True, blank=True)
-    phone = models.CharField(max_length=20)
+    business_phone = models.CharField(max_length=20)  # İşyeri telefon numarası
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=64)
     district = models.CharField(max_length=64)
@@ -43,12 +43,22 @@ class VendorProfile(models.Model):
     manager_name = models.CharField(max_length=100)
     manager_birthdate = models.DateField()
     manager_tc = models.CharField(max_length=11)
-    manager_phone = models.CharField(max_length=20)
+    # manager_phone kaldırıldı - CustomUser'dan alınacak
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.display_name} ({self.user.email})"
+    
+    @property
+    def phone_number(self):
+        """CustomUser'dan telefon numarasını al"""
+        return self.user.phone_number
+    
+    @property
+    def manager_phone(self):
+        """Geriye uyumluluk için property"""
+        return self.user.phone_number
 
     def save(self, *args, **kwargs):
         if not self.slug:

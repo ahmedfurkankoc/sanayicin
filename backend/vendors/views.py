@@ -148,15 +148,27 @@ class VendorRegisterView(generics.CreateAPIView):
         return serializer.save()
 
     def create(self, request, *args, **kwargs):
+        print("Received data:", request.data)
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        profile = self.perform_create(serializer)
+        if not serializer.is_valid():
+            print("Validation errors:", serializer.errors)
+            return Response({
+                "detail": "Validation error",
+                "errors": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        return Response({
-            "detail": "Hesabınız başarıyla oluşturuldu. Email doğrulama kodu gönderildi.",
-            "email": profile.user.email,
-            "requires_verification": True
-        }, status=status.HTTP_201_CREATED)
+        try:
+            profile = self.perform_create(serializer)
+            return Response({
+                "detail": "Hesabınız başarıyla oluşturuldu. Doğrulama yöntemi seçin.",
+                "email": profile.user.email,
+                "requires_verification": True
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print("Registration error:", str(e))
+            return Response({
+                "detail": f"Registration failed: {str(e)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class SetVendorPasswordView(APIView):
     permission_classes = [AllowAny]

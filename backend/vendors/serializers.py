@@ -35,7 +35,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField()
     about = serializers.CharField(allow_blank=True, required=False)
     profile_photo = serializers.ImageField(required=False, allow_null=True)
-    phone = serializers.CharField()
+    business_phone = serializers.CharField(required=True)  # İşyeri telefon numarası
     city = serializers.CharField()
     district = serializers.CharField()
     subdistrict = serializers.CharField()
@@ -43,15 +43,15 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
     manager_name = serializers.CharField()
     manager_birthdate = serializers.DateField()
     manager_tc = serializers.CharField()
-    manager_phone = serializers.CharField()
+    phone_number = serializers.CharField()  # CustomUser'a kaydedilecek
 
     class Meta:
         model = VendorProfile
         fields = (
             'email', 'password', 'password2', 'business_type', 'service_area', 'categories',
             'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'profile_photo',
-            'phone', 'city', 'district', 'subdistrict', 'address',
-            'manager_name', 'manager_birthdate', 'manager_tc', 'manager_phone'
+            'business_phone', 'city', 'district', 'subdistrict', 'address',
+            'manager_name', 'manager_birthdate', 'manager_tc', 'phone_number'
         )
 
     def validate_email(self, value):
@@ -72,7 +72,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("TC kimlik numarası 11 haneli olmalıdır.")
         return value
 
-    def validate_manager_phone(self, value):
+    def validate_phone_number(self, value):
         # Telefon numarası kontrolü
         import re
         phone_pattern = re.compile(r'^\+?[0-9\s\-\(\)]{10,15}$')
@@ -179,6 +179,9 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         # Profile photo'yu çıkar (varsa)
         profile_photo = validated_data.pop('profile_photo', None)
         
+        # Phone number'ı çıkar (CustomUser'a kaydedilecek)
+        phone_number = validated_data.pop('phone_number', None)
+        
         # Kullanıcı oluştur
         from core.models import CustomUser
         user = CustomUser.objects.create_user(
@@ -186,6 +189,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
             email=email,
             password=password,
             role="vendor",
+            phone_number=phone_number,  # Telefon numarasını kaydet
             email_verified=False  # Email verification sonrası true olacak
         )
         
@@ -203,12 +207,12 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
                 user.delete()
                 raise serializers.ValidationError("Profil fotoğrafı işlenirken hata oluştu.")
         
-        # Email verification gönder - başarısız olursa kullanıcı ve profili sil
-        email_sent = user.send_verification_email()
-        if not email_sent:
-            # Email gönderilemezse kullanıcı ve profili sil
-            user.delete()  # Bu VendorProfile'ı da silecek (CASCADE)
-            raise serializers.ValidationError("Email doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.")
+        # Email verification gönderme - kullanıcı doğrulama yöntemi seçtikten sonra gönderilecek
+        # email_sent = user.send_verification_email()
+        # if not email_sent:
+        #     # Email gönderilemezse kullanıcı ve profili sil
+        #     user.delete()  # Bu VendorProfile'ı da silecek (CASCADE)
+        #     raise serializers.ValidationError("Email doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.")
         
         return profile
 
@@ -238,9 +242,9 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'slug', 'user', 'business_type', 'service_areas', 'categories', 'categories_ids', 
             'car_brands', 'car_brands_ids', 'company_title', 'tax_office', 'tax_no',
-            'display_name', 'about', 'profile_photo', 'avatar', 'phone', 'city', 'district', 'subdistrict', 'address',
+            'display_name', 'about', 'profile_photo', 'avatar', 'business_phone', 'city', 'district', 'subdistrict', 'address',
             'social_media', 'working_hours', 'unavailable_dates',
-            'manager_name', 'manager_birthdate', 'manager_tc', 'manager_phone'
+            'manager_name', 'manager_birthdate', 'manager_tc'
         )
         read_only_fields = ('id', 'slug')
 

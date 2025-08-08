@@ -75,12 +75,45 @@ class EmailService:
             return False
     
     @staticmethod
-    def send_verification_link_email(email: str, verification_token: str) -> None:
-        """Asenkron email doğrulama linki gönder"""
+    def send_verification_link_email(email: str, verification_token: str) -> bool:
+        """Email doğrulama linki gönder (senkron)"""
         try:
-            send_verification_email.delay(email, verification_token)
+            subject = "Email Adresinizi Doğrulayın - Sanayicin"
+            verification_url = f"https://test.sanayicin.com/esnaf/email-dogrula?token={verification_token}"
+            
+            html_content = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
+                    <h2 style="color: #333; margin-bottom: 20px;">Email Doğrulama</h2>
+                    <p style="color: #666; margin-bottom: 30px;">
+                        Sanayicin hesabınızı doğrulamak için aşağıdaki butona tıklayın:
+                    </p>
+                    <div style="background: #ffd600; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                        <a href="{verification_url}" 
+                           style="color: #111111; text-decoration: none; font-weight: bold; font-size: 18px;">
+                            Email Adresimi Doğrula
+                        </a>
+                    </div>
+                    <p style="color: #666; font-size: 14px;">
+                        Bu link 24 saat geçerlidir.
+                    </p>
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                    <p style="color: #999; font-size: 12px;">
+                        Eğer bu işlemi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
+                    </p>
+                </div>
+            </div>
+            """
+            
+            return EmailService.send_email(
+                to_emails=[email],
+                subject=subject,
+                html_content=html_content,
+                category="email_verification"
+            )
         except Exception as e:
-            logger.error(f"Async verification email task failed: {str(e)}")
+            logger.error(f"Verification email failed: {str(e)}")
+            return False
     
     @staticmethod
     def send_welcome_email(email: str, user_name: str, user_role: str = "customer") -> None:

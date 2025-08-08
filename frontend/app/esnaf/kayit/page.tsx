@@ -104,7 +104,11 @@ export default function EsnafKayitPage() {
   });
   const [managerError, setManagerError] = useState("");
 
+  // 5. adım - Doğrulama seçimi state
+  const [verificationMethod, setVerificationMethod] = useState<'email' | 'sms' | null>(null);
+  const [verificationError, setVerificationError] = useState("");
 
+  // 6. adım - Email doğrulama state
   const [verificationEmail, setVerificationEmail] = useState<string>('');
 
   const router = useRouter();
@@ -328,6 +332,58 @@ export default function EsnafKayitPage() {
     }));
   };
   const handleBackStep4 = () => setStep(3);
+  
+  const handleVerificationMethodSelect = (method: 'email' | 'sms') => {
+    setVerificationMethod(method);
+    setVerificationError("");
+  };
+
+  const handleSubmitVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerificationError("");
+
+    if (!verificationMethod) {
+      setVerificationError("Lütfen bir doğrulama yöntemi seçin.");
+      return;
+    }
+
+    try {
+      if (verificationMethod === 'email') {
+        // Email doğrulama gönder
+        const response = await api.sendVerificationEmail({
+          email: managerInfo.email
+        });
+        
+        if (response.status === 200) {
+          setVerificationEmail(managerInfo.email);
+          setStep(6); // Email verification step
+        } else {
+          setVerificationError("Email gönderilemedi. Lütfen tekrar deneyin.");
+        }
+      } else if (verificationMethod === 'sms') {
+        // SMS doğrulama gönder
+        const response = await api.sendSMSVerification({
+          email: managerInfo.email,
+          phone_number: managerInfo.phone
+        });
+        
+        if (response.status === 200) {
+          // SMS doğrulama sayfasına yönlendir
+          router.push(`/esnaf/sms-dogrula?email=${encodeURIComponent(managerInfo.email)}&phone=${encodeURIComponent(managerInfo.phone)}`);
+        } else {
+          setVerificationError("SMS gönderilemedi. Lütfen tekrar deneyin.");
+        }
+      }
+    } catch (err: any) {
+      console.log(err);
+      let errorMsg = "Doğrulama gönderilemedi. Lütfen tekrar deneyin.";
+      if (err.response?.data?.detail) {
+        errorMsg = err.response.data.detail;
+      }
+      setVerificationError(errorMsg);
+    }
+  };
+
   const handleSubmitManager = async (e: React.FormEvent) => {
     e.preventDefault();
     setManagerError("");
@@ -411,7 +467,7 @@ export default function EsnafKayitPage() {
       if (companyInfo.photo) {
         formData.append('profile_photo', companyInfo.photo);
       }
-      formData.append('phone', companyInfo.phone);
+      formData.append('business_phone', companyInfo.phone);
       formData.append('city', selectedCity);
       formData.append('district', selectedDistrict);
       formData.append('subdistrict', selectedNeighbourhood);
@@ -419,12 +475,20 @@ export default function EsnafKayitPage() {
       formData.append('manager_name', name);
       formData.append('manager_birthdate', managerInfo.birthdate);
       formData.append('manager_tc', tc);
-      formData.append('manager_phone', phone);
+      formData.append('phone_number', phone);
 
       const res = await api.register(formData);
       const data = res.data;
       if (res.status !== 201) { // 201 Created
-        setManagerError(data.detail || "Bir hata oluştu.");
+        console.log("Registration error:", data);
+        if (data.errors) {
+          const errorMessages = Object.entries(data.errors).map(([field, errors]) => {
+            return `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`;
+          }).join('; ');
+          setManagerError(errorMessages);
+        } else {
+          setManagerError(data.detail || "Bir hata oluştu.");
+        }
         return;
       }
       // Email bilgisini localStorage'a kaydet
@@ -433,11 +497,10 @@ export default function EsnafKayitPage() {
         // Password'ü hash'leyerek sakla (email verification sonrası login için)
         const hashedPassword = btoa(password); // Base64 encoding (basit hash)
         localStorage.setItem("esnaf_temp_password_hash", hashedPassword);
-
       }
-      // Email doğrulama sayfasına yönlendir
-      setVerificationEmail(email);
-      setStep(5); // Email verification step
+      // Doğrulama seçimi adımına yönlendir
+      setStep(5); // Verification method selection step
+      setVerificationEmail(email); // Email'i sakla
     } catch (err: any) {
       console.log(err);
       // Backend'den dönen hata mesajını göster
@@ -760,7 +823,76 @@ export default function EsnafKayitPage() {
             </div>
           </form>
         )}
-        {step === 5 && verificationEmail && (
+        {step === 5 && (
+          <form onSubmit={handleSubmitVerification} className="esnaf-register-form">
+            <h2 style={{ textAlign: 'center', marginBottom: '24px', color: '#333' }}>
+              Doğrulama Yöntemi Seçin
+            </h2>
+            <p style={{ textAlign: 'center', marginBottom: '32px', color: '#666' }}>
+              Hesabınızı doğrulamak için bir yöntem seçin
+            </p>
+            
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+              <label 
+                className={`esnaf-business-type-option${verificationMethod === 'email' ? " selected" : ""}`}
+                style={{ flex: 1, textAlign: 'center', padding: '20px' }}
+              >
+                <input
+                  type="radio"
+                  name="verificationMethod"
+                  value="email"
+                  checked={verificationMethod === 'email'}
+                  onChange={() => handleVerificationMethodSelect('email')}
+                  required
+                />
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>📧</div>
+                  <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Email ile Doğrulama</div>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    {managerInfo.email} adresine doğrulama linki gönderilir
+                  </div>
+                </div>
+              </label>
+              
+              <label 
+                className={`esnaf-business-type-option${verificationMethod === 'sms' ? " selected" : ""}`}
+                style={{ flex: 1, textAlign: 'center', padding: '20px' }}
+              >
+                <input
+                  type="radio"
+                  name="verificationMethod"
+                  value="sms"
+                  checked={verificationMethod === 'sms'}
+                  onChange={() => handleVerificationMethodSelect('sms')}
+                  required
+                />
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>📱</div>
+                  <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>SMS ile Doğrulama</div>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    {managerInfo.phone} numarasına doğrulama kodu gönderilir
+                  </div>
+                </div>
+              </label>
+            </div>
+            
+            {verificationError && <div className="esnaf-register-error">{verificationError}</div>}
+            
+            <div className="esnaf-register-step-btns">
+              <button type="button" className="esnaf-register-back-btn" onClick={() => setStep(4)}>
+                Geri
+              </button>
+              <button 
+                type="submit" 
+                className="esnaf-register-next-btn"
+                disabled={!verificationMethod}
+              >
+                Doğrulama Gönder
+              </button>
+            </div>
+          </form>
+        )}
+        {step === 6 && verificationEmail && (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
             <div style={{ fontSize: '48px', marginBottom: '20px' }}>📧</div>
             <h1 style={{ color: '#333', marginBottom: '16px' }}>Kayıt Tamamlandı!</h1>
