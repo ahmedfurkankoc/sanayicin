@@ -266,6 +266,16 @@ export const api = {
   resendVerificationEmail: (data: { email: string }) => 
     apiClient.post('/auth/resend-verification/', data),
 
+  // SMS verification işlemleri (ortak)
+  sendSMSVerification: (data: { email: string; phone_number: string }) => 
+    apiClient.post('/auth/send-sms-verification/', data),
+  
+  verifySMSCode: (data: { email: string; code: string }) => 
+    apiClient.post('/auth/verify-sms-code/', data),
+  
+  checkVerificationStatus: () => 
+    apiClient.get('/auth/check-verification-status/'),
+
   // Şifre sıfırlama işlemleri
   forgotPassword: (data: { email: string }) => 
     apiClient.post('/auth/forgot-password/', data),
