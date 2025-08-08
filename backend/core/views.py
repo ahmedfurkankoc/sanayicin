@@ -6,12 +6,14 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
-from .models import CustomUser, ServiceArea, Category, EmailVerification
+from .models import CustomUser, ServiceArea, Category, EmailVerification, SMSVerification
 from .serializers import CustomUserSerializer
 from .utils.email_service import EmailService
+from .utils.sms_service import IletiMerkeziSMS
 import logging
 import secrets
 from django.urls import reverse
+from django.contrib.auth.tokens import default_token_generator
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +47,24 @@ class CategoryListView(generics.ListAPIView):
 def get_rate_limit_key(email: str, action: str) -> str:
     return f"email_verification_rate_limit:{action}:{email}"
 
+def get_sms_rate_limit_key(phone: str, action: str) -> str:
+    return f"sms_verification_rate_limit:{action}:{phone}"
+
 def check_rate_limit(email: str, action: str, max_attempts: int, window_minutes: int) -> bool:
     """Rate limiting kontrolü"""
     cache_key = get_rate_limit_key(email, action)
+    attempts = cache.get(cache_key, 0)
+    
+    if attempts >= max_attempts:
+        return False
+    
+    # Attempt sayısını artır
+    cache.set(cache_key, attempts + 1, window_minutes * 60)
+    return True
+
+def check_sms_rate_limit(phone: str, action: str, max_attempts: int, window_minutes: int) -> bool:
+    """SMS rate limiting kontrolü"""
+    cache_key = get_sms_rate_limit_key(phone, action)
     attempts = cache.get(cache_key, 0)
     
     if attempts >= max_attempts:
@@ -95,10 +112,11 @@ def login(request):
             'access': str(refresh.access_token),
             'refresh': str(refresh),
             'email': user.email,
-            'email_verified': user.email_verified,
+            'is_verified': user.is_verified_user,  # Güncellendi
+            'verification_status': user.verification_status,  # Yeni
             'role': user.role,
         })
-        
+
     except Exception as e:
         logger.error(f"Login error: {e}")
         return Response(
@@ -109,72 +127,38 @@ def login(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def upload_avatar(request):
-    """Avatar yükleme endpoint'i - vendor ve customer için"""
+    """Avatar yükle"""
     try:
-        # Dosya kontrolü
         if 'avatar' not in request.FILES:
             return Response(
                 {'error': 'Avatar dosyası gerekli'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        image_file = request.FILES['avatar']
+        avatar_file = request.FILES['avatar']
+        
+        # Dosya boyutu kontrolü (5MB)
+        if avatar_file.size > 5 * 1024 * 1024:
+            return Response(
+                {'error': 'Dosya boyutu 5MB\'dan küçük olmalı'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         # Dosya tipi kontrolü
         allowed_types = ['image/jpeg', 'image/jpg', 'image/png']
-        if image_file.content_type not in allowed_types:
+        if avatar_file.content_type not in allowed_types:
             return Response(
                 {'error': 'Sadece JPEG ve PNG dosyaları kabul edilir'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Dosya boyutu kontrolü (5MB)
-        if image_file.size > 5 * 1024 * 1024:
-            return Response(
-                {'error': 'Dosya boyutu 5MB\'dan küçük olmalıdır'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Avatar'ı kaydet
+        success = request.user.save_avatar(avatar_file)
         
-        # Kullanıcı role'üne göre avatar'ı kaydet
-        user = request.user
-        avatar_url = None
-        
-        if user.role == 'vendor':
-            # Vendor profile'ı bul
-            try:
-                vendor_profile = user.vendor_profile
-                success = vendor_profile.save_avatar(image_file)
-                if success:
-                    vendor_profile.save()
-                    avatar_url = vendor_profile.avatar.url if vendor_profile.avatar else None
-            except:
-                return Response(
-                    {'error': 'Vendor profili bulunamadı'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-        elif user.role == 'client':
-            # Client profile'ı bul
-            try:
-                client_profile = user.client_profile
-                success = client_profile.save_avatar(image_file)
-                if success:
-                    client_profile.save()
-                    avatar_url = client_profile.avatar.url if client_profile.avatar else None
-            except:
-                return Response(
-                    {'error': 'Client profili bulunamadı'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-        else:
-            return Response(
-                {'error': 'Geçersiz kullanıcı rolü'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        if avatar_url:
+        if success:
             return Response({
                 'message': 'Avatar başarıyla yüklendi',
-                'avatar_url': avatar_url
+                'avatar_url': request.user.avatar.url if request.user.avatar else None
             })
         else:
             return Response(
@@ -183,7 +167,7 @@ def upload_avatar(request):
             )
             
     except Exception as e:
-        logger.error(f"Avatar upload hatası: {e}")
+        logger.error(f"Avatar upload error: {e}")
         return Response(
             {'error': 'Avatar yüklenirken hata oluştu'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -192,7 +176,7 @@ def upload_avatar(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def send_verification_email(request):
-    """Email doğrulama kodu gönder"""
+    """Email doğrulama linki gönder"""
     try:
         email = request.data.get('email')
         
@@ -202,171 +186,10 @@ def send_verification_email(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Rate limiting kontrolü (15 dakikada max 3 deneme)
-        if not check_rate_limit(email, 'send', 3, 15):
+        # Rate limiting kontrolü
+        if not check_rate_limit(email, 'send_email', 3, 10):
             return Response(
-                {'error': 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.'}, 
-                status=status.HTTP_429_TOO_MANY_REQUESTS
-            )
-        
-        # Kullanıcıyı bul (email_verified=False olan)
-        try:
-            user = CustomUser.objects.get(email=email, email_verified=False)
-        except CustomUser.DoesNotExist:
-            return Response(
-                {'error': 'Email doğrulama kodu gönderildi'}, 
-                status=status.HTTP_200_OK
-            )
-        
-        # Email gönder (token otomatik oluşturulur)
-        success = user.send_verification_email()
-        
-        if success:
-            return Response({
-                'message': 'Doğrulama kodu gönderildi',
-                'email': email
-            })
-        else:
-            return Response(
-                {'error': 'Email doğrulama kodu gönderilemedi'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-            
-    except Exception as e:
-        logger.error(f"Email verification error: {str(e)}")
-        return Response(
-            {'error': 'Bir hata oluştu'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def verify_email(request):
-    """Email doğrulama token'ını kontrol et"""
-    try:
-        token = request.data.get('token')
-        
-        if not token:
-            return Response(
-                {'error': 'Token gerekli'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Token'ı kontrol et
-        try:
-            verification = EmailVerification.objects.get(
-                token=token,
-                is_used=False,
-                expires_at__gt=timezone.now()
-            )
-        except EmailVerification.DoesNotExist:
-            return Response(
-                {'error': 'Geçersiz veya süresi dolmuş doğrulama linki'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Email'i doğrulanmış olarak işaretle
-        user = verification.user
-        user.email_verified = True
-        user.save()
-        
-        # Token'ı kullanıldı olarak işaretle
-        verification.is_used = True
-        verification.save()
-        
-        # Hoş geldin emaili gönder
-        try:
-            EmailService.send_welcome_email(user.email, user.first_name or user.username, user.role)
-        except Exception as e:
-            logger.error(f"Welcome email failed: {e}")
-        
-        return Response({
-            'message': 'Email başarıyla doğrulandı',
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'username': user.username,
-                'role': user.role,
-                'email_verified': user.email_verified,
-                'first_name': user.first_name,
-                'last_name': user.last_name
-            }
-        })
-                
-    except Exception as e:
-        logger.error(f"Email verification error: {str(e)}")
-        return Response(
-            {'error': 'Bir hata oluştu'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def resend_verification_email(request):
-    """Doğrulama kodunu tekrar gönder"""
-    try:
-        email = request.data.get('email')
-        
-        if not email:
-            return Response(
-                {'error': 'Email adresi gerekli'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Rate limiting kontrolü (15 dakikada max 3 deneme)
-        if not check_rate_limit(email, 'resend', 3, 15):
-            return Response(
-                {'error': 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.'}, 
-                status=status.HTTP_429_TOO_MANY_REQUESTS
-            )
-        
-        # Kullanıcıyı bul
-        try:
-            user = CustomUser.objects.get(email=email, email_verified=False)
-        except CustomUser.DoesNotExist:
-            return Response(
-                {'error': 'Email doğrulama kodu gönderildi'}, 
-                status=status.HTTP_200_OK
-            )
-        
-        # Email gönder
-        success = user.send_verification_email()
-        
-        if success:
-            return Response({
-                'message': 'Doğrulama kodu tekrar gönderildi',
-                'email': email
-            })
-        else:
-            return Response(
-                {'error': 'Email gönderilemedi'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-            
-    except Exception as e:
-        logger.error(f"Resend verification error: {str(e)}")
-        return Response(
-            {'error': 'Bir hata oluştu'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def forgot_password(request):
-    """Şifre sıfırlama linki gönder"""
-    try:
-        email = request.data.get('email')
-        
-        if not email:
-            return Response(
-                {'error': 'Email adresi gerekli'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Rate limiting kontrolü (15 dakikada max 3 deneme)
-        if not check_rate_limit(email, 'forgot_password', 3, 15):
-            return Response(
-                {'error': 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.'}, 
+                {'error': 'Çok fazla deneme. 10 dakika sonra tekrar deneyin.'}, 
                 status=status.HTTP_429_TOO_MANY_REQUESTS
             )
         
@@ -379,70 +202,227 @@ def forgot_password(request):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Şifre sıfırlama token'ı oluştur (24 saat geçerli)
-        reset_token = secrets.token_urlsafe(32)
-        cache_key = f"password_reset_token:{reset_token}"
-        cache.set(cache_key, user.email, 24 * 60 * 60)  # 24 saat
-        
-        # Şifre sıfırlama linki oluştur
-        reset_url = f"https://esnaf.sanayicin.com/esnaf/sifre-yenile/{reset_token}"
-        
-        # Email gönder
-        try:
-            EmailService.send_password_reset_email(email, user.first_name or user.username, reset_url)
-            logger.info(f"Password reset email sent to {email}")
-        except Exception as e:
-            logger.error(f"Password reset email failed for {email}: {e}")
+        # Zaten doğrulanmış mı?
+        if user.is_verified_user:
             return Response(
-                {'error': 'Şifre sıfırlama emaili gönderilemedi'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {'error': 'Bu hesap zaten doğrulanmış'}, 
+                status=status.HTTP_400_BAD_REQUEST
             )
         
-        return Response({
-            'message': 'Şifre sıfırlama linki email adresinize gönderildi'
-        }, status=status.HTTP_200_OK)
+        # Email gönder
+        email_sent = user.send_verification_email()
         
+        if email_sent:
+            return Response({
+                'message': 'Doğrulama emaili gönderildi',
+                'email': email
+            })
+        else:
+            return Response(
+                {'error': 'Email gönderilemedi. Lütfen daha sonra tekrar deneyin.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
     except Exception as e:
-        logger.error(f"Forgot password error: {e}")
+        logger.error(f"Send verification email error: {e}")
         return Response(
-            {'error': 'Şifre sıfırlama işlemi başarısız'}, 
+            {'error': 'Email gönderilirken hata oluştu'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def reset_password(request):
-    """Şifre sıfırlama token'ı ile şifreyi güncelle"""
+def verify_email(request):
+    """Email doğrulama token'ını kontrol et"""
     try:
         token = request.data.get('token')
-        password = request.data.get('password')
-        password2 = request.data.get('password2')
         
-        if not token or not password or not password2:
+        if not token:
             return Response(
-                {'error': 'Token ve şifre bilgileri gerekli'}, 
+                {'error': 'Doğrulama token\'ı gerekli'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if password != password2:
+        # Token'ı bul
+        try:
+            verification = EmailVerification.objects.get(token=token)
+        except EmailVerification.DoesNotExist:
             return Response(
-                {'error': 'Şifreler eşleşmiyor'}, 
+                {'error': 'Geçersiz doğrulama linki'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if len(password) < 6:
-            return Response(
-                {'error': 'Şifre en az 6 karakter olmalı'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Token geçerli mi?
+        if not verification.is_valid:
+            if verification.is_expired:
+                return Response(
+                    {'error': 'Doğrulama linki süresi dolmuş'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            else:
+                return Response(
+                    {'error': 'Bu doğrulama linki zaten kullanılmış'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
-        # Token'ı kontrol et
-        cache_key = f"password_reset_token:{token}"
-        email = cache.get(cache_key)
+        # Kullanıcıyı doğrula
+        user = verification.user
+        user.is_verified = True
+        user.verification_method = 'email'
+        user.email_verified = True  # Geriye uyumluluk için
+        user.save()
+        
+        # Token'ı kullanıldı olarak işaretle
+        verification.is_used = True
+        verification.save()
+        
+        return Response({
+            'message': 'Email başarıyla doğrulandı',
+            'email': user.email,
+            'is_verified': True
+        })
+        
+    except Exception as e:
+        logger.error(f"Verify email error: {e}")
+        return Response(
+            {'error': 'Email doğrulanırken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def resend_verification_email(request):
+    """Email doğrulama linkini tekrar gönder"""
+    try:
+        email = request.data.get('email')
         
         if not email:
             return Response(
-                {'error': 'Geçersiz veya süresi dolmuş token'}, 
+                {'error': 'Email adresi gerekli'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Rate limiting kontrolü (daha sıkı)
+        if not check_rate_limit(email, 'resend_email', 2, 5):
+            return Response(
+                {'error': 'Çok fazla deneme. 5 dakika sonra tekrar deneyin.'}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Kullanıcıyı bul
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Bu email adresi ile kayıtlı kullanıcı bulunamadı'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Zaten doğrulanmış mı?
+        if user.is_verified_user:
+            return Response(
+                {'error': 'Bu hesap zaten doğrulanmış'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Email gönder
+        email_sent = user.send_verification_email()
+        
+        if email_sent:
+            return Response({
+                'message': 'Doğrulama emaili tekrar gönderildi',
+                'email': email
+            })
+        else:
+            return Response(
+                {'error': 'Email gönderilemedi. Lütfen daha sonra tekrar deneyin.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    except Exception as e:
+        logger.error(f"Resend verification email error: {e}")
+        return Response(
+            {'error': 'Email gönderilirken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_sms_verification(request):
+    """SMS doğrulama kodu gönder"""
+    try:
+        phone_number = request.data.get('phone_number')
+        email = request.data.get('email')  # Kullanıcıyı bulmak için
+        
+        if not phone_number or not email:
+            return Response(
+                {'error': 'Telefon numarası ve email gerekli'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Rate limiting kontrolü
+        if not check_sms_rate_limit(phone_number, 'send_sms', 3, 10):
+            return Response(
+                {'error': 'Çok fazla deneme. 10 dakika sonra tekrar deneyin.'}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Kullanıcıyı bul
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Bu email adresi ile kayıtlı kullanıcı bulunamadı'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Zaten doğrulanmış mı?
+        if user.is_verified_user:
+            return Response(
+                {'error': 'Bu hesap zaten doğrulanmış'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Telefon numarasını formatla
+        sms_service = IletiMerkeziSMS()
+        formatted_phone = sms_service.format_phone_number(phone_number)
+        
+        # Telefon numarasını kullanıcıya kaydet
+        user.phone_number = formatted_phone
+        user.save()
+        
+        # SMS gönder
+        sms_sent = user.send_sms_verification()
+        
+        if sms_sent:
+            return Response({
+                'message': 'SMS doğrulama kodu gönderildi',
+                'phone_number': formatted_phone
+            })
+        else:
+            return Response(
+                {'error': 'SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    except Exception as e:
+        logger.error(f"Send SMS verification error: {e}")
+        return Response(
+            {'error': 'SMS gönderilirken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_sms_code(request):
+    """SMS doğrulama kodunu kontrol et"""
+    try:
+        email = request.data.get('email')
+        code = request.data.get('code')
+        
+        if not email or not code:
+            return Response(
+                {'error': 'Email ve doğrulama kodu gerekli'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -451,26 +431,154 @@ def reset_password(request):
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
             return Response(
-                {'error': 'Kullanıcı bulunamadı'}, 
+                {'error': 'Bu email adresi ile kayıtlı kullanıcı bulunamadı'}, 
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Şifreyi güncelle
-        user.set_password(password)
-        user.save()
+        # SMS kodunu doğrula
+        is_valid = user.verify_sms_code(code)
         
-        # Token'ı sil
-        cache.delete(cache_key)
-        
-        logger.info(f"Password reset successful for {email}")
+        if is_valid:
+            return Response({
+                'message': 'SMS kodu başarıyla doğrulandı',
+                'email': user.email,
+                'is_verified': True
+            })
+        else:
+            return Response(
+                {'error': 'Geçersiz doğrulama kodu'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+    except Exception as e:
+        logger.error(f"Verify SMS code error: {e}")
+        return Response(
+            {'error': 'SMS kodu doğrulanırken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_verification_status(request):
+    """Kullanıcının doğrulama durumunu kontrol et"""
+    try:
+        user = request.user
         
         return Response({
-            'message': 'Şifreniz başarıyla güncellendi'
-        }, status=status.HTTP_200_OK)
+            'email': user.email,
+            'is_verified': user.is_verified_user,
+            'verification_status': user.verification_status,
+            'verification_method': user.verification_method,
+            'phone_number': user.phone_number
+        })
+        
+    except Exception as e:
+        logger.error(f"Check verification status error: {e}")
+        return Response(
+            {'error': 'Doğrulama durumu kontrol edilirken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def forgot_password(request):
+    """Şifre sıfırlama emaili gönder"""
+    try:
+        email = request.data.get('email')
+        
+        if not email:
+            return Response(
+                {'error': 'Email adresi gerekli'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Rate limiting kontrolü
+        if not check_rate_limit(email, 'forgot_password', 3, 10):
+            return Response(
+                {'error': 'Çok fazla deneme. 10 dakika sonra tekrar deneyin.'}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Kullanıcıyı bul
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Bu email adresi ile kayıtlı kullanıcı bulunamadı'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Şifre sıfırlama token'ı oluştur
+        token = default_token_generator.make_token(user)
+        
+        # Reset URL oluştur
+        reset_url = request.build_absolute_uri(
+            reverse('reset_password_confirm', kwargs={'uidb64': user.pk, 'token': token})
+        )
+        
+        # Email gönder
+        email_sent = EmailService.send_password_reset_email(email, reset_url)
+        
+        if email_sent:
+            return Response({
+                'message': 'Şifre sıfırlama emaili gönderildi',
+                'email': email
+            })
+        else:
+            return Response(
+                {'error': 'Email gönderilemedi. Lütfen daha sonra tekrar deneyin.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    except Exception as e:
+        logger.error(f"Forgot password error: {e}")
+        return Response(
+            {'error': 'Şifre sıfırlama emaili gönderilirken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_password(request):
+    """Şifre sıfırlama token'ını kontrol et ve şifreyi güncelle"""
+    try:
+        uidb64 = request.data.get('uidb64')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+        
+        if not uidb64 or not token or not new_password:
+            return Response(
+                {'error': 'Tüm alanlar gerekli'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Kullanıcıyı bul
+        try:
+            user = CustomUser.objects.get(pk=uidb64)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Geçersiz kullanıcı'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Token'ı kontrol et
+        if not default_token_generator.check_token(user, token):
+            return Response(
+                {'error': 'Geçersiz veya süresi dolmuş token'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Şifreyi güncelle
+        user.set_password(new_password)
+        user.save()
+        
+        return Response({
+            'message': 'Şifre başarıyla güncellendi'
+        })
         
     except Exception as e:
         logger.error(f"Reset password error: {e}")
         return Response(
-            {'error': 'Şifre güncelleme işlemi başarısız'}, 
+            {'error': 'Şifre güncellenirken hata oluştu'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
