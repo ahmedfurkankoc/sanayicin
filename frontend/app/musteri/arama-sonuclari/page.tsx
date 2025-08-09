@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense, useCallback, useMemo, useRef } fr
 import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
+import { iconMapping } from "@/app/utils/iconMapping";
 
 interface Vendor {
   id: number;
@@ -55,24 +56,7 @@ const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
   return (
     <div 
       onClick={() => router.push(`/musteri/esnaf/${vendor.slug}`)}
-      style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '20px',
-        border: '1px solid #e0e0e0',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        marginBottom: '16px'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)';
-      }}
+      className="musteri-vendor-card"
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
         {/* Avatar */}
@@ -118,8 +102,14 @@ const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
             fontSize: '13px',
             color: '#666'
           }}>
-            <span>📍 {vendor.district}, {vendor.city}</span>
-            <span>📞 {vendor.phone}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {React.createElement(iconMapping['map-pin'], { size: 14 })}
+              {vendor.district}, {vendor.city}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {React.createElement(iconMapping.phone, { size: 14 })}
+              {vendor.phone}
+            </span>
           </div>
 
           {vendor.about && (
@@ -379,101 +369,10 @@ function AramaSonuclariContent() {
   );
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header */}
-      <header style={{ 
-        backgroundColor: 'white', 
-        borderBottom: '1px solid #e0e0e0',
-        padding: '0 24px',
-        height: '64px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-          <div 
-            onClick={() => router.push('/')}
-            style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#ffd600',
-              cursor: 'pointer'
-            }}
-          >
-            Sanayicin
-          </div>
-        </div>
-
-        <div style={{ flex: 1, maxWidth: '600px', margin: '0 32px' }}>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Arama yapın..."
-              value={`${selectedCity} ${selectedDistrict} ${services.find(s => s.id == selectedService)?.name || ''} ${categories.find(c => c.id == selectedCategory)?.name || ''}`}
-              readOnly
-              style={{
-                width: '100%',
-                padding: '12px 16px 12px 40px',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                fontSize: '16px',
-                backgroundColor: '#f8f9fa'
-              }}
-            />
-            <span style={{
-              position: 'absolute',
-              left: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#666',
-              fontSize: '16px'
-            }}>
-              🔍
-            </span>
-            <button
-              onClick={handleSearch}
-              style={{
-                position: 'absolute',
-                right: '8px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                backgroundColor: '#ffd600',
-                color: '#111111',
-                border: 'none',
-                padding: '6px 12px',
-                borderRadius: '4px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
-            >
-              Ara
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button style={{
-            background: 'none',
-            border: 'none',
-            fontSize: '18px',
-            color: '#666',
-            cursor: 'pointer',
-            padding: '8px'
-          }}>
-            ?
-          </button>
-        </div>
-      </header>
-
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 64px)' }}>
+    <div className="musteri-container">
+      <div style={{ display: 'flex', minHeight: 'calc(100vh - 200px)' }}>
         {/* Sol Sütun - Filtreler */}
-        <div style={{ 
-          width: '300px', 
-          backgroundColor: 'white', 
-          padding: '24px',
-          borderRight: '1px solid #e0e0e0'
-        }}>
+        <div className="musteri-filters-sidebar">
           <h3 style={{ marginBottom: '20px', color: '#333' }}>Filtreler</h3>
           
           <FilterSelect
@@ -522,7 +421,7 @@ function AramaSonuclariContent() {
         </div>
 
         {/* Sağ Sütun - Arama Sonuçları */}
-        <div style={{ flex: 1, padding: '24px' }}>
+        <div className="musteri-search-results-container">
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px' }}>
               <div>Aranıyor...</div>
