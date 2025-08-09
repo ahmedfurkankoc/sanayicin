@@ -51,6 +51,7 @@ function VendorDetailContent() {
   const [error, setError] = useState("");
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [creatingChat, setCreatingChat] = useState(false);
 
   // Hizmet alanlarını ve kategorileri çek
   useEffect(() => {
@@ -231,21 +232,38 @@ function VendorDetailContent() {
                   {React.createElement(iconMapping.calendar, { size: 16 })}
                   Randevu Al
                 </button>
-                <button style={{
-                  backgroundColor: 'transparent',
-                  color: '#111111',
-                  border: '2px solid #ffd600',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {React.createElement(iconMapping.phone, { size: 16 })}
-                  İletişime Geç
+                <button
+                  onClick={async () => {
+                    if (!vendor) return;
+                    try {
+                      setCreatingChat(true);
+                      await api.chatEnsureGuest();
+                      const res = await api.chatCreateConversation(vendor.id);
+                      const convId = res.data?.id;
+                      if (convId) router.push(`/musteri/mesajlar/${convId}`);
+                    } catch (e) {
+                      console.error('Sohbet başlatma hatası', e);
+                    } finally {
+                      setCreatingChat(false);
+                    }
+                  }}
+                  disabled={creatingChat}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: '#111111',
+                    border: '2px solid #ffd600',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    cursor: creatingChat ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {React.createElement(iconMapping.message, { size: 16 })}
+                  {creatingChat ? 'Başlatılıyor...' : 'Mesaj Gönder'}
                 </button>
               </div>
             </div>
