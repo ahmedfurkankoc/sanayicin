@@ -131,45 +131,6 @@ function VendorDetailContent() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header */}
-      <header style={{ 
-        backgroundColor: 'white', 
-        borderBottom: '1px solid #e0e0e0',
-        padding: '0 24px',
-        height: '64px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-          <div 
-            onClick={() => router.push('/')}
-            style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#ffd600',
-              cursor: 'pointer'
-            }}
-          >
-            Sanayicin
-          </div>
-        </div>
-        
-        <button 
-          onClick={() => router.back()}
-          style={{
-            backgroundColor: 'transparent',
-            color: '#666',
-            border: '1px solid #ddd',
-            padding: '8px 16px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}>
-          ← Geri Dön
-        </button>
-      </header>
-
       {/* Ana İçerik */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
         <div style={{ 
@@ -235,14 +196,14 @@ function VendorDetailContent() {
 
               <div style={{ display: 'flex', gap: '24px', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', color: '#666' }}>📍</span>
+                  {React.createElement(iconMapping['map-pin'], { size: 16, color: '#666' })}
                   <span style={{ fontSize: '14px', color: '#333' }}>
                     {vendor.city}, {vendor.district}
                   </span>
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '14px', color: '#666' }}>📞</span>
+                  {React.createElement(iconMapping.phone, { size: 16, color: '#666' })}
                   <span style={{ fontSize: '14px', color: '#333' }}>
                     {vendor.phone}
                   </span>
@@ -267,7 +228,8 @@ function VendorDetailContent() {
                     gap: '8px'
                   }}
                 >
-                  📅 Randevu Al
+                  {React.createElement(iconMapping.calendar, { size: 16 })}
+                  Randevu Al
                 </button>
                 <button style={{
                   backgroundColor: 'transparent',
@@ -282,7 +244,8 @@ function VendorDetailContent() {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  📞 İletişime Geç
+                  {React.createElement(iconMapping.phone, { size: 16 })}
+                  İletişime Geç
                 </button>
               </div>
             </div>

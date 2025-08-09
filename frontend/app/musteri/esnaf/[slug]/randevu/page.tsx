@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/app/utils/api";
 import { toast } from "sonner";
+import { iconMapping } from "@/app/utils/iconMapping";
 
 interface Vendor {
   id: number;
@@ -301,9 +302,11 @@ export default function CustomerAppointmentPage() {
               }}>
                 <div style={{
                   fontSize: '48px',
-                  marginBottom: '16px'
+                  marginBottom: '16px',
+                  display: 'flex',
+                  justifyContent: 'center'
                 }}>
-                  ⚠️
+                  {React.createElement(iconMapping['alert-circle'], { size: 48, color: '#dc2626' })}
                 </div>
                 <h3 style={{
                   fontSize: '20px',
@@ -536,9 +539,13 @@ export default function CustomerAppointmentPage() {
                         <p style={{ 
                           margin: '8px 0 0 0', 
                           color: '#ef4444', 
-                          fontSize: '14px' 
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
                         }}>
-                          ⚠️ Bu tarihte esnaf kapalı. Lütfen başka bir tarih seçin.
+                          {React.createElement(iconMapping['alert-circle'], { size: 14, color: '#ef4444' })}
+                          Bu tarihte esnaf kapalı. Lütfen başka bir tarih seçin.
                         </p>
                       )}
                     </div>

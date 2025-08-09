@@ -59,6 +59,7 @@ import {
   ChevronDown,
   ChevronUp,
   Menu,
+  Bell,
   X as Close
 } from 'lucide-react';
 
@@ -100,6 +101,7 @@ export const iconMapping = {
   // Arama ve filtreleme
   'search': Search,
   'filter': Filter,
+  'bell': Bell,
   
   // Şehir ikonları
   'city': Building,
