@@ -87,7 +87,7 @@ export default function ChatPage() {
             </div>
           ))}
           {typing && (
-            <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>Karşı taraf yazıyor...</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>Yazıyor...</div>
           )}
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
