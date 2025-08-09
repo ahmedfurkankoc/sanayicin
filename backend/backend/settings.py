@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     'core',
     'vendors',
     'clients',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -134,6 +135,7 @@ CORS_ALLOW_HEADERS = [
     'origin',
     'user-agent',
     'x-csrftoken',
+    'x-guest-token',
     'x-requested-with',
 ]
 
@@ -176,6 +178,17 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
     }
+}
+
+# Channels config (development defaults)
+ASGI_APPLICATION = 'backend.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')],
+        },
+    },
 }
 
 # Email Verification Settings

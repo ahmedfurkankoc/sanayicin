@@ -1,6 +1,7 @@
 'use client';
 
 import React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEsnaf } from "../context/EsnafContext";
 import Icon from "@/app/components/ui/Icon";
@@ -86,43 +87,43 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
         
                  {/* Navigation Menu */}
          <nav className="esnaf-nav">
-                       <a href="/esnaf/panel" className={`esnaf-nav-item ${getActiveClass("panel")}`}>
+                       <Link href="/esnaf/panel" className={`esnaf-nav-item ${getActiveClass("panel")}`}>
               <Icon name="home" className="esnaf-nav-icon" color="white" />
               <span className="esnaf-nav-text">Özet</span>
               {activePage === "panel" && <span className="esnaf-nav-dot"></span>}
-            </a>
-           <a href="/esnaf/takvim" className={`esnaf-nav-item ${getActiveClass("takvim")}`}>
+             </Link>
+            <Link href="/esnaf/takvim" className={`esnaf-nav-item ${getActiveClass("takvim")}`}>
              <Icon name="calendar" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Takvim</span>
              {activePage === "takvim" && <span className="esnaf-nav-dot"></span>}
-           </a>
-           <a href="/esnaf/randevularim" className={`esnaf-nav-item ${getActiveClass("randevularim")}`}>
+            </Link>
+            <Link href="/esnaf/randevularim" className={`esnaf-nav-item ${getActiveClass("randevularim")}`}>
              <Icon name="clock" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Randevularım</span>
              {activePage === "randevularim" && <span className="esnaf-nav-dot"></span>}
-           </a>
-           <a href="/esnaf/taleplerim" className={`esnaf-nav-item ${getActiveClass("taleplerim")}`}>
+            </Link>
+            <Link href="/esnaf/taleplerim" className={`esnaf-nav-item ${getActiveClass("taleplerim")}`}>
              <Icon name="file" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Taleplerim</span>
              {activePage === "taleplerim" && <span className="esnaf-nav-dot"></span>}
-           </a>
-           <a href="#" className="esnaf-nav-item">
+            </Link>
+           <Link href="/esnaf/panel/mesajlar" className={`esnaf-nav-item ${getActiveClass("mesajlar")}`}>
              <Icon name="message" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Mesajlarım</span>
-           </a>
-           <a href="#" className="esnaf-nav-item">
+            </Link>
+            <Link href="#" className="esnaf-nav-item">
              <Icon name="star" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Yorumlarım</span>
-           </a>
-           <a href="/esnaf/profil" className={`esnaf-nav-item ${getActiveClass("profil")}`}>
+            </Link>
+            <Link href="/esnaf/profil" className={`esnaf-nav-item ${getActiveClass("profil")}`}>
              <Icon name="user" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Profilim</span>
              {activePage === "profil" && <span className="esnaf-nav-dot"></span>}
-           </a>
-           <a href="/esnaf/giris" className="esnaf-nav-item esnaf-logout-item" onClick={handleLogout}>
+            </Link>
+            <Link href="/esnaf/giris" className="esnaf-nav-item esnaf-logout-item" onClick={handleLogout}>
              <Icon name="logout" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Çıkış Yap</span>
-           </a>
+            </Link>
          </nav>
         
         {/* Ana Sayfaya Dön Butonu */}
@@ -162,37 +163,37 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
 
              {/* Mobil Menü */}
        <nav className="esnaf-mobile-nav">
-                   <a href="/esnaf/panel" className={`esnaf-mobile-nav-item ${getActiveClass("panel")}`}>
+                   <Link href="/esnaf/panel" className={`esnaf-mobile-nav-item ${getActiveClass("panel")}`}>
             <span className="esnaf-mobile-nav-icon">
               <Icon name="home" size="sm" />
               <span className="esnaf-mobile-nav-badge">2</span>
             </span>
             <span className="esnaf-mobile-nav-text">Özet</span>
-          </a>
-         <a href="#" className={`esnaf-mobile-nav-item ${getActiveClass("mesajlar")}`}>
+           </Link>
+         <Link href="/esnaf/panel/mesajlar" className={`esnaf-mobile-nav-item ${getActiveClass("mesajlar")}`}>
            <span className="esnaf-mobile-nav-icon">
              <Icon name="file" size="sm" />
            </span>
            <span className="esnaf-mobile-nav-text">Mesajlarım</span>
-         </a>
-         <a href="/esnaf/randevularim" className={`esnaf-mobile-nav-item ${getActiveClass("randevularim")}`}>
+         </Link>
+         <Link href="/esnaf/randevularim" className={`esnaf-mobile-nav-item ${getActiveClass("randevularim")}`}>
            <span className="esnaf-mobile-nav-icon">
              <Icon name="calendar" size="sm" />
            </span>
            <span className="esnaf-mobile-nav-text">Randevularım</span>
-         </a>
-         <a href="/esnaf/takvim" className={`esnaf-mobile-nav-item ${getActiveClass("takvim")}`}>
+         </Link>
+         <Link href="/esnaf/takvim" className={`esnaf-mobile-nav-item ${getActiveClass("takvim")}`}>
            <span className="esnaf-mobile-nav-icon">
              <Icon name="calendar" size="sm" />
            </span>
            <span className="esnaf-mobile-nav-text">Takvim</span>
-         </a>
-         <a href="/esnaf/ayarlar" className={`esnaf-mobile-nav-item ${getActiveClass("ayarlar")}`}>
+         </Link>
+         <Link href="/esnaf/ayarlar" className={`esnaf-mobile-nav-item ${getActiveClass("ayarlar")}`}>
            <span className="esnaf-mobile-nav-icon">
              <Icon name="user" size="sm" />
            </span>
            <span className="esnaf-mobile-nav-text">Ayarlar</span>
-         </a>
+         </Link>
        </nav>
     </>
   );
