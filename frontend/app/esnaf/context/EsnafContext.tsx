@@ -43,7 +43,7 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
     localStorage.removeItem("esnaf_access_token");
     localStorage.removeItem("esnaf_refresh_token");
     localStorage.removeItem("esnaf_email");
-    localStorage.removeItem("esnaf_email_verified"); // Eski veriyi temizle
+    localStorage.removeItem("esnaf_email_verified"); // legacy cleanup
     setIsAuthenticated(false);
     setUser(null);
     setEmail('');
@@ -131,7 +131,7 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
       
       console.log("EsnafContext - API response:", response.data);
       console.log("EsnafContext - user data:", response.data.user);
-      console.log("EsnafContext - email_verified from backend:", response.data.user?.email_verified);
+        console.log("EsnafContext - verification_status:", response.data.user?.verification_status, "is_verified:", response.data.user?.is_verified);
       
       // Kullanıcı verilerini güncelle
       setUser(response.data);
@@ -139,7 +139,7 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       
       // Email verification durumunu sadece backend'den al
-      const backendEmailVerified = response.data.user?.email_verified || false;
+        const backendEmailVerified = response.data.user?.is_verified || false;
       console.log("EsnafContext - Setting emailVerified to:", backendEmailVerified);
       setEmailVerified(backendEmailVerified);
       
@@ -185,7 +185,7 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
               setEmail(userEmail);
               setIsAuthenticated(true);
               
-              const backendEmailVerified = retryResponse.data.user?.email_verified || false;
+            const backendEmailVerified = retryResponse.data.user?.is_verified || false;
               setEmailVerified(backendEmailVerified);
               
               const isAdminUser = retryResponse.data.user?.is_staff || retryResponse.data.user?.is_superuser;

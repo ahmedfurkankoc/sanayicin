@@ -19,25 +19,26 @@ export default function EsnafPanelLayout({
 }: EsnafPanelLayoutProps) {
   const router = useRouter();
   const { user, email, loading, isAdmin, emailVerified: contextEmailVerified, handleLogout } = useEsnaf();
+  const isVerified = user?.is_verified === true || contextEmailVerified === true;
 
   // Email doğrulama kontrolü
   useEffect(() => {
     // Loading bittikten ve user varsa kontrol et
     if (!loading && user) {
-      // Email doğrulanmamışsa email doğrulama sayfasına yönlendir
-      if (!contextEmailVerified) {
+      // Email doğrulanmamışsa yönlendir (yeni alan is_verified öncelikli)
+      if (!isVerified) {
         router.replace(`/esnaf/email-dogrula?email=${user.email || ''}`);
         return;
       }
     }
-  }, [loading, contextEmailVerified, user, router]);
+  }, [loading, isVerified, user, router]);
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
   // Email doğrulanmamışsa loading göster (yönlendirme sırasında)
-  if (!contextEmailVerified && user) {
+  if (!isVerified && user) {
     return <LoadingSpinner />;
   }
 

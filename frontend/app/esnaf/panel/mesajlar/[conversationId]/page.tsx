@@ -75,20 +75,33 @@ export default function EsnafChatPage() {
         ) : (
           <div className="esnaf-card" style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
             <div style={{ flex: 1, overflowY: 'auto', padding: 8, border: '1px solid #eee', borderRadius: 8 }}>
-              {messages.map((m) => (
-                <div key={m.id} style={{ display: 'flex', justifyContent: m.sender_is_vendor ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
-                  <div style={{ background: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: 8, padding: '8px 12px', maxWidth: '75%' }}>
-                    {m.content}
+              {messages.map((m) => {
+                const isOwn = m.sender_is_vendor; // esnaf kendi mesajı
+                const bubbleStyle: React.CSSProperties = isOwn
+                  ? { background: '#ffd600', color: '#111', border: '1px solid transparent' }
+                  : { background: '#f8f9fa', color: '#111', border: '1px solid #e9ecef' };
+                return (
+                  <div key={m.id} style={{ display: 'flex', justifyContent: m.sender_is_vendor ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
+                    <div style={{ ...bubbleStyle, borderRadius: 8, padding: '8px 12px', maxWidth: '75%' }}>
+                      {m.content}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {typing && (
                 <div style={{ color: '#666', fontSize: 12, marginTop: 4 }}>Yazıyor...</div>
               )}
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <input value={input} onChange={(e) => { setInput(e.target.value); wsRef.current?.typing(true); }} onBlur={() => wsRef.current?.typing(false)} className="musteri-input" placeholder="Mesaj yaz..." />
-              <button onClick={send} className="musteri-btn">Gönder</button>
+              <input
+                value={input}
+                onChange={(e) => { setInput(e.target.value); wsRef.current?.typing(true); }}
+                onFocus={(e) => { (e.currentTarget.style.borderColor = '#ffd600'); (e.currentTarget.style.outline = 'none'); }}
+                onBlur={(e) => { wsRef.current?.typing(false); (e.currentTarget.style.borderColor = '#e9ecef'); }}
+                placeholder="Mesaj yaz..."
+                style={{ flex: 1, border: '1px solid #e9ecef', borderRadius: 8, padding: '10px 12px' }}
+              />
+              <button onClick={send} style={{ background: '#ffd600', color: '#111', border: 'none', padding: '10px 14px', borderRadius: 8, fontWeight: 700 }}>Gönder</button>
             </div>
           </div>
         )}
