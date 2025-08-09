@@ -51,11 +51,10 @@ export default function EsnafGirisPage() {
         // Debug log
         console.log("Login response:", res.data);
         console.log("Response keys:", Object.keys(res.data));
-        console.log("email_verified value:", res.data.email_verified);
-        console.log("email_verified type:", typeof res.data.email_verified);
-        
-        // Email doğrulanmamışsa email verification sayfasına yönlendir
-        if (!res.data.email_verified) {
+        console.log("verification_status:", res.data.verification_status, "is_verified:", res.data.is_verified);
+
+        // Doğrulanmamışsa email verification sayfasına yönlendir
+        if (!res.data.is_verified) {
           router.push(`/esnaf/email-dogrula?email=${email}`);
           return;
         }

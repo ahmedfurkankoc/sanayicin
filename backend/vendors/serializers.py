@@ -256,7 +256,9 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'is_staff': obj.user.is_staff,
             'is_superuser': obj.user.is_superuser,
             'role': obj.user.role,
-            'email_verified': obj.user.email_verified,
+            'email_verified': obj.user.email_verified,  # legacy
+            'is_verified': obj.user.is_verified_user,
+            'verification_status': obj.user.verification_status,
             'avatar': obj.avatar.url if obj.avatar else None
         }
 

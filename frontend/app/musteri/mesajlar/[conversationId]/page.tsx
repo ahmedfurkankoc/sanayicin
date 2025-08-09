@@ -79,13 +79,19 @@ export default function ChatPage() {
     <main className="musteri-container">
       <div className="musteri-card" style={{ display: 'flex', flexDirection: 'column', height: '70vh' }}>
         <div style={{ flex: 1, overflowY: 'auto', padding: 8, border: '1px solid var(--border-strong)', borderRadius: 8 }}>
-          {messages.map((m) => (
-            <div key={m.id} style={{ display: 'flex', justifyContent: m.sender_is_vendor ? 'flex-start' : 'flex-end', marginBottom: 8 }}>
-              <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px', maxWidth: '75%' }}>
-                {m.content}
+          {messages.map((m) => {
+            const isOwn = !m.sender_is_vendor; // müşteri kendi mesajı
+            const bubbleStyle: React.CSSProperties = isOwn
+              ? { background: '#2d3748', color: '#fff', border: '1px solid transparent' }
+              : { background: '#fff', color: '#111', border: '1px solid var(--border)' };
+            return (
+              <div key={m.id} style={{ display: 'flex', justifyContent: m.sender_is_vendor ? 'flex-start' : 'flex-end', marginBottom: 8 }}>
+                <div style={{ ...bubbleStyle, borderRadius: 8, padding: '8px 12px', maxWidth: '75%' }}>
+                  {m.content}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {typing && (
             <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>Yazıyor...</div>
           )}
