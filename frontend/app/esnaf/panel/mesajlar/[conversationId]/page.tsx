@@ -83,7 +83,7 @@ export default function EsnafChatPage() {
                 </div>
               ))}
               {typing && (
-                <div style={{ color: '#666', fontSize: 12, marginTop: 4 }}>Karşı taraf yazıyor...</div>
+                <div style={{ color: '#666', fontSize: 12, marginTop: 4 }}>Yazıyor...</div>
               )}
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
