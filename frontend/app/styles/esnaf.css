@@ -3929,3 +3929,23 @@ body, html, .esnaf-panel-layout {
   transition: all 0.2s ease;
   background: white;
 }
+
+/* Ad Soyad yan yana 2'li düzen */
+.esnaf-name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.esnaf-name-field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobilde tek sütun */
+@media (max-width: 600px) {
+  .esnaf-name-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}

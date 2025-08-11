@@ -34,13 +34,14 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
     tax_no = serializers.CharField()
     display_name = serializers.CharField()
     about = serializers.CharField(allow_blank=True, required=False)
-    profile_photo = serializers.ImageField(required=False, allow_null=True)
+    avatar = serializers.ImageField(required=False, allow_null=True)
     business_phone = serializers.CharField(required=True)  # İşyeri telefon numarası
     city = serializers.CharField()
     district = serializers.CharField()
     subdistrict = serializers.CharField()
     address = serializers.CharField()
-    manager_name = serializers.CharField()
+    first_name = serializers.CharField()  # CustomUser'a kaydedilecek
+    last_name = serializers.CharField()   # CustomUser'a kaydedilecek
     manager_birthdate = serializers.DateField()
     manager_tc = serializers.CharField()
     phone_number = serializers.CharField()  # CustomUser'a kaydedilecek
@@ -49,9 +50,9 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         model = VendorProfile
         fields = (
             'email', 'password', 'password2', 'business_type', 'service_area', 'categories',
-            'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'profile_photo',
+            'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'avatar',
             'business_phone', 'city', 'district', 'subdistrict', 'address',
-            'manager_name', 'manager_birthdate', 'manager_tc', 'phone_number'
+            'first_name', 'last_name', 'manager_birthdate', 'manager_tc', 'phone_number'
         )
 
     def validate_email(self, value):
@@ -132,21 +133,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         
         return value.strip()
 
-    def validate_manager_name(self, value):
-        # Yönetici adı güvenlik kontrolü
-        import re
-        dangerous_patterns = [
-            r'<script.*?>.*?</script>',
-            r'javascript:',
-            r'on\w+\s*=',
-            r'<iframe.*?>',
-        ]
-        
-        for pattern in dangerous_patterns:
-            if re.search(pattern, value, re.IGNORECASE):
-                raise serializers.ValidationError("Yönetici adında geçersiz karakterler bulunuyor.")
-        
-        return value.strip()
+
 
     def validate(self, attrs):
         # Şifre kontrolü
@@ -176,8 +163,8 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         service_area = validated_data.pop('service_area')
         categories = validated_data.pop('categories')
         
-        # Profile photo'yu çıkar (varsa)
-        profile_photo = validated_data.pop('profile_photo', None)
+        # Avatar'ı çıkar (varsa)
+        avatar = validated_data.pop('avatar', None)
         
         # Phone number'ı çıkar (CustomUser'a kaydedilecek)
         phone_number = validated_data.pop('phone_number', None)
@@ -193,19 +180,19 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
             email_verified=False  # Email verification sonrası true olacak
         )
         
+        # CustomUser'a profil bilgilerini kaydet
+        first_name = validated_data.pop('first_name', '')
+        last_name = validated_data.pop('last_name', '')
+        
+        user.first_name = first_name
+        user.last_name = last_name
+        if avatar:
+            user.avatar = avatar
+        user.save()
+        
         profile = VendorProfile.objects.create(user=user, **validated_data)
         profile.categories.set(categories)
         profile.service_areas.set([service_area])  # service_area'yı service_areas olarak set et
-        
-        # Profile photo varsa işle ve kaydet
-        if profile_photo:
-            try:
-                profile.save_avatar(profile_photo)
-                profile.save()
-            except Exception as e:
-                # Fotoğraf işlenemezse kullanıcıyı sil
-                user.delete()
-                raise serializers.ValidationError("Profil fotoğrafı işlenirken hata oluştu.")
         
         # Email verification gönderme - kullanıcı doğrulama yöntemi seçtikten sonra gönderilecek
         # email_sent = user.send_verification_email()
@@ -236,15 +223,16 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         write_only=True
     )
     user = serializers.SerializerMethodField()
+    vendor_profile = serializers.SerializerMethodField()
     
     class Meta:
         model = VendorProfile
         fields = (
-            'id', 'slug', 'user', 'business_type', 'service_areas', 'categories', 'categories_ids', 
+            'id', 'slug', 'user', 'vendor_profile', 'business_type', 'service_areas', 'categories', 'categories_ids', 
             'car_brands', 'car_brands_ids', 'company_title', 'tax_office', 'tax_no',
-            'display_name', 'about', 'profile_photo', 'avatar', 'business_phone', 'city', 'district', 'subdistrict', 'address',
+            'display_name', 'about', 'business_phone', 'city', 'district', 'subdistrict', 'address',
             'social_media', 'working_hours', 'unavailable_dates',
-            'manager_name', 'manager_birthdate', 'manager_tc'
+            'manager_birthdate', 'manager_tc'
         )
         read_only_fields = ('id', 'slug')
 
@@ -253,13 +241,34 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'id': obj.user.id,
             'email': obj.user.email,
             'username': obj.user.username,
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
             'is_staff': obj.user.is_staff,
             'is_superuser': obj.user.is_superuser,
             'role': obj.user.role,
             'email_verified': obj.user.email_verified,  # legacy
             'is_verified': obj.user.is_verified_user,
             'verification_status': obj.user.verification_status,
-            'avatar': obj.avatar.url if obj.avatar else None
+            'avatar': obj.user.avatar.url if obj.user.avatar else None
+        }
+    
+    def get_vendor_profile(self, obj):
+        return {
+            'id': obj.id,
+            'slug': obj.slug,
+            'business_type': obj.business_type,
+            'company_title': obj.company_title,
+            'tax_office': obj.tax_office,
+            'tax_no': obj.tax_no,
+            'display_name': obj.display_name,
+            'about': obj.about,
+            'business_phone': obj.business_phone,
+            'city': obj.city,
+            'district': obj.district,
+            'subdistrict': obj.subdistrict,
+            'address': obj.address,
+            'manager_birthdate': obj.manager_birthdate,
+            'manager_tc': obj.manager_tc
         }
 
     def validate_business_type(self, value):

@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
-from .models import CustomUser, ServiceArea, Category, EmailVerification, SMSVerification
+from .models import CustomUser, ServiceArea, Category, EmailVerification, SMSVerification, VendorUpgradeRequest
 from .serializers import CustomUserSerializer
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
@@ -276,10 +276,34 @@ def verify_email(request):
         verification.is_used = True
         verification.save()
         
+        # Otomatik vendor upgrade - client is_verified olduğunda
+        upgrade_message = ""
+        if user.role == 'client':
+            try:
+                # Client'ı otomatik olarak vendor'a yükselt
+                if user.auto_upgrade_to_vendor():
+                    upgrade_message = " Hesabınız otomatik olarak esnaf hesabına yükseltildi!"
+                    logger.info(f"User {user.email} automatically upgraded to vendor after email verification")
+                else:
+                    # Eğer otomatik upgrade yapılamadıysa, upgrade request var mı kontrol et
+                    if hasattr(user, 'vendor_upgrade_request'):
+                        try:
+                            vendor_profile = user.vendor_upgrade_request.auto_approve_if_verified()
+                            if vendor_profile:
+                                upgrade_message = " Esnaf yükseltme talebiniz onaylandı ve hesabınız açıldı!"
+                                logger.info(f"User {user.email} vendor upgrade request approved after email verification")
+                        except Exception as e:
+                            logger.error(f"Vendor upgrade request approval error: {e}")
+            except Exception as e:
+                logger.error(f"Auto upgrade error for user {user.email}: {e}")
+                # Hata olsa bile email verification başarılı
+        
         return Response({
-            'message': 'Email başarıyla doğrulandı',
+            'message': f'Email başarıyla doğrulandı{upgrade_message}',
             'email': user.email,
-            'is_verified': True
+            'is_verified': True,
+            'role': user.role,
+            'auto_upgraded': user.role == 'vendor'
         })
         
     except Exception as e:
@@ -439,10 +463,34 @@ def verify_sms_code(request):
         is_valid = user.verify_sms_code(code)
         
         if is_valid:
+            # Otomatik vendor upgrade - client is_verified olduğunda
+            upgrade_message = ""
+            if user.role == 'client':
+                try:
+                    # Client'ı otomatik olarak vendor'a yükselt
+                    if user.auto_upgrade_to_vendor():
+                        upgrade_message = " Hesabınız otomatik olarak esnaf hesabına yükseltildi!"
+                        logger.info(f"User {user.email} automatically upgraded to vendor after SMS verification")
+                    else:
+                        # Eğer otomatik upgrade yapılamadıysa, upgrade request var mı kontrol et
+                        if hasattr(user, 'vendor_upgrade_request'):
+                            try:
+                                vendor_profile = user.vendor_upgrade_request.auto_approve_if_verified()
+                                if vendor_profile:
+                                    upgrade_message = " Esnaf yükseltme talebiniz onaylandı ve hesabınız açıldı!"
+                                    logger.info(f"User {user.email} vendor upgrade request approved after SMS verification")
+                            except Exception as e:
+                                logger.error(f"Vendor upgrade request approval error: {e}")
+                except Exception as e:
+                    logger.error(f"Auto upgrade error for user {user.email}: {e}")
+                    # Hata olsa bile SMS verification başarılı
+            
             return Response({
-                'message': 'SMS kodu başarıyla doğrulandı',
+                'message': f'SMS kodu başarıyla doğrulandı{upgrade_message}',
                 'email': user.email,
-                'is_verified': True
+                'is_verified': True,
+                'role': user.role,
+                'auto_upgraded': user.role == 'vendor'
             })
         else:
             return Response(
@@ -582,3 +630,120 @@ def reset_password(request):
             {'error': 'Şifre güncellenirken hata oluştu'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def request_vendor_upgrade(request):
+    """Client'tan vendor'a yükseltme talebi"""
+    try:
+        from .models import VendorUpgradeRequest
+        
+        # Kullanıcı sadece client olabilir
+        if request.user.role != 'client':
+            return Response(
+                {'error': 'Sadece müşteriler esnafa yükseltilebilir'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Mevcut upgrade request var mı kontrol et
+        if hasattr(request.user, 'vendor_upgrade_request'):
+            return Response(
+                {'error': 'Zaten bir yükseltme talebiniz bulunuyor'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Form data'yı al
+        data = request.data.copy()
+        
+        # Client bilgilerini otomatik doldur
+        client_profile = request.user.client_profile
+        data.update({
+            'manager_name': f"{client_profile.first_name} {client_profile.last_name}",
+            'business_phone': client_profile.phone,
+            'city': client_profile.city,
+            'district': client_profile.district,
+            'address': client_profile.address,
+            'about': client_profile.about or ''
+        })
+        
+        # Upgrade request oluştur
+        serializer = VendorUpgradeRequestSerializer(data=data)
+        if serializer.is_valid():
+            upgrade_request = serializer.save(user=request.user)
+            
+            # Eğer kullanıcı is_verified ise otomatik onayla
+            if request.user.is_verified:
+                try:
+                    vendor_profile = upgrade_request.auto_approve_if_verified()
+                    if vendor_profile:
+                        return Response({
+                            'message': 'Hesabınız otomatik olarak esnaf hesabına yükseltildi!',
+                            'auto_approved': True,
+                            'vendor_profile_id': vendor_profile.id
+                        }, status=status.HTTP_200_OK)
+                except Exception as e:
+                    logger.error(f"Auto approval error: {e}")
+                    # Hata olsa bile upgrade request oluşturuldu
+            
+            # is_verified değilse normal flow
+            return Response({
+                'message': 'Esnaf yükseltme talebiniz alındı. Email/SMS doğrulaması gerekli.',
+                'request_id': upgrade_request.id,
+                'auto_approved': False,
+                'requires_verification': True
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+    except Exception as e:
+        logger.error(f"Vendor upgrade request error: {e}")
+        return Response(
+            {'error': 'Yükseltme talebi oluşturulamadı'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_vendor_upgrade_status(request):
+    """Vendor upgrade request durumunu kontrol et"""
+    try:
+        if hasattr(request.user, 'vendor_upgrade_request'):
+            upgrade_request = request.user.vendor_upgrade_request
+            return Response({
+                'status': upgrade_request.status,
+                'requested_at': upgrade_request.requested_at,
+                'processed_at': upgrade_request.processed_at,
+                'admin_notes': upgrade_request.admin_notes
+            })
+        else:
+            return Response({'status': 'no_request'})
+            
+    except Exception as e:
+        logger.error(f"Check vendor upgrade status error: {e}")
+        return Response(
+            {'error': 'Durum kontrol edilemedi'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+# VendorUpgradeRequest Serializer
+class VendorUpgradeRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VendorUpgradeRequest
+        fields = [
+            'business_type', 'company_title', 'tax_office', 'tax_no', 'display_name',
+            'service_areas', 'categories', 'car_brands', 'subdistrict',
+            'manager_birthdate', 'manager_tc', 'business_license', 'tax_certificate',
+            'identity_document', 'social_media', 'working_hours', 'unavailable_dates'
+        ]
+    
+    def validate_manager_tc(self, value):
+        """TC kimlik numarası validasyonu"""
+        if not value.isdigit() or len(value) != 11:
+            raise serializers.ValidationError("TC kimlik numarası 11 haneli olmalıdır.")
+        return value
+    
+    def validate_tax_no(self, value):
+        """Vergi numarası validasyonu"""
+        if not value.isdigit() or len(value) < 9 or len(value) > 11:
+            raise serializers.ValidationError("Vergi numarası 9-11 haneli olmalıdır.")
+        return value

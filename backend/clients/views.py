@@ -1,18 +1,24 @@
 from django.shortcuts import render
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from .serializers import ClientProfileSerializer, ClientRegisterSerializer
 from .models import ClientProfile
 from core.models import CustomUser
+from rest_framework_simplejwt.tokens import RefreshToken
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
 class IsClient(permissions.BasePermission):
     def has_permission(self, request, view):
-        # Client, admin role veya superuser olabilir
+        # Client, vendor (esnaflar da customer olarak davranabilir), admin role veya superuser olabilir
         return request.user.is_authenticated and (
             request.user.role == "client" or 
-            request.user.role == "both" or
+            request.user.role == "vendor" or  # 'both' yerine 'vendor'
             request.user.role == "admin" or
             request.user.is_staff or 
             request.user.is_superuser
@@ -21,56 +27,87 @@ class IsClient(permissions.BasePermission):
 class ClientRegisterView(generics.CreateAPIView):
     queryset = ClientProfile.objects.all()
     serializer_class = ClientRegisterSerializer
-    permission_classes = []
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                "detail": "Validation error",
+                "errors": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            profile = serializer.save()
+            return Response({
+                "detail": "Hesabınız başarıyla oluşturuldu. Email doğrulama kodu gönderildi.",
+                "email": profile.user.email,
+                "requires_verification": True
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Client registration error: {e}")
+            return Response({
+                "detail": f"Registration failed: {str(e)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class ClientProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ClientProfileSerializer
     permission_classes = [IsClient]
 
     def get_object(self):
-        # ClientProfile'ı döndür, CustomUser'ı değil
-        try:
-            return ClientProfile.objects.get(user=self.request.user)
-        except ClientProfile.DoesNotExist:
-            # Eğer ClientProfile yoksa ve admin/superuser ise, test için boş profile oluştur
-            if self.request.user.is_staff or self.request.user.is_superuser:
-                # Test için admin/superuser için dummy profile
-                return ClientProfile.objects.create(
-                    user=self.request.user,
-                    first_name="Admin Test",
-                    last_name="Müşteri",
-                    phone="5551234567",
-                    city="İstanbul",
-                    district="Kadıköy",
-                    address="Test Adres",
-                    about="Admin test müşteri profili"
-                )
-            else:
-                # Normal kullanıcı için 404
-                from rest_framework.exceptions import NotFound
-                raise NotFound("Müşteri profili bulunamadı.")
+        return self.request.user.client_profile
 
-    def get(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
-        except Exception as e:
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def client_login(request):
+    """Müşteri girişi - Email ve şifre ile"""
+    try:
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        if not email or not password:
             return Response(
-                {"error": "Müşteri profili bulunamadı."}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-    def put(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"error": "Müşteri profili güncellenirken hata oluştu."}, 
+                {'error': 'Email ve şifre gerekli'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        # Kullanıcıyı bul
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Geçersiz email veya şifre'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Client role kontrolü - vendor'lar da customer olarak davranabilir
+        if user.role not in ['client', 'vendor']:  # 'both' yerine 'vendor'
+            return Response(
+                {'error': 'Bu hesap müşteri hesabı değil'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Şifreyi kontrol et
+        if not user.check_password(password):
+            return Response(
+                {'error': 'Geçersiz email veya şifre'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # JWT token oluştur
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'email': user.email,
+            'is_verified': user.is_verified_user,
+            'role': user.role,
+        })
+
+    except Exception as e:
+        logger.error(f"Client login error: {e}")
+        return Response(
+            {'error': 'Giriş yapılırken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

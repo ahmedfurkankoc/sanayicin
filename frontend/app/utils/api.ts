@@ -179,18 +179,37 @@ apiClient.interceptors.response.use(
       
       // Token geçersiz, logout yap
       if (typeof window !== "undefined") {
-        // Role'ü URL'den tahmin et - avatar upload için özel kontrol
-        const isVendor = error.config?.url?.includes('/vendors/') || 
-                        error.config?.url?.includes('/esnaf/') || 
-                        error.config?.url?.includes('/avatar/upload/'); // Avatar upload vendor için
-        const role: 'vendor' | 'customer' = isVendor ? 'vendor' : 'customer';
+        // Mevcut token'ları kontrol et - hangi role'ün token'ı varsa o role'ü kullan
+        const vendorToken = localStorage.getItem('esnaf_access_token');
+        const customerToken = localStorage.getItem('customer_access_token');
         
+        let role: 'vendor' | 'customer' = 'vendor'; // Default vendor
+        
+        if (vendorToken && !customerToken) {
+          role = 'vendor';
+        } else if (customerToken && !vendorToken) {
+          role = 'customer';
+        } else if (vendorToken && customerToken) {
+          // Her iki token da varsa, URL'den tahmin et
+          const isVendorUrl = error.config?.url?.includes('/vendors/') || 
+                              error.config?.url?.includes('/esnaf/') || 
+                              error.config?.url?.includes('/avatar/upload/');
+          role = isVendorUrl ? 'vendor' : 'customer';
+        } else {
+          // Hiç token yoksa, URL'den tahmin et
+          const isVendorUrl = error.config?.url?.includes('/vendors/') || 
+                              error.config?.url?.includes('/esnaf/') || 
+                              error.config?.url?.includes('/avatar/upload/');
+          role = isVendorUrl ? 'vendor' : 'customer';
+        }
+        
+        // Token'ları temizle
         localStorage.removeItem(getTokenKey(role));
         localStorage.removeItem(getRefreshTokenKey(role));
         localStorage.removeItem(getEmailKey(role));
         
-        // Role'e göre yönlendirme
-        const redirectUrl = role === 'vendor' ? '/esnaf/giris' : '/musteri/giris';
+        // Role'e göre yönlendirme - sadece mevcut sayfalar
+        const redirectUrl = role === 'vendor' ? '/esnaf/giris' : '/';
         window.location.href = redirectUrl;
       }
     }
@@ -202,10 +221,10 @@ apiClient.interceptors.response.use(
 export const api = {
   // Profil işlemleri - Role'e göre farklı endpoint'ler
   getProfile: (role: 'vendor' | 'customer' = 'vendor') => 
-    apiClient.get(role === 'vendor' ? '/vendors/profile/' : '/customers/profile/'),
+    apiClient.get(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/'),
   
   updateProfile: (data: FormData, role: 'vendor' | 'customer' = 'vendor') => 
-    apiClient.patch(role === 'vendor' ? '/vendors/profile/' : '/customers/profile/', data, {
+    apiClient.patch(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/', data, {
       headers: { "Content-Type": "multipart/form-data" }
     }),
   

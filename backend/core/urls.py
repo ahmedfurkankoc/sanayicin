@@ -12,7 +12,9 @@ from .views import (
     check_verification_status,
     forgot_password,
     reset_password,
-    upload_avatar
+    upload_avatar,
+    request_vendor_upgrade,
+    check_vendor_upgrade_status
 )
 
 urlpatterns = [
@@ -29,4 +31,8 @@ urlpatterns = [
     path('avatar/upload/', upload_avatar, name='upload_avatar'),
     path('services/', ServiceAreaListView.as_view(), name='servicearea-list'),
     path('categories/', CategoryListView.as_view(), name='category-list'),
+    
+    # Vendor upgrade endpoints
+    path('vendor/upgrade/', request_vendor_upgrade, name='request_vendor_upgrade'),
+    path('vendor/upgrade/status/', check_vendor_upgrade_status, name='check_vendor_upgrade_status'),
 ] 

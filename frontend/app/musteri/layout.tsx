@@ -1,25 +1,20 @@
-import { Toaster } from "@/app/components/ui/sonner";
-import "@/app/styles/musteri.css";
-import MusteriHeader from "./components/MusteriHeader";
-import MusteriFooter from "./components/MusteriFooter";
-import ChatWidget from "@/app/components/ChatWidget";
+import type { Metadata } from "next";
+import { MusteriProvider } from "./context/MusteriContext";
+import "../styles/musteri.css";
 
-export default function CustomerLayout({
+export const metadata: Metadata = {
+  title: "Sanayicin - Müşteri Paneli",
+  description: "Sanayicin müşteri paneli - Hizmet alın, esnaf bulun",
+};
+
+export default function MusteriLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="tr">
-      <body className="antialiased musteri-layout">
-        <MusteriHeader />
-        <main className="musteri-main">
-          {children}
-        </main>
-        <MusteriFooter />
-        <ChatWidget role="customer" />
-        <Toaster />
-      </body>
-    </html>
+    <MusteriProvider>
+      {children}
+    </MusteriProvider>
   );
 } 

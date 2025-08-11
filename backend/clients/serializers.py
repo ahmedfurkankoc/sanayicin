@@ -13,20 +13,20 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
     city = serializers.CharField()
     district = serializers.CharField()
     address = serializers.CharField()
-    profile_photo = serializers.ImageField(required=False, allow_null=True)
+    avatar = serializers.ImageField(required=False, allow_null=True)
     about = serializers.CharField(allow_blank=True, required=False)
 
     class Meta:
         model = ClientProfile
         fields = (
             "email", "password", "password2", "first_name", "last_name", 
-            "phone", "city", "district", "address", "profile_photo", "about"
+            "phone", "city", "district", "address", "avatar", "about"
         )
 
     def validate_email(self, value):
         # Email format kontrolü
-        if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', value):
-            raise serializers.ValidationError("Geçersiz e-posta formatı.")
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
+            raise serializers.ValidationError("Geçersiz email formatı.")
         
         # Email zaten var mı kontrol et
         if CustomUser.objects.filter(email=value).exists():
@@ -34,10 +34,9 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
             # Eğer kullanıcı zaten client ise hata ver
             if user.role == 'client':
                 raise serializers.ValidationError("Bu e-posta ile zaten bir müşteri hesabı var.")
-            # Eğer vendor ise role'ü 'both' yap
+            # Eğer vendor ise hata ver (artık 'both' yapmıyoruz)
             elif user.role == 'vendor':
-                # Vendor zaten varsa, role'ü 'both' yap
-                pass
+                raise serializers.ValidationError("Bu e-posta ile zaten bir esnaf hesabı var. Müşteri hesabı oluşturamazsınız.")
         return value
 
     def validate_phone(self, value):
@@ -66,13 +65,12 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
         # Kullanıcı zaten var mı kontrol et
         if CustomUser.objects.filter(email=email).exists():
             user = CustomUser.objects.get(email=email)
-            # Eğer vendor ise role'ü 'both' yap
+            # Eğer vendor ise hata ver (artık 'both' yapmıyoruz)
             if user.role == 'vendor':
-                user.role = 'both'
-                user.save()
-            # Eğer zaten 'both' ise hata ver
-            elif user.role == 'both':
-                raise serializers.ValidationError("Bu e-posta ile zaten hem esnaf hem müşteri hesabı var.")
+                raise serializers.ValidationError("Bu e-posta ile zaten bir esnaf hesabı var.")
+            # Eğer zaten 'client' ise hata ver
+            elif user.role == 'client':
+                raise serializers.ValidationError("Bu e-posta ile zaten bir müşteri hesabı var.")
         else:
             # Yeni kullanıcı oluştur
             user = CustomUser.objects.create_user(
@@ -82,6 +80,19 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
                 role="client",
                 email_verified=False
             )
+        
+        # CustomUser'a profil bilgilerini kaydet
+        first_name = validated_data.pop('first_name', '')
+        last_name = validated_data.pop('last_name', '')
+        phone = validated_data.pop('phone', '')
+        avatar = validated_data.pop('avatar', None)
+        
+        user.first_name = first_name
+        user.last_name = last_name
+        user.phone_number = phone
+        if avatar:
+            user.avatar = avatar
+        user.save()
         
         # ClientProfile oluştur
         profile = ClientProfile.objects.create(user=user, **validated_data)
@@ -97,12 +108,13 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
 
 class ClientProfileSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
+    client_profile = serializers.SerializerMethodField()
     
     class Meta:
         model = ClientProfile
         fields = (
-            'id', 'user', 'first_name', 'last_name', 'phone', 'city', 
-            'district', 'address', 'profile_photo', 'about', 'created_at', 'updated_at'
+            'id', 'user', 'client_profile', 'city', 
+            'district', 'address', 'about', 'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'created_at', 'updated_at')
 
@@ -111,8 +123,24 @@ class ClientProfileSerializer(serializers.ModelSerializer):
             'id': obj.user.id,
             'email': obj.user.email,
             'username': obj.user.username,
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
             'role': obj.user.role,
-            'email_verified': obj.user.email_verified
+            'email_verified': obj.user.email_verified,
+            'is_verified': obj.user.is_verified_user
+        }
+    
+    def get_client_profile(self, obj):
+        return {
+            'id': obj.id,
+            'first_name': obj.user.first_name,
+            'last_name': obj.user.last_name,
+            'phone': obj.user.phone_number,
+            'city': obj.city,
+            'district': obj.district,
+            'address': obj.address,
+            'avatar': obj.user.avatar.url if obj.user.avatar else None,
+            'about': obj.about
         }
 
     def validate_phone(self, value):

@@ -18,11 +18,14 @@ class CustomUser(AbstractUser):
     ROLE_CHOICES = [
         ('client', 'Müşteri'),
         ('vendor', 'Esnaf'),
-        ('both', 'Esnaf + Müşteri'),
         ('admin', 'Admin'),
     ]
     role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="client")
     email = models.EmailField(unique=True)
+    
+    # Permission fields
+    can_provide_services = models.BooleanField(default=False)  # Hizmet verebilir mi?
+    can_request_services = models.BooleanField(default=True)   # Hizmet isteyebilir mi?
     
     # Yeni doğrulama sistemi
     is_verified = models.BooleanField(default=False)  # Genel doğrulama durumu
@@ -34,6 +37,11 @@ class CustomUser(AbstractUser):
     
     # Merkezi telefon numarası (hem müşteri hem esnaf için)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
+    
+    # Merkezi profil bilgileri (hem müşteri hem esnaf için)
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    avatar = models.ImageField(upload_to=avatar_upload_path, null=True, blank=True)
     
     # SMS doğrulama
     sms_verification_code = models.CharField(max_length=6, null=True, blank=True)
@@ -48,6 +56,20 @@ class CustomUser(AbstractUser):
         # Superuser oluşturulduğunda role'ü admin yap
         if self.is_superuser and not self.pk:
             self.role = "admin"
+            self.can_provide_services = True
+            self.can_request_services = True
+        
+        # Role'e göre permission'ları otomatik set et
+        if self.role == 'vendor':
+            self.can_provide_services = True
+            self.can_request_services = True
+        elif self.role == 'client':
+            self.can_provide_services = False
+            self.can_request_services = True
+        elif self.role == 'admin':
+            self.can_provide_services = True
+            self.can_request_services = True
+        
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -67,6 +89,99 @@ class CustomUser(AbstractUser):
             return 'legacy_verified'  # Eski sistemden gelen
         else:
             return 'unverified'
+    
+    @property
+    def full_name(self):
+        """Tam adı döndür"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return self.username or self.email
+    
+    def save_avatar(self, image_file):
+        """Avatar dosyasını 200x200 boyutunda kaydet"""
+        try:
+            # Eski avatar'ı sil
+            if self.avatar:
+                if os.path.exists(self.avatar.path):
+                    os.remove(self.avatar.path)
+            
+            # Resmi aç ve işle
+            img = Image.open(image_file)
+            
+            # RGBA'yı RGB'ye çevir (JPEG için)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+            
+            # 200x200 boyutunda resize et (aspect ratio korunarak)
+            img.thumbnail((200, 200), Image.Resampling.LANCZOS)
+            
+            # Yeni canvas oluştur (200x200)
+            new_img = Image.new('RGB', (200, 200), (255, 255, 255))
+            
+            # Resmi ortala
+            x = (200 - img.width) // 2
+            y = (200 - img.height) // 2
+            new_img.paste(img, (x, y))
+            
+            # BytesIO'ya kaydet
+            buffer = BytesIO()
+            new_img.save(buffer, format='JPEG', quality=85, optimize=True)
+            buffer.seek(0)
+            
+            # Dosya adını oluştur
+            file_uuid = str(uuid.uuid4())
+            filename = f'{file_uuid}_200x200.jpg'
+            
+            # Django File objesi oluştur
+            django_file = File(buffer, name=filename)
+            
+            # Avatar field'ına kaydet
+            self.avatar.save(filename, django_file, save=False)
+            
+            return True
+        except Exception as e:
+            print(f"Avatar kaydetme hatası: {e}")
+            return False
+    
+    @property
+    def permissions(self):
+        """Role-based permissions"""
+        if self.role == 'admin':
+            return {
+                'can_provide_services': True,
+                'can_request_services': True,
+                'can_manage_users': True,
+                'can_access_admin': True
+            }
+        elif self.role == 'vendor':
+            return {
+                'can_provide_services': True,
+                'can_request_services': True,  # Esnaflar da müşteri olarak davranabilir
+                'can_manage_users': False,
+                'can_access_admin': False
+            }
+        else:  # client
+            return {
+                'can_provide_services': False,
+                'can_request_services': True,
+                'can_manage_users': False,
+                'can_access_admin': False
+            }
+    
+    def auto_upgrade_to_vendor(self):
+        """Client'ı otomatik olarak vendor'a yükselt (is_verified=True ise)"""
+        if self.role == 'client' and self.is_verified:
+            self.role = 'vendor'
+            self.can_provide_services = True
+            self.can_request_services = True
+            self.save()
+            return True
+        return False
     
     def create_email_verification(self) -> 'EmailVerification':
         """Email verification token'ı oluştur"""
@@ -257,5 +372,132 @@ class CarBrand(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class VendorUpgradeRequest(models.Model):
+    """Client'tan vendor'a yükseltme talebi için model"""
+    STATUS_CHOICES = [
+        ('pending', 'Beklemede'),
+        ('approved', 'Onaylandı'),
+        ('rejected', 'Reddedildi'),
+        ('requires_info', 'Bilgi Gerekli')
+    ]
+    
+    # Temel bilgiler
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='vendor_upgrade_request')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    admin_notes = models.TextField(blank=True)
+    
+    # İşletme bilgileri (Client'da olmayan)
+    business_type = models.CharField(max_length=16, choices=[
+        ("sahis", "Şahıs Şirketi"),
+        ("limited", "Limited Şirketi"),
+        ("anonim", "Anonim Şirketi"),
+        ("esnaf", "Esnaf"),
+    ])
+    company_title = models.CharField(max_length=150)
+    tax_office = models.CharField(max_length=100)
+    tax_no = models.CharField(max_length=20)
+    display_name = models.CharField(max_length=100)
+    
+    # Hizmet bilgileri
+    service_areas = models.ManyToManyField(ServiceArea, blank=True)
+    categories = models.ManyToManyField(Category, blank=True)
+    car_brands = models.ManyToManyField(CarBrand, blank=True)
+    
+    # Konum bilgileri (Client'da olmayan)
+    subdistrict = models.CharField(max_length=128)
+    
+    # Yönetici bilgileri (Client'da olmayan)
+    manager_birthdate = models.DateField()
+    manager_tc = models.CharField(max_length=11)
+    
+    # İşletme belgeleri
+    business_license = models.FileField(upload_to='business_licenses/')
+    tax_certificate = models.FileField(upload_to='tax_certificates/')
+    identity_document = models.FileField(upload_to='identity_documents/')
+    
+    # Ek bilgiler
+    social_media = models.JSONField(default=dict, blank=True)
+    working_hours = models.JSONField(default=dict, blank=True)
+    unavailable_dates = models.JSONField(default=list, blank=True)
+    
+    class Meta:
+        verbose_name = "Esnaf Yükseltme Talebi"
+        verbose_name_plural = "Esnaf Yükseltme Talepleri"
+        ordering = ['-requested_at']
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.get_status_display()}"
+    
+    @property
+    def is_pending(self):
+        return self.status == 'pending'
+    
+    @property
+    def is_approved(self):
+        return self.status == 'approved'
+    
+    @property
+    def is_rejected(self):
+        return self.status == 'rejected'
+    
+    def approve(self, admin_user):
+        """Admin tarafından onaylanır"""
+        if not admin_user.is_staff:
+            raise PermissionError("Sadece admin'ler onaylayabilir")
+        
+        self.status = 'approved'
+        self.processed_at = timezone.now()
+        self.save()
+        
+        # Kullanıcıyı vendor'a yükselt
+        self.user.role = 'vendor'
+        self.user.can_provide_services = True
+        self.user.can_request_services = True
+        self.user.save()
+        
+        # VendorProfile oluştur (eğer yoksa)
+        from vendors.models import VendorProfile
+        vendor_profile, created = VendorProfile.objects.get_or_create(
+            user=self.user,
+            defaults={
+                'business_type': self.business_type,
+                'company_title': self.company_title,
+                'tax_office': self.tax_office,
+                'tax_no': self.tax_no,
+                'display_name': self.display_name,
+                'subdistrict': self.subdistrict,
+                'manager_name': f"{self.user.client_profile.first_name} {self.user.client_profile.last_name}",
+                'manager_birthdate': self.manager_birthdate,
+                'manager_tc': self.manager_tc,
+                'business_phone': self.user.client_profile.phone,
+                'city': self.user.client_profile.city,
+                'district': self.user.client_profile.district,
+                'address': self.user.client_profile.address,
+                'about': self.user.client_profile.about or '',
+                'profile_photo': self.user.client_profile.profile_photo,
+                'avatar': self.user.client_profile.avatar,
+                'social_media': self.social_media,
+                'working_hours': self.working_hours,
+                'unavailable_dates': self.unavailable_dates,
+            }
+        )
+        
+        # Service areas, categories ve car brands ekle
+        vendor_profile.service_areas.set(self.service_areas.all())
+        vendor_profile.categories.set(self.categories.all())
+        vendor_profile.car_brands.set(self.car_brands.all())
+        
+        return vendor_profile
+    
+    def auto_approve_if_verified(self):
+        """Eğer kullanıcı is_verified ise otomatik onayla"""
+        if self.user.is_verified:
+            # Admin olmadan da otomatik onaylanabilir
+            return self.approve(self.user)
+        return False
 
 
