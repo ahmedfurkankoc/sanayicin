@@ -83,14 +83,6 @@ const SearchBar = () => {
         </select>
         <button type="submit" className="modernSearchButton">Ara</button>
       </form>
-
-      {/* Esnaf Ol Butonu */}
-      <div className="esnaf-ol-section">
-        <p className="esnaf-ol-text">Hizmet vermek istiyor musunuz?</p>
-        <Link href="/musteri/esnaf-ol" className="esnaf-ol-button">
-          Esnaf Ol
-        </Link>
-      </div>
     </>
   );
 };

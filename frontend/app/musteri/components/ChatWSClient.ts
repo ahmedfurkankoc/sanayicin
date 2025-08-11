@@ -3,8 +3,7 @@
 export type ChatWSClientOptions = {
   baseWsUrl?: string; // e.g. ws://localhost:8000
   conversationId: number;
-  authToken?: string | null;
-  guestToken?: string | null;
+  authToken: string | null; // Required for authenticated users
   onOpen?: () => void;
   onClose?: (e?: CloseEvent) => void;
   onMessage?: (event: { event: string; data: any }) => void;
@@ -43,8 +42,6 @@ export class ChatWSClient {
     const base = this.resolveBase();
     const qs = this.opts.authToken
       ? `token=${encodeURIComponent(this.opts.authToken)}`
-      : this.opts.guestToken
-      ? `guest=${encodeURIComponent(this.opts.guestToken)}`
       : '';
     const url = `${base}/ws/chat/${this.opts.conversationId}/${qs ? `?${qs}` : ''}`;
     this.socket = new WebSocket(url);

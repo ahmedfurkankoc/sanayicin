@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { api, getAuthToken, getGuestToken } from '@/app/utils/api';
+import { api, getAuthToken } from '@/app/utils/api';
 import { ChatWSClient } from '@/app/musteri/components/ChatWSClient';
 
 export default function ChatPage() {
@@ -15,24 +15,25 @@ export default function ChatPage() {
   const wsRef = useRef<ChatWSClient | null>(null);
 
   useEffect(() => {
-    (async () => {
+    const loadMessages = async () => {
       try {
-        await api.chatEnsureGuest();
+        setLoading(true);
         const res = await api.chatGetMessages(conversationId, { limit: 50 });
         const list = res.data?.results ?? [];
         setMessages(list.reverse());
-      } catch (e) {
-        console.error(e);
+      } catch (error) {
+        console.error('Mesajlar yüklenemedi:', error);
       } finally {
         setLoading(false);
       }
-    })();
+    };
+
+    loadMessages();
   }, [conversationId]);
 
   useEffect(() => {
     const authToken = getAuthToken('customer');
-    const guestToken = getGuestToken();
-    const ws = new ChatWSClient({ conversationId, authToken, guestToken, onMessage: (evt) => {
+    const ws = new ChatWSClient({ conversationId, authToken, onMessage: (evt) => {
       if (evt.event === 'message.new') {
         setMessages((prev) => [...prev, evt.data]);
       } else if (evt.event === 'typing') {
