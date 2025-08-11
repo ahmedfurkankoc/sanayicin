@@ -8,20 +8,14 @@ import ChatWidget from "@/app/components/ChatWidget";
 
 export default function EsnafLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr">
-      <head>
-        <meta name="robots" content="noindex, nofollow" />
-        <meta name="googlebot" content="noindex, nofollow" />
-      </head>
-      <body>
-        <EsnafProvider>
+    <>
+      <EsnafProvider>
         <div className="esnaf-panel-layout">
           <main className="esnaf-panel-main-content">{children}</main>
         </div>
-        </EsnafProvider>
-        <ChatWidget role="vendor" />
-        <Toaster />
-      </body>
-    </html>
+      </EsnafProvider>
+      <ChatWidget role="vendor" />
+      <Toaster />
+    </>
   );
 } 

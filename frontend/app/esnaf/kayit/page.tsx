@@ -93,7 +93,8 @@ export default function EsnafKayitPage() {
 
   // 4. adım state
   const [managerInfo, setManagerInfo] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     birthdate: "",
     tc: "",
     phone: "",
@@ -382,10 +383,10 @@ export default function EsnafKayitPage() {
   const handleSubmitManager = async (e: React.FormEvent) => {
     e.preventDefault();
     setManagerError("");
-    const { name, birthdate, tc, phone, email, password, password2, agreement } = managerInfo;
+    const { firstName, lastName, birthdate, tc, phone, email, password, password2, agreement } = managerInfo;
     
     // Güvenlik: Kapsamlı validation
-    if (!name || !birthdate || !tc || !phone || !email || !password || !password2) {
+    if (!firstName || !lastName || !birthdate || !tc || !phone || !email || !password || !password2) {
       setManagerError("Lütfen tüm alanları doldurun.");
       return;
     }
@@ -419,12 +420,21 @@ export default function EsnafKayitPage() {
     }
     
     // Yönetici adı güvenlik kontrolü (API'deki validation)
-    if (name.length > 100) {
+    if (firstName.length > 100) {
       setManagerError("Yönetici adı çok uzun (maksimum 100 karakter).");
       return;
     }
-    if (/[<>"']/.test(name)) {
+    if (/[<>"']/.test(firstName)) {
       setManagerError("Yönetici adında geçersiz karakterler var.");
+      return;
+    }
+    
+    if (lastName.length > 100) {
+      setManagerError("Yönetici soyadı çok uzun (maksimum 100 karakter).");
+      return;
+    }
+    if (/[<>"']/.test(lastName)) {
+      setManagerError("Yönetici soyadında geçersiz karakterler var.");
       return;
     }
     
@@ -467,7 +477,8 @@ export default function EsnafKayitPage() {
       formData.append('district', selectedDistrict);
       formData.append('subdistrict', selectedNeighbourhood);
       formData.append('address', companyInfo.address);
-      formData.append('manager_name', name);
+      formData.append('first_name', firstName);
+      formData.append('last_name', lastName);
       formData.append('manager_birthdate', managerInfo.birthdate);
       formData.append('manager_tc', tc);
       formData.append('phone_number', phone);
@@ -730,15 +741,30 @@ export default function EsnafKayitPage() {
         )}
         {step === 4 && (
           <form onSubmit={handleSubmitManager} className="esnaf-register-form">
-            <label className="esnaf-register-label">Yetkili Ad Soyad</label>
-            <input
-              type="text"
-              name="name"
-              className="esnaf-register-input"
-              value={managerInfo.name}
-              onChange={handleManagerInput}
-              required
-            />
+            <div className="esnaf-name-row">
+              <div className="esnaf-name-field">
+                <label className="esnaf-register-label">Ad</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  className="esnaf-register-input"
+                  value={managerInfo.firstName}
+                  onChange={handleManagerInput}
+                  required
+                />
+              </div>
+              <div className="esnaf-name-field">
+                <label className="esnaf-register-label">Soyad</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  className="esnaf-register-input"
+                  value={managerInfo.lastName}
+                  onChange={handleManagerInput}
+                  required
+                />
+              </div>
+            </div>
             <label className="esnaf-register-label">Doğum Tarihi</label>
             <input
               type="date"

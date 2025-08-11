@@ -5,6 +5,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { iconMapping } from "@/app/utils/iconMapping";
+import MusteriHeader from "../components/MusteriHeader";
+import MusteriFooter from "../components/MusteriFooter";
+import AuthModal from "@/app/components/AuthModal";
 
 interface Vendor {
   id: number;
@@ -52,83 +55,110 @@ function useDebounce<T>(value: T, delay: number): T {
 // Memoized vendor card component
 const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
   const router = useRouter();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  const handleVendorClick = () => {
+    // Yeni permission system ile authentication kontrolü
+    const vendorToken = localStorage.getItem('esnaf_access_token');
+    const customerToken = localStorage.getItem('customer_access_token');
+    
+    // Vendor token varsa hem vendor hem customer olarak davran
+    const isAuthenticated = vendorToken || customerToken;
+    
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    // Giriş yapılmışsa esnaf profil sayfasına yönlendir
+    router.push(`/musteri/esnaf/${vendor.slug}`);
+  };
   
   return (
-    <div 
-      onClick={() => router.push(`/musteri/esnaf/${vendor.slug}`)}
-      className="musteri-vendor-card"
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-        {/* Avatar */}
-        <div style={{
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          backgroundColor: '#ffd600',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#111111',
-          flexShrink: 0
-        }}>
-          {vendor.display_name.charAt(0).toUpperCase()}
-        </div>
-
-        {/* Content */}
-        <div style={{ flex: 1 }}>
-          <h3 style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            margin: '0 0 8px 0',
-            color: '#111111'
-          }}>
-            {vendor.display_name}
-          </h3>
-          
-          <p style={{
-            fontSize: '14px',
-            color: '#666',
-            margin: '0 0 12px 0'
-          }}>
-            {vendor.business_type}
-          </p>
-
+    <>
+      <div 
+        onClick={handleVendorClick}
+        className="musteri-vendor-card"
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+          {/* Avatar */}
           <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            backgroundColor: '#ffd600',
             display: 'flex',
             alignItems: 'center',
-            gap: '16px',
-            fontSize: '13px',
-            color: '#666'
+            justifyContent: 'center',
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#111111',
+            flexShrink: 0
           }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              {React.createElement(iconMapping['map-pin'], { size: 14 })}
-              {vendor.district}, {vendor.city}
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              {React.createElement(iconMapping.phone, { size: 14 })}
-              {vendor.phone}
-            </span>
+            {vendor.display_name.charAt(0).toUpperCase()}
           </div>
 
-          {vendor.about && (
+          {/* Content */}
+          <div style={{ flex: 1 }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              margin: '0 0 8px 0',
+              color: '#111111'
+            }}>
+              {vendor.display_name}
+            </h3>
+            
             <p style={{
               fontSize: '14px',
-              color: '#444',
-              margin: '12px 0 0 0',
-              lineHeight: '1.4',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
+              color: '#666',
+              margin: '0 0 12px 0'
             }}>
-              {vendor.about}
+              {vendor.business_type}
             </p>
-          )}
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              fontSize: '13px',
+              color: '#666'
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {React.createElement(iconMapping['map-pin'], { size: 14 })}
+                {vendor.district}, {vendor.city}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {React.createElement(iconMapping.phone, { size: 14 })}
+                {vendor.phone}
+              </span>
+            </div>
+
+            {vendor.about && (
+              <p style={{
+                fontSize: '14px',
+                color: '#444',
+                margin: '12px 0 0 0',
+                lineHeight: '1.4',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}>
+                {vendor.about}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        title="Giriş Gerekli"
+        message="Esnaf profilini görüntülemek için giriş yapmanız veya hesap oluşturmanız gerekiyor."
+      />
+    </>
   );
 });
 
@@ -369,79 +399,83 @@ function AramaSonuclariContent() {
   );
 
   return (
-    <div className="musteri-container">
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 200px)' }}>
-        {/* Sol Sütun - Filtreler */}
-        <div className="musteri-filters-sidebar">
-          <h3 style={{ marginBottom: '20px', color: '#333' }}>Filtreler</h3>
-          
-          <FilterSelect
-            label="Şehir"
-            value={selectedCity}
-            onChange={(value) => handleFilterChange('city', value)}
-            options={cityOptions}
-            placeholder="İl seçiniz"
-          />
+    <>
+      <MusteriHeader />
+      <div className="musteri-container">
+        <div style={{ display: 'flex', minHeight: 'calc(100vh - 200px)' }}>
+          {/* Sol Sütun - Filtreler */}
+          <div className="musteri-filters-sidebar">
+            <h3 style={{ marginBottom: '20px', color: '#333' }}>Filtreler</h3>
+            
+            <FilterSelect
+              label="Şehir"
+              value={selectedCity}
+              onChange={(value) => handleFilterChange('city', value)}
+              options={cityOptions}
+              placeholder="İl seçiniz"
+            />
 
-          <FilterSelect
-            label="İlçe"
-            value={selectedDistrict}
-            onChange={(value) => handleFilterChange('district', value)}
-            options={districtOptions}
-            disabled={!selectedCity}
-            placeholder="İlçe seçiniz"
-          />
+            <FilterSelect
+              label="İlçe"
+              value={selectedDistrict}
+              onChange={(value) => handleFilterChange('district', value)}
+              options={districtOptions}
+              disabled={!selectedCity}
+              placeholder="İlçe seçiniz"
+            />
 
-          <FilterSelect
-            label="Hizmet Alanı"
-            value={selectedService}
-            onChange={(value) => handleFilterChange('service', value)}
-            options={serviceOptions}
-            placeholder="Hizmet seçiniz"
-          />
+            <FilterSelect
+              label="Hizmet Alanı"
+              value={selectedService}
+              onChange={(value) => handleFilterChange('service', value)}
+              options={serviceOptions}
+              placeholder="Hizmet seçiniz"
+            />
 
-          <FilterSelect
-            label="Kategori"
-            value={selectedCategory}
-            onChange={(value) => handleFilterChange('category', value)}
-            options={categoryOptions}
-            disabled={!selectedService}
-            placeholder="Kategori seçiniz"
-          />
+            <FilterSelect
+              label="Kategori"
+              value={selectedCategory}
+              onChange={(value) => handleFilterChange('category', value)}
+              options={categoryOptions}
+              disabled={!selectedService}
+              placeholder="Kategori seçiniz"
+            />
 
-          {/* Sonuç Sayısı */}
-          <div style={{ 
-            padding: '16px', 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '8px',
-            marginTop: '20px'
-          }}>
-            <strong>{vendors.length}</strong> usta bulundu
+            {/* Sonuç Sayısı */}
+            <div style={{ 
+              padding: '16px', 
+              backgroundColor: '#f8f9fa', 
+              borderRadius: '8px',
+              marginTop: '20px'
+            }}>
+              <strong>{vendors.length}</strong> usta bulundu
+            </div>
+          </div>
+
+          {/* Sağ Sütun - Arama Sonuçları */}
+          <div className="musteri-search-results-container">
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <div>Aranıyor...</div>
+              </div>
+            ) : error ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
+                <div>{error}</div>
+              </div>
+            ) : vendors.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                <div>Sonuç bulunamadı</div>
+              </div>
+            ) : (
+              <div>
+                {vendorList}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Sağ Sütun - Arama Sonuçları */}
-        <div className="musteri-search-results-container">
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <div>Aranıyor...</div>
-            </div>
-          ) : error ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
-              <div>{error}</div>
-            </div>
-          ) : vendors.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-              <div>Sonuç bulunamadı</div>
-            </div>
-          ) : (
-            <div>
-              {vendorList}
-            </div>
-          )}
-        </div>
       </div>
-    </div>
+      <MusteriFooter />
+    </>
   );
 }
 

@@ -34,6 +34,8 @@ const Navbar = () => {
     if (typeof window === 'undefined') return;
     const vendorToken = localStorage.getItem('esnaf_access_token');
     const customerToken = localStorage.getItem('customer_access_token');
+    
+    // Vendor token varsa hem vendor hem customer olarak davran
     if (vendorToken) {
       setUserType('vendor');
     } else if (customerToken) {
@@ -83,7 +85,8 @@ const Navbar = () => {
     if (userType === 'vendor') {
       router.push('/esnaf/panel');
     } else if (userType === 'customer') {
-      router.push('/musteri/panel');
+      // Müşteri paneli henüz mevcut değil, ana sayfaya yönlendir
+      router.push('/');
     }
   };
 
@@ -135,7 +138,7 @@ const Navbar = () => {
           {userType === 'customer' && (
             <>
               <li>
-                <a href="/musteri/panel" className="sanayicin-btn-vendor" onClick={handlePanel}>Hesabım</a>
+                <a href="/" className="sanayicin-btn-vendor" onClick={handlePanel}>Hesabım</a>
               </li>
               <li>
                 <a href="#logout" className="sanayicin-btn-vendor" onClick={handleLogout}>Çıkış</a>
