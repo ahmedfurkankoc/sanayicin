@@ -139,7 +139,7 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       
       // Email verification durumunu sadece backend'den al
-        const backendEmailVerified = response.data.user?.is_verified || false;
+      const backendEmailVerified = response.data.user?.is_verified || false;
       console.log("EsnafContext - Setting emailVerified to:", backendEmailVerified);
       setEmailVerified(backendEmailVerified);
       
@@ -147,6 +147,8 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
       const isAdminUser = response.data.user?.is_staff || response.data.user?.is_superuser;
       setIsAdmin(!!isAdminUser);
       
+      setLoading(false);
+      return; // Başarılı, fonksiyondan çık
     } catch (error) {
       console.error("Kullanıcı bilgileri yüklenirken hata:", error);
       

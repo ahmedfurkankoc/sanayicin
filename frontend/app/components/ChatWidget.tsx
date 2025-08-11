@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { api, getAuthToken, getGuestToken } from '@/app/utils/api';
+import { api, getAuthToken } from '@/app/utils/api';
 import { ChatWSClient } from '@/app/musteri/components/ChatWSClient';
 
 type Role = 'customer' | 'vendor';
@@ -25,19 +25,42 @@ export default function ChatWidget({ role }: { role: Role }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [typing, setTyping] = useState(false);
   const [msg, setMsg] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const wsRef = useRef<ChatWSClient | null>(null);
+
+  // Authentication kontrolü
+  useEffect(() => {
+    const checkAuth = () => {
+      const vendorToken = localStorage.getItem('esnaf_access_token');
+      const customerToken = localStorage.getItem('customer_access_token');
+      const hasToken = vendorToken || customerToken;
+      setIsAuthenticated(!!hasToken);
+    };
+
+    checkAuth();
+    // Storage değişikliklerini dinle
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, []);
 
   const totalUnread = useMemo(() => {
     return conversations.reduce((sum, c) => sum + (role === 'vendor' ? (c.vendor_unread_count || 0) : (c.client_unread_count || 0)), 0);
   }, [conversations, role]);
 
+  const buttonLabel = useMemo(() => open ? 'Kapat' : 'Mesajlar', [open]);
+  
+  const palette = useMemo(() => (
+    role === 'vendor'
+      ? { primary: '#ffd600', primaryText: '#111', highlight: 'rgba(255,214,0,0.15)' }
+      : { primary: '#2d3748', primaryText: '#fff', highlight: 'rgba(45,55,72,0.15)' }
+  ), [role]);
+
   // load conversation list on open
   useEffect(() => {
-    if (!open) return;
+    if (!open || !isAuthenticated) return;
     (async () => {
       try {
         setLoadingList(true);
-        if (role === 'customer') await api.chatEnsureGuest();
         const res = await api.chatListConversations();
         const items = res.data ?? res;
         setConversations(items);
@@ -47,15 +70,15 @@ export default function ChatWidget({ role }: { role: Role }) {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, isAuthenticated]);
 
   // background polling for unread counts (works when widget closed or open)
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     let timer: any;
     const tick = async () => {
       try {
-        // customer tarafında guest token yoksa al
-        if (role === 'customer') await api.chatEnsureGuest();
         const res = await api.chatListConversations();
         const items = res.data ?? res;
         setConversations((prev) => {
@@ -73,11 +96,11 @@ export default function ChatWidget({ role }: { role: Role }) {
     // run once immediately when closed as well
     tick();
     return () => clearInterval(timer);
-  }, [role, open, activeId]);
+  }, [role, open, activeId, isAuthenticated]);
 
   // load messages when activeId changes
   useEffect(() => {
-    if (!open || !activeId) return;
+    if (!open || !activeId || !isAuthenticated) return;
     (async () => {
       const res = await api.chatGetMessages(activeId, { limit: 50 });
       const list = res.data?.results ?? [];
@@ -88,17 +111,15 @@ export default function ChatWidget({ role }: { role: Role }) {
         setConversations((prev) => prev.map((c) => (c.id === activeId ? { ...c, client_unread_count: 0, vendor_unread_count: 0 } : c)));
       } catch {}
     })();
-  }, [open, activeId]);
+  }, [open, activeId, isAuthenticated]);
 
   // connect WS for active conversation
   useEffect(() => {
-    if (!open || !activeId) return;
+    if (!open || !activeId || !isAuthenticated) return;
     const authToken = getAuthToken(role === 'vendor' ? 'vendor' : 'customer');
-    const guestToken = role === 'customer' ? getGuestToken() : null;
     const ws = new ChatWSClient({
       conversationId: activeId,
       authToken,
-      guestToken,
       onMessage: (evt) => {
         if (evt.event === 'message.new') {
           setMessages((prev) => [...prev, evt.data]);
@@ -131,11 +152,11 @@ export default function ChatWidget({ role }: { role: Role }) {
     ws.connect();
     wsRef.current = ws;
     return () => ws.close();
-  }, [open, activeId, role]);
+  }, [open, activeId, role, isAuthenticated]);
 
   const send = async () => {
     const text = msg.trim();
-    if (!text || !activeId) return;
+    if (!text || !activeId || !isAuthenticated) return;
     const optimistic: any = { id: `tmp-${Date.now()}`, content: text, sender_is_vendor: role === 'vendor', created_at: new Date().toISOString() };
     setMessages((p) => [...p, optimistic]);
     setMsg('');
@@ -153,12 +174,10 @@ export default function ChatWidget({ role }: { role: Role }) {
     }
   };
 
-  const buttonLabel = open ? 'Kapat' : 'Mesajlar';
-  const palette = useMemo(() => (
-    role === 'vendor'
-      ? { primary: '#ffd600', primaryText: '#111', highlight: 'rgba(255,214,0,0.15)' }
-      : { primary: '#2d3748', primaryText: '#fff', highlight: 'rgba(45,55,72,0.15)' }
-  ), [role]);
+  // Eğer authenticated değilse ChatWidget'ı gösterme
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div>
@@ -243,7 +262,9 @@ export default function ChatWidget({ role }: { role: Role }) {
                     }}
                   >
                     <div style={{ fontWeight: 600, fontSize: 14 }}>
-                      {role === 'vendor' ? (c.client_user?.email ?? `Misafir`) : (c.vendor_display_name ?? c.vendor?.display_name ?? 'Esnaf')}
+                      {role === 'vendor' 
+                        ? (c.client_user?.email || c.client_user?.username || 'Bilinmeyen Kullanıcı') 
+                        : (c.vendor_display_name || c.vendor?.display_name || 'Esnaf')}
                       {unread > 0 && (
                         <span style={{ marginLeft: 8, background: '#ef4444', color: '#fff', borderRadius: 999, padding: '0 6px', fontSize: 11, fontWeight: 800 }}>
                           {unread > 99 ? '99+' : unread}
@@ -261,8 +282,9 @@ export default function ChatWidget({ role }: { role: Role }) {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: 12, borderBottom: `2px solid ${palette.primary}`, fontWeight: 700 }}>
               {role === 'vendor'
-                ? conversations.find((c) => c.id === activeId)?.client_user?.email ?? 'Sohbet'
-                : conversations.find((c) => c.id === activeId)?.vendor_display_name ?? 'Sohbet'}
+                ? (conversations.find((c) => c.id === activeId)?.client_user?.email || 
+                   conversations.find((c) => c.id === activeId)?.client_user?.username || 'Sohbet')
+                : (conversations.find((c) => c.id === activeId)?.vendor_display_name || 'Sohbet')}
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 12, background: '#fafafa' }}>
               {messages.map((m) => {
@@ -275,7 +297,7 @@ export default function ChatWidget({ role }: { role: Role }) {
                   : { background: '#fff', color: '#111', border: '1px solid #e9ecef' };
                 return (
                   <div key={m.id} style={{ display: 'flex', justifyContent: justify, marginBottom: 8 }}>
-                    <div style={{ ...bubbleStyle, borderRadius: 8, padding: '8px 12px', maxWidth: '75%' }}>{m.content}</div>
+                    <div style={{ ...bubbleStyle, borderRadius: 8, padding: '8px 12px', maxWidth: '75%' }}>{m.id === 'tmp-${Date.now()}' ? 'Gönderiliyor...' : m.content}</div>
                   </div>
                 );
               })}

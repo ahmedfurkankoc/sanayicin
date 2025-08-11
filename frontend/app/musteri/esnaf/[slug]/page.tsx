@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { api } from "@/app/utils/api";
-import { iconMapping } from "@/app/utils/iconMapping";
-
+import React, { useEffect, useState, Suspense } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { api } from '@/app/utils/api';
+import { iconMapping } from '@/app/utils/iconMapping';
 
 interface Vendor {
   id: number;
@@ -13,6 +12,7 @@ interface Vendor {
     email: string;
     email_verified: boolean;
   };
+  user_id?: number; // Backend'den gelmesi gereken field
   business_type: string;
   company_title: string;
   display_name: string;
@@ -177,7 +177,7 @@ function VendorDetailContent() {
             {/* Vendor Bilgileri */}
             <div style={{ flex: 1 }}>
               <h1 style={{ 
-                fontSize: '28px', 
+                fontSize: '32px', 
                 fontWeight: 'bold', 
                 margin: '0 0 8px 0',
                 color: '#333'
@@ -185,17 +185,16 @@ function VendorDetailContent() {
                 {vendor.display_name}
               </h1>
               
-              {vendor.company_title && (
-                <p style={{ 
-                  fontSize: '16px', 
-                  color: '#666', 
-                  margin: '0 0 16px 0' 
-                }}>
-                  {vendor.company_title}
-                </p>
-              )}
+              <p style={{ 
+                fontSize: '18px', 
+                color: '#666', 
+                margin: '0 0 16px 0'
+              }}>
+                {vendor.business_type} • {vendor.company_title}
+              </p>
 
-              <div style={{ display: 'flex', gap: '24px', marginBottom: '16px' }}>
+              {/* İletişim Bilgileri */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {React.createElement(iconMapping['map-pin'], { size: 16, color: '#666' })}
                   <span style={{ fontSize: '14px', color: '#333' }}>
@@ -212,60 +211,130 @@ function VendorDetailContent() {
               </div>
 
               {/* İletişim Butonları */}
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <button 
-                  onClick={() => router.push(`/musteri/esnaf/${slug}/randevu`)}
-                  style={{
-                    backgroundColor: '#ffd600',
-                    color: '#111111',
-                    border: 'none',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  {React.createElement(iconMapping.calendar, { size: 16 })}
-                  Randevu Al
-                </button>
-                <button
-                  onClick={async () => {
-                    if (!vendor) return;
-                    try {
-                      setCreatingChat(true);
-                      await api.chatEnsureGuest();
-                      const res = await api.chatCreateConversation(vendor.id);
-                      const convId = res.data?.id;
-                      if (convId) router.push(`/musteri/mesajlar/${convId}`);
-                    } catch (e) {
-                      console.error('Sohbet başlatma hatası', e);
-                    } finally {
-                      setCreatingChat(false);
+              {(() => {
+                // Kullanıcı kendi profiline bakıyor mu kontrol et
+                const vendorToken = localStorage.getItem('esnaf_access_token');
+                const customerToken = localStorage.getItem('customer_access_token');
+                const isAuthenticated = vendorToken || customerToken;
+                
+                let isOwnProfile = false;
+                if (vendorToken) {
+                  try {
+                    // JWT token'dan user ID'yi decode et
+                    const tokenParts = vendorToken.split('.');
+                    if (tokenParts.length === 3) {
+                      const payload = JSON.parse(atob(tokenParts[1]));
+                      const currentUserId = payload.user_id;
+                      console.log('DEBUG: Current user ID from token:', currentUserId);
+                      console.log('DEBUG: Vendor data:', vendor);
+                      
+                      // Vendor data'sında user_id var mı kontrol et
+                      if (vendor.user_id) {
+                        isOwnProfile = currentUserId === vendor.user_id;
+                      } else {
+                        // Geçici çözüm: email ile karşılaştır
+                        const userEmail = localStorage.getItem('esnaf_email');
+                        isOwnProfile = userEmail === vendor.user.email;
+                      }
                     }
-                  }}
-                  disabled={creatingChat}
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: '#111111',
-                    border: '2px solid #ffd600',
-                    padding: '12px 24px',
-                    borderRadius: '8px',
-                    cursor: creatingChat ? 'not-allowed' : 'pointer',
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  {React.createElement(iconMapping.message, { size: 16 })}
-                  {creatingChat ? 'Başlatılıyor...' : 'Mesaj Gönder'}
-                </button>
-              </div>
+                  } catch (e) {
+                    console.error('Token decode error:', e);
+                  }
+                }
+
+                console.log('DEBUG: Is own profile:', isOwnProfile);
+
+                // Kendi profiline bakıyorsa butonları gösterme
+                if (isOwnProfile) {
+                  return (
+                    <div style={{ 
+                      padding: '16px', 
+                      backgroundColor: '#f0f0f0', 
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      color: '#666'
+                    }}>
+                      Bu sizin kendi profiliniz. Kendinize mesaj gönderemez veya randevu alamazsınız.
+                    </div>
+                  );
+                }
+
+                // Giriş yapılmamışsa butonları gösterme
+                if (!isAuthenticated) {
+                  return (
+                    <div style={{ 
+                      padding: '16px', 
+                      backgroundColor: '#fff3cd', 
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      color: '#856404',
+                      border: '1px solid #ffeaa7'
+                    }}>
+                      Mesaj göndermek veya randevu almak için giriş yapmanız gerekiyor.
+                    </div>
+                  );
+                }
+
+                // Normal butonları göster
+                return (
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <button 
+                      onClick={() => {
+                        router.push(`/musteri/esnaf/${slug}/randevu`);
+                      }}
+                      style={{
+                        backgroundColor: '#ffd600',
+                        color: '#111111',
+                        border: 'none',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      {React.createElement(iconMapping.calendar, { size: 16 })}
+                      Randevu Al
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!vendor) return;
+                        
+                        try {
+                          setCreatingChat(true);
+                          const res = await api.chatCreateConversation(vendor.id);
+                          const conversation = res.data ?? res;
+                          router.push(`/musteri/mesajlar/${conversation.id}`);
+                        } catch (error: any) {
+                          console.error('Chat başlatılamadı:', error);
+                        } finally {
+                          setCreatingChat(false);
+                        }
+                      }}
+                      disabled={creatingChat}
+                      style={{
+                        backgroundColor: 'transparent',
+                        color: '#111111',
+                        border: '2px solid #ffd600',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        cursor: creatingChat ? 'not-allowed' : 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      {React.createElement(iconMapping.message, { size: 16 })}
+                      {creatingChat ? 'Başlatılıyor...' : 'Mesaj Gönder'}
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -330,17 +399,16 @@ function VendorDetailContent() {
                   margin: '0 0 16px 0',
                   color: '#333'
                 }}>
-                  Uzmanlık Alanları
+                  Kategoriler
                 </h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {vendor.categories.map((category: any) => (
                     <span key={category.id} style={{
-                      backgroundColor: '#e8f4fd',
+                      backgroundColor: '#e3f2fd',
                       padding: '8px 16px',
                       borderRadius: '20px',
                       fontSize: '14px',
-                      color: '#0066cc',
-                      border: '1px solid #b3d9ff',
+                      color: '#1976d2',
                       fontWeight: '500'
                     }}>
                       {category.name}
@@ -350,120 +418,20 @@ function VendorDetailContent() {
               </div>
             )}
 
-            {/* Adres Bilgileri */}
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                margin: '0 0 16px 0',
-                color: '#333'
-              }}>
-                Adres Bilgileri
-              </h3>
-              <div style={{ 
-                backgroundColor: '#f8f9fa', 
-                padding: '20px', 
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-              }}>
-                <p style={{ 
-                  fontSize: '16px', 
-                  lineHeight: '1.6', 
-                  color: '#333',
-                  margin: 0
-                }}>
-                  <strong>Şehir:</strong> {vendor.city}<br />
-                  <strong>İlçe:</strong> {vendor.district}<br />
-                  {vendor.subdistrict && (
-                    <>
-                      <strong>Mahalle:</strong> {vendor.subdistrict}<br />
-                    </>
-                  )}
-                  <strong>Adres:</strong> {vendor.address}
-                </p>
-              </div>
-            </div>
-
-
-
-            {/* Çalışma Saatleri */}
-            {vendor.working_hours && Object.keys(vendor.working_hours).length > 0 && (
-              <div style={{ marginBottom: '32px' }}>
-                <h3 style={{ 
-                  fontSize: '20px', 
-                  fontWeight: 'bold', 
-                  margin: '0 0 16px 0',
-                  color: '#333',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {React.createElement(iconMapping.clock, { 
-                    size: 24, 
-                    color: '#666'
-                  })}
-                  Çalışma Saatleri
-                </h3>
-                <div style={{ 
-                  backgroundColor: '#f8f9fa', 
-                  padding: '20px', 
-                  borderRadius: '8px',
-                  border: '1px solid #e9ecef'
-                }}>
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {Object.entries(vendor.working_hours).map(([day, hours]) => (
-                      <div key={day} style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #e9ecef'
-                      }}>
-                        <span style={{ 
-                          fontSize: '16px', 
-                          fontWeight: '500',
-                          color: '#333',
-                          minWidth: '100px'
-                        }}>
-                          {day === 'monday' && 'Pazartesi'}
-                          {day === 'tuesday' && 'Salı'}
-                          {day === 'wednesday' && 'Çarşamba'}
-                          {day === 'thursday' && 'Perşembe'}
-                          {day === 'friday' && 'Cuma'}
-                          {day === 'saturday' && 'Cumartesi'}
-                          {day === 'sunday' && 'Pazar'}
-                        </span>
-                        <span style={{ 
-                          fontSize: '16px', 
-                          color: hours.closed ? '#dc3545' : '#28a745',
-                          fontWeight: '500'
-                        }}>
-                          {hours.closed ? 'Kapalı' : `${hours.open} - ${hours.close}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Sosyal Medya */}
-            {vendor.social_media && 
-             (vendor.social_media.instagram || vendor.social_media.facebook || vendor.social_media.twitter || vendor.social_media.website) && (
+            {vendor.social_media && (
+              vendor.social_media.instagram || 
+              vendor.social_media.facebook || 
+              vendor.social_media.twitter || 
+              vendor.social_media.website
+            ) && (
               <div style={{ marginBottom: '32px' }}>
                 <h3 style={{ 
                   fontSize: '20px', 
                   fontWeight: 'bold', 
                   margin: '0 0 16px 0',
-                  color: '#333',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  color: '#333'
                 }}>
-                  {React.createElement(iconMapping.globe, { 
-                    size: 24, 
-                    color: '#666'
-                  })}
                   Sosyal Medya
                 </h3>
                 <div style={{ 
@@ -472,111 +440,109 @@ function VendorDetailContent() {
                   borderRadius: '8px',
                   border: '1px solid #e9ecef'
                 }}>
-                  <div style={{ display: 'grid', gap: '16px' }}>
-                    {vendor.social_media.instagram && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {React.createElement(iconMapping.instagram, { 
-                          size: 20, 
-                          color: '#E4405F',
-                          style: { flexShrink: 0 }
-                        })}
-                        <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
-                          Instagram:
-                        </span>
-                        <a 
-                          href={vendor.social_media.instagram.startsWith('http') ? vendor.social_media.instagram : `https://instagram.com/${vendor.social_media.instagram}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ 
-                            color: '#0066cc',
-                            textDecoration: 'none',
-                            fontSize: '16px',
-                            wordBreak: 'break-all'
-                          }}
-                        >
-                          {vendor.social_media.instagram}
-                        </a>
-                      </div>
-                    )}
-                    
-                    {vendor.social_media.facebook && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {React.createElement(iconMapping.facebook, { 
-                          size: 20, 
-                          color: '#1877F2',
-                          style: { flexShrink: 0 }
-                        })}
-                        <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
-                          Facebook:
-                        </span>
-                        <a 
-                          href={vendor.social_media.facebook.startsWith('http') ? vendor.social_media.facebook : `https://facebook.com/${vendor.social_media.facebook}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ 
-                            color: '#0066cc',
-                            textDecoration: 'none',
-                            fontSize: '16px',
-                            wordBreak: 'break-all'
-                          }}
-                        >
-                          {vendor.social_media.facebook}
-                        </a>
-                      </div>
-                    )}
-                    
-                    {vendor.social_media.twitter && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {React.createElement(iconMapping.twitter, { 
-                          size: 20, 
-                          color: '#1DA1F2',
-                          style: { flexShrink: 0 }
-                        })}
-                        <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
-                          Twitter:
-                        </span>
-                        <a 
-                          href={vendor.social_media.twitter.startsWith('http') ? vendor.social_media.twitter : `https://twitter.com/${vendor.social_media.twitter}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ 
-                            color: '#0066cc',
-                            textDecoration: 'none',
-                            fontSize: '16px',
-                            wordBreak: 'break-all'
-                          }}
-                        >
-                          {vendor.social_media.twitter}
-                        </a>
-                      </div>
-                    )}
-                    
-                    {vendor.social_media.website && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {React.createElement(iconMapping.globe, { 
-                          size: 20, 
+                  {vendor.social_media.instagram && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                      {React.createElement(iconMapping.instagram, { 
+                        size: 20, 
+                        color: '#E4405F',
+                        style: { flexShrink: 0 }
+                      })}
+                      <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
+                        Instagram:
+                      </span>
+                      <a 
+                        href={vendor.social_media.instagram.startsWith('http') ? vendor.social_media.instagram : `https://instagram.com/${vendor.social_media.instagram}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ 
                           color: '#0066cc',
-                          style: { flexShrink: 0 }
-                        })}
-                        <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
-                          Web Sitesi:
-                        </span>
-                        <a 
-                          href={vendor.social_media.website.startsWith('http') ? vendor.social_media.website : `https://${vendor.social_media.website}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ 
-                            color: '#0066cc',
-                            textDecoration: 'none',
-                            fontSize: '16px',
-                            wordBreak: 'break-all'
-                          }}
-                        >
-                          {vendor.social_media.website}
-                        </a>
-                      </div>
-                    )}
-                  </div>
+                          textDecoration: 'none',
+                          fontSize: '16px',
+                          wordBreak: 'break-all'
+                        }}
+                      >
+                        {vendor.social_media.instagram}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {vendor.social_media.facebook && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                      {React.createElement(iconMapping.facebook, { 
+                        size: 20, 
+                        color: '#1877F2',
+                        style: { flexShrink: 0 }
+                      })}
+                      <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
+                        Facebook:
+                      </span>
+                      <a 
+                        href={vendor.social_media.facebook.startsWith('http') ? vendor.social_media.facebook : `https://facebook.com/${vendor.social_media.facebook}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ 
+                          color: '#0066cc',
+                          textDecoration: 'none',
+                          fontSize: '16px',
+                          wordBreak: 'break-all'
+                        }}
+                      >
+                        {vendor.social_media.facebook}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {vendor.social_media.twitter && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                      {React.createElement(iconMapping.twitter, { 
+                        size: 20, 
+                        color: '#1DA1F2',
+                        style: { flexShrink: 0 }
+                      })}
+                      <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
+                        Twitter:
+                      </span>
+                      <a 
+                        href={vendor.social_media.twitter.startsWith('http') ? vendor.social_media.twitter : `https://twitter.com/${vendor.social_media.twitter}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ 
+                          color: '#0066cc',
+                          textDecoration: 'none',
+                          fontSize: '16px',
+                          wordBreak: 'break-all'
+                        }}
+                      >
+                        {vendor.social_media.twitter}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {vendor.social_media.website && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                      {React.createElement(iconMapping.globe, { 
+                        size: 20, 
+                        color: '#0066cc',
+                        style: { flexShrink: 0 }
+                      })}
+                      <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
+                        Web Sitesi:
+                      </span>
+                      <a 
+                        href={vendor.social_media.website.startsWith('http') ? vendor.social_media.website : `https://${vendor.social_media.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ 
+                          color: '#0066cc',
+                          textDecoration: 'none',
+                          fontSize: '16px',
+                          wordBreak: 'break-all'
+                        }}
+                      >
+                        {vendor.social_media.website}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

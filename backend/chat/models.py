@@ -10,7 +10,7 @@ from vendors.models import VendorProfile
 
 class Conversation(models.Model):
     """
-    1-1 sohbet. Ya authenticated client_user ile ya da guest_id ile bağlanır.
+    1-1 sohbet. Sadece authenticated ve verified kullanıcılar için.
     """
 
     id = models.BigAutoField(primary_key=True)
@@ -23,10 +23,7 @@ class Conversation(models.Model):
         CustomUser,
         on_delete=models.CASCADE,
         related_name='client_conversations',
-        null=True,
-        blank=True,
     )
-    guest_id = models.UUIDField(null=True, blank=True, db_index=True)
 
     # Denormalized metadata
     last_message_text = models.TextField(blank=True, default='')
@@ -43,23 +40,15 @@ class Conversation(models.Model):
 
     class Meta:
         constraints = [
-            # Aynı vendor + client_user için tek konuşma (guest null iken)
+            # Aynı vendor + client_user için tek konuşma
             models.UniqueConstraint(
                 fields=['vendor', 'client_user'],
-                condition=Q(guest_id__isnull=True) & Q(client_user__isnull=False),
                 name='uniq_vendor_client_conversation',
-            ),
-            # Aynı vendor + guest_id için tek konuşma (client_user null iken)
-            models.UniqueConstraint(
-                fields=['vendor', 'guest_id'],
-                condition=Q(client_user__isnull=True) & Q(guest_id__isnull=False),
-                name='uniq_vendor_guest_conversation',
             ),
         ]
 
     def __str__(self) -> str:
-        owner = self.client_user.email if self.client_user_id else f"guest:{self.guest_id}"
-        return f"{owner} ↔ {self.vendor.display_name}"
+        return f"{self.client_user.email} ↔ {self.vendor.display_name}"
 
 
 class Message(models.Model):
@@ -77,13 +66,10 @@ class Message(models.Model):
     )
     sender_user = models.ForeignKey(
         CustomUser,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
         related_name='sent_messages',
     )
     sender_is_vendor = models.BooleanField(default=False)
-    guest_id = models.UUIDField(null=True, blank=True, db_index=True)
 
     content = models.TextField()
     message_type = models.CharField(max_length=16, default='text')

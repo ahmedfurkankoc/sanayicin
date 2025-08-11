@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import EsnafSidebar from "./EsnafSidebar";
 import { useEsnaf } from "../context/EsnafContext";
 import { LoadingSpinner } from "./LoadingSpinner";
+import ChatWidget from "@/app/components/ChatWidget";
 
 interface EsnafPanelLayoutProps {
   children: React.ReactNode;
@@ -43,30 +44,35 @@ export default function EsnafPanelLayout({
   }
 
   return (
-    <div className="esnaf-dashboard">
-      {/* Sol Sidebar */}
-      <EsnafSidebar 
-        user={user} 
-        email={email} 
-        onLogout={handleLogout}
-        activePage={activePage}
-      />
+    <>
+      <div className="esnaf-dashboard">
+        {/* Sol Sidebar */}
+        <EsnafSidebar 
+          user={user} 
+          email={email} 
+          onLogout={handleLogout}
+          activePage={activePage}
+        />
 
-      {/* Ana İçerik */}
-      <div className="esnaf-main-content">
-        {/* Header */}
-        <div className="esnaf-content-header">
-          <h1 className="esnaf-page-title">
-            {title}
-            {isAdmin && <span style={{ fontSize: '14px', color: '#666', marginLeft: '10px' }}>
-              (Admin Test Modu)
-            </span>}
-          </h1>
+        {/* Ana İçerik */}
+        <div className="esnaf-main-content">
+          {/* Header */}
+          <div className="esnaf-content-header">
+            <h1 className="esnaf-page-title">
+              {title}
+              {isAdmin && <span style={{ fontSize: '14px', color: '#666', marginLeft: '10px' }}>
+                (Admin Test Modu)
+              </span>}
+            </h1>
+          </div>
+
+          {/* Sayfa İçeriği */}
+          {children}
         </div>
-
-        {/* Sayfa İçeriği */}
-        {children}
       </div>
-    </div>
+      
+      {/* ChatWidget sadece panel sayfalarında */}
+      <ChatWidget role="vendor" />
+    </>
   );
 } 

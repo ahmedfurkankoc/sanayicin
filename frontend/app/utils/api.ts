@@ -2,24 +2,13 @@ import axios from 'axios';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
-// Guest token helpers (anonymous chat)
-const GUEST_TOKEN_KEY = 'guest_token';
-export const getGuestToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(GUEST_TOKEN_KEY);
-};
-export const setGuestToken = (token: string) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(GUEST_TOKEN_KEY, token);
-};
-
 // Role'e göre token key'leri
 const getTokenKey = (role: 'vendor' | 'customer' = 'vendor') => {
   return role === 'vendor' ? 'esnaf_access_token' : 'customer_access_token';
 };
 
 const getRefreshTokenKey = (role: 'vendor' | 'customer' = 'vendor') => {
-  return role === 'vendor' ? 'esnaf_refresh_token' : 'customer_refresh_token';
+  return role === 'vendor' ? 'esnaf_refresh_token' : 'customer_access_token';
 };
 
 const getEmailKey = (role: 'vendor' | 'customer' = 'vendor') => {
@@ -137,27 +126,45 @@ apiClient.interceptors.request.use((config) => {
   }
   
   // Role'ü URL'den ve mevcut sayfa yolundan tahmin et
-  const isChatEndpoint = config.url?.startsWith('/chat/');
   const isVendorUrl = config.url?.includes('/vendors/') || 
                       config.url?.includes('/esnaf/') || 
                       config.url?.includes('/avatar/upload/');
+  
+  // Chat endpoint'leri için özel logic
+  const isChatEndpoint = config.url?.startsWith('/chat/');
+  
   // Esnaf panelinde isek chat çağrıları vendor rolüyle yapılmalı
   const isEsnafContext = typeof window !== 'undefined' && window.location?.pathname?.startsWith('/esnaf');
-  const role: 'vendor' | 'customer' = isChatEndpoint ? (isEsnafContext ? 'vendor' : 'customer') : (isVendorUrl ? 'vendor' : 'customer');
+  
+  let role: 'vendor' | 'customer' = 'customer'; // Default customer
+  
+  if (isChatEndpoint) {
+    // Chat endpoint'leri için: hem vendor hem customer token'ları kontrol et
+    const vendorToken = localStorage.getItem('esnaf_access_token');
+    const customerToken = localStorage.getItem('customer_access_token');
+    
+    if (vendorToken && !customerToken) {
+      role = 'vendor';
+    } else if (customerToken && !vendorToken) {
+      role = 'customer';
+    } else if (vendorToken && customerToken) {
+      // Her iki token da varsa, mevcut sayfadan karar ver
+      role = isEsnafContext ? 'vendor' : 'customer';
+    } else {
+      // Hiç token yoksa, mevcut sayfadan karar ver
+      role = isEsnafContext ? 'vendor' : 'customer';
+    }
+  } else {
+    // Diğer endpoint'ler için eski logic
+    role = isEsnafContext ? 'vendor' : (isVendorUrl ? 'vendor' : 'customer');
+  }
   
   const token = getAuthToken(role);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // Chat endpoint'leri için guest header ekle (Bearer yoksa)
-  if (isChatEndpoint && !config.headers.Authorization) {
-    const guest = getGuestToken();
-    if (guest) {
-      // Backend expects X-Guest-Token
-      (config.headers as any)['X-Guest-Token'] = guest;
-    }
-  }
+  // Chat endpoint'leri için artık guest token gerekmiyor - sadece authenticated user'lar
   return config;
 });
 
@@ -344,18 +351,6 @@ export const api = {
     apiClient.post(`/vendors/${vendorSlug}/appointments/`, data),
   
   // Chat API
-  chatGuestStart: async () => {
-    const res = await apiClient.post('/chat/guest/start');
-    const token = res.data?.guest_token as string | undefined;
-    if (token) setGuestToken(token);
-    return res.data;
-  },
-  chatEnsureGuest: async () => {
-    if (!getGuestToken()) {
-      await api.chatGuestStart();
-    }
-    return getGuestToken();
-  },
   chatCreateConversation: (vendorId: number) => 
     apiClient.post('/chat/conversations/', { vendor_id: vendorId }),
   chatListConversations: () => apiClient.get('/chat/conversations/'),

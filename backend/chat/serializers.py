@@ -1,31 +1,33 @@
 from rest_framework import serializers
 from .models import Conversation, Message
+from core.serializers import CustomUserSerializer
 
 
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = [
-            'id', 'conversation', 'sender_user', 'sender_is_vendor', 'guest_id',
+            'id', 'conversation', 'sender_user', 'sender_is_vendor',
             'content', 'message_type', 'status', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'status', 'created_at', 'updated_at', 'sender_user', 'guest_id', 'sender_is_vendor']
+        read_only_fields = ['id', 'status', 'created_at', 'updated_at', 'sender_user', 'sender_is_vendor']
 
 
 class ConversationSerializer(serializers.ModelSerializer):
     last_message = serializers.SerializerMethodField()
     vendor_display_name = serializers.SerializerMethodField()
+    client_user = CustomUserSerializer(read_only=True)
 
     class Meta:
         model = Conversation
         fields = [
-            'id', 'vendor', 'client_user', 'guest_id',
+            'id', 'vendor', 'client_user',
             'last_message_text', 'last_message_at',
             'client_unread_count', 'vendor_unread_count',
             'created_at', 'updated_at', 'last_message', 'vendor_display_name',
         ]
         read_only_fields = [
-            'id', 'client_user', 'guest_id',
+            'id', 'client_user',
             'last_message_text', 'last_message_at',
             'client_unread_count', 'vendor_unread_count',
             'created_at', 'updated_at'
