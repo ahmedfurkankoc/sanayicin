@@ -53,12 +53,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
-      <body className="antialiased">
-        {children}
-        <Toaster />
-      </body>
-    </html>
+    <div>
+      {children}
+      <Toaster />
+    </div>
   );
 }
  

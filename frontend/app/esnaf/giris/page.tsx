@@ -62,7 +62,10 @@ export default function EsnafGirisPage() {
         // Context'i yenile
         await refreshUser();
         
-        router.push("/esnaf/panel");
+        // State güncellenmesini bekle
+        setTimeout(() => {
+          router.push("/esnaf/panel");
+        }, 100);
       } else {
         setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
       }

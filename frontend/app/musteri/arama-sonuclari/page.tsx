@@ -58,11 +58,11 @@ const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   
   const handleVendorClick = () => {
-    // Yeni permission system ile authentication kontrolü
+    // Hem vendor hem customer token'ları kontrol et
     const vendorToken = localStorage.getItem('esnaf_access_token');
     const customerToken = localStorage.getItem('customer_access_token');
     
-    // Vendor token varsa hem vendor hem customer olarak davran
+    // Herhangi bir token varsa authenticated kabul et
     const isAuthenticated = vendorToken || customerToken;
     
     if (!isAuthenticated) {

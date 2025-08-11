@@ -78,7 +78,7 @@ export default function AuthModal({ isOpen, onClose, title = "Giriş Gerekli", m
 
           <div className="auth-modal-footer">
             <p className="auth-modal-info">
-              Hesap olutşurmadan detayları görüntüleyemezsiniz.
+              Hesap oluşturduktan sonra email doğrulaması yapmanız gerekecektir.
             </p>
           </div>
         </div>

@@ -39,7 +39,7 @@ export default function EsnafMessagesListPage() {
                   <Link href={`/esnaf/panel/mesajlar/${c.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                       <div>
-                        <div style={{ fontWeight: 600 }}>{c.client_user?.email ?? `Misafir (${c.guest_id?.slice?.(0,8) ?? ''})`}</div>
+                        <div style={{ fontWeight: 600 }}>{c.client_user?.email || c.client_user?.username || 'Bilinmeyen Kullanıcı'}</div>
                         <div style={{ color: '#666' }}>{c.last_message_text}</div>
                       </div>
                       <div style={{ fontSize: 12, color: '#666' }}>{c.vendor_unread_count}</div>

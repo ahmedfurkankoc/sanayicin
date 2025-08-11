@@ -9,17 +9,20 @@ export default function MessagesListPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
+    const loadConversations = async () => {
       try {
-        await api.chatEnsureGuest();
+        setLoading(true);
         const res = await api.chatListConversations();
-        setItems(res.data ?? res);
-      } catch (e) {
-        console.error(e);
+        const items = res.data ?? res;
+        setItems(items);
+      } catch (error) {
+        console.error('Konuşmalar yüklenemedi:', error);
       } finally {
         setLoading(false);
       }
-    })();
+    };
+
+    loadConversations();
   }, []);
 
   if (loading) return <div className="musteri-container">Yükleniyor...</div>;

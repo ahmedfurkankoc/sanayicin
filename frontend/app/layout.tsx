@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./styles/styles.css";
 import { MusteriProvider } from "./musteri/context/MusteriContext";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Sanayicin - Size En Yakın Ustayı Hemen Bulun",
@@ -18,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr">
-      <body className={inter.className}>
+      <body className="antialiased">
         <MusteriProvider>
           {children}
         </MusteriProvider>
