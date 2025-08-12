@@ -194,9 +194,9 @@ AUTHENTICATION_BACKENDS = [
     'core.backends.EmailBackend',
 ]
 
-# JWT Settings - Production (kısa süreler)
-JWT_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_HOURS', '0.25'))  # 15 minutes
-JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '7'))
+# JWT Settings - Production (uzun süreler)
+JWT_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_HOURS', '168'))  # 7 gün (168 saat)
+JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=JWT_ACCESS_TOKEN_LIFETIME_HOURS),

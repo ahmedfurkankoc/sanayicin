@@ -77,8 +77,8 @@ python manage.py runserver
 | **Cache** | LocMemCache | Redis |
 | **Logging** | Console | File |
 | **Rate Limits** | 1000/hour | 100/hour |
-| **JWT Access** | 1 saat | 15 dakika |
-| **JWT Refresh** | 30 gün | 7 gün |
+| **JWT Access** | 7 gün | 7 gün |
+| **JWT Refresh** | 30 gün | 30 gün |
 | **SSL/HTTPS** | ❌ Kapalı | ✅ Zorunlu |
 | **Secret Key** | Fallback | Environment |
 
