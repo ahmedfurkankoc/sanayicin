@@ -29,7 +29,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // Kullanıcı tipini kontrol et
+  // Kullanıcı tipini kontrol et - sadece UI için, yönlendirme yapma
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const vendorToken = localStorage.getItem('esnaf_access_token');
@@ -48,7 +48,7 @@ const Navbar = () => {
   const handleEsnafGiris = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Token kontrolü
+    // Token kontrolü - sadece UI için
     const token = localStorage.getItem("esnaf_access_token");
     
     if (token) {

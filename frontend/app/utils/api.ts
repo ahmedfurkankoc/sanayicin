@@ -215,9 +215,9 @@ apiClient.interceptors.response.use(
         localStorage.removeItem(getRefreshTokenKey(role));
         localStorage.removeItem(getEmailKey(role));
         
-        // Role'e göre yönlendirme - sadece mevcut sayfalar
-        const redirectUrl = role === 'vendor' ? '/esnaf/giris' : '/';
-        window.location.href = redirectUrl;
+        // Yönlendirme yapma - sadece logout yap
+        // Kullanıcı isterse kendisi giriş yapar
+        console.log('Token geçersiz, logout yapıldı. Yönlendirme yapılmadı.');
       }
     }
     return Promise.reject(error);
