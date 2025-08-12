@@ -131,11 +131,14 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
         setRole(authCheck.role);
         setUserPermissions(authCheck.role);
       } else {
-        // Token geçersiz, logout yap
+        // Token geçersiz, sadece logout yap - yönlendirme yapma
+        console.log('Token geçersiz, logout yapıldı. Yönlendirme yapılmadı.');
         logout();
       }
     } catch (error) {
       console.error('Profil yüklenirken hata:', error);
+      // Hata durumunda da sadece logout yap - yönlendirme yapma
+      console.log('Profil yüklenirken hata, logout yapıldı. Yönlendirme yapılmadı.');
       logout();
     }
   };
@@ -188,7 +191,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     setMounted(true);
   }, []);
 
-  // Authentication kontrolü
+  // Authentication kontrolü - sadece mevcut token'ları kontrol et, yönlendirme yapma
   useEffect(() => {
     if (!mounted) return;
     
