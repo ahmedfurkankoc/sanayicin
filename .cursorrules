@@ -1,0 +1,10 @@
+projemin ismi Sanayicin
+projemde Nextjs 15+ frontend, django backend bulunmakta.
+proje; esnaf paneli, müşterilerin/clientsların kullanacağı kısım ve bir de ana sayfa(public) bölümü mevcut.
+esnaf paneli, müşteri ve ana sayfa css dosyaları farklı dosyalar halinde
+proje Ubuntu serverda test olarak deploy edildi ve aynı anda local de Windows ve Mac bir pc de de test ediliyor. 
+
+backend de console ile bir şey yapacakken venv aktif etmeyi unutma.
+
+
+css eklerken :root üzerinden ilerle her zaman. :root da tanımlı olan variable lar dışında yeni bir şeyler eklemeden ilerlemeye çalış. 

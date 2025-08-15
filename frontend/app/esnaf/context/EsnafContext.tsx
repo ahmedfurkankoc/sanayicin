@@ -49,8 +49,9 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
     setEmail('');
     setIsAdmin(false);
     setEmailVerified(false);
-    // Yönlendirme yapma - kullanıcı isterse kendisi giriş yapar
-    console.log('Esnaf logout yapıldı. Yönlendirme yapılmadı.');
+    // Ana sayfaya yönlendir
+    router.push('/');
+    console.log('Esnaf logout yapıldı. Ana sayfaya yönlendirildi.');
   };
 
   const checkAuthStatus = (): boolean => {
@@ -231,8 +232,8 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
   // Component mount olduktan sonra otomatik token kontrolü yapma
   // Kullanıcı isterse kendisi giriş yapar
   useEffect(() => {
-    // Otomatik token kontrolü yapma
-    // refreshUser();
+    // Otomatik token kontrolü yap
+    refreshUser();
   }, []);
 
   const value: EsnafContextType = {

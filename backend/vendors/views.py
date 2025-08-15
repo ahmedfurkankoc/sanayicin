@@ -30,17 +30,17 @@ class IsVendor(permissions.BasePermission):
 class VendorDetailView(generics.RetrieveAPIView):
     serializer_class = VendorProfileSerializer
     permission_classes = [AllowAny]
-    queryset = VendorProfile.objects.filter(user__email_verified=True, user__is_active=True)
+    queryset = VendorProfile.objects.filter(user__is_verified=True, user__is_active=True)
     lookup_field = 'slug'
     
     def get_object(self):
         slug = self.kwargs.get('slug')
         try:
-            return VendorProfile.objects.get(
-                slug=slug,
-                user__email_verified=True,
-                user__is_active=True
-            )
+                    return VendorProfile.objects.get(
+            slug=slug,
+            user__is_verified=True,
+            user__is_active=True
+        )
         except VendorProfile.DoesNotExist:
             from rest_framework.exceptions import NotFound
             raise NotFound("Vendor bulunamadı")
@@ -54,9 +54,9 @@ class VendorSearchView(APIView):
         service = request.query_params.get('service', '')
         category = request.query_params.get('category', '')
         
-        # Sadece email doğrulanmış vendor'ları getir
+        # Sadece doğrulanmış vendor'ları getir
         queryset = VendorProfile.objects.filter(
-            user__email_verified=True,
+            user__is_verified=True,
             user__is_active=True
         )
         
@@ -389,7 +389,7 @@ class CustomerAppointmentView(APIView):
     def post(self, request, slug):
         """Müşteri randevu talebi oluşturur"""
         try:
-            vendor = VendorProfile.objects.get(slug=slug, user__email_verified=True, user__is_active=True)
+            vendor = VendorProfile.objects.get(slug=slug, user__is_verified=True, user__is_active=True)
         except VendorProfile.DoesNotExist:
             return Response({"detail": "Esnaf bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
         

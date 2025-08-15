@@ -166,6 +166,183 @@ body {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.musteri-message-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.musteri-message-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.musteri-message-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--yellow);
+  transform: scale(1.05);
+}
+
+/* Mesaj Dropdown Stili */
+.musteri-message-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  min-width: 320px;
+  max-width: 400px;
+  padding: 0;
+  margin-top: 0.5rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s;
+  z-index: 1000;
+  border: 1px solid var(--border-strong);
+}
+
+.musteri-header-right {
+  position: relative;
+}
+
+/* Hover yerine click ile çalışacak */
+.musteri-message-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.musteri-message-dropdown-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-strong);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.musteri-message-dropdown-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.musteri-message-count {
+  background: var(--primary-500);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.musteri-message-loading,
+.musteri-message-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.musteri-message-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.musteri-message-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s;
+}
+
+.musteri-message-item:hover {
+  background: var(--bg);
+}
+
+.musteri-message-item:last-child {
+  border-bottom: none;
+}
+
+.musteri-message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-500);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.musteri-message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.musteri-message-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.musteri-message-preview {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.musteri-message-unread {
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.musteri-message-dropdown-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-strong);
+  text-align: center;
+}
+
+.musteri-message-view-all {
+  color: var(--primary-500);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.musteri-message-view-all:hover {
+  color: var(--primary-600);
+}
+
 .musteri-user-menu {
   position: relative;
 }
@@ -1038,4 +1215,178 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Mesaj Badge */
+.musteri-message-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+  line-height: 1;
+}
+
+/* Mesaj butonu pozisyonu */
+.musteri-message-btn {
+  position: relative;
+}
+
+/* Chat Interface Styles - Müşteri Paneli */
+.musteri-chat-interface {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.musteri-chat-header {
+  background: var(--primary-500);
+  color: white;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.musteri-chat-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.musteri-chat-messages-container {
+  height: 60vh;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f8f9fa;
+}
+
+.musteri-load-more-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.musteri-load-more-button {
+  background: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.musteri-load-more-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.musteri-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.musteri-message-item {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.musteri-message-item.own {
+  justify-content: flex-end;
+}
+
+.musteri-message-item.other {
+  justify-content: flex-start;
+}
+
+.musteri-message-avatar {
+  flex-shrink: 0;
+}
+
+.musteri-message-bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  word-wrap: break-word;
+}
+
+.musteri-message-bubble.own {
+  background: var(--primary-500);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.musteri-message-bubble.other {
+  background: white;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+
+.musteri-typing-indicator {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+.musteri-typing-text {
+  background: #f0f0f0;
+  color: #666;
+  padding: 8px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.musteri-chat-input-container {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-top: 1px solid var(--border);
+}
+
+.musteri-chat-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 12px 16px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.musteri-chat-input:focus {
+  border-color: var(--primary-500);
+}
+
+.musteri-chat-send-button {
+  background: var(--primary-500);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.musteri-chat-send-button:hover {
+  background: var(--primary-600);
+}
+
+.musteri-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 16px;
 }

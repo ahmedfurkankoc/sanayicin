@@ -13,7 +13,7 @@ interface Vendor {
   id: number;
   user: {
     email: string;
-    email_verified: boolean;
+    is_verified: boolean;
   };
   business_type: string;
   company_title: string;
