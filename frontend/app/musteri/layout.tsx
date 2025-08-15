@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { MusteriProvider } from "./context/MusteriContext";
 import "../styles/musteri.css";
-import ChatWidget from "@/app/components/ChatWidget";
 
 export const metadata: Metadata = {
   title: "Sanayicin - Müşteri Paneli",
@@ -18,7 +17,6 @@ export default function MusteriLayout({
       <MusteriProvider>
         {children}
       </MusteriProvider>
-      <ChatWidget role="customer" />
     </>
   );
 } 

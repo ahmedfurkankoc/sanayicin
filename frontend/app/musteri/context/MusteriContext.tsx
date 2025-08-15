@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/app/utils/api';
 
 interface MusteriContextType {
@@ -45,6 +46,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
   });
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   // Token kontrolü - vendor token'ı varsa customer olarak da davran
   const checkAuth = (): { isAuthenticated: boolean; role: 'client' | 'vendor' | null } => {
@@ -184,6 +186,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     setUser(null);
     setRole(null);
     setUserPermissions(null);
+    router.push('/'); // Çıkış yaptıktan sonra ana sayfaya yönlendir
   };
 
   // Component mount olduktan sonra authentication kontrolü
