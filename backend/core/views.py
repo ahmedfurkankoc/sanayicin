@@ -269,7 +269,7 @@ def verify_email(request):
         user = verification.user
         user.is_verified = True
         user.verification_method = 'email'
-        user.email_verified = True  # Geriye uyumluluk için
+        user.is_verified = True  # Ana verification field
         user.save()
         
         # Token'ı kullanıldı olarak işaretle

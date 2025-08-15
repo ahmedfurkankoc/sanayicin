@@ -47,8 +47,8 @@ class CustomUser(AbstractUser):
     sms_verification_code = models.CharField(max_length=6, null=True, blank=True)
     sms_code_expires_at = models.DateTimeField(null=True, blank=True)
     
-    # Geriye uyumluluk için email_verified tutulacak (geçiş süreci için)
-    email_verified = models.BooleanField(default=False)
+    # Legacy field - artık kullanılmıyor, sadece migration için tutuluyor
+    # email_verified = models.BooleanField(default=False)  # Kaldırıldı
 
     REQUIRED_FIELDS = ["email"]
 
@@ -75,18 +75,50 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.role})"
     
+    def can_chat(self):
+        """Chat yapabilir mi?"""
+        return self.is_verified and self.is_active
+    
+    def get_chat_permissions(self):
+        """Chat izinleri"""
+        if self.role == 'admin':
+            return {
+                'can_receive_messages': True,
+                'can_send_as_vendor': True,
+                'can_send_as_client': True,
+                'can_access_all_chats': True,
+            }
+        elif self.role == 'vendor':
+            return {
+                'can_receive_messages': True,  # Müşterilerden mesaj alabilir
+                'can_send_as_vendor': True,    # Esnaf olarak mesaj gönderebilir
+                'can_send_as_client': True,    # Müşteri olarak da mesaj gönderebilir
+                'can_access_all_chats': False,
+            }
+        elif self.role == 'client':
+            return {
+                'can_receive_messages': True,  # Esnaftan mesaj alabilir
+                'can_send_as_client': True,    # Müşteri olarak mesaj gönderebilir
+                'can_send_as_vendor': False,   # Esnaf olarak mesaj gönderemez
+                'can_access_all_chats': False,
+            }
+        return {
+            'can_receive_messages': False, 
+            'can_send_as_vendor': False, 
+            'can_send_as_client': False,
+            'can_access_all_chats': False,
+        }
+    
     @property
     def is_verified_user(self):
-        """Geriye uyumluluk için - hem eski hem yeni sistemi kontrol eder"""
-        return self.is_verified or self.email_verified
+        """Doğrulama durumu - sadece is_verified kullanır"""
+        return self.is_verified
     
     @property
     def verification_status(self):
         """Doğrulama durumunu döndürür"""
         if self.is_verified:
             return 'verified'
-        elif self.email_verified:
-            return 'legacy_verified'  # Eski sistemden gelen
         else:
             return 'unverified'
     

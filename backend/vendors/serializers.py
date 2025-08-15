@@ -177,7 +177,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
             password=password,
             role="vendor",
             phone_number=phone_number,  # Telefon numarasını kaydet
-            email_verified=False  # Email verification sonrası true olacak
+            is_verified=False  # Verification sonrası true olacak
         )
         
         # CustomUser'a profil bilgilerini kaydet
@@ -246,8 +246,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'is_staff': obj.user.is_staff,
             'is_superuser': obj.user.is_superuser,
             'role': obj.user.role,
-            'email_verified': obj.user.email_verified,  # legacy
-            'is_verified': obj.user.is_verified_user,
+            'is_verified': obj.user.is_verified,
             'verification_status': obj.user.verification_status,
             'avatar': obj.user.avatar.url if obj.user.avatar else None
         }

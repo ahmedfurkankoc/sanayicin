@@ -78,7 +78,7 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
                 email=email,
                 password=password,
                 role="client",
-                email_verified=False
+                is_verified=False
             )
         
         # CustomUser'a profil bilgilerini kaydet
@@ -126,8 +126,7 @@ class ClientProfileSerializer(serializers.ModelSerializer):
             'first_name': obj.user.first_name,
             'last_name': obj.user.last_name,
             'role': obj.user.role,
-            'email_verified': obj.user.email_verified,
-            'is_verified': obj.user.is_verified_user
+            'is_verified': obj.user.is_verified,
         }
     
     def get_client_profile(self, obj):

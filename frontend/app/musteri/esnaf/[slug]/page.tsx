@@ -9,8 +9,9 @@ interface Vendor {
   id: number;
   slug: string;
   user: {
+    id: number;
     email: string;
-    email_verified: boolean;
+    is_verified: boolean;
   };
   user_id?: number; // Backend'den gelmesi gereken field
   business_type: string;
@@ -218,6 +219,8 @@ function VendorDetailContent() {
                 const isAuthenticated = vendorToken || customerToken;
                 
                 let isOwnProfile = false;
+                let currentUserRole = null;
+                
                 if (vendorToken) {
                   try {
                     // JWT token'dan user ID'yi decode et
@@ -236,13 +239,18 @@ function VendorDetailContent() {
                         const userEmail = localStorage.getItem('esnaf_email');
                         isOwnProfile = userEmail === vendor.user.email;
                       }
+                      
+                      currentUserRole = 'vendor';
                     }
                   } catch (e) {
                     console.error('Token decode error:', e);
                   }
+                } else if (customerToken) {
+                  currentUserRole = 'customer';
                 }
 
                 console.log('DEBUG: Is own profile:', isOwnProfile);
+                console.log('DEBUG: Current user role:', currentUserRole);
 
                 // Kendi profiline bakıyorsa butonları gösterme
                 if (isOwnProfile) {
@@ -278,36 +286,52 @@ function VendorDetailContent() {
                 // Normal butonları göster
                 return (
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <button 
-                      onClick={() => {
-                        router.push(`/musteri/esnaf/${slug}/randevu`);
-                      }}
-                      style={{
-                        backgroundColor: '#ffd600',
-                        color: '#111111',
-                        border: 'none',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        fontSize: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      {React.createElement(iconMapping.calendar, { size: 16 })}
-                      Randevu Al
-                    </button>
+                    {/* Randevu butonu - sadece customer'lar için */}
+                    {currentUserRole === 'customer' && (
+                      <button 
+                        onClick={() => {
+                          router.push(`/musteri/esnaf/${slug}/randevu`);
+                        }}
+                        style={{
+                          backgroundColor: '#ffd600',
+                          color: '#111111',
+                          border: 'none',
+                          padding: '12px 24px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          fontSize: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        {React.createElement(iconMapping.calendar, { size: 16 })}
+                        Randevu Al
+                      </button>
+                    )}
+                    
+                    {/* Mesaj butonu - hem vendor hem customer'lar için */}
                     <button
                       onClick={async () => {
                         if (!vendor) return;
                         
                         try {
                           setCreatingChat(true);
-                          const res = await api.chatCreateConversation(vendor.id);
+                          if (!vendor.user?.id) {
+                            throw new Error('Vendor user ID bulunamadı');
+                          }
+                          const res = await api.chatCreateConversation(vendor.user.id);
                           const conversation = res.data ?? res;
-                          router.push(`/musteri/mesajlar/${conversation.id}`);
+                          
+                          // Role'e göre farklı sayfalara yönlendir
+                          if (currentUserRole === 'vendor') {
+                            // Esnaf: Müşteri olarak mesaj göndermek için müşteri sayfasına git
+                            router.push(`/musteri/mesajlar/${conversation.id}`);
+                          } else {
+                            // Müşteri: Normal müşteri mesajlar sayfasına git
+                            router.push(`/musteri/mesajlar/${conversation.id}`);
+                          }
                         } catch (error: any) {
                           console.error('Chat başlatılamadı:', error);
                         } finally {

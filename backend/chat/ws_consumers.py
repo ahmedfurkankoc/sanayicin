@@ -6,6 +6,7 @@ from typing import Optional
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth.models import AnonymousUser
 from django.conf import settings
+from channels.db import database_sync_to_async
 import jwt
 
 from .models import Conversation, Message
@@ -21,9 +22,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=4401)  # unauthorized
             return
 
-        # Check if user is verified
-        if not user.is_verified_user:
-            await self.close(code=4403)  # forbidden - not verified
+        # Check if user can chat
+        if not user.can_chat():
+            await self.close(code=4403)  # forbidden - cannot chat
             return
 
         # Permission check
@@ -32,12 +33,18 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=4403)  # forbidden
             return
 
-        # Resolve side of this connection for typing events
+        # Kullanıcının conversation'daki pozisyonunu belirle
         try:
-            conv = await Conversation.objects.select_related('vendor', 'client_user').aget(id=self.conversation_id)
-            self.is_vendor_side = (conv.vendor.user_id == user.id)
+            conv = await self._get_conversation()
+            # Kullanıcı conversation'da user1 mi user2 mi?
+            if conv.user1_id == user.id:
+                self.user_position = 'user1'
+            elif conv.user2_id == user.id:
+                self.user_position = 'user2'
+            else:
+                self.user_position = None
         except Exception:
-            self.is_vendor_side = False
+            self.user_position = None
 
         self.group_name = f"conv_{self.conversation_id}"
         await self.channel_layer.group_add(self.group_name, self.channel_name)
@@ -59,8 +66,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     'payload': {
                         'user_id': getattr(self.scope.get('user'), 'id', None),
                         'is_typing': event == 'typing.start',
-                        'sender_is_vendor': getattr(self, 'is_vendor_side', False),
                         'conversation': int(self.conversation_id),
+                        # Typing event'ini gönderen kullanıcının ID'si
+                        'typing_user_id': getattr(self.scope.get('user'), 'id', None),
                     },
                 },
             )
@@ -71,12 +79,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def message_new(self, event):
         await self.send_json({'event': 'message.new', 'data': event['payload']})
 
+    @database_sync_to_async
+    def _get_conversation(self):
+        return Conversation.objects.select_related('user1', 'user2').get(id=self.conversation_id)
+
     async def _has_access(self, user) -> bool:
         try:
-            conv = await Conversation.objects.select_related('vendor', 'client_user').aget(id=self.conversation_id)
+            conv = await self._get_conversation()
         except Conversation.DoesNotExist:
             return False
-        return conv.client_user_id == user.id or conv.vendor.user_id == user.id
+        # Kullanıcı conversation'da var mı?
+        return conv.user1_id == user.id or conv.user2_id == user.id
 
     async def _handle_send_message(self, content):
         payload = content.get('data') or {}
@@ -85,24 +98,18 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return
         user = self.scope.get('user')
 
-        conv = await Conversation.objects.aget(id=self.conversation_id)
-        is_vendor = (conv.vendor.user_id == user.id)
+        conv = await self._get_conversation()
+        
+        # Kullanıcı conversation'da var mı?
+        if not (conv.user1_id == user.id or conv.user2_id == user.id):
+            return
+            
+        # Debug için log ekle
+        print(f"DEBUG WS: User ID: {user.id}, Role: {user.role}")
+        print(f"DEBUG WS: Conv user1 ID: {conv.user1_id}, Conv user2 ID: {conv.user2_id}")
 
-        msg = await Message.objects.acreate(
-            conversation=conv,
-            sender_user=user,
-            sender_is_vendor=is_vendor,
-            content=text,
-        )
-
-        # Update conversation denorms (basic async-friendly update)
-        conv.last_message_text = text[:500]
-        conv.last_message_at = msg.created_at
-        if is_vendor:
-            conv.client_unread_count = (conv.client_unread_count or 0) + 1
-        else:
-            conv.vendor_unread_count = (conv.vendor_unread_count or 0) + 1
-        await conv.asave(update_fields=['last_message_text', 'last_message_at', 'client_unread_count', 'vendor_unread_count'])
+        msg = await self._create_message(conv, user, text)
+        await self._update_conversation(conv, text)
 
         await self.channel_layer.group_send(
             self.group_name,
@@ -113,10 +120,27 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     'conversation': conv.id,
                     'content': msg.content,
                     'sender_user': user.id,
-                    'sender_is_vendor': is_vendor,
                     'created_at': msg.created_at.isoformat(),
                 },
             },
         )
+
+    @database_sync_to_async
+    def _create_message(self, conv, user, text):
+        return Message.objects.create(
+            conversation=conv,
+            sender_user=user,
+            content=text,
+        )
+
+    @database_sync_to_async
+    def _update_conversation(self, conv, text):
+        conv.last_message_text = text[:500]
+        conv.last_message_at = conv.messages.last().created_at
+        
+        # Unread count'u güncelle - karşı tarafın okumadığı mesaj sayısı
+        conv.unread_count = (conv.unread_count or 0) + 1
+            
+        conv.save(update_fields=['last_message_text', 'last_message_at', 'unread_count'])
 
 

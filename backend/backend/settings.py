@@ -180,7 +180,7 @@ CACHES = {
     }
 }
 
-# Channels config (development defaults)
+# Channels config (Redis her zaman)
 ASGI_APPLICATION = 'backend.asgi.application'
 CHANNEL_LAYERS = {
     'default': {

@@ -351,8 +351,8 @@ export const api = {
     apiClient.post(`/vendors/${vendorSlug}/appointments/`, data),
   
   // Chat API
-  chatCreateConversation: (vendorId: number) => 
-    apiClient.post('/chat/conversations/', { vendor_id: vendorId }),
+  chatCreateConversation: (otherUserId: number) => 
+    apiClient.post('/chat/conversations/', { other_user_id: otherUserId }),
   chatListConversations: () => apiClient.get('/chat/conversations/'),
   chatGetMessages: (conversationId: number, params?: { offset?: number; limit?: number }) =>
     apiClient.get(`/chat/conversations/${conversationId}/messages`, { params }),
