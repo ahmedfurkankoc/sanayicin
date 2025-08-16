@@ -5,18 +5,18 @@ import { getAuthToken } from '@/app/utils/api';
 import ConversationList from '@/app/components/ConversationList';
 
 export default function MessagesListPage() {
-  const [userRole, setUserRole] = useState<'customer' | 'vendor' | null>(null);
+  const [userRole, setUserRole] = useState<'client' | 'vendor' | null>(null);
 
   useEffect(() => {
     const checkUserRole = () => {
-      const customerToken = getAuthToken('customer');
-      const vendorToken = getAuthToken('vendor');
-      
-      if (vendorToken) {
-        setUserRole('vendor');
-      } else if (customerToken) {
-        setUserRole('customer');
-      }
+          const clientToken = getAuthToken('client');
+    const vendorToken = getAuthToken('vendor');
+    
+    if (vendorToken) {
+      setUserRole('vendor');
+    } else if (clientToken) {
+      setUserRole('client');
+    }
     };
 
     checkUserRole();

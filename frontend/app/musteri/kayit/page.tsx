@@ -163,7 +163,7 @@ export default function MusteriKayitPage() {
           setAuthEmail("client", formData.email);
           // Password'ü hash'leyerek sakla (email verification sonrası login için)
           const hashedPassword = btoa(formData.password); // Base64 encoding (basit hash)
-          localStorage.setItem("customer_temp_password_hash", hashedPassword);
+          localStorage.setItem("client_temp_password_hash", hashedPassword);
         }
         // Doğrulama seçimi adımına yönlendir
         setStep(2); // Verification method selection step

@@ -10,9 +10,9 @@ import { toast } from "sonner";
 
 interface Appointment {
   id: number;
-  customer_name: string;
-  customer_phone: string;
-  customer_email: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string;
   service_description: string;
   appointment_date: string;
   appointment_time: string;
@@ -133,7 +133,7 @@ export default function EsnafRandevularimPage() {
 
   const filteredAppointments = appointments.filter(appointment => {
     const matchesStatus = selectedStatus === 'all' || appointment.status === selectedStatus;
-    const matchesSearch = appointment.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = appointment.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          appointment.service_description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
@@ -231,15 +231,15 @@ export default function EsnafRandevularimPage() {
             {filteredAppointments.map((appointment) => (
               <div key={appointment.id} className="esnaf-appointment-card">
                 <div className="esnaf-appointment-header">
-                  <div className="esnaf-appointment-customer-info">
-                    <h3>{appointment.customer_name}</h3>
+                  <div className="esnaf-appointment-client-info">
+                    <h3>{appointment.client_name}</h3>
                     <p className="esnaf-appointment-contact-info">
                       <Icon name="phone" size={14} className="esnaf-appointment-contact-icon" />
-                      <span>{appointment.customer_phone}</span>
+                      <span>{appointment.client_phone}</span>
                     </p>
                     <p className="esnaf-appointment-contact-info">
                       <Icon name="mail" size={14} className="esnaf-appointment-contact-icon" />
-                      <span>{appointment.customer_email}</span>
+                      <span>{appointment.client_email}</span>
                     </p>
                   </div>
                   

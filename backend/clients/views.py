@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class IsClient(permissions.BasePermission):
     def has_permission(self, request, view):
-        # Client, vendor (esnaflar da customer olarak davranabilir), admin role veya superuser olabilir
+        # Client, vendor (esnaflar da client olarak davranabilir), admin role veya superuser olabilir
         return request.user.is_authenticated and (
             request.user.role == "client" or 
             request.user.role == "vendor" or  # 'both' yerine 'vendor'
