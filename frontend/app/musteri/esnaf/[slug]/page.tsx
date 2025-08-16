@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { api } from '@/app/utils/api';
+import { api, getAuthToken } from '@/app/utils/api';
 import { iconMapping } from '@/app/utils/iconMapping';
 
 interface Vendor {
@@ -214,9 +214,9 @@ function VendorDetailContent() {
               {/* İletişim Butonları */}
               {(() => {
                 // Kullanıcı kendi profiline bakıyor mu kontrol et
-                const vendorToken = localStorage.getItem('esnaf_access_token');
-                const customerToken = localStorage.getItem('customer_access_token');
-                const isAuthenticated = vendorToken || customerToken;
+                const vendorToken = getAuthToken('vendor');
+                const clientToken = getAuthToken('client');
+                const isAuthenticated = vendorToken || clientToken;
                 
                 let isOwnProfile = false;
                 let currentUserRole = null;
@@ -236,7 +236,7 @@ function VendorDetailContent() {
                         isOwnProfile = currentUserId === vendor.user_id;
                       } else {
                         // Geçici çözüm: email ile karşılaştır
-                        const userEmail = localStorage.getItem('esnaf_email');
+                        const userEmail = getAuthToken('vendor') ? localStorage.getItem('esnaf_email') : null;
                         isOwnProfile = userEmail === vendor.user.email;
                       }
                       
@@ -245,8 +245,8 @@ function VendorDetailContent() {
                   } catch (e) {
                     console.error('Token decode error:', e);
                   }
-                } else if (customerToken) {
-                  currentUserRole = 'customer';
+                } else if (clientToken) {
+                  currentUserRole = 'client';
                 }
 
                 console.log('DEBUG: Is own profile:', isOwnProfile);
@@ -286,8 +286,8 @@ function VendorDetailContent() {
                 // Normal butonları göster
                 return (
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {/* Randevu butonu - sadece customer'lar için */}
-                    {currentUserRole === 'customer' && (
+                    {/* Randevu butonu - sadece client'lar için */}
+                    {currentUserRole === 'client' && (
                       <button 
                         onClick={() => {
                           router.push(`/musteri/esnaf/${slug}/randevu`);
@@ -311,7 +311,7 @@ function VendorDetailContent() {
                       </button>
                     )}
                     
-                    {/* Mesaj butonu - hem vendor hem customer'lar için */}
+                    {/* Mesaj butonu - hem vendor hem client'lar için */}
                     <button
                       onClick={async () => {
                         if (!vendor) return;
@@ -329,7 +329,7 @@ function VendorDetailContent() {
                             // Esnaf: Müşteri olarak mesaj göndermek için müşteri sayfasına git
                             router.push(`/musteri/mesajlar/${conversation.id}`);
                           } else {
-                            // Müşteri: Normal müşteri mesajlar sayfasına git
+                            // Client: Normal client mesajlar sayfasına git
                             router.push(`/musteri/mesajlar/${conversation.id}`);
                           }
                         } catch (error: any) {

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { getAuthToken, setAuthToken, setRefreshToken, setAuthEmail, clearAuthTokens } from '@/app/utils/api';
 
 interface EsnafContextType {
   user: any;
@@ -40,9 +41,7 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
   const [emailVerified, setEmailVerified] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("esnaf_access_token");
-    localStorage.removeItem("esnaf_refresh_token");
-    localStorage.removeItem("esnaf_email");
+    clearAuthTokens('vendor');
     localStorage.removeItem("esnaf_email_verified"); // legacy cleanup
     setIsAuthenticated(false);
     setUser(null);
@@ -56,7 +55,7 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
 
   const checkAuthStatus = (): boolean => {
     if (typeof window === "undefined") return false;
-    const token = localStorage.getItem("esnaf_access_token");
+    const token = getAuthToken("vendor");
     return !!token;
   };
 
@@ -82,7 +81,7 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
       });
 
       if (response.data.access) {
-        localStorage.setItem("esnaf_access_token", response.data.access);
+        setAuthToken("vendor", response.data.access);
         console.log("EsnafContext - Token refreshed successfully");
         return true;
       } else {

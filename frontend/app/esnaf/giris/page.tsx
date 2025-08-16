@@ -7,6 +7,7 @@ import axios from "axios";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
 import EsnafFooter from "@/app/esnaf/components/EsnafFooter";
 import { useEsnaf } from "../context/EsnafContext";
+import { setAuthToken, setRefreshToken, setAuthEmail } from '@/app/utils/api';
 
 export default function EsnafGirisPage() {
   const [email, setEmail] = useState("");
@@ -41,12 +42,12 @@ export default function EsnafGirisPage() {
       if (res.status === 200 && res.data.access) {
         const { access, refresh, role, is_verified } = res.data;
         
-        // Sadece vendor'lar esnaf paneline girebilir
-        if (role === 'vendor' || role === 'admin') {
-          localStorage.setItem("esnaf_access_token", access);
-          localStorage.setItem("esnaf_refresh_token", refresh);
-          localStorage.setItem("esnaf_email", email);
-          localStorage.removeItem("esnaf_password_set");
+                  // Sadece vendor'lar esnaf paneline girebilir
+          if (role === 'vendor' || role === 'admin') {
+            setAuthToken("vendor", access);
+            setRefreshToken("vendor", refresh);
+            setAuthEmail("vendor", email);
+            localStorage.removeItem("esnaf_password_set");
           
           // Doğrulanmamışsa email verification sayfasına yönlendir
           if (!is_verified) {

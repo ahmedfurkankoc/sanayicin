@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getAuthToken, clearAuthTokens } from '@/app/utils/api';
 
 const Navbar = () => {
   const router = useRouter();
@@ -10,7 +11,7 @@ const Navbar = () => {
   const [showSticky, setShowSticky] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
-  const [userType, setUserType] = useState<string | null>(null); // 'vendor' | 'customer' | null
+  const [userType, setUserType] = useState<string | null>(null); // 'vendor' | 'client' | null
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -32,14 +33,14 @@ const Navbar = () => {
   // Kullanıcı tipini kontrol et - sadece UI için, yönlendirme yapma
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const vendorToken = localStorage.getItem('esnaf_access_token');
-    const customerToken = localStorage.getItem('customer_access_token');
+    const vendorToken = getAuthToken('vendor');
+    const clientToken = getAuthToken('client');
     
-    // Vendor token varsa hem vendor hem customer olarak davran
+    // Vendor token varsa hem vendor hem client olarak davran
     if (vendorToken) {
       setUserType('vendor');
-    } else if (customerToken) {
-      setUserType('customer');
+    } else if (clientToken) {
+      setUserType('client');
     } else {
       setUserType(null);
     }
@@ -49,7 +50,7 @@ const Navbar = () => {
     e.preventDefault();
     
     // Token kontrolü - sadece UI için
-    const token = localStorage.getItem("esnaf_access_token");
+    const token = getAuthToken("vendor");
     
     if (token) {
       // Token varsa direkt panel'e yönlendir
@@ -65,13 +66,9 @@ const Navbar = () => {
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
     if (userType === 'vendor') {
-      localStorage.removeItem('esnaf_access_token');
-      localStorage.removeItem('esnaf_refresh_token');
-      localStorage.removeItem('esnaf_email');
-    } else if (userType === 'customer') {
-      localStorage.removeItem('customer_access_token');
-      localStorage.removeItem('customer_refresh_token');
-      localStorage.removeItem('customer_email');
+      clearAuthTokens('vendor');
+    } else if (userType === 'client') {
+      clearAuthTokens('client');
     }
     setUserType(null);
     router.push('/');
@@ -84,7 +81,7 @@ const Navbar = () => {
     e.preventDefault();
     if (userType === 'vendor') {
       router.push('/esnaf/panel');
-    } else if (userType === 'customer') {
+    } else if (userType === 'client') {
       // Müşteri paneli henüz mevcut değil, ana sayfaya yönlendir
       router.push('/');
     }
@@ -135,7 +132,7 @@ const Navbar = () => {
               </li>
             </>
           )}
-          {userType === 'customer' && (
+          {userType === 'client' && (
             <>
               <li>
                 <a href="/" className="sanayicin-btn-vendor" onClick={handlePanel}>Hesabım</a>

@@ -102,19 +102,26 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     }
   };
 
-  // Role mapping: 'client' -> 'customer'
+  // Role mapping: 'client' -> 'client' (artık aynı)
   const mappedRole = role;
 
-  // Mevcut kullanıcının ID'sini al
+  // Mevcut kullanıcının ID'sini al - ChatInterface'deki gibi güvenilir
   const getCurrentUserId = () => {
     try {
-      // Hem vendor hem customer token'ları kontrol et
-      const vendorToken = localStorage.getItem('esnaf_access_token');
-      const customerToken = localStorage.getItem('customer_access_token');
-      const token = vendorToken || customerToken;
+      // Önce vendor token'ı kontrol et
+      const vendorToken = getAuthToken('vendor');
+      if (vendorToken) {
+        const tokenParts = vendorToken.split('.');
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(atob(tokenParts[1]));
+          return payload.user_id;
+        }
+      }
       
-      if (token) {
-        const tokenParts = token.split('.');
+      // Vendor token yoksa client token'ı kontrol et
+      const clientToken = getAuthToken('client');
+      if (clientToken) {
+        const tokenParts = clientToken.split('.');
         if (tokenParts.length === 3) {
           const payload = JSON.parse(atob(tokenParts[1]));
           return payload.user_id;
@@ -146,9 +153,9 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   // Authentication kontrolü
   useEffect(() => {
     const checkAuth = () => {
-      const vendorToken = localStorage.getItem('esnaf_access_token');
-      const customerToken = localStorage.getItem('customer_access_token');
-      const hasToken = vendorToken || customerToken;
+      const vendorToken = getAuthToken('vendor');
+      const clientToken = getAuthToken('client');
+      const hasToken = vendorToken || clientToken;
       setIsAuthenticated(!!hasToken);
     };
 
@@ -263,11 +270,21 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   // connect WS for active conversation
   useEffect(() => {
     if (!isWidgetOpen || !activeId || !isAuthenticated) return;
-    const authToken = getAuthToken(mappedRole === 'vendor' ? 'vendor' : 'customer');
+    
+    // Role'e göre doğru token'ı al
+    const authToken = getAuthToken(mappedRole === 'vendor' ? 'vendor' : 'client');
+    
+    if (!authToken) {
+      console.error('Auth token bulunamadı - WebSocket bağlantısı kurulamıyor');
+      return;
+    }
+    
     const ws = new ChatWSClient({
       conversationId: activeId,
       authToken,
       onMessage: (evt) => {
+        console.log('WebSocket mesajı alındı:', evt);
+        
         if (evt.event === 'message.new') {
           setMessages((prev) => [...prev, evt.data]);
           // Aktif değilse ve karşı taraftan geldiyse unread ++
@@ -302,7 +319,7 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
         } else if (evt.event === 'typing') {
           // Sadece karşı taraf typing yapıyorsa göster
           if (evt.data?.conversation === activeId) {
-            const currentUserId = getCurrentUserId();
+            const currentUserId = getCurrentUserId(); // getCurrentUserId() kullan
             const typingUserId = evt.data?.typing_user_id;
             
             // String vs number karşılaştırmasını düzelt
@@ -314,14 +331,21 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
               setTyping(!!evt.data?.is_typing);
             } else if (currentUserIdStr && typingUserIdStr && currentUserIdStr === typingUserIdStr) {
               setTyping(false);
-            } else {
             }
           }
         }
       },
+      onOpen: () => {
+        console.log('WebSocket bağlantısı açıldı - Conversation:', activeId);
+      },
+      onClose: (e) => {
+        console.log('WebSocket bağlantısı kapandı - Conversation:', activeId, 'Code:', e?.code, 'Reason:', e?.reason);
+      },
     });
+    
     ws.connect();
     wsRef.current = ws;
+    
     return () => {
       ws.close();
       // Typing timeout'u temizle
@@ -334,11 +358,22 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   const send = async () => {
     const text = msg.trim();
     if (!text || !activeId || !isAuthenticated) return;
-    const optimistic: any = { id: `tmp-${Date.now()}`, content: text, sender_is_vendor: mappedRole === 'vendor', created_at: new Date().toISOString() };
+    
+    // Optimistic message'ı doğru formatta oluştur - ChatInterface'deki gibi
+    const currentUserId = getCurrentUserId();
+    const optimistic: any = { 
+      id: `tmp-${Date.now()}`, 
+      content: text, 
+      sender_user: currentUserId, // sender_user olarak currentUserId kullan
+      created_at: new Date().toISOString() 
+    };
+    
     setMessages((p) => [...p, optimistic]);
     setMsg('');
+    
     // Typing'i durdur
     sendTypingEvent(false);
+    
     if (wsRef.current?.isOpen()) {
       wsRef.current.sendMessage(text);
     } else {
@@ -347,7 +382,11 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
         const saved = res.data ?? res;
         setMessages((prev) => prev.map((m) => (m.id === optimistic.id ? saved : m)));
       } catch (e) {
-        // keep optimistic; optionally show error
+        console.error('Mesaj gönderilemedi:', e);
+        // Hata durumunda optimistic message'ı kaldır
+        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+        // Hata durumunda input'u geri yükle
+        setMsg(text);
       }
     }
   };
@@ -489,7 +528,9 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
               {messages.map((m) => {
                 const currentConversation = conversations.find(c => c.id === activeId);
                 
-                const isOwn = m.sender_user === getCurrentUserId();
+                // Mesaj yönünü doğru hesapla - ChatInterface'deki gibi
+                const currentUserId = getCurrentUserId();
+                const isOwn = m.sender_user?.toString() === currentUserId?.toString();
                 const justify = isOwn ? 'flex-end' : 'flex-start';
                 const bubbleStyle: React.CSSProperties = isOwn
                   ? (mappedRole === 'vendor'

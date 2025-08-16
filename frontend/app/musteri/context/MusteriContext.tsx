@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/app/utils/api';
+import { api, getAuthToken, setAuthToken, setRefreshToken, setAuthEmail, clearAuthTokens, clearAllAuthData } from '@/app/utils/api';
 
 interface MusteriContextType {
   isAuthenticated: boolean;
@@ -52,13 +52,13 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
   const checkAuth = (): { isAuthenticated: boolean; role: 'client' | 'vendor' | null } => {
     if (!mounted) return { isAuthenticated: false, role: null };
     
-    const customerToken = localStorage.getItem('customer_access_token');
-    const vendorToken = localStorage.getItem('esnaf_access_token');
+    const clientToken = getAuthToken('client');
+    const vendorToken = getAuthToken('vendor');
     
-    // Vendor token varsa hem vendor hem customer olarak davran
+    // Vendor token varsa hem vendor hem client olarak davran
     if (vendorToken) {
       return { isAuthenticated: true, role: 'vendor' };
-    } else if (customerToken) {
+    } else if (clientToken) {
       return { isAuthenticated: true, role: 'client' };
     }
     
@@ -113,8 +113,8 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
         // Vendor token varsa vendor profil bilgilerini çek
         response = await api.getProfile('vendor');
       } else {
-        // Customer token varsa customer profil bilgilerini çek
-        response = await api.getProfile('customer');
+        // Client token varsa client profil bilgilerini çek
+        response = await api.getProfile('client');
       }
       
       if (response.status === 200) {
@@ -162,13 +162,13 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
         
         // Role'e göre token'ları sakla
         if (role === 'vendor') {
-          localStorage.setItem('esnaf_access_token', access);
-          localStorage.setItem('esnaf_refresh_token', refresh);
-          localStorage.setItem('esnaf_email', email);
+          setAuthToken('vendor', access);
+          setRefreshToken('vendor', refresh);
+          setAuthEmail('vendor', email);
         } else {
-          localStorage.setItem('customer_access_token', access);
-          localStorage.setItem('customer_refresh_token', refresh);
-          localStorage.setItem('customer_email', email);
+          setAuthToken('client', access);
+          setRefreshToken('client', refresh);
+          setAuthEmail('client', email);
         }
         
         // Role bilgisini hemen set et
@@ -192,12 +192,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
 
   // Çıkış yap
   const logout = () => {
-    localStorage.removeItem('customer_access_token');
-    localStorage.removeItem('customer_refresh_token');
-    localStorage.removeItem('customer_email');
-    localStorage.removeItem('esnaf_access_token');
-    localStorage.removeItem('esnaf_refresh_token');
-    localStorage.removeItem('esnaf_email');
+    clearAllAuthData();
     
     setIsAuthenticated(false);
     setUser(null);

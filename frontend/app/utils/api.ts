@@ -3,28 +3,66 @@ import axios from 'axios';
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 // Role'e göre token key'leri
-const getTokenKey = (role: 'vendor' | 'customer' = 'vendor') => {
+const getTokenKey = (role: 'vendor' | 'client' = 'vendor') => {
   return role === 'vendor' ? 'esnaf_access_token' : 'customer_access_token';
 };
 
-const getRefreshTokenKey = (role: 'vendor' | 'customer' = 'vendor') => {
+const getRefreshTokenKey = (role: 'vendor' | 'client' = 'vendor') => {
   return role === 'vendor' ? 'esnaf_refresh_token' : 'customer_access_token';
 };
 
-const getEmailKey = (role: 'vendor' | 'customer' = 'vendor') => {
+const getEmailKey = (role: 'vendor' | 'client' = 'vendor') => {
   return role === 'vendor' ? 'esnaf_email' : 'customer_email';
 };
 
 // Auth token'ı al
-export const getAuthToken = (role: 'vendor' | 'customer' = 'vendor'): string | null => {
+export const getAuthToken = (role: 'vendor' | 'client' = 'vendor'): string | null => {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(getTokenKey(role));
 };
 
 // Auth header'ı oluştur
-export const getAuthHeaders = (role: 'vendor' | 'customer' = 'vendor') => {
+export const getAuthHeaders = (role: 'vendor' | 'client' = 'vendor') => {
   const token = getAuthToken(role);
   return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// Token'ı kaydet
+export const setAuthToken = (role: 'vendor' | 'client', token: string) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(getTokenKey(role), token);
+};
+
+// Refresh token'ı kaydet
+export const setRefreshToken = (role: 'vendor' | 'client', token: string) => {
+  if (typeof window === "undefined") return;
+  const refreshKey = role === 'vendor' ? 'esnaf_refresh_token' : 'customer_refresh_token';
+  localStorage.setItem(refreshKey, token);
+};
+
+// Email'i kaydet
+export const setAuthEmail = (role: 'vendor' | 'client', email: string) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(getEmailKey(role), email);
+};
+
+// Token'ları sil
+export const clearAuthTokens = (role: 'vendor' | 'client') => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(getTokenKey(role));
+  localStorage.removeItem(getRefreshTokenKey(role));
+  localStorage.removeItem(getEmailKey(role));
+};
+
+// Tüm auth verilerini sil
+export const clearAllAuthData = () => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem('esnaf_access_token');
+  localStorage.removeItem('esnaf_refresh_token');
+  localStorage.removeItem('esnaf_email');
+  localStorage.removeItem('customer_access_token');
+  localStorage.removeItem('customer_refresh_token');
+  localStorage.removeItem('customer_email');
 };
 
 // Güvenlik: Input sanitization fonksiyonları
@@ -49,7 +87,7 @@ const validateTaxNo = (taxNo: string): boolean => {
 };
 
 // Güvenlik: Register data validation
-const validateRegisterData = (data: any, role: 'vendor' | 'customer' = 'vendor'): { isValid: boolean; errors: string[] } => {
+const validateRegisterData = (data: any, role: 'vendor' | 'client' = 'vendor'): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
   // Email kontrolü
@@ -136,28 +174,28 @@ apiClient.interceptors.request.use((config) => {
   // Esnaf panelinde isek chat çağrıları vendor rolüyle yapılmalı
   const isEsnafContext = typeof window !== 'undefined' && window.location?.pathname?.startsWith('/esnaf');
   
-  let role: 'vendor' | 'customer' = 'customer'; // Default customer
+  let role: 'vendor' | 'client' = 'client'; // Default client
   
   if (isChatEndpoint) {
-    // Chat endpoint'leri için: hem vendor hem customer token'ları kontrol et
+        // Chat endpoint'leri için: hem vendor hem client token'ları kontrol et
     const vendorToken = localStorage.getItem('esnaf_access_token');
-    const customerToken = localStorage.getItem('customer_access_token');
+    const clientToken = localStorage.getItem('customer_access_token');
     
-    if (vendorToken && !customerToken) {
+    if (vendorToken && !clientToken) {
       role = 'vendor';
-    } else if (customerToken && !vendorToken) {
-      role = 'customer';
-    } else if (vendorToken && customerToken) {
+    } else if (clientToken && !vendorToken) {
+      role = 'client';
+    } else if (vendorToken && clientToken) {
       // Her iki token da varsa, mevcut sayfadan karar ver
-      role = isEsnafContext ? 'vendor' : 'customer';
+      role = isEsnafContext ? 'vendor' : 'client';
     } else {
       // Hiç token yoksa, mevcut sayfadan karar ver
-      role = isEsnafContext ? 'vendor' : 'customer';
+      role = isEsnafContext ? 'vendor' : 'client';
     }
-  } else {
-    // Diğer endpoint'ler için eski logic
-    role = isEsnafContext ? 'vendor' : (isVendorUrl ? 'vendor' : 'customer');
-  }
+      } else {
+        // Diğer endpoint'ler için eski logic
+        role = isEsnafContext ? 'vendor' : (isVendorUrl ? 'vendor' : 'client');
+      }
   
   const token = getAuthToken(role);
   if (token) {
@@ -188,26 +226,26 @@ apiClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         // Mevcut token'ları kontrol et - hangi role'ün token'ı varsa o role'ü kullan
         const vendorToken = localStorage.getItem('esnaf_access_token');
-        const customerToken = localStorage.getItem('customer_access_token');
+        const clientToken = localStorage.getItem('customer_access_token');
         
-        let role: 'vendor' | 'customer' = 'vendor'; // Default vendor
+        let role: 'vendor' | 'client' = 'vendor'; // Default vendor
         
-        if (vendorToken && !customerToken) {
+        if (vendorToken && !clientToken) {
           role = 'vendor';
-        } else if (customerToken && !vendorToken) {
-          role = 'customer';
-        } else if (vendorToken && customerToken) {
+        } else if (clientToken && !vendorToken) {
+          role = 'client';
+        } else if (vendorToken && clientToken) {
           // Her iki token da varsa, URL'den tahmin et
           const isVendorUrl = error.config?.url?.includes('/vendors/') || 
                               error.config?.url?.includes('/esnaf/') || 
                               error.config?.url?.includes('/avatar/upload/');
-          role = isVendorUrl ? 'vendor' : 'customer';
+          role = isVendorUrl ? 'vendor' : 'client';
         } else {
           // Hiç token yoksa, URL'den tahmin et
           const isVendorUrl = error.config?.url?.includes('/vendors/') || 
                               error.config?.url?.includes('/esnaf/') || 
                               error.config?.url?.includes('/avatar/upload/');
-          role = isVendorUrl ? 'vendor' : 'customer';
+          role = isVendorUrl ? 'vendor' : 'client';
         }
         
         // Token'ları temizle
@@ -227,10 +265,10 @@ apiClient.interceptors.response.use(
 // Ortak API fonksiyonları
 export const api = {
   // Profil işlemleri - Role'e göre farklı endpoint'ler
-  getProfile: (role: 'vendor' | 'customer' = 'vendor') => 
+  getProfile: (role: 'vendor' | 'client' = 'vendor') => 
     apiClient.get(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/'),
   
-  updateProfile: (data: FormData, role: 'vendor' | 'customer' = 'vendor') => 
+  updateProfile: (data: FormData, role: 'vendor' | 'client' = 'vendor') => 
     apiClient.patch(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/', data, {
       headers: { "Content-Type": "multipart/form-data" }
     }),
@@ -252,8 +290,8 @@ export const api = {
   getVendorDetail: (slug: string) => 
     apiClient.get(`/vendors/${slug}/`),
   
-  // Avatar upload - vendor ve customer için ortak endpoint
-  uploadAvatar: (data: FormData, role: 'vendor' | 'customer' = 'vendor') => 
+  // Avatar upload - vendor ve client için ortak endpoint
+  uploadAvatar: (data: FormData, role: 'vendor' | 'client' = 'vendor') => 
     apiClient.post('/avatar/upload/', data, {
       headers: { "Content-Type": "multipart/form-data" }
     }),
@@ -263,11 +301,11 @@ export const api = {
     apiClient.post('/auth/login/', data),
   
   // Register - Role'e göre farklı endpoint'ler
-  register: (data: any, role: 'vendor' | 'customer' = 'vendor') => {
+  register: (data: any, role: 'vendor' | 'client' = 'vendor') => {
     // FormData kontrolü
     if (data instanceof FormData) {
       // FormData için validation yapmaya gerek yok, backend'de yapılacak
-      const endpoint = role === 'vendor' ? '/vendors/register/' : '/customers/register/';
+      const endpoint = role === 'vendor' ? '/vendors/register/' : '/clients/register/';
       return apiClient.post(endpoint, data, {
         headers: { "Content-Type": "multipart/form-data" }
       });
@@ -298,12 +336,12 @@ export const api = {
       });
     }
 
-    const endpoint = role === 'vendor' ? '/vendors/register/' : '/customers/register/';
+    const endpoint = role === 'vendor' ? '/vendors/register/' : '/clients/register/';
     return apiClient.post(endpoint, sanitizedData);
   },
   
-  setPassword: (data: { email: string; password: string; password2: string }, role: 'vendor' | 'customer' = 'vendor') => 
-    apiClient.post(role === 'vendor' ? '/vendors/set-password/' : '/customers/set-password/', data),
+  setPassword: (data: { email: string; password: string; password2: string }, role: 'vendor' | 'client' = 'vendor') => 
+    apiClient.post(role === 'vendor' ? '/vendors/set-password/' : '/clients/set-password/', data),
   
   // Email verification işlemleri (ortak)
   sendVerificationEmail: (data: { email: string }) => 
