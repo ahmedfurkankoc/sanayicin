@@ -3,7 +3,7 @@
 import React from 'react';
 import { useParams } from 'next/navigation';
 import EsnafPanelLayout from '@/app/esnaf/components/EsnafPanelLayout';
-import ChatInterface from '@/app/components/ui/ChatInterface';
+import ChatInterface from '@/app/components/ChatInterface';
 
 export default function ChatPage() {
   const params = useParams();

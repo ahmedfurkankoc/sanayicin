@@ -245,7 +245,7 @@ export const api = {
   getCarBrands: () => apiClient.get('/vendors/car-brands/'),
   
   // Vendor arama sonuçları
-  searchVendors: (params: { city?: string; district?: string; service?: string; category?: string }) => 
+  searchVendors: (params: { city?: string; district?: string; service?: string; category?: string; carBrand?: string; page?: string; q?: string }) => 
     apiClient.get('/vendors/search/', { params }),
   
   // Vendor detay sayfası
@@ -258,9 +258,9 @@ export const api = {
       headers: { "Content-Type": "multipart/form-data" }
     }),
   
-  // Auth işlemleri - Role'e göre farklı endpoint'ler
-  login: (data: { email: string; password: string }, role: 'vendor' | 'customer' = 'vendor') => 
-    apiClient.post(role === 'vendor' ? '/auth/login/' : '/customers/login/', data),
+  // Auth işlemleri - Tek endpoint kullan
+  login: (data: { email: string; password: string }) => 
+    apiClient.post('/auth/login/', data),
   
   // Register - Role'e göre farklı endpoint'ler
   register: (data: any, role: 'vendor' | 'customer' = 'vendor') => {

@@ -94,6 +94,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
   // Kullanıcı bilgilerini yenile
   const refreshUser = async () => {
     try {
+      setLoading(true);
       const authCheck = checkAuth();
       
       if (!authCheck.isAuthenticated) {
@@ -101,6 +102,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
         setUser(null);
         setRole(null);
         setUserPermissions(null);
+        setLoading(false);
         return;
       }
 
@@ -142,6 +144,8 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
       // Hata durumunda da sadece logout yap - yönlendirme yapma
       console.log('Profil yüklenirken hata, logout yapıldı. Yönlendirme yapılmadı.');
       logout();
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -150,14 +154,27 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     try {
       setLoading(true);
       
-      // Önce customer olarak dene
-      let response = await api.login({ email, password }, 'customer');
+      // Tek endpoint ile giriş yap
+      const response = await api.login({ email, password });
       
       if (response.status === 200 && response.data.access) {
-        // Customer girişi başarılı
-        localStorage.setItem('customer_access_token', response.data.access);
-        localStorage.setItem('customer_refresh_token', response.data.refresh);
-        localStorage.setItem('customer_email', email);
+        const { access, refresh, role } = response.data;
+        
+        // Role'e göre token'ları sakla
+        if (role === 'vendor') {
+          localStorage.setItem('esnaf_access_token', access);
+          localStorage.setItem('esnaf_refresh_token', refresh);
+          localStorage.setItem('esnaf_email', email);
+        } else {
+          localStorage.setItem('customer_access_token', access);
+          localStorage.setItem('customer_refresh_token', refresh);
+          localStorage.setItem('customer_email', email);
+        }
+        
+        // Role bilgisini hemen set et
+        setRole(role);
+        setUserPermissions(role);
+        setIsAuthenticated(true);
         
         // Kullanıcı bilgilerini yükle
         await refreshUser();
@@ -186,7 +203,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     setUser(null);
     setRole(null);
     setUserPermissions(null);
-    router.push('/'); // Çıkış yaptıktan sonra ana sayfaya yönlendir
+    router.push('/musteri/hizmetler'); // Çıkış yaptıktan sonra hizmetler sayfasına yönlendir
   };
 
   // Component mount olduktan sonra authentication kontrolü

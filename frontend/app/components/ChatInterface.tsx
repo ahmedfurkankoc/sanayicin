@@ -140,6 +140,18 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
         setMessages(list.reverse());
         setHasMore(res.data?.has_more ?? false);
         setNextOffset(res.data?.next_offset ?? null);
+        
+        // Mesajlar yüklendiğinde okundu olarak işaretle
+        if (list.length > 0) {
+          await api.chatMarkRead(conversationId);
+          // Parent component'e unread count güncellemesi bildir
+          if (onUnreadCountUpdate) {
+            // Conversation list'i yeniden yükle ve güncelle
+            const convRes = await api.chatListConversations();
+            const conversations = convRes.data ?? convRes;
+            onUnreadCountUpdate(conversations);
+          }
+        }
       } catch (error) {
         console.error('Mesajlar yüklenemedi:', error);
       } finally {
@@ -148,7 +160,7 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
     };
 
     loadMessages();
-  }, [conversationId]);
+  }, [conversationId, onUnreadCountUpdate]);
 
   // Daha fazla mesaj yükle
   const loadMoreMessages = async () => {
@@ -182,7 +194,7 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
     const ws = new ChatWSClient({ 
       conversationId, 
       authToken, 
-      onMessage: (evt) => {
+      onMessage: async (evt) => {
         if (evt.event === 'typing') {
           // Sadece karşı taraf typing yapıyorsa göster
           if (evt.data?.conversation === conversationId) {
@@ -218,6 +230,15 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
             
             return updated;
           });
+          
+          // Yeni mesaj geldiğinde okundu olarak işaretle
+          await api.chatMarkRead(conversationId);
+          // Parent component'e unread count güncellemesi bildir
+          if (onUnreadCountUpdate) {
+            const convRes = await api.chatListConversations();
+            const conversations = convRes.data ?? convRes;
+            onUnreadCountUpdate(conversations);
+          }
         }
       }
     });

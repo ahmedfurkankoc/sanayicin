@@ -8,7 +8,7 @@ export default function MusteriFooter() {
     <footer className="musteri-footer">
       <div className="musteri-footer-content">
         <div style={{ marginBottom: '1rem' }}>
-          <Link href="/" className="musteri-logo" style={{ fontSize: '1.2rem' }}>
+          <Link href="/musteri/hizmetler" className="musteri-logo" style={{ fontSize: '1.2rem' }}>
             Sanayicin
           </Link>
         </div>
