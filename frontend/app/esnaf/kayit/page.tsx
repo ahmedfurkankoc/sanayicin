@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { api } from "@/app/utils/api";
+import { api, setAuthEmail } from "@/app/utils/api";
 
 // UI Components
 import EsnafFooter from "../components/EsnafFooter";
@@ -499,7 +499,7 @@ export default function EsnafKayitPage() {
       }
       // Email bilgisini localStorage'a kaydet
       if (typeof window !== "undefined") {
-        localStorage.setItem("esnaf_email", email);
+        setAuthEmail("vendor", email);
         // Password'ü hash'leyerek sakla (email verification sonrası login için)
         const hashedPassword = btoa(password); // Base64 encoding (basit hash)
         localStorage.setItem("esnaf_temp_password_hash", hashedPassword);

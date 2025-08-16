@@ -4,6 +4,19 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/app/utils/api';
 
+interface ConversationItem {
+  id: number;
+  other_user?: {
+    first_name?: string;
+    display_name?: string;
+    username?: string;
+    email?: string;
+  };
+  last_message_text?: string;
+  vendor_unread_count?: number;
+  client_unread_count?: number;
+}
+
 interface ConversationListProps {
   userRole: 'customer' | 'vendor';
   baseUrl: string;
@@ -11,7 +24,7 @@ interface ConversationListProps {
 }
 
 export default function ConversationList({ userRole, baseUrl, className = '' }: ConversationListProps) {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +40,7 @@ export default function ConversationList({ userRole, baseUrl, className = '' }: 
         console.log(`DEBUG ${userRole.toUpperCase()}: Conversation items:`, items);
         
         // Her item'ın detayını logla
-        items.forEach((item, index) => {
+        items.forEach((item: ConversationItem, index: number) => {
           console.log(`DEBUG ${userRole.toUpperCase()}: Item ${index}:`, {
             id: item.id,
             other_user: item.other_user,

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { api } from "@/app/utils/api";
+import { api, getAuthToken } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { useMusteri } from "../context/MusteriContext";
 import MusteriHeader from "../components/MusteriHeader";
@@ -163,7 +163,7 @@ export default function EsnafOlPage() {
         method: 'POST',
         body: formDataObj,
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('customer_access_token')}`
+          'Authorization': `Bearer ${getAuthToken('client')}`
         }
       });
       
@@ -175,7 +175,7 @@ export default function EsnafOlPage() {
           setSuccess(true);
           setTimeout(() => {
             // Vendor token'ı varsa esnaf paneline, yoksa ana sayfaya yönlendir
-            if (localStorage.getItem('esnaf_access_token')) {
+            if (getAuthToken('vendor')) {
               router.push('/esnaf/panel');
             } else {
               router.push('/');
