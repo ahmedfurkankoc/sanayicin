@@ -16,7 +16,17 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 from django.http import Http404
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+import logging
 
+logger = logging.getLogger(__name__)
+
+# Permission class'ları
 class IsVendor(permissions.BasePermission):
     def has_permission(self, request, view):
         # Vendor, admin role veya superuser olabilir
@@ -27,38 +37,77 @@ class IsVendor(permissions.BasePermission):
             request.user.is_superuser
         )
 
-class VendorDetailView(generics.RetrieveAPIView):
+# Pagination sınıfı
+class VendorSearchPagination(PageNumberPagination):
+    page_size = 15  # Sayfa başına 15 sonuç
+    page_size_query_param = 'page_size'
+    max_page_size = 50  # Maksimum sayfa boyutu
+
+class VendorSearchView(generics.ListAPIView):
     serializer_class = VendorProfileSerializer
     permission_classes = [AllowAny]
-    queryset = VendorProfile.objects.filter(user__is_verified=True, user__is_active=True)
-    lookup_field = 'slug'
+    pagination_class = VendorSearchPagination
     
-    def get_object(self):
-        slug = self.kwargs.get('slug')
-        try:
-                    return VendorProfile.objects.get(
-            slug=slug,
-            user__is_verified=True,
-            user__is_active=True
-        )
-        except VendorProfile.DoesNotExist:
-            from rest_framework.exceptions import NotFound
-            raise NotFound("Vendor bulunamadı")
-
-class VendorSearchView(APIView):
-    permission_classes = [AllowAny]
+    # Yüksek trafik için caching - 5 dakika
+    @method_decorator(cache_page(300))
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
     
-    def get(self, request):
-        city = request.query_params.get('city', '')
-        district = request.query_params.get('district', '')
-        service = request.query_params.get('service', '')
-        category = request.query_params.get('category', '')
-        
-        # Sadece doğrulanmış vendor'ları getir
+    def get_queryset(self):
         queryset = VendorProfile.objects.filter(
-            user__is_verified=True,
-            user__is_active=True
-        )
+            user__is_verified=True,  # Sadece doğrulanmış kullanıcılar
+            user__is_active=True     # Sadece aktif kullanıcılar
+        ).select_related('user').prefetch_related('service_areas', 'categories', 'car_brands')
+        
+        # Filtreleme parametreleri
+        city = self.request.query_params.get('city', '')
+        district = self.request.query_params.get('district', '')
+        service = self.request.query_params.get('service', '')
+        category = self.request.query_params.get('category', '')
+        car_brand = self.request.query_params.get('carBrand', '')
+        search_query = self.request.query_params.get('q', '')  # Text search parametresi
+        
+        # Text search - esnaf adı, hizmet, açıklama gibi alanlarda arama (case-insensitive)
+        if search_query:
+            # Case-insensitive arama için search_query'yi normalize et
+            normalized_query = search_query.lower().strip()
+            
+            # Türkçe karakter alternatifleri oluştur
+            turkish_alternatives = [
+                normalized_query,
+                normalized_query.replace('i', 'ı'),
+                normalized_query.replace('ı', 'i'),
+                normalized_query.replace('o', 'ö'),
+                normalized_query.replace('ö', 'o'),
+                normalized_query.replace('u', 'ü'),
+                normalized_query.replace('ü', 'u'),
+                normalized_query.replace('s', 'ş'),
+                normalized_query.replace('ş', 's'),
+                normalized_query.replace('c', 'ç'),
+                normalized_query.replace('ç', 'c'),
+                normalized_query.replace('g', 'ğ'),
+                normalized_query.replace('ğ', 'g')
+            ]
+            
+            # Gelişmiş arama için birden fazla yaklaşım kullan
+            from django.db.models import Q
+            search_queries = Q()
+            
+            for alt_query in turkish_alternatives:
+                search_queries |= (
+                    Q(display_name__icontains=alt_query) |  # Esnaf adı
+                    Q(company_title__icontains=alt_query) |  # Şirket adı
+                    Q(about__icontains=alt_query) |  # Açıklama
+                    Q(business_type__icontains=alt_query) |  # İşletme türü
+                    Q(service_areas__name__icontains=alt_query) |  # Hizmet alanı adı
+                    Q(categories__name__icontains=alt_query) |  # Kategori adı
+                    Q(car_brands__name__icontains=alt_query) |  # Araba markası adı
+                    # Şehir ve ilçe araması da ekle
+                    Q(city__icontains=alt_query) |  # Şehir
+                    Q(district__icontains=alt_query)  # İlçe
+                )
+            
+            queryset = queryset.filter(search_queries).distinct()  # Duplicate sonuçları önle
         
         # Şehir filtresi
         if city:
@@ -71,6 +120,7 @@ class VendorSearchView(APIView):
         # Hizmet alanı filtresi
         if service:
             try:
+                from core.models import ServiceArea
                 service_area = ServiceArea.objects.get(id=service)
                 # Vendor'ların service_areas field'ında bu hizmet alanı var mı kontrol et
                 queryset = queryset.filter(service_areas=service_area)
@@ -87,13 +137,35 @@ class VendorSearchView(APIView):
             except Category.DoesNotExist:
                 pass
         
-        # Sonuçları serialize et
-        serializer = VendorProfileSerializer(queryset, many=True)
+        # Araba markası filtresi
+        if car_brand:
+            try:
+                from core.models import CarBrand
+                car_brand_obj = CarBrand.objects.get(id=car_brand)
+                # Vendor'ların car_brands field'ında bu araba markası var mı kontrol et
+                queryset = queryset.filter(car_brands=car_brand_obj)
+            except Category.DoesNotExist:
+                pass
         
-        return Response({
-            "count": queryset.count(),
-            "results": serializer.data
-        })
+        return queryset.order_by('-id')  # En yeni vendor'lar önce
+
+class VendorDetailView(generics.RetrieveAPIView):
+    serializer_class = VendorProfileSerializer
+    permission_classes = [AllowAny]
+    queryset = VendorProfile.objects.filter(user__is_verified=True, user__is_active=True)
+    lookup_field = 'slug'
+    
+    def get_object(self):
+        slug = self.kwargs.get('slug')
+        try:
+            return VendorProfile.objects.get(
+                slug=slug,
+                user__is_verified=True,
+                user__is_active=True
+            )
+        except VendorProfile.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Vendor bulunamadı")
 
 class VendorProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = VendorProfileSerializer

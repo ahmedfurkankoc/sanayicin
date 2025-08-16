@@ -28,49 +28,50 @@ export default function EsnafGirisPage() {
     setError("");
     setLoading(true);
     try {
-      // Production'da hardcode URL kullan
+      // Tek endpoint ile giriş yap
       const apiUrl = typeof window !== 'undefined' && window.location.hostname === 'test.sanayicin.com' 
         ? 'https://test.sanayicin.com/api' 
         : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api');
-      
-      // Debug log
-      console.log("Current hostname:", typeof window !== 'undefined' ? window.location.hostname : 'server');
-      console.log("NEXT_PUBLIC_API_URL:", process.env.NEXT_PUBLIC_API_URL);
-      console.log("Final API URL:", apiUrl);
       
       const res = await axios.post(`${apiUrl}/auth/login/`, {
         email,
         password,
       });
+      
       if (res.status === 200 && res.data.access) {
-        localStorage.setItem("esnaf_access_token", res.data.access);
-        localStorage.setItem("esnaf_refresh_token", res.data.refresh);
-        localStorage.setItem("esnaf_email", email);
-        localStorage.removeItem("esnaf_password_set"); // Şifre oluşturma modalı için
+        const { access, refresh, role, is_verified } = res.data;
         
-        // Debug log
-        console.log("Login response:", res.data);
-        console.log("Response keys:", Object.keys(res.data));
-        console.log("verification_status:", res.data.verification_status, "is_verified:", res.data.is_verified);
-
-        // Doğrulanmamışsa email verification sayfasına yönlendir
-        if (!res.data.is_verified) {
-          router.push(`/esnaf/email-dogrula?email=${email}`);
-          return;
+        // Sadece vendor'lar esnaf paneline girebilir
+        if (role === 'vendor' || role === 'admin') {
+          localStorage.setItem("esnaf_access_token", access);
+          localStorage.setItem("esnaf_refresh_token", refresh);
+          localStorage.setItem("esnaf_email", email);
+          localStorage.removeItem("esnaf_password_set");
+          
+          // Doğrulanmamışsa email verification sayfasına yönlendir
+          if (!is_verified) {
+            router.push(`/esnaf/email-dogrula?email=${email}`);
+            return;
+          }
+          
+          // Context'i yenile
+          await refreshUser();
+          
+          // State güncellenmesini bekle
+          setTimeout(() => {
+            router.push("/esnaf/panel");
+          }, 100);
+        } else if (role === 'client') {
+          // Client hesabı varsa vendor'a upgrade et
+          setError("Bu hesap müşteri hesabı. Esnaf olmak için lütfen yeni hesap açın veya mevcut hesabınızı yükseltin.");
+        } else {
+          setError("Bu hesap esnaf hesabı değil.");
         }
-        
-        // Context'i yenile
-        await refreshUser();
-        
-        // State güncellenmesini bekle
-        setTimeout(() => {
-          router.push("/esnaf/panel");
-        }, 100);
       } else {
         setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Giriş başarısız. Bilgilerinizi kontrol edin.");
+      setError(err.response?.data?.error || "Giriş başarısız. Bilgilerinizi kontrol edin.");
     } finally {
       setLoading(false);
     }

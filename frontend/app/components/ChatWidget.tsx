@@ -108,10 +108,13 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   // Mevcut kullanıcının ID'sini al
   const getCurrentUserId = () => {
     try {
-      // Önce vendor token'ı kontrol et
-      const vendorToken = getAuthToken(mappedRole === 'vendor' ? 'vendor' : 'customer');
-      if (vendorToken) {
-        const tokenParts = vendorToken.split('.');
+      // Hem vendor hem customer token'ları kontrol et
+      const vendorToken = localStorage.getItem('esnaf_access_token');
+      const customerToken = localStorage.getItem('customer_access_token');
+      const token = vendorToken || customerToken;
+      
+      if (token) {
+        const tokenParts = token.split('.');
         if (tokenParts.length === 3) {
           const payload = JSON.parse(atob(tokenParts[1]));
           return payload.user_id;
@@ -161,24 +164,10 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
       // Her conversation'da sadece karşıdan gelen mesajları say
       // Kendi gönderdiğimiz mesajları sayma
       
-      const currentUserId = getCurrentUserId();
-      
-      // Debug için log ekle
-      console.log('DEBUG Badge Calculation:', {
-        conversationId: c.id,
-        currentUserId: currentUserId,
-        user1Id: c.user1?.id,
-        user2Id: c.user2?.id,
-        otherUserId: c.other_user?.id,
-        unreadCount: c.unread_count,
-        unreadCountForCurrentUser: c.unread_count_for_current_user
-      });
-      
       // Yeni sistemde unread_count_for_current_user kullan
       return sum + (c.unread_count_for_current_user || 0);
     }, 0);
     
-    console.log('DEBUG: Total unread count:', total);
     return total;
   }, [conversations]);
 
@@ -232,48 +221,29 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   useEffect(() => {
     if (!isAuthenticated) return;
     
-    let timer: any;
-    const tick = async () => {
-      try {
-        const res = await api.chatListConversations();
-        const items = res.data ?? res;
-        setConversations((prev) => {
-          // preserve activeId but refresh list contents
-          return items;
-        });
-        // aktif pencere açıksa okundu tut
-        if (isWidgetOpen && activeId) {
-          await api.chatMarkRead(activeId).catch(() => {});
-        }
-        // Parent component'e unread count güncellemesi bildir
-        if (onUnreadCountUpdate) {
-          // Sadece karşıdan gelen mesajları say, kendi gönderdiğimizi değil
-          const updatedConversations = items.map((c: any) => {
-            const currentUserId = getCurrentUserId();
-            
-            // Eğer bu conversation'da vendor olarak varsak
-            if (c.vendor_user?.id === currentUserId) {
-              // Vendor olarak varsak, sadece client'tan gelen mesajları say
-              return { ...c, vendor_unread_count: 0, client_unread_count: c.client_unread_count || 0 };
-            } 
-            // Eğer bu conversation'da client olarak varsak
-            else if (c.client_user?.id === currentUserId) {
-              // Client olarak varsak, sadece vendor'dan gelen mesajları say
-              return { ...c, client_unread_count: 0, vendor_unread_count: c.vendor_unread_count || 0 };
-            }
-            
-            return c;
+    // Polling kaldırıldı - sadece WebSocket ile real-time güncelleme
+    // Widget açıldığında bir kez yükle
+    if (isWidgetOpen) {
+      (async () => {
+        try {
+          const res = await api.chatListConversations();
+          const items = res.data ?? res;
+          setConversations((prev) => {
+            // preserve activeId but refresh list contents
+            return items;
           });
-          onUnreadCountUpdate(updatedConversations);
-        }
-      } catch {}
-    };
-    // poll every 10s
-    timer = setInterval(tick, 10000);
-    // run once immediately when closed as well
-    tick();
-    return () => clearInterval(timer);
-  }, [mappedRole, isWidgetOpen, activeId, isAuthenticated, onUnreadCountUpdate]);
+          // aktif pencere açıksa okundu tut
+          if (activeId) {
+            await api.chatMarkRead(activeId).catch(() => {});
+          }
+          // Parent component'e unread count güncellemesi bildir
+          if (onUnreadCountUpdate) {
+            onUnreadCountUpdate(items);
+          }
+        } catch {}
+      })();
+    }
+  }, [isWidgetOpen, activeId, isAuthenticated, onUnreadCountUpdate]);
 
   // load messages when activeId changes
   useEffect(() => {
@@ -335,28 +305,16 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
             const currentUserId = getCurrentUserId();
             const typingUserId = evt.data?.typing_user_id;
             
-            // Debug için log ekle
-            console.log('DEBUG Typing Event:', {
-              currentUserId: currentUserId,
-              typingUserId: typingUserId,
-              isTyping: evt.data?.is_typing,
-              conversation: evt.data?.conversation,
-              activeId: activeId
-            });
-            
             // String vs number karşılaştırmasını düzelt
             const currentUserIdStr = currentUserId?.toString();
             const typingUserIdStr = typingUserId?.toString();
             
             // Sadece karşı taraf typing yapıyorsa göster
             if (currentUserIdStr && typingUserIdStr && currentUserIdStr !== typingUserIdStr) {
-              console.log('DEBUG: Karşı taraf typing yapıyor, typing gösteriliyor');
               setTyping(!!evt.data?.is_typing);
             } else if (currentUserIdStr && typingUserIdStr && currentUserIdStr === typingUserIdStr) {
-              console.log('DEBUG: Kendi typing event\'im, typing gizleniyor');
               setTyping(false);
             } else {
-              console.log('DEBUG: Typing event bilgisi eksik');
             }
           }
         }

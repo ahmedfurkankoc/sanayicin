@@ -30,7 +30,7 @@ export default function MusteriGirisPage() {
     try {
       const success = await login(email, password);
       if (success) {
-        router.push("/");
+        router.push("/musteri/hizmetler");
       } else {
         setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
       }
