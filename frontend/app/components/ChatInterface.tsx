@@ -75,10 +75,10 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
         }
       }
       
-      // Vendor token yoksa customer token'ı kontrol et
-      const customerToken = getAuthToken('customer');
-      if (customerToken) {
-        const tokenParts = customerToken.split('.');
+      // Vendor token yoksa client token'ı kontrol et
+      const clientToken = getAuthToken('client');
+      if (clientToken) {
+        const tokenParts = clientToken.split('.');
         if (tokenParts.length === 3) {
           const payload = JSON.parse(atob(tokenParts[1]));
           return payload.user_id;
@@ -184,10 +184,10 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
 
   // WebSocket bağlantısı
   useEffect(() => {
-    // Hem customer hem vendor token'ını kontrol et
-    const customerToken = getAuthToken('customer');
+    // Hem client hem vendor token'ını kontrol et
+    const clientToken = getAuthToken('client');
     const vendorToken = getAuthToken('vendor');
-    const authToken = customerToken || vendorToken;
+    const authToken = clientToken || vendorToken;
     
     if (!authToken) return;
     

@@ -326,8 +326,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = [
-            'id', 'vendor', 'vendor_display_name', 'customer_name', 'customer_phone', 
-            'customer_email', 'service_description', 'appointment_date', 'appointment_time',
+                        'id', 'vendor', 'vendor_display_name', 'client_name', 'client_phone',
+            'client_email', 'service_description', 'appointment_date', 'appointment_time',
             'status', 'status_display', 'notes', 'created_at', 'updated_at'
         ]
         read_only_fields = ['vendor', 'created_at', 'updated_at']
@@ -344,6 +344,6 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = [
-            'customer_name', 'customer_phone', 'customer_email', 'service_description',
+            'client_name', 'client_phone', 'client_email', 'service_description',
             'appointment_date', 'appointment_time', 'notes'
         ] 

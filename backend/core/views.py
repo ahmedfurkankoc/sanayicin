@@ -1,4 +1,4 @@
-# Ortak view'lar burada tutulabilir. Şu an vendor/customer view'lar ilgili app'lere taşındı.
+# Ortak view'lar burada tutulabilir. Şu an vendor/client view'lar ilgili app'lere taşındı.
 from rest_framework import generics, permissions, status, serializers
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes

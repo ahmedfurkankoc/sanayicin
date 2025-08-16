@@ -4,15 +4,15 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 // Role'e göre token key'leri
 const getTokenKey = (role: 'vendor' | 'client' = 'vendor') => {
-  return role === 'vendor' ? 'esnaf_access_token' : 'customer_access_token';
+  return role === 'vendor' ? 'esnaf_access_token' : 'client_access_token';
 };
 
 const getRefreshTokenKey = (role: 'vendor' | 'client' = 'vendor') => {
-  return role === 'vendor' ? 'esnaf_refresh_token' : 'customer_access_token';
+  return role === 'vendor' ? 'esnaf_refresh_token' : 'client_refresh_token';
 };
 
 const getEmailKey = (role: 'vendor' | 'client' = 'vendor') => {
-  return role === 'vendor' ? 'esnaf_email' : 'customer_email';
+  return role === 'vendor' ? 'esnaf_email' : 'client_email';
 };
 
 // Auth token'ı al
@@ -36,7 +36,7 @@ export const setAuthToken = (role: 'vendor' | 'client', token: string) => {
 // Refresh token'ı kaydet
 export const setRefreshToken = (role: 'vendor' | 'client', token: string) => {
   if (typeof window === "undefined") return;
-  const refreshKey = role === 'vendor' ? 'esnaf_refresh_token' : 'customer_refresh_token';
+  const refreshKey = role === 'vendor' ? 'esnaf_refresh_token' : 'client_refresh_token';
   localStorage.setItem(refreshKey, token);
 };
 
@@ -60,9 +60,9 @@ export const clearAllAuthData = () => {
   localStorage.removeItem('esnaf_access_token');
   localStorage.removeItem('esnaf_refresh_token');
   localStorage.removeItem('esnaf_email');
-  localStorage.removeItem('customer_access_token');
-  localStorage.removeItem('customer_refresh_token');
-  localStorage.removeItem('customer_email');
+  localStorage.removeItem('client_access_token');
+localStorage.removeItem('client_refresh_token');
+localStorage.removeItem('client_email');
 };
 
 // Güvenlik: Input sanitization fonksiyonları
@@ -179,7 +179,7 @@ apiClient.interceptors.request.use((config) => {
   if (isChatEndpoint) {
         // Chat endpoint'leri için: hem vendor hem client token'ları kontrol et
     const vendorToken = localStorage.getItem('esnaf_access_token');
-    const clientToken = localStorage.getItem('customer_access_token');
+    const clientToken = localStorage.getItem('client_access_token');
     
     if (vendorToken && !clientToken) {
       role = 'vendor';
@@ -226,7 +226,7 @@ apiClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         // Mevcut token'ları kontrol et - hangi role'ün token'ı varsa o role'ü kullan
         const vendorToken = localStorage.getItem('esnaf_access_token');
-        const clientToken = localStorage.getItem('customer_access_token');
+        const clientToken = localStorage.getItem('client_access_token');
         
         let role: 'vendor' | 'client' = 'vendor'; // Default vendor
         
@@ -378,9 +378,9 @@ export const api = {
     apiClient.post(`/vendors/appointments/${appointmentId}/${action}/`),
   
   createAppointment: (data: {
-    customer_name: string;
-    customer_phone: string;
-    customer_email: string;
+    client_name: string;
+    client_phone: string;
+    client_email: string;
     service_description: string;
     appointment_date: string;
     appointment_time: string;

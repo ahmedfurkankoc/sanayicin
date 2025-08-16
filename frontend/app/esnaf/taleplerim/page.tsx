@@ -8,8 +8,8 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 
 interface Request {
   id: string;
-  customerName: string;
-  customerPhone: string;
+  clientName: string;
+  clientPhone: string;
   service: string;
   description: string;
   location: string;
@@ -29,8 +29,8 @@ export default function TaleplerimPage() {
     const mockRequests: Request[] = [
       {
         id: '1',
-        customerName: 'Ahmet Yılmaz',
-        customerPhone: '+90 532 123 45 67',
+        clientName: 'Ahmet Yılmaz',
+        clientPhone: '+90 532 123 45 67',
         service: 'Motor Yağı Değişimi',
         description: 'Araç motor yağı değişimi yapılması gerekiyor. 5000 km geçti.',
         location: 'Kadıköy, İstanbul',
@@ -40,8 +40,8 @@ export default function TaleplerimPage() {
       },
       {
         id: '2',
-        customerName: 'Fatma Demir',
-        customerPhone: '+90 533 987 65 43',
+        clientName: 'Fatma Demir',
+        clientPhone: '+90 533 987 65 43',
         service: 'Fren Sistemi Kontrolü',
         description: 'Frenlerde ses geliyor, kontrol edilmesi gerekiyor.',
         location: 'Beşiktaş, İstanbul',
@@ -51,8 +51,8 @@ export default function TaleplerimPage() {
       },
       {
         id: '3',
-        customerName: 'Mehmet Kaya',
-        customerPhone: '+90 534 555 44 33',
+        clientName: 'Mehmet Kaya',
+        clientPhone: '+90 534 555 44 33',
         service: 'Lastik Değişimi',
         description: '4 lastik değişimi yapılması gerekiyor.',
         location: 'Şişli, İstanbul',
@@ -70,7 +70,7 @@ export default function TaleplerimPage() {
 
   const filteredRequests = requests.filter(request => {
     const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
-    const matchesSearch = request.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = request.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          request.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          request.location.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
@@ -306,7 +306,7 @@ export default function TaleplerimPage() {
                       margin: '0 0 4px 0',
                       color: '#111111'
                     }}>
-                      {request.customerName}
+                      {request.clientName}
                     </h3>
                     <p style={{
                       fontSize: '14px',
@@ -373,7 +373,7 @@ export default function TaleplerimPage() {
                     color: '#666'
                   }}>
                     <Icon name="phone" size="sm" color="#666" />
-                    <span>{request.customerPhone}</span>
+                                            <span>{request.clientPhone}</span>
                   </div>
                   
                   <div style={{

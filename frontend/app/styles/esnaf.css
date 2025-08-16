@@ -3306,7 +3306,7 @@ body, html, .esnaf-panel-layout {
   margin-bottom: 16px;
 }
 
-.esnaf-appointment-customer-info h3 {
+.esnaf-appointment-client-info h3 {
   margin: 0 0 8px 0;
   font-size: 1.1rem;
   font-weight: 700;
@@ -3619,7 +3619,7 @@ body, html, .esnaf-panel-layout {
     padding: 12px;
   }
   
-  .esnaf-appointment-customer-info h3 {
+  .esnaf-appointment-client-info h3 {
     font-size: 1rem;
   }
   
@@ -3676,7 +3676,7 @@ body, html, .esnaf-panel-layout {
     padding: 10px;
   }
   
-  .esnaf-appointment-customer-info h3 {
+  .esnaf-appointment-client-info h3 {
     font-size: 0.9rem;
   }
   

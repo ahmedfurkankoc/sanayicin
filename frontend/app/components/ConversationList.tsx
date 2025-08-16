@@ -18,7 +18,7 @@ interface ConversationItem {
 }
 
 interface ConversationListProps {
-  userRole: 'customer' | 'vendor';
+  userRole: 'client' | 'vendor';
   baseUrl: string;
   className?: string;
 }

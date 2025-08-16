@@ -11,15 +11,15 @@ def send_appointment_email(appointment_data: Dict[str, Any]) -> bool:
     try:
         from core.utils.email_service import EmailService
         
-        subject = f"Yeni Randevu Talebi - {appointment_data['customer_name']}"
+        subject = f"Yeni Randevu Talebi - {appointment_data['client_name']}"
         html_content = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
                 <h2 style="color: #333; margin-bottom: 20px;">Yeni Randevu Talebiniz Var!</h2>
                 <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p><strong>Müşteri:</strong> {appointment_data['customer_name']}</p>
-                    <p><strong>Telefon:</strong> {appointment_data['customer_phone']}</p>
-                    <p><strong>Email:</strong> {appointment_data['customer_email']}</p>
+                            <p><strong>Müşteri:</strong> {appointment_data['client_name']}</p>
+        <p><strong>Telefon:</strong> {appointment_data['client_phone']}</p>
+        <p><strong>Email:</strong> {appointment_data['client_email']}</p>
                     <p><strong>Tarih:</strong> {appointment_data['appointment_date']}</p>
                     <p><strong>Saat:</strong> {appointment_data['appointment_time']}</p>
                     <p><strong>Hizmet:</strong> {appointment_data['service_description']}</p>
@@ -67,7 +67,7 @@ def send_confirmation_email(appointment_data: Dict[str, Any]) -> bool:
         """
         
         return EmailService.send_email(
-            to_emails=[appointment_data['customer_email']],
+            to_emails=[appointment_data['client_email']],
             subject=subject,
             html_content=html_content,
             category="appointment_confirmation"
@@ -100,7 +100,7 @@ def send_rejection_email(appointment_data: Dict[str, Any]) -> bool:
         """
         
         return EmailService.send_email(
-            to_emails=[appointment_data['customer_email']],
+            to_emails=[appointment_data['client_email']],
             subject=subject,
             html_content=html_content,
             category="appointment_rejection"
@@ -133,7 +133,7 @@ def send_cancellation_email(appointment_data: Dict[str, Any]) -> bool:
         """
         
         return EmailService.send_email(
-            to_emails=[appointment_data['customer_email']],
+            to_emails=[appointment_data['client_email']],
             subject=subject,
             html_content=html_content,
             category="appointment_cancellation"
@@ -187,14 +187,14 @@ def send_verification_email(email: str, verification_token: str) -> bool:
         return False
 
 @shared_task
-def send_welcome_email(email: str, user_name: str, user_role: str = "customer") -> bool:
+def send_welcome_email(email: str, user_name: str, user_role: str = "client") -> bool:
     """Hoş geldin email'i gönder"""
     try:
         from core.utils.email_service import EmailService
         
         subject = f"Sanayicin'e Hoş Geldiniz, {user_name}!"
         
-        role_text = "müşteri" if user_role == "customer" else "esnaf"
+        role_text = "müşteri" if user_role == "client" else "esnaf"
         
         html_content = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

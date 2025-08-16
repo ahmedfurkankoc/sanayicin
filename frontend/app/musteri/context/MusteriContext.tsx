@@ -12,7 +12,7 @@ interface MusteriContextType {
     can_provide_services: boolean;
     can_request_services: boolean;
     can_access_vendor_panel: boolean;
-    can_access_customer_features: boolean;
+    can_access_client_features: boolean;
   };
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -42,13 +42,13 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     can_provide_services: false,
     can_request_services: true,
     can_access_vendor_panel: false,
-    can_access_customer_features: true,
+    can_access_client_features: true,
   });
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  // Token kontrolü - vendor token'ı varsa customer olarak da davran
+  // Token kontrolü - vendor token'ı varsa client olarak da davran
   const checkAuth = (): { isAuthenticated: boolean; role: 'client' | 'vendor' | null } => {
     if (!mounted) return { isAuthenticated: false, role: null };
     
@@ -72,21 +72,21 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
         can_provide_services: true,
         can_request_services: true,
         can_access_vendor_panel: true,
-        can_access_customer_features: true, // Vendor'lar customer özelliklerini de kullanabilir
+        can_access_client_features: true, // Vendor'lar client özelliklerini de kullanabilir
       });
     } else if (userRole === 'client') {
       setPermissions({
         can_provide_services: false,
         can_request_services: true,
         can_access_vendor_panel: false,
-        can_access_customer_features: true,
+        can_access_client_features: true,
       });
     } else {
       setPermissions({
         can_provide_services: false,
         can_request_services: false,
         can_access_vendor_panel: false,
-        can_access_customer_features: false,
+        can_access_client_features: false,
       });
     }
   };
