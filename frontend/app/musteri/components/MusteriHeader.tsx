@@ -40,9 +40,7 @@ export default function MusteriHeader() {
     
     loadUnreadCount();
     
-    // Her 10 saniyede bir güncelle (widget açık olsun veya olmasın)
-    const interval = setInterval(loadUnreadCount, 10000);
-    return () => clearInterval(interval);
+    // Polling kaldırıldı - sadece WebSocket ile güncelleme
   }, [isAuthenticated, loadUnreadCount]);
 
   // WebSocket üzerinden real-time unread count güncellemesi
@@ -91,6 +89,7 @@ export default function MusteriHeader() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      // Gelişmiş arama için query parametresi ekle
       router.push(`/musteri/arama-sonuclari?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
@@ -98,7 +97,7 @@ export default function MusteriHeader() {
   const handleLogout = () => {
     logout();
     setShowDropdown(false);
-    router.push('/');
+    router.push('/musteri/hizmetler');
   };
 
   const toggleDropdown = () => {
@@ -171,7 +170,7 @@ export default function MusteriHeader() {
       <div className="musteri-header-content">
         {/* Sol: Logo */}
         <div className="musteri-header-left">
-          <Link href="/" className="musteri-logo">
+          <Link href="/musteri/hizmetler" className="musteri-logo">
             <Image
               src="/sanayicin-esnaf-logo.png"
               alt="sanayicin.com"
@@ -226,14 +225,18 @@ export default function MusteriHeader() {
                   {getUserDisplayName()}
                 </span>
               )}
-            </button>
-            <span className="musteri-user-name">
-                  {console.log('About to call getUserDisplayName')}
-                  {getUserDisplayName()}
+              {isAuthenticated && !loading && user && (
+                <span className="musteri-chevron">
+                  {showDropdown 
+                    ? React.createElement(iconMapping['chevron-up'], { size: 16 })
+                    : React.createElement(iconMapping['chevron-down'], { size: 16 })
+                  }
                 </span>
+              )}
+            </button>
             
             {showDropdown && (
-              <div className="musteri-user-dropdown">
+              <div className={`musteri-user-dropdown ${showDropdown ? 'show' : ''}`}>
                 {!isAuthenticated ? (
                   // Giriş yapılmamış
                   <>

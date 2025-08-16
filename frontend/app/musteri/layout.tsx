@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { MusteriProvider } from "./context/MusteriContext";
+import MusteriHeader from "./components/MusteriHeader";
+import MusteriFooter from "./components/MusteriFooter";
 import "../styles/musteri.css";
 
 export const metadata: Metadata = {
@@ -15,7 +17,13 @@ export default function MusteriLayout({
   return (
     <>
       <MusteriProvider>
-        {children}
+        <div className="musteri-layout">
+          <MusteriHeader />
+          <main className="musteri-main">
+            {children}
+          </main>
+          <MusteriFooter />
+        </div>
       </MusteriProvider>
     </>
   );
