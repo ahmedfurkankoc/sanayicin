@@ -21,16 +21,16 @@ interface Vendor {
 }
 
 interface AppointmentForm {
-  customer_name: string;
-  customer_phone: string;
-  customer_email: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string;
   service_description: string;
   appointment_date: string;
   appointment_time: string;
   notes: string;
 }
 
-export default function CustomerAppointmentPage() {
+export default function ClientAppointmentPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
@@ -39,9 +39,9 @@ export default function CustomerAppointmentPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<AppointmentForm>({
-    customer_name: '',
-    customer_phone: '',
-    customer_email: '',
+    client_name: '',
+    client_phone: '',
+    client_email: '',
     service_description: '',
     appointment_date: '',
     appointment_time: '',
@@ -83,15 +83,15 @@ export default function CustomerAppointmentPage() {
     if (!vendor) return;
 
     // Form validasyonu
-    if (!formData.customer_name.trim()) {
+    if (!formData.client_name.trim()) {
       toast.error('Adınızı giriniz');
       return;
     }
-    if (!formData.customer_phone.trim()) {
+    if (!formData.client_phone.trim()) {
       toast.error('Telefon numaranızı giriniz');
       return;
     }
-    if (!formData.customer_email.trim()) {
+    if (!formData.client_email.trim()) {
       toast.error('E-posta adresinizi giriniz');
       return;
     }
@@ -367,8 +367,8 @@ export default function CustomerAppointmentPage() {
                     </label>
                     <input
                       type="text"
-                      name="customer_name"
-                      value={formData.customer_name}
+                                          name="client_name"
+                    value={formData.client_name}
                       onChange={handleInputChange}
                       style={{
                         width: '100%',
@@ -392,8 +392,8 @@ export default function CustomerAppointmentPage() {
                     </label>
                     <input
                       type="tel"
-                      name="customer_phone"
-                      value={formData.customer_phone}
+                                          name="client_phone"
+                    value={formData.client_phone}
                       onChange={handleInputChange}
                       style={{
                         width: '100%',
@@ -417,8 +417,8 @@ export default function CustomerAppointmentPage() {
                     </label>
                     <input
                       type="email"
-                      name="customer_email"
-                      value={formData.customer_email}
+                                          name="client_email"
+                    value={formData.client_email}
                       onChange={handleInputChange}
                       style={{
                         width: '100%',

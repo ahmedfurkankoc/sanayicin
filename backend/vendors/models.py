@@ -87,9 +87,9 @@ class Appointment(models.Model):
     ]
     
     vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='appointments')
-    customer_name = models.CharField(max_length=100)
-    customer_phone = models.CharField(max_length=20)
-    customer_email = models.EmailField()
+    client_name = models.CharField(max_length=100)
+    client_phone = models.CharField(max_length=20)
+    client_email = models.EmailField()
     service_description = models.TextField()
     appointment_date = models.DateField()
     appointment_time = models.TimeField()
@@ -102,7 +102,7 @@ class Appointment(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.customer_name} - {self.vendor.display_name} - {self.appointment_date}"
+        return f"{self.client_name} - {self.vendor.display_name} - {self.appointment_date}"
     
     @property
     def is_pending(self):

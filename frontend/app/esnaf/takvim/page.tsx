@@ -9,9 +9,9 @@ import Icon from "@/app/components/ui/Icon";
 
 interface CalendarEvent {
   id: number;
-  customer_name: string;
-  customer_phone: string;
-  customer_email: string;
+  client_name: string;
+  client_phone: string;
+  client_email: string;
   service_description: string;
   appointment_date: string;
   appointment_time: string;
@@ -180,9 +180,9 @@ export default function EsnafTakvimPage() {
             <div 
               key={event.id} 
               className={`esnaf-calendar-event ${event.status}`}
-              title={`${event.customer_name} - ${event.service_description}`}
+              title={`${event.client_name} - ${event.service_description}`}
             >
-              {event.appointment_time} {event.customer_name}
+                              {event.appointment_time} {event.client_name}
             </div>
           ))}
         </div>
@@ -279,7 +279,7 @@ export default function EsnafTakvimPage() {
                       <div key={event.id} className="esnaf-calendar-event-card">
                         <div className="esnaf-calendar-event-header">
                           <h4 className="esnaf-calendar-event-title">
-                            {event.customer_name}
+                            {event.client_name}
                           </h4>
                           <span className={`esnaf-calendar-event-status ${event.status}`}>
                             {getStatusText(event.status)}
@@ -327,7 +327,7 @@ export default function EsnafTakvimPage() {
                         >
                           <div className="esnaf-calendar-upcoming-header">
                             <h4 className="esnaf-calendar-upcoming-title">
-                              {event.customer_name}
+                              {event.client_name}
                             </h4>
                             <span className={`esnaf-calendar-upcoming-status ${event.status}`}>
                               {getStatusText(event.status)}

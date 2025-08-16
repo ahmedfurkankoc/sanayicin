@@ -373,9 +373,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             
             # Asenkron email gönder
             appointment_data = {
-                'customer_name': appointment.customer_name,
-                'customer_phone': appointment.customer_phone,
-                'customer_email': appointment.customer_email,
+                'client_name': appointment.client_name,
+                'client_phone': appointment.client_phone,
+                'client_email': appointment.client_email,
                 'appointment_date': str(appointment.appointment_date),
                 'appointment_time': str(appointment.appointment_time),
                 'service_description': appointment.service_description,
@@ -395,9 +395,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             from core.utils.email_service import EmailService
             
             appointment_data = {
-                'customer_name': appointment.customer_name,
-                'customer_phone': appointment.customer_phone,
-                'customer_email': appointment.customer_email,
+                'client_name': appointment.client_name,
+                'client_phone': appointment.client_phone,
+                'client_email': appointment.client_email,
                 'appointment_date': str(appointment.appointment_date),
                 'appointment_time': str(appointment.appointment_time),
                 'service_description': appointment.service_description,
@@ -417,9 +417,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             from core.utils.email_service import EmailService
             
             appointment_data = {
-                'customer_name': appointment.customer_name,
-                'customer_phone': appointment.customer_phone,
-                'customer_email': appointment.customer_email,
+                'client_name': appointment.client_name,
+                'client_phone': appointment.client_phone,
+                'client_email': appointment.client_email,
                 'appointment_date': str(appointment.appointment_date),
                 'appointment_time': str(appointment.appointment_time),
                 'service_description': appointment.service_description,
@@ -439,9 +439,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             from core.utils.email_service import EmailService
             
             appointment_data = {
-                'customer_name': appointment.customer_name,
-                'customer_phone': appointment.customer_phone,
-                'customer_email': appointment.customer_email,
+                'client_name': appointment.client_name,
+                'client_phone': appointment.client_phone,
+                'client_email': appointment.client_email,
                 'appointment_date': str(appointment.appointment_date),
                 'appointment_time': str(appointment.appointment_time),
                 'service_description': appointment.service_description,
@@ -455,7 +455,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(f"Async cancellation email gönderme hatası: {e}")
 
-class CustomerAppointmentView(APIView):
+class ClientAppointmentView(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request, slug):
@@ -486,9 +486,9 @@ class CustomerAppointmentView(APIView):
             
             # Asenkron email gönder
             appointment_data = {
-                'customer_name': appointment.customer_name,
-                'customer_phone': appointment.customer_phone,
-                'customer_email': appointment.customer_email,
+                'client_name': appointment.client_name,
+                'client_phone': appointment.client_phone,
+                'client_email': appointment.client_email,
                 'appointment_date': str(appointment.appointment_date),
                 'appointment_time': str(appointment.appointment_time),
                 'service_description': appointment.service_description,

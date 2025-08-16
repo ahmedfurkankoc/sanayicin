@@ -116,7 +116,7 @@ class EmailService:
             return False
     
     @staticmethod
-    def send_welcome_email(email: str, user_name: str, user_role: str = "customer") -> None:
+    def send_welcome_email(email: str, user_name: str, user_role: str = "client") -> None:
         """Asenkron hoş geldin emaili gönder"""
         try:
             send_welcome_email.delay(email, user_name, user_role)
