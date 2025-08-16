@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense, useCallback, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { api } from "@/app/utils/api";
+import { api, getAuthToken } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { useCarBrands } from "@/app/hooks/useCarBrands";
 import { useServices } from "@/app/hooks/useServices";
@@ -90,12 +90,12 @@ const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   
   const handleVendorClick = () => {
-    // Hem vendor hem customer token'ları kontrol et
-    const vendorToken = localStorage.getItem('esnaf_access_token');
-    const customerToken = localStorage.getItem('customer_access_token');
+    // Hem vendor hem client token'ları kontrol et
+    const vendorToken = getAuthToken('vendor');
+    const clientToken = getAuthToken('client');
     
     // Herhangi bir token varsa authenticated kabul et
-    const isAuthenticated = vendorToken || customerToken;
+    const isAuthenticated = vendorToken || clientToken;
     
     if (!isAuthenticated) {
       setShowAuthModal(true);

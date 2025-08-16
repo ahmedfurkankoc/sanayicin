@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { api } from "@/app/utils/api";
+import { api, setAuthToken, setRefreshToken, setAuthEmail } from "@/app/utils/api";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
 import EsnafFooter from "../components/EsnafFooter";
 import { useEsnaf } from "../context/EsnafContext";
@@ -55,9 +55,9 @@ function EmailDogrulaContent() {
             if (loginResponse.status === 200) {
               // Token'ları localStorage'a kaydet
               const { access, refresh } = loginResponse.data;
-              localStorage.setItem("esnaf_access_token", access);
-              localStorage.setItem("esnaf_refresh_token", refresh);
-              localStorage.setItem("esnaf_email", email);
+              setAuthToken("vendor", access);
+              setRefreshToken("vendor", refresh);
+              setAuthEmail("vendor", email);
               
               // Context'i güncelle
               await refreshUser();

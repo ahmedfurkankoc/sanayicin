@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEsnaf } from "../context/EsnafContext";
+import { clearAuthTokens } from '@/app/utils/api';
 import Icon from "@/app/components/ui/Icon";
 
 interface EsnafSidebarProps {
@@ -30,9 +31,7 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
     if (onLogout) {
       onLogout();
     } else {
-      localStorage.removeItem("esnaf_access_token");
-      localStorage.removeItem("esnaf_refresh_token");
-      localStorage.removeItem("esnaf_email");
+      clearAuthTokens("vendor");
       router.replace("/esnaf/giris");
     }
   };
