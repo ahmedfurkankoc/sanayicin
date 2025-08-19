@@ -75,18 +75,25 @@ class EmailService:
             return False
     
     @staticmethod
-    def send_verification_link_email(email: str, verification_token: str) -> bool:
+    def send_verification_link_email(email: str, verification_token: str, user_role: str = "client") -> bool:
         """Email doğrulama linki gönder (senkron)"""
         try:
             subject = "Email Adresinizi Doğrulayın - Sanayicin"
-            verification_url = f"https://test.sanayicin.com/esnaf/email-dogrula?token={verification_token}"
+            
+            # Kullanıcı rolüne göre doğrulama URL'i belirle
+            if user_role == "vendor":
+                verification_url = f"https://test.sanayicin.com/esnaf/email-dogrula?token={verification_token}"
+                role_text = "esnaf"
+            else:  # client veya diğer roller için
+                verification_url = f"https://test.sanayicin.com/musteri/email-dogrula?token={verification_token}"
+                role_text = "müşteri"
             
             html_content = f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
                     <h2 style="color: #333; margin-bottom: 20px;">Email Doğrulama</h2>
                     <p style="color: #666; margin-bottom: 30px;">
-                        Sanayicin hesabınızı doğrulamak için aşağıdaki butona tıklayın:
+                        Sanayicin {role_text} hesabınızı doğrulamak için aşağıdaki butona tıklayın:
                     </p>
                     <div style="background: #ffd600; padding: 20px; border-radius: 8px; margin: 25px 0;">
                         <a href="{verification_url}" 
@@ -115,6 +122,14 @@ class EmailService:
             logger.error(f"Verification email failed: {str(e)}")
             return False
     
+    @staticmethod
+    def send_verification_email_async(email: str, verification_token: str, user_role: str = "client") -> None:
+        """Asenkron email doğrulama linki gönder"""
+        try:
+            send_verification_email.delay(email, verification_token, user_role)
+        except Exception as e:
+            logger.error(f"Async verification email task failed: {str(e)}")
+
     @staticmethod
     def send_welcome_email(email: str, user_name: str, user_role: str = "client") -> None:
         """Asenkron hoş geldin emaili gönder"""

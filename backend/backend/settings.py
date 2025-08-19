@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 # Load environment variables from .env file
 load_dotenv()
@@ -73,6 +74,14 @@ CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 dakika
 CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 dakika
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
+
+# Celery Beat Schedule
+CELERY_BEAT_SCHEDULE = {
+    'auto-cancel-expired-appointments': {
+        'task': 'core.tasks.auto_cancel_expired_appointments',
+        'schedule': crontab(hour=0, minute=0),  # Her gece 00:00'da çalıştır
+    },
+}
 
 # Application definition
 INSTALLED_APPS = [

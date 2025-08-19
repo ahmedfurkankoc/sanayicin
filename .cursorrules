@@ -10,3 +10,6 @@ backend de console ile bir şey yapacakken venv aktif etmeyi unutma.
 css eklerken :root üzerinden ilerle her zaman. :root da tanımlı olan variable lar dışında yeni bir şeyler eklemeden ilerlemeye çalış. 
 
 proje yüksek trafikli yapılı bir proje olacak. aynı anda binlerce kişi kullanabilir şekilde tasarlanacak.
+
+
+ileri de bu backende bir de mobil uygulama dahil edilecek. bu yüzden backendde bir de mobil uygulama için api yapısı oluşturulacak.

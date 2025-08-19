@@ -16,4 +16,7 @@ source venv/bin/activate
 # 7 günden eski token'ları temizle
 python manage.py cleanup_tokens --days 7
 
+# Süresi geçmiş bekleyen randevuları iptal et
+python manage.py auto_cancel_expired_appointments
+
 echo "Token temizleme tamamlandı: $(date)" >> $LOG_FILE 

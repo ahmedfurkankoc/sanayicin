@@ -142,22 +142,121 @@ def send_cancellation_email(appointment_data: Dict[str, Any]) -> bool:
         logger.error(f"Cancellation email task failed: {str(e)}")
         return False
 
+@shared_task
+def send_auto_cancellation_email(appointment_data: Dict[str, Any]) -> bool:
+    """Otomatik iptal edilen randevu bildirimi email'i gönder"""
+    try:
+        from core.utils.email_service import EmailService
+        
+        subject = f"Randevu Otomatik İptal Edildi - {appointment_data['vendor_name']}"
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #ef4444; margin-bottom: 20px;">Randevunuz Otomatik İptal Edildi</h2>
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
+                    <p><strong>Esnaf:</strong> {appointment_data['vendor_name']}</p>
+                    <p><strong>Tarih:</strong> {appointment_data['appointment_date']}</p>
+                    <p><strong>Saat:</strong> {appointment_data['appointment_time']}</p>
+                    <p><strong>Hizmet:</strong> {appointment_data['service_description']}</p>
+                </div>
+                <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #fecaca;">
+                    <p style="color: #991b1b; margin: 0; font-weight: 500;">
+                        ⚠️ Bu randevu, tarihi geçtiği için sistem tarafından otomatik olarak iptal edilmiştir.
+                    </p>
+                </div>
+                <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                    Randevu talebiniz onaylanmamış ve tarihi geçmiş olduğu için otomatik olarak iptal edildi. 
+                    Yeni bir randevu oluşturabilirsiniz.
+                </p>
+                <div style="background: #ffd600; padding: 15px; border-radius: 8px; text-align: center;">
+                    <a href="https://test.sanayicin.com" 
+                       style="color: #111111; text-decoration: none; font-weight: bold;">
+                        Yeni Randevu Oluştur
+                    </a>
+                </div>
+            </div>
+        </div>
+        """
+        
+        return EmailService.send_email(
+            to_emails=[appointment_data['client_email']],
+            subject=subject,
+            html_content=html_content,
+            category="appointment_auto_cancellation"
+        )
+    except Exception as e:
+        logger.error(f"Auto cancellation email task failed: {str(e)}")
+        return False
+
+@shared_task
+def auto_cancel_expired_appointments() -> dict:
+    """Geçmiş tarihli pending randevuları otomatik iptal et"""
+    try:
+        from vendors.models import Appointment
+        from django.utils import timezone
+        from datetime import datetime
+        
+        # Geçmiş tarihli pending randevuları bul
+        now = timezone.now()
+        current_date = now.date()
+        current_time = now.time()
+        
+        expired_appointments = Appointment.objects.filter(
+            status='pending'
+        ).filter(
+            # Bugünden önceki tarihlerde olanlar
+            appointment_date__lt=current_date
+        ) | Appointment.objects.filter(
+            status='pending',
+            appointment_date=current_date,
+            # Bugün ama saati geçmiş olanlar
+            appointment_time__lt=current_time
+        )
+        
+        cancelled_count = 0
+        for appointment in expired_appointments:
+            if appointment.auto_cancel_if_expired():
+                cancelled_count += 1
+        
+        logger.info(f"Auto-cancelled {cancelled_count} expired appointments")
+        
+        return {
+            'success': True,
+            'cancelled_count': cancelled_count,
+            'message': f'{cancelled_count} expired appointment(s) auto-cancelled'
+        }
+        
+    except Exception as e:
+        logger.error(f"Auto cancel expired appointments task failed: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e),
+            'cancelled_count': 0
+        }
+
 # Genel email task'ları
 @shared_task
-def send_verification_email(email: str, verification_token: str) -> bool:
+def send_verification_email(email: str, verification_token: str, user_role: str = "client") -> bool:
     """Email doğrulama linki gönder"""
     try:
         from core.utils.email_service import EmailService
         
         subject = "Email Adresinizi Doğrulayın - Sanayicin"
-        verification_url = f"https://test.sanayicin.com/esnaf/email-dogrula?token={verification_token}"
+        
+        # Kullanıcı rolüne göre doğrulama URL'i belirle
+        if user_role == "vendor":
+            verification_url = f"https://test.sanayicin.com/esnaf/email-dogrula?token={verification_token}"
+            role_text = "esnaf"
+        else:  # client veya diğer roller için
+            verification_url = f"https://test.sanayicin.com/musteri/email-dogrula?token={verification_token}"
+            role_text = "müşteri"
         
         html_content = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: #f8f9fa; padding: 30px; border-radius: 10px; text-align: center;">
                 <h2 style="color: #333; margin-bottom: 20px;">Email Doğrulama</h2>
                 <p style="color: #666; margin-bottom: 30px;">
-                    Sanayicin hesabınızı doğrulamak için aşağıdaki butona tıklayın:
+                    Sanayicin {role_text} hesabınızı doğrulamak için aşağıdaki butona tıklayın:
                 </p>
                 <div style="background: #ffd600; padding: 20px; border-radius: 8px; margin: 25px 0;">
                     <a href="{verification_url}" 
