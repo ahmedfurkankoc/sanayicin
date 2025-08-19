@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/app/utils/api";
 import MusteriHeader from "../components/MusteriHeader";
 import MusteriFooter from "../components/MusteriFooter";
 
-export default function MusteriEmailDogrulaPage() {
+function EmailVerificationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -172,5 +172,31 @@ export default function MusteriEmailDogrulaPage() {
       </main>
       <MusteriFooter />
     </>
+  );
+}
+
+export default function MusteriEmailDogrulaPage() {
+  return (
+    <Suspense fallback={
+      <>
+        <MusteriHeader />
+        <main className="musteri-auth-main">
+          <div className="musteri-auth-container">
+            <div className="musteri-auth-card">
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
+                <h1 style={{ color: '#333', marginBottom: '16px' }}>Sayfa Yükleniyor...</h1>
+                <p style={{ color: '#666', lineHeight: '1.6' }}>
+                  Lütfen bekleyin...
+                </p>
+              </div>
+            </div>
+          </div>
+        </main>
+        <MusteriFooter />
+      </>
+    }>
+      <EmailVerificationContent />
+    </Suspense>
   );
 }

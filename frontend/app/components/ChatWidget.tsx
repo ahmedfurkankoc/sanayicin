@@ -74,8 +74,12 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
+  const [messagesCache, setMessagesCache] = useState<{[key: number]: any[]}>({});
   const [typing, setTyping] = useState(false);
   const [msg, setMsg] = useState('');
+  const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const wsRef = useRef<ChatWSClient | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -252,34 +256,35 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     }
   }, [isWidgetOpen, activeId, isAuthenticated, onUnreadCountUpdate]);
 
-  // load messages when activeId changes
+  // load messages when activeId changes - cache kullanarak blink'i önle
   useEffect(() => {
     if (!isWidgetOpen || !activeId || !isAuthenticated) return;
+    
+    // Önce cache'den kontrol et
+    if (messagesCache[activeId]) {
+      setMessages(messagesCache[activeId]);
+      return;
+    }
+    
     (async () => {
-      const res = await api.chatGetMessages(activeId, { limit: 50 });
-      const list = res.data?.results ?? [];
-      setMessages(list.reverse());
-      
-      // Mesajlar yüklendiğinde hemen okundu olarak işaretle
       try {
-        await api.chatMarkRead(activeId);
+        const res = await api.chatGetMessages(activeId, { limit: 20, offset: 0 });
+        const list = res.data?.results ?? [];
+        const reversedList = list.reverse();
         
-        // Conversation list'te unread count'u güncelle
-        setConversations((prev) => prev.map((c) => {
-          if (c.id === activeId) {
-            return { 
-              ...c, 
-              unread_count_for_current_user: 0,
-              client_unread_count: 0, 
-              vendor_unread_count: 0 
-            };
-          }
-          return c;
-        }));
+        // Cache'e kaydet ve state'i güncelle
+        setMessagesCache(prev => ({ ...prev, [activeId]: reversedList }));
+        setMessages(reversedList);
+        setHasMoreMessages(res.data?.has_more ?? false);
+        setNextOffset(res.data?.next_offset ?? null);
+        setLoadingMoreMessages(false);
         
-        // Parent component'e güncelleme bildir
-        if (onUnreadCountUpdate) {
-          const updatedConversations = conversations.map((c) => {
+        // Mesajlar yüklendiğinde hemen okundu olarak işaretle
+        try {
+          await api.chatMarkRead(activeId);
+          
+          // Conversation list'te unread count'u güncelle
+          setConversations((prev) => prev.map((c) => {
             if (c.id === activeId) {
               return { 
                 ...c, 
@@ -289,14 +294,52 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
               };
             }
             return c;
-          });
-          onUnreadCountUpdate(updatedConversations);
+          }));
+          
+          // Parent component'e güncelleme bildir
+          if (onUnreadCountUpdate) {
+            const updatedConversations = conversations.map((c) => {
+              if (c.id === activeId) {
+                return { 
+                  ...c, 
+                  unread_count_for_current_user: 0,
+                  client_unread_count: 0, 
+                  vendor_unread_count: 0 
+                };
+              }
+              return c;
+            });
+            onUnreadCountUpdate(updatedConversations);
+          }
+        } catch (error) {
+          console.error('Mesaj okundu işaretlenemedi:', error);
         }
       } catch (error) {
-        console.error('Mesaj okundu işaretlenemedi:', error);
+        console.error('Mesajlar yüklenemedi:', error);
+        // Hata durumunda eski mesajları koru
       }
     })();
-  }, [isWidgetOpen, activeId, isAuthenticated, conversations, onUnreadCountUpdate]);
+  }, [isWidgetOpen, activeId, isAuthenticated, conversations, onUnreadCountUpdate, messagesCache]);
+
+  // Daha fazla mesaj yükle fonksiyonu
+  const loadMoreMessages = async () => {
+    if (!nextOffset || loadingMoreMessages || !activeId) return;
+    
+    try {
+      setLoadingMoreMessages(true);
+      const res = await api.chatGetMessages(activeId, { limit: 20, offset: nextOffset });
+      const list = res.data?.results ?? [];
+      
+      // Yeni mesajları mevcut mesajların başına ekle (eski mesajlar)
+      setMessages((prev) => [...list.reverse(), ...prev]);
+      setHasMoreMessages(res.data?.has_more ?? false);
+      setNextOffset(res.data?.next_offset ?? null);
+    } catch (error) {
+      console.error('Daha fazla mesaj yüklenemedi:', error);
+    } finally {
+      setLoadingMoreMessages(false);
+    }
+  };
 
   // connect WS for active conversation
   useEffect(() => {
@@ -330,9 +373,14 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
             
             // Eğer bu mesaj zaten yoksa ekle
             if (!updated.find(m => m.id === newMessage.id)) {
-              return [...updated, newMessage];
+              const newList = [...updated, newMessage];
+              // Cache'i de güncelle
+              setMessagesCache(cache => ({ ...cache, [activeId]: newList }));
+              return newList;
             }
             
+            // Cache'i güncelle
+            setMessagesCache(cache => ({ ...cache, [activeId]: updated }));
             return updated;
           });
           
@@ -427,7 +475,14 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
       created_at: new Date().toISOString() 
     };
     
-    setMessages((p) => [...p, optimistic]);
+    setMessages((p) => {
+      const newList = [...p, optimistic];
+      // Cache'i de güncelle
+      if (activeId) {
+        setMessagesCache(cache => ({ ...cache, [activeId]: newList }));
+      }
+      return newList;
+    });
     setMsg('');
     
     // Typing'i durdur
@@ -602,33 +657,74 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
               })()}
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 12, background: '#fafafa' }}>
-              {messages.map((m) => {
-                const currentConversation = conversations.find(c => c.id === activeId);
-                
-                // Mesaj yönünü doğru hesapla - ChatInterface'deki gibi
-                const currentUserId = getCurrentUserId();
-                const isOwn = m.sender_user?.toString() === currentUserId?.toString();
-                const justify = isOwn ? 'flex-end' : 'flex-start';
-                const bubbleStyle: React.CSSProperties = isOwn
-                  ? (mappedRole === 'vendor'
-                      ? { background: '#ffd600', color: '#111', border: '1px solid transparent' }
-                      : { background: '#2d3748', color: '#fff', border: '1px solid transparent' })
-                  : { background: '#fff', color: '#111', border: '1px solid #e9ecef' };
-                
-                // Avatar için other_user bilgisini al
-                const otherUser = currentConversation?.other_user;
-                
-                return (
-                  <div key={m.id} style={{ display: 'flex', justifyContent: justify, marginBottom: 8, alignItems: 'flex-end', gap: 8 }}>
-                    {/* Sadece karşı tarafın mesajlarında avatar göster */}
-                    {!isOwn && (
-                      getAvatar(otherUser, false)
-                    )}
-                    <div style={{ ...bubbleStyle, borderRadius: 8, padding: '8px 12px', maxWidth: '75%' }}>{m.id === `tmp-${Date.now()}` ? 'Gönderiliyor...' : m.content}</div>
-                  </div>
-                );
-              })}
-              {typing && <div style={{ fontSize: 12, color: '#666' }}>Yazıyor...</div>}
+              {/* Daha fazla mesaj yükle butonu - en üstte */}
+              {hasMoreMessages && (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '10px 0', 
+                  marginBottom: '10px',
+                  borderBottom: '1px solid #e9ecef'
+                }}>
+                  <button
+                    onClick={loadMoreMessages}
+                    disabled={loadingMoreMessages}
+                    style={{
+                      background: 'transparent',
+                      border: `1px solid ${palette.primary}`,
+                      color: palette.primary,
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      cursor: loadingMoreMessages ? 'not-allowed' : 'pointer',
+                      opacity: loadingMoreMessages ? 0.6 : 1
+                    }}
+                  >
+                    {loadingMoreMessages ? 'Yükleniyor...' : 'Daha Fazla Mesaj Yükle'}
+                  </button>
+                </div>
+              )}
+
+              {messages.length === 0 ? (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
+                  color: '#999',
+                  fontSize: 14,
+                  textAlign: 'center'
+                }}>
+                  Henüz mesaj yok.<br />İlk mesajı gönderin!
+                </div>
+              ) : (
+                messages.map((m) => {
+                  const currentConversation = conversations.find(c => c.id === activeId);
+                  
+                  // Mesaj yönünü doğru hesapla - ChatInterface'deki gibi
+                  const currentUserId = getCurrentUserId();
+                  const isOwn = m.sender_user?.toString() === currentUserId?.toString();
+                  const justify = isOwn ? 'flex-end' : 'flex-start';
+                  const bubbleStyle: React.CSSProperties = isOwn
+                    ? (mappedRole === 'vendor'
+                        ? { background: '#ffd600', color: '#111', border: '1px solid transparent' }
+                        : { background: '#2d3748', color: '#fff', border: '1px solid transparent' })
+                    : { background: '#fff', color: '#111', border: '1px solid #e9ecef' };
+                  
+                  // Avatar için other_user bilgisini al
+                  const otherUser = currentConversation?.other_user;
+                  
+                  return (
+                    <div key={m.id} style={{ display: 'flex', justifyContent: justify, marginBottom: 8, alignItems: 'flex-end', gap: 8 }}>
+                      {/* Sadece karşı tarafın mesajlarında avatar göster */}
+                      {!isOwn && (
+                        getAvatar(otherUser, false)
+                      )}
+                      <div style={{ ...bubbleStyle, borderRadius: 8, padding: '8px 12px', maxWidth: '75%' }}>{m.id === `tmp-${Date.now()}` ? 'Gönderiliyor...' : m.content}</div>
+                    </div>
+                  );
+                })
+              )}
+              {typing && <div style={{ fontSize: 12, color: '#666', padding: '8px 0' }}>Yazıyor...</div>}
             </div>
             <div style={{ padding: 10, display: 'flex', gap: 8, borderTop: `2px solid ${palette.primary}` }}>
               <input
