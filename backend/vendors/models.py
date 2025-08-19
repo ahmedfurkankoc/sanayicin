@@ -7,6 +7,8 @@ import os
 from PIL import Image
 from io import BytesIO
 from django.core.files import File
+from django.utils import timezone
+from datetime import datetime, timedelta
 
 class VendorProfile(models.Model):
     BUSINESS_TYPE_CHOICES = [
@@ -119,3 +121,38 @@ class Appointment(models.Model):
     @property
     def is_cancelled(self):
         return self.status in ['cancelled', 'rejected']
+    
+    @property
+    def is_expired(self):
+        """Randevu tarihi geçmiş mi kontrol et"""
+        appointment_datetime = datetime.combine(
+            self.appointment_date,
+            self.appointment_time
+        )
+        now = timezone.now()
+        current_datetime = datetime.combine(now.date(), now.time())
+        return appointment_datetime < current_datetime
+    
+    def auto_cancel_if_expired(self):
+        """Eğer randevu tarihi geçmişse ve pending durumda ise otomatik iptal et"""
+        if self.status == 'pending' and self.is_expired:
+            self.status = 'cancelled'
+            self.save()
+            
+            # Otomatik iptal bildirim emaili gönder
+            try:
+                from core.tasks import send_auto_cancellation_email
+                appointment_data = {
+                    'client_name': self.client_name,
+                    'client_email': self.client_email,
+                    'vendor_name': self.vendor.display_name,
+                    'appointment_date': self.appointment_date.strftime('%d.%m.%Y'),
+                    'appointment_time': self.appointment_time.strftime('%H:%M'),
+                    'service_description': self.service_description,
+                }
+                send_auto_cancellation_email.delay(appointment_data)
+            except Exception:
+                pass  # Email gönderim hatası randevu iptalini etkilememeli
+            
+            return True
+        return False
