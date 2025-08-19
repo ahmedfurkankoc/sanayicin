@@ -11,11 +11,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django_asgi_app = get_asgi_application()
 
 # Django başlatıldıktan sonra import et (app registry hazır)
-from chat.ws_consumers import ChatConsumer  # noqa: E402
+from chat.ws_consumers import ChatConsumer, GlobalChatConsumer  # noqa: E402
 from chat.middleware import JWTAuthMiddleware  # noqa: E402
 
 websocket_urlpatterns = [
     re_path(r"ws/chat/(?P<conversation_id>\d+)/$", ChatConsumer.as_asgi()),
+    re_path(r"ws/chat/global/$", GlobalChatConsumer.as_asgi()),
 ]
 
 application = ProtocolTypeRouter({
