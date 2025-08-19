@@ -259,13 +259,44 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
       const res = await api.chatGetMessages(activeId, { limit: 50 });
       const list = res.data?.results ?? [];
       setMessages(list.reverse());
-      // unread temizle
+      
+      // Mesajlar yüklendiğinde hemen okundu olarak işaretle
       try {
         await api.chatMarkRead(activeId);
-        setConversations((prev) => prev.map((c) => (c.id === activeId ? { ...c, client_unread_count: 0, vendor_unread_count: 0 } : c)));
-      } catch {}
+        
+        // Conversation list'te unread count'u güncelle
+        setConversations((prev) => prev.map((c) => {
+          if (c.id === activeId) {
+            return { 
+              ...c, 
+              unread_count_for_current_user: 0,
+              client_unread_count: 0, 
+              vendor_unread_count: 0 
+            };
+          }
+          return c;
+        }));
+        
+        // Parent component'e güncelleme bildir
+        if (onUnreadCountUpdate) {
+          const updatedConversations = conversations.map((c) => {
+            if (c.id === activeId) {
+              return { 
+                ...c, 
+                unread_count_for_current_user: 0,
+                client_unread_count: 0, 
+                vendor_unread_count: 0 
+              };
+            }
+            return c;
+          });
+          onUnreadCountUpdate(updatedConversations);
+        }
+      } catch (error) {
+        console.error('Mesaj okundu işaretlenemedi:', error);
+      }
     })();
-  }, [isWidgetOpen, activeId, isAuthenticated]);
+  }, [isWidgetOpen, activeId, isAuthenticated, conversations, onUnreadCountUpdate]);
 
   // connect WS for active conversation
   useEffect(() => {
@@ -282,11 +313,29 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     const ws = new ChatWSClient({
       conversationId: activeId,
       authToken,
-      onMessage: (evt) => {
+      onMessage: async (evt) => {
         console.log('WebSocket mesajı alındı:', evt);
         
         if (evt.event === 'message.new') {
-          setMessages((prev) => [...prev, evt.data]);
+          const newMessage = evt.data;
+          
+          // Yeni mesaj geldiğinde optimistic message'ı güncelle
+          setMessages((prev) => {
+            // Optimistic message'ı gerçek message ile değiştir
+            const updated = prev.map((m) => 
+              m.id.toString().startsWith('tmp-') && m.content === newMessage.content 
+                ? newMessage 
+                : m
+            );
+            
+            // Eğer bu mesaj zaten yoksa ekle
+            if (!updated.find(m => m.id === newMessage.id)) {
+              return [...updated, newMessage];
+            }
+            
+            return updated;
+          });
+          
           // Aktif değilse ve karşı taraftan geldiyse unread ++
           const cid = evt.data?.conversation;
           if (!isWidgetOpen || cid !== activeId) {
@@ -294,7 +343,12 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
               setConversations((prev) => {
                 const updated = prev.map((c) => (
                   c.id === cid
-                    ? { ...c, unread_count: (c.unread_count || 0) + 1, last_message_text: evt.data.content }
+                    ? { 
+                        ...c, 
+                        unread_count: (c.unread_count || 0) + 1, 
+                        unread_count_for_current_user: (c.unread_count_for_current_user || 0) + 1,
+                        last_message_text: evt.data.content 
+                      }
                     : c
                 ));
                 // Parent component'e unread count güncellemesi bildir
@@ -306,9 +360,14 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
             }
           } else {
             // Aktif pencere ise okundu bildir
-            api.chatMarkRead(activeId).catch(() => {});
+            await api.chatMarkRead(activeId);
             setConversations((prev) => {
-              const updated = prev.map((c) => (c.id === activeId ? { ...c, unread_count: 0, last_message_text: evt.data.content } : c));
+              const updated = prev.map((c) => (c.id === activeId ? { 
+                ...c, 
+                unread_count: 0, 
+                unread_count_for_current_user: 0,
+                last_message_text: evt.data.content 
+              } : c));
               // Parent component'e unread count güncellemesi bildir
               if (onUnreadCountUpdate) {
                 onUnreadCountUpdate(updated);
@@ -418,20 +477,24 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
           }}
         >
           {buttonLabel}
+          {/* Badge - her zaman göster */}
           {totalUnread > 0 && (
             <span style={{
               position: 'absolute',
-              top: -6,
-              right: -6,
+              top: -8,
+              right: -8,
               background: '#ef4444',
               color: '#fff',
-              borderRadius: 999,
+              borderRadius: '50%',
               padding: '2px 6px',
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 800,
-              minWidth: 22,
-              textAlign: 'center',
-              boxShadow: '0 0 0 2px rgba(0,0,0,0.1)'
+              minWidth: 18,
+              height: 18,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.1)'
             }}>
               {totalUnread > 99 ? '99+' : totalUnread}
             </span>
@@ -495,8 +558,22 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: 14 }}>
                           {otherUser?.first_name || otherUser?.email || 'Bilinmeyen Kullanıcı'}
+                          {/* Badge - her conversation'da göster */}
                           {unread > 0 && (
-                            <span style={{ marginLeft: 8, background: '#ef4444', color: '#fff', borderRadius: 999, padding: '0 6px', fontSize: 11, fontWeight: 800 }}>
+                            <span style={{ 
+                              marginLeft: 8, 
+                              background: '#ef4444', 
+                              color: '#fff', 
+                              borderRadius: '50%', 
+                              padding: '0 6px', 
+                              fontSize: 11, 
+                              fontWeight: 800,
+                              minWidth: 18,
+                              height: 18,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
                               {unread > 99 ? '99+' : unread}
                             </span>
                           )}
@@ -572,7 +649,7 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                   sendTypingEvent(false);
                 }}
                 placeholder="Mesaj yaz..."
-                style={{ flex: 1, border: `1px solid ${palette.primary}`, borderRadius: 8, padding: '10px 12px' }}
+                style={{ flex: 1, border: `1px solid ${palette.primary}`, borderRadius: 8, padding: '10px 14px' }}
               />
               <button onClick={send} style={{ background: palette.primary, color: palette.primaryText, border: 'none', padding: '10px 14px', borderRadius: 8, fontWeight: 700 }}>Gönder</button>
             </div>

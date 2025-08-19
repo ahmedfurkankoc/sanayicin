@@ -44,6 +44,7 @@ interface Vendor {
   user: {
     email: string;
     is_verified: boolean;
+    avatar?: string; // user.avatar ekledim
   };
   business_type: string;
   company_title: string;
@@ -54,7 +55,6 @@ interface Vendor {
   subdistrict: string;
   address: string;
   about?: string;
-  profile_photo?: string;
   service_areas?: any[];
   categories?: any[];
   slug: string;
@@ -114,7 +114,11 @@ const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
       >
         {/* Avatar */}
         <div className="musteri-vendor-avatar">
-          {vendor.display_name.charAt(0).toUpperCase()}
+          {vendor.user.avatar ? (
+            <img src={vendor.user.avatar} alt={vendor.display_name} />
+          ) : (
+            vendor.display_name.charAt(0).toUpperCase()
+          )}
         </div>
 
         {/* Content */}

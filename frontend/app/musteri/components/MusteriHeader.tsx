@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { iconMapping } from '@/app/utils/iconMapping';
 import Image from 'next/image';
 import { useMusteri } from '../context/MusteriContext';
 import ChatWidget from '@/app/components/ChatWidget';
-import { api } from '@/app/utils/api';
+import { api, getAuthToken } from '@/app/utils/api';
 
 export default function MusteriHeader() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,6 +16,99 @@ export default function MusteriHeader() {
   const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const { isAuthenticated, user, role, logout, loading } = useMusteri();
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Global WebSocket bağlantısı kur
+  const connectGlobalWebSocket = useCallback(() => {
+    if (!isAuthenticated || !user) return;
+
+    // Mevcut bağlantıyı kapat
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
+    // Auth token'ları kontrol et - hem client hem vendor
+    const clientToken = getAuthToken('client');
+    const vendorToken = getAuthToken('vendor');
+    const currentToken = role === 'vendor' ? vendorToken : clientToken;
+
+    if (!currentToken) {
+      console.warn('Auth token bulunamadı - WebSocket bağlantısı kurulamıyor');
+      return;
+    }
+
+    try {
+      // WebSocket URL'ini oluştur
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 
+        (process.env.NEXT_PUBLIC_API_URL ? 
+          process.env.NEXT_PUBLIC_API_URL.replace('https://', 'wss://').replace('http://', 'ws://').replace('/api', '') : 
+          'wss://test.sanayicin.com'
+        );
+      
+      const ws = new WebSocket(`${wsUrl}/ws/chat/global/?token=${encodeURIComponent(currentToken)}`);
+      
+      ws.onopen = () => {
+        console.log('Global WebSocket bağlantısı kuruldu');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          // Yeni mesaj geldiğinde unread count'u güncelle
+          if (data.event === 'message.new' || data.event === 'conversation.update') {
+            loadUnreadCount();
+          }
+          
+          // Typing event'leri
+          if (data.event === 'typing.start' || data.event === 'typing.stop') {
+            // Typing event'leri için gerekirse işlem yap
+          }
+        } catch (error) {
+          console.error('WebSocket mesaj parse hatası:', error);
+        }
+      };
+
+      ws.onclose = (event) => {
+        console.log('Global WebSocket bağlantısı kapandı:', event.code, event.reason);
+        
+        // Otomatik yeniden bağlanma (exponential backoff)
+        if (event.code !== 1000 && event.code !== 1001) {
+          const delay = Math.min(1000 * Math.pow(2, Math.min(5, 5)), 30000);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (isAuthenticated) {
+              connectGlobalWebSocket();
+            }
+          }, delay);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket hatası:', error);
+      };
+
+      wsRef.current = ws;
+    } catch (error) {
+      console.error('WebSocket bağlantı hatası:', error);
+    }
+  }, [isAuthenticated, user, role]);
+
+  // WebSocket bağlantısını kur
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      connectGlobalWebSocket();
+    }
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [isAuthenticated, user, connectGlobalWebSocket]);
 
   // loadUnreadCount fonksiyonunu useCallback ile sarmala
   const loadUnreadCount = useCallback(async () => {
@@ -40,33 +133,10 @@ export default function MusteriHeader() {
     
     loadUnreadCount();
     
-    // Polling kaldırıldı - sadece WebSocket ile güncelleme
-  }, [isAuthenticated, loadUnreadCount]);
-
-  // WebSocket üzerinden real-time unread count güncellemesi
-  useEffect(() => {
-    if (!isAuthenticated) return;
+    // Periyodik güncelleme (yüksek trafik için optimize edildi)
+    const interval = setInterval(loadUnreadCount, 30000); // 30 saniyede bir
     
-    // WebSocket event listener ekle
-    const handleWebSocketMessage = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.event === 'message.new') {
-          // Yeni mesaj geldiğinde unread count'u güncelle
-          // Widget açık değilse de güncelle
-          loadUnreadCount();
-        }
-      } catch (error) {
-        // WebSocket mesajı parse edilemedi
-      }
-    };
-
-    // WebSocket bağlantısı varsa listener ekle
-    if (typeof window !== 'undefined' && window.WebSocket) {
-      // Global WebSocket listener ekle
-      window.addEventListener('message', handleWebSocketMessage);
-      return () => window.removeEventListener('message', handleWebSocketMessage);
-    }
+    return () => clearInterval(interval);
   }, [isAuthenticated, loadUnreadCount]);
 
   // Okunmamış mesaj sayısını güncelle
@@ -77,11 +147,8 @@ export default function MusteriHeader() {
   // ChatWidget'tan unread count güncellemesi
   const handleChatWidgetUpdate = (conversations: any[]) => {
     const totalUnread = conversations.reduce((sum: number, c: any) => {
-      if (role === 'vendor') {
-        return sum + (c.vendor_unread_count || 0);
-      } else {
-        return sum + (c.client_unread_count || 0);
-      }
+      // Yeni sistemde unread_count_for_current_user kullan
+      return sum + (c.unread_count_for_current_user || 0);
     }, 0);
     setUnreadCount(totalUnread);
   };
@@ -97,6 +164,12 @@ export default function MusteriHeader() {
   const handleLogout = () => {
     logout();
     setShowDropdown(false);
+    
+    // WebSocket bağlantısını kapat
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    
     router.push('/musteri/hizmetler');
   };
 
@@ -142,26 +215,15 @@ export default function MusteriHeader() {
 
   // Kullanıcı adını al
   const getUserDisplayName = () => {
-    console.log('getUserDisplayName called with user:', user);
-    
-    if (!user) {
-      console.log('User is null');
-      return '';
-    }
-    
-    console.log('User first_name:', user.first_name);
-    console.log('User last_name:', user.last_name);
-    console.log('User email:', user.email);
+    if (!user) return '';
     
     // Artık CustomUser'dan first_name ve last_name kullanıyoruz
     if (user.first_name || user.last_name) {
       const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-      console.log('Full name:', fullName);
       return fullName || user.email;
     }
     
     // Fallback olarak email kullan
-    console.log('Using email as fallback:', user.email);
     return user.email;
   };
 
