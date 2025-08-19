@@ -270,6 +270,13 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Sadece vendor'ın kendi randevularını göster
         if hasattr(self.request.user, 'vendor_profile'):
+            queryset = Appointment.objects.filter(vendor=self.request.user.vendor_profile)
+            
+            # Geçmiş tarihli pending randevuları otomatik iptal et
+            for appointment in queryset.filter(status='pending'):
+                appointment.auto_cancel_if_expired()
+            
+            # Güncellenmiş queryset'i döndür
             return Appointment.objects.filter(vendor=self.request.user.vendor_profile)
         return Appointment.objects.none()
     
@@ -296,6 +303,33 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def confirm(self, request, pk=None):
         """Randevuyu onayla"""
         appointment = self.get_object()
+        # Geçmiş tarih/saat için onaylamayı engelle
+        from django.utils import timezone
+        from datetime import datetime
+        appointment_datetime = datetime.combine(
+            appointment.appointment_date,
+            appointment.appointment_time
+        )
+        now = timezone.now()
+        current_datetime = datetime.combine(now.date(), now.time())
+
+        if appointment_datetime < current_datetime:
+            # Otomatik iptal et ve bildirim gönder
+            previous_status = appointment.status
+            if previous_status == 'pending':
+                appointment.status = 'cancelled'
+                appointment.save()
+                try:
+                    self.send_cancellation_notification(appointment)
+                except Exception:
+                    pass
+                return Response({
+                    'error': 'Randevu tarihi/saatı geçmiş. Randevu otomatik olarak iptal edildi.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'error': 'Geçmiş tarihli randevu onaylanamaz.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         appointment.status = 'confirmed'
         appointment.save()
         

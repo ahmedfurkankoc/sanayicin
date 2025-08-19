@@ -243,8 +243,8 @@ class CustomUser(AbstractUser):
             # Verification token oluştur
             verification = self.create_email_verification()
             
-            # Email gönder
-            email_sent = EmailService.send_verification_link_email(self.email, verification.token)
+            # Email gönder - kullanıcı rolünü de geç
+            email_sent = EmailService.send_verification_link_email(self.email, verification.token, self.role)
             
             return email_sent
             

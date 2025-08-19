@@ -80,12 +80,17 @@ export default function EsnafRandevularimPage() {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: string, appointment?: Appointment) => {
     switch (status) {
       case 'confirmed': return 'Onaylandı';
       case 'pending': return 'Beklemede';
       case 'completed': return 'Tamamlandı';
-      case 'cancelled': return 'İptal Edildi';
+      case 'cancelled': 
+        // Eğer randevu pending iken geçmiş tarihliyse, otomatik iptal mesajı göster
+        if (appointment && isAppointmentTimePassed(appointment)) {
+          return 'Otomatik İptal Edildi';
+        }
+        return 'İptal Edildi';
       case 'rejected': return 'Reddedildi';
       default: return 'Bilinmiyor';
     }
@@ -245,7 +250,7 @@ export default function EsnafRandevularimPage() {
                   
                   <div className="esnaf-appointment-status-section">
                     <span className={`esnaf-appointment-status ${appointment.status}`}>
-                      {getStatusText(appointment.status)}
+                      {getStatusText(appointment.status, appointment)}
                     </span>
                     <div className="esnaf-appointment-date-time">
                       {new Date(appointment.appointment_date).toLocaleDateString('tr-TR')} • {appointment.appointment_time}
@@ -270,12 +275,19 @@ export default function EsnafRandevularimPage() {
                 <div className="esnaf-appointment-actions">
                   {appointment.status === 'pending' && (
                     <>
-                      <button 
-                        onClick={() => handleAppointmentAction(appointment.id, 'confirm')}
-                        className="esnaf-appointment-btn esnaf-appointment-btn-confirm"
-                      >
-                        Onayla
-                      </button>
+                      {!isAppointmentTimePassed(appointment) ? (
+                        <button 
+                          onClick={() => handleAppointmentAction(appointment.id, 'confirm')}
+                          className="esnaf-appointment-btn esnaf-appointment-btn-confirm"
+                        >
+                          Onayla
+                        </button>
+                      ) : (
+                        <div className="esnaf-appointment-time-warning">
+                          <Icon name="clock" size={14} />
+                          Süresi geçmiş talep, onaylanamaz
+                        </div>
+                      )}
                       <button 
                         onClick={() => handleAppointmentAction(appointment.id, 'reject')}
                         className="esnaf-appointment-btn esnaf-appointment-btn-reject"
@@ -283,6 +295,15 @@ export default function EsnafRandevularimPage() {
                         Reddet
                       </button>
                     </>
+                  )}
+
+                  {appointment.status === 'cancelled' && isAppointmentTimePassed(appointment) && (
+                    <div className="esnaf-appointment-auto-cancel-notice">
+                      <Icon name="alert-triangle" size={14} />
+                      <span>
+                        Randevu tarihi geçtiği için bir işlem yapmadığınız için otomatik iptal edildi
+                      </span>
+                    </div>
                   )}
                   
                   {appointment.status === 'confirmed' && (
