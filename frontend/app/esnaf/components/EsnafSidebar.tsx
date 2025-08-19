@@ -12,9 +12,10 @@ interface EsnafSidebarProps {
   email?: string;
   onLogout?: () => void;
   activePage?: string;
+  unreadCount?: number; // Unread count prop'u ekledim
 }
 
-export default function EsnafSidebar({ user, email, onLogout, activePage = "panel" }: EsnafSidebarProps) {
+export default function EsnafSidebar({ user, email, onLogout, activePage = "panel", unreadCount = 0 }: EsnafSidebarProps) {
   const router = useRouter();
   const { user: contextUser, email: contextEmail, loading } = useEsnaf();
 
@@ -109,6 +110,12 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
            <Link href="/esnaf/panel/mesajlar" className={`esnaf-nav-item ${getActiveClass("mesajlar")}`}>
              <Icon name="message" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Mesajlarım</span>
+             {/* Unread count badge */}
+             {unreadCount > 0 && (
+               <span className="esnaf-nav-badge">
+                 {unreadCount > 99 ? '99+' : unreadCount}
+               </span>
+             )}
             </Link>
             <Link href="#" className="esnaf-nav-item">
              <Icon name="star" className="esnaf-nav-icon" color="white" />
@@ -171,7 +178,13 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
            </Link>
          <Link href="/esnaf/panel/mesajlar" className={`esnaf-mobile-nav-item ${getActiveClass("mesajlar")}`}>
            <span className="esnaf-mobile-nav-icon">
-             <Icon name="file" size="sm" />
+             <Icon name="message" size="sm" />
+             {/* Mobilde de unread count badge göster */}
+             {unreadCount > 0 && (
+               <span className="esnaf-mobile-nav-badge">
+                 {unreadCount > 99 ? '99+' : unreadCount}
+               </span>
+             )}
            </span>
            <span className="esnaf-mobile-nav-text">Mesajlarım</span>
          </Link>

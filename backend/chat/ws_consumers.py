@@ -12,6 +12,51 @@ import jwt
 from .models import Conversation, Message
 
 
+class GlobalChatConsumer(AsyncJsonWebsocketConsumer):
+    """Global chat consumer - tüm kullanıcılar için mesaj dinleme"""
+    
+    async def connect(self):
+        # Auth: user required
+        user = self.scope.get('user')
+        if not user or isinstance(user, AnonymousUser) or not user.is_authenticated:
+            await self.close(code=4401)  # unauthorized
+            return
+
+        # Check if user can chat
+        if not user.can_chat():
+            await self.close(code=4403)  # forbidden - cannot chat
+            return
+
+        # Global group'a ekle
+        self.group_name = f"user_{user.id}"
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        
+        print(f"DEBUG Global WS: User {user.id} connected to global chat")
+
+    async def disconnect(self, close_code):
+        if hasattr(self, 'group_name'):
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+    async def receive_json(self, content, **kwargs):
+        # Global consumer sadece mesaj alır, göndermez
+        pass
+
+    async def message_new(self, event):
+        """Yeni mesaj geldiğinde kullanıcıya bildir"""
+        await self.send_json({
+            'event': 'message.new', 
+            'data': event['payload']
+        })
+
+    async def conversation_update(self, event):
+        """Conversation güncellendiğinde kullanıcıya bildir"""
+        await self.send_json({
+            'event': 'conversation.update', 
+            'data': event['payload']
+        })
+
+
 class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.conversation_id = self.scope['url_route']['kwargs']['conversation_id']
@@ -78,6 +123,33 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def message_new(self, event):
         await self.send_json({'event': 'message.new', 'data': event['payload']})
+        
+        # Global consumer'lara da bildir
+        user = self.scope.get('user')
+        if user:
+            # Karşı tarafa bildir
+            other_user_id = event['payload'].get('other_user_id')
+            if other_user_id:
+                await self.channel_layer.group_send(
+                    f"user_{other_user_id}",
+                    {
+                        'type': 'message_new',
+                        'payload': event['payload']
+                    }
+                )
+                
+                # Conversation update'i de gönder
+                await self.channel_layer.group_send(
+                    f"user_{other_user_id}",
+                    {
+                        'type': 'conversation_update',
+                        'payload': {
+                            'conversation_id': self.conversation_id,
+                            'last_message_text': event['payload'].get('content', ''),
+                            'unread_count': 1
+                        }
+                    }
+                )
 
     @database_sync_to_async
     def _get_conversation(self):
@@ -111,6 +183,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         msg = await self._create_message(conv, user, text)
         await self._update_conversation(conv, text)
 
+        # Karşı tarafın ID'sini bul
+        other_user_id = conv.user2_id if conv.user1_id == user.id else conv.user1_id
+
         await self.channel_layer.group_send(
             self.group_name,
             {
@@ -120,6 +195,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     'conversation': conv.id,
                     'content': msg.content,
                     'sender_user': user.id,
+                    'other_user_id': other_user_id,
                     'created_at': msg.created_at.isoformat(),
                 },
             },

@@ -712,6 +712,14 @@ body {
   font-weight: 600;
   font-size: 1.5rem;
   flex-shrink: 0;
+  overflow: hidden; /* Avatar için overflow hidden ekledim */
+}
+
+.musteri-vendor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .musteri-vendor-info {
