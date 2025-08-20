@@ -570,6 +570,35 @@ def check_verification_status(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_profile(request):
+    """Kullanıcı profil bilgilerini getir"""
+    try:
+        user = request.user
+        
+        return Response({
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'role': user.role,
+            'is_verified': user.is_verified,
+            'phone_number': user.phone_number,
+            'avatar': user.avatar.url if user.avatar else None,
+            'can_provide_services': user.can_provide_services,
+            'can_request_services': user.can_request_services,
+            'verification_method': user.verification_method
+        })
+        
+    except Exception as e:
+        logger.error(f"Get profile error: {e}")
+        return Response(
+            {'error': 'Profil bilgileri alınırken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):

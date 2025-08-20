@@ -15,6 +15,7 @@ from .views import (
     upload_avatar,
     request_vendor_upgrade,
     check_vendor_upgrade_status,
+    get_profile,
     update_profile
 )
 
@@ -30,7 +31,8 @@ urlpatterns = [
     path('auth/forgot-password/', forgot_password, name='forgot_password'),
     path('auth/reset-password/', reset_password, name='reset_password'),
     path('avatar/upload/', upload_avatar, name='upload_avatar'),
-    path('profile/', update_profile, name='update_profile'),
+    path('profile/', get_profile, name='get_profile'),
+    path('profile/update/', update_profile, name='update_profile'),
     path('services/', ServiceAreaListView.as_view(), name='servicearea-list'),
     path('categories/', CategoryListView.as_view(), name='category-list'),
     

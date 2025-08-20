@@ -171,13 +171,16 @@ apiClient.interceptors.request.use((config) => {
   // Chat endpoint'leri için özel logic
   const isChatEndpoint = config.url?.startsWith('/chat/');
   
+  // Profile endpoint'i için özel logic
+  const isProfileEndpoint = config.url?.includes('/profile/');
+  
   // Esnaf panelinde isek chat çağrıları vendor rolüyle yapılmalı
   const isEsnafContext = typeof window !== 'undefined' && window.location?.pathname?.startsWith('/esnaf');
   
   let role: 'vendor' | 'client' = 'client'; // Default client
   
   if (isChatEndpoint) {
-        // Chat endpoint'leri için: hem vendor hem client token'ları kontrol et
+    // Chat endpoint'leri için: hem vendor hem client token'ları kontrol et
     const vendorToken = localStorage.getItem('esnaf_access_token');
     const clientToken = localStorage.getItem('client_access_token');
     
@@ -192,10 +195,26 @@ apiClient.interceptors.request.use((config) => {
       // Hiç token yoksa, mevcut sayfadan karar ver
       role = isEsnafContext ? 'vendor' : 'client';
     }
-      } else {
-        // Diğer endpoint'ler için eski logic
-        role = isEsnafContext ? 'vendor' : (isVendorUrl ? 'vendor' : 'client');
-      }
+  } else if (isProfileEndpoint) {
+    // Profile endpoint'i için: hem vendor hem client token'ları kontrol et
+    const vendorToken = localStorage.getItem('esnaf_access_token');
+    const clientToken = localStorage.getItem('client_access_token');
+    
+    if (vendorToken && !clientToken) {
+      role = 'vendor';
+    } else if (clientToken && !vendorToken) {
+      role = 'client';
+    } else if (vendorToken && clientToken) {
+      // Her iki token da varsa, mevcut sayfadan karar ver
+      role = isEsnafContext ? 'vendor' : 'client';
+    } else {
+      // Hiç token yoksa, mevcut sayfadan karar ver
+      role = isEsnafContext ? 'vendor' : 'client';
+    }
+  } else {
+    // Diğer endpoint'ler için eski logic
+    role = isEsnafContext ? 'vendor' : (isVendorUrl ? 'vendor' : 'client');
+  }
   
   const token = getAuthToken(role);
   if (token) {
@@ -215,11 +234,17 @@ apiClient.interceptors.response.use(
       const isPublicEndpoint = error.config?.url?.includes('/vendors/search/') || 
                               error.config?.url?.includes('/vendors/') && error.config?.url?.includes('/slug/') ||
                               error.config?.url?.includes('/services/') ||
-                              error.config?.url?.includes('/categories/');
-                              error.config?.url?.includes('/vendors/car-brands/')
+                              error.config?.url?.includes('/categories/') ||
+                              error.config?.url?.includes('/vendors/car-brands/') ||
+                              error.config?.url?.includes('/profile/')
       
       if (isPublicEndpoint) {
         return Promise.reject(error); // Logout yapma, sadece hatayı döndür
+      }
+      
+      // Profile endpoint'i için de logout yapma - sadece hatayı döndür
+      if (error.config?.url?.includes('/profile/')) {
+        return Promise.reject(error);
       }
       
       // Token geçersiz, logout yap
