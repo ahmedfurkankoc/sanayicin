@@ -43,7 +43,6 @@ export default function MusteriGirisPage() {
 
   return (
     <>
-      <MusteriHeader />
       <main className="musteri-auth-main">
         <div className="musteri-auth-container">
           <div className="musteri-auth-card">
@@ -119,7 +118,6 @@ export default function MusteriGirisPage() {
           </div>
         </div>
       </main>
-      <MusteriFooter />
     </>
   );
 }

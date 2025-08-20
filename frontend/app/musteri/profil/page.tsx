@@ -3,45 +3,30 @@
 import React, { useEffect, useState, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api, apiClient } from '@/app/utils/api';
+import { api, apiClient, getAuthToken } from '@/app/utils/api';
+import { useMusteri } from '../context/MusteriContext';
 
-interface ClientUser {
+    interface CustomUser {
   id: number;
   email: string;
   username?: string;
   first_name?: string;
   last_name?: string;
-  role?: string;
-  is_verified?: boolean;
+  role: string;
+  is_verified: boolean;
   phone_number?: string;
-}
-
-interface ClientProfileNested {
-  id: number;
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  city?: string;
-  district?: string;
-  address?: string;
-  avatar?: string | null;
-  about?: string;
-}
-
-interface ClientProfileResponse {
-  id: number;
-  user: ClientUser;
-  client_profile: ClientProfileNested;
-  about?: string;
-  created_at?: string;
-  updated_at?: string;
+  avatar?: string;
+  can_provide_services: boolean;
+  can_request_services: boolean;
+  verification_method: string;
 }
 
 function ProfileContent() {
   const router = useRouter();
+  const { role } = useMusteri();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [data, setData] = useState<ClientProfileResponse | null>(null);
+  const [userData, setUserData] = useState<CustomUser | null>(null);
   const [activeTab, setActiveTab] = useState<'basic' | 'email' | 'phone' | 'password' | 'danger'>('basic');
   const [editingBasic, setEditingBasic] = useState(false);
   const [editingPhone, setEditingPhone] = useState(false);
@@ -52,17 +37,39 @@ function ProfileContent() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [infoMsg, setInfoMsg] = useState('');
 
-  useEffect(() => {
+    useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.getProfile('client');
-        setData(res.data);
-        setFirstName(res.data?.user?.first_name || '');
-        setLastName(res.data?.user?.last_name || '');
-        setPhone(res.data?.user?.phone_number || res.data?.client_profile?.phone || '');
-      } catch (e: any) {
-        setError(e?.response?.data?.detail || 'Profil bilgileri yüklenemedi');
-      } finally {
+        // Önce hangi role için token var kontrol et
+        const vendorToken = localStorage.getItem('esnaf_access_token');
+        const clientToken = localStorage.getItem('client_access_token');
+        
+        if (!vendorToken && !clientToken) {
+          setError('Giriş yapılmamış. Lütfen önce giriş yapın.');
+          setTimeout(() => {
+            router.push('/musteri/giris');
+          }, 2000);
+          return;
+        }
+        
+        // Giriş yapan kullanıcının CustomUser bilgilerini al
+        const res = await apiClient.get('/profile/');
+        setUserData(res.data);
+        setFirstName(res.data.first_name || '');
+        setLastName(res.data.last_name || '');
+        setPhone(res.data.phone_number || '');
+              } catch (e: any) {
+          console.error('Profile load error:', e);
+          if (e?.response?.status === 401) {
+            setError('Oturum süresi dolmuş veya giriş yapılmamış. Lütfen tekrar giriş yapın.');
+            // 401 hatası durumunda login sayfasına yönlendir
+            setTimeout(() => {
+              router.push('/musteri/giris');
+            }, 3000);
+          } else {
+            setError(e?.response?.data?.detail || 'Profil bilgileri yüklenemedi');
+          }
+        } finally {
         setLoading(false);
       }
     };
@@ -70,19 +77,20 @@ function ProfileContent() {
   }, []);
 
   const displayName = useMemo(() => {
-    const first = data?.user?.first_name || data?.client_profile?.first_name || '';
-    const last = data?.user?.last_name || data?.client_profile?.last_name || '';
+    if (!userData) return '';
+    const first = userData.first_name || '';
+    const last = userData.last_name || '';
     const full = `${first} ${last}`.trim();
-    return full || data?.user?.email || '';
-  }, [data]);
+    return full || userData.email || '';
+  }, [userData]);
 
-  const avatarUrl = useMemo(() => data?.client_profile?.avatar || null, [data]);
+  const avatarUrl = useMemo(() => userData?.avatar || null, [userData]);
 
   const avatarInitial = useMemo(() => {
     if (displayName) return displayName.charAt(0).toUpperCase();
-    if (data?.user?.email) return data.user.email.charAt(0).toUpperCase();
+    if (userData?.email) return userData.email.charAt(0).toUpperCase();
     return 'M';
-  }, [displayName, data]);
+  }, [displayName, userData]);
 
   if (loading) {
     return (
@@ -92,7 +100,7 @@ function ProfileContent() {
     );
   }
 
-  if (error || !data) {
+  if (error || !userData) {
     return (
       <div className="musteri-page-container">
         <div className="musteri-error"><div>{error || 'Profil bulunamadı'}</div></div>
@@ -152,9 +160,10 @@ function ProfileContent() {
                     {!editingBasic ? (
                       <>
                         <div className="musteri-info-grid">
-                          <div className="musteri-info-item"><label>Ad</label><span>{data.user.first_name || '—'}</span></div>
-                          <div className="musteri-info-item"><label>Soyad</label><span>{data.user.last_name || '—'}</span></div>
-                          <div className="musteri-info-item"><label>Doğrulama</label><span>{data.user.is_verified ? 'Doğrulandı' : 'Doğrulanmadı'}</span></div>
+                          <div className="musteri-info-item"><label>Ad</label><span>{userData.first_name || '—'}</span></div>
+                          <div className="musteri-info-item"><label>Soyad</label><span>{userData.last_name || '—'}</span></div>
+                          <div className="musteri-info-item"><label>Doğrulama</label><span>{userData.is_verified ? 'Doğrulandı' : 'Doğrulanmadı'}</span></div>
+                          <div className="musteri-info-item"><label>Rol</label><span>{userData.role === 'client' ? 'Müşteri' : userData.role === 'vendor' ? 'Esnaf' : 'Admin'}</span></div>
                         </div>
                         <button className="musteri-auth-button" onClick={() => { setEditingBasic(true); setInfoMsg(''); }}>Düzenle</button>
                       </>
@@ -178,17 +187,19 @@ function ProfileContent() {
                               try {
                                 setSaving(true);
                                 setInfoMsg('');
-                                await apiClient.patch('/clients/profile/', { first_name: firstName, last_name: lastName });
+                                await apiClient.patch('/profile/update/', { first_name: firstName, last_name: lastName });
                                 if (avatarFile) {
                                   const fd = new FormData();
                                   fd.append('avatar', avatarFile);
                                   await api.uploadAvatar(fd, 'client');
                                 }
-                                const res = await api.getProfile('client');
-                                setData(res.data);
+                                // Profil bilgilerini yeniden yükle
+                                const profileRes = await apiClient.get('/profile/');
+                                setUserData(profileRes.data);
                                 setEditingBasic(false);
                                 setInfoMsg('Kayıt güncellendi.');
                               } catch (e) {
+                                console.error('Update error:', e);
                                 setInfoMsg('Güncelleme başarısız.');
                               } finally {
                                 setSaving(false);
@@ -210,7 +221,7 @@ function ProfileContent() {
               <div>
                 <h2 className="musteri-auth-subtitle" style={{ marginTop: 0 }}>E-posta</h2>
                 <div className="musteri-info-grid">
-                  <div className="musteri-info-item"><label>E-posta</label><span>{data.user.email}</span></div>
+                  <div className="musteri-info-item"><label>E-posta</label><span>{userData.email}</span></div>
                 </div>
                 <p style={{ color: '#666', marginTop: 12 }}>E-posta değişikliği için yakında self-service akış eklenecek. Şimdilik destek ile iletişime geçin.</p>
               </div>
@@ -223,7 +234,7 @@ function ProfileContent() {
                 {!editingPhone ? (
                   <>
                     <div className="musteri-info-grid">
-                      <div className="musteri-info-item"><label>Telefon</label><span>{data.user?.phone_number || data.client_profile?.phone || '—'}</span></div>
+                      <div className="musteri-info-item"><label>Telefon</label><span>{userData.phone_number || '—'}</span></div>
                     </div>
                     <button className="musteri-auth-button" onClick={() => { setEditingPhone(true); setInfoMsg(''); }}>Düzenle</button>
                   </>
@@ -241,14 +252,15 @@ function ProfileContent() {
                           try {
                             setSaving(true);
                             setInfoMsg('');
-                            // Telefon numarasını hem CustomUser'a hem de ClientProfile'a kaydet
-                            await apiClient.patch('/clients/profile/', { phone });
-                            await apiClient.patch('/core/profile/', { phone_number: phone });
-                            const res = await api.getProfile('client');
-                            setData(res.data);
+                            // Telefon numarasını CustomUser'a kaydet
+                            await apiClient.patch('/profile/update/', { phone_number: phone });
+                            // Profil bilgilerini yeniden yükle
+                            const profileRes = await apiClient.get('/profile/');
+                            setUserData(profileRes.data);
                             setEditingPhone(false);
                             setInfoMsg('Telefon güncellendi.');
                           } catch (e) {
+                            console.error('Phone update error:', e);
                             setInfoMsg('Güncelleme başarısız.');
                           } finally {
                             setSaving(false);
@@ -274,9 +286,10 @@ function ProfileContent() {
                   onClick={async () => {
                     try {
                       setSaving(true);
-                      await api.forgotPassword({ email: data.user.email });
+                      await api.forgotPassword({ email: userData.email });
                       setInfoMsg('Şifre sıfırlama e-postası gönderildi.');
                     } catch (e) {
+                      console.error('Password reset error:', e);
                       setInfoMsg('E-posta gönderilemedi.');
                     } finally {
                       setSaving(false);
@@ -308,5 +321,3 @@ export default function MusteriProfilPage() {
     </Suspense>
   );
 }
-
-
