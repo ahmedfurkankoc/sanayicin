@@ -206,8 +206,9 @@ class CustomUser(AbstractUser):
             }
     
     def auto_upgrade_to_vendor(self):
-        """Client'ı otomatik olarak vendor'a yükselt (is_verified=True ise)"""
-        if self.role == 'client' and self.is_verified:
+        """Client'ı otomatik olarak vendor'a yükselt (sadece upgrade request'i varsa)"""
+        if self.role == 'client' and self.is_verified and hasattr(self, 'vendor_upgrade_request'):
+            # Sadece vendor upgrade request'i olan client'ları yükselt
             self.role = 'vendor'
             self.can_provide_services = True
             self.can_request_services = True

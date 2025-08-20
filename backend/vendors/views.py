@@ -176,31 +176,10 @@ class VendorProfileView(generics.RetrieveUpdateAPIView):
         try:
             return VendorProfile.objects.get(user=self.request.user)
         except VendorProfile.DoesNotExist:
-            # Eğer VendorProfile yoksa ve admin/superuser ise, test için boş profile oluştur
-            if self.request.user.is_staff or self.request.user.is_superuser:
-                # Test için admin/superuser için dummy profile
-                return VendorProfile.objects.create(
-                    user=self.request.user,
-                    business_type="esnaf",
-                    company_title="Admin Test Şirketi",
-                    tax_office="Test Vergi Dairesi",
-                    tax_no="1234567890",
-                    display_name="Admin Test",
-                    about="Admin test profili",
-                    phone="5551234567",
-                    address="Test Adres",
-                    city="İstanbul",
-                    district="Kadıköy",
-                    subdistrict="Test Mahalle",
-                    manager_name="Admin Test",
-                    manager_birthdate="1990-01-01",
-                    manager_tc="12345678901",
-                    manager_phone="5551234567"
-                )
-            else:
-                # Normal vendor için 404 döndür
-                from rest_framework.exceptions import NotFound
-                raise NotFound("Vendor profile not found")
+            # Vendor role'üne sahip kullanıcının VendorProfile'ı yok - bu bir hata durumu
+            logger.error(f"Vendor user {self.request.user.email} has no VendorProfile. Role should be fixed.")
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Vendor profili bulunamadı. Bu bir sistem hatası, lütfen destek ile iletişime geçin.")
 
     def get(self, request, *args, **kwargs):
         try:

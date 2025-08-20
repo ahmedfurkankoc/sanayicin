@@ -20,15 +20,19 @@ function EmailVerificationContent() {
       const token = searchParams.get('token');
       
       if (!token) {
-        setError("Doğrulama token'ı bulunamadı.");
+        console.error('Email verification: No token provided in URL');
+        setError("Doğrulama token'ı bulunamadı. Lütfen email'inizdeki linki kullandığınızdan emin olun.");
         setLoading(false);
         return;
       }
+
+      console.log('Email verification: Attempting verification with token:', token.substring(0, 20) + '...');
 
       try {
         const response = await api.verifyEmail({ token });
         
         if (response.status === 200) {
+          console.log('Email verification successful:', response.data);
           setSuccess(true);
           setVerificationData(response.data);
           
@@ -37,13 +41,27 @@ function EmailVerificationContent() {
             router.push('/musteri/giris?verified=true');
           }, 3000);
         } else {
+          console.error('Email verification failed with status:', response.status, response.data);
           setError(response.data?.error || "Email doğrulama başarısız.");
         }
       } catch (err: any) {
         console.error('Email verification error:', err);
-        const errorMessage = err.response?.data?.error || 
-                            err.response?.data?.detail || 
-                            "Email doğrulama sırasında hata oluştu.";
+        
+        // Daha detaylı hata mesajları
+        let errorMessage = "Email doğrulama sırasında hata oluştu.";
+        
+        if (err.response?.status === 400) {
+          errorMessage = err.response?.data?.error || 
+                        err.response?.data?.detail || 
+                        "Doğrulama linki geçersiz, süresi dolmuş veya zaten kullanılmış.";
+        } else if (err.response?.status === 404) {
+          errorMessage = "Doğrulama linki bulunamadı. Link geçersiz olabilir.";
+        } else if (err.response?.status === 500) {
+          errorMessage = "Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.";
+        } else if (!err.response) {
+          errorMessage = "İnternet bağlantınızı kontrol edin ve tekrar deneyin.";
+        }
+        
         setError(errorMessage);
       } finally {
         setLoading(false);
