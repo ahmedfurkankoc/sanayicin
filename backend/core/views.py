@@ -570,6 +570,38 @@ def check_verification_status(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def update_profile(request):
+    """Kullanıcı profil bilgilerini güncelle"""
+    try:
+        user = request.user
+        data = request.data
+        
+        # Güncellenebilir alanlar
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+        if 'phone_number' in data:
+            user.phone_number = data['phone_number']
+        
+        user.save()
+        
+        return Response({
+            'message': 'Profil güncellendi',
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phone_number': user.phone_number
+        })
+        
+    except Exception as e:
+        logger.error(f"Update profile error: {e}")
+        return Response(
+            {'error': 'Profil güncellenirken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def forgot_password(request):

@@ -14,7 +14,8 @@ from .views import (
     reset_password,
     upload_avatar,
     request_vendor_upgrade,
-    check_vendor_upgrade_status
+    check_vendor_upgrade_status,
+    update_profile
 )
 
 urlpatterns = [
@@ -29,6 +30,7 @@ urlpatterns = [
     path('auth/forgot-password/', forgot_password, name='forgot_password'),
     path('auth/reset-password/', reset_password, name='reset_password'),
     path('avatar/upload/', upload_avatar, name='upload_avatar'),
+    path('profile/', update_profile, name='update_profile'),
     path('services/', ServiceAreaListView.as_view(), name='servicearea-list'),
     path('categories/', CategoryListView.as_view(), name='category-list'),
     
