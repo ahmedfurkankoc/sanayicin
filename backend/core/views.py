@@ -108,13 +108,44 @@ def login(request):
         from rest_framework_simplejwt.tokens import RefreshToken
         refresh = RefreshToken.for_user(user)
         
+        # Kullanıcının hangi profil tipine sahip olduğunu kontrol et
+        has_vendor_profile = False
+        has_client_profile = False
+        
+        if user.role == 'vendor':
+            # VendorProfile var mı kontrol et
+            try:
+                from vendors.models import VendorProfile
+                VendorProfile.objects.get(user=user)
+                has_vendor_profile = True
+            except VendorProfile.DoesNotExist:
+                has_vendor_profile = False
+        
+        if user.role == 'client' or user.role == 'vendor':
+            # ClientProfile var mı kontrol et
+            try:
+                from clients.models import ClientProfile
+                ClientProfile.objects.get(user=user)
+                has_client_profile = True
+            except ClientProfile.DoesNotExist:
+                has_client_profile = False
+        
+        # Eğer vendor role'ü ama VendorProfile yoksa, client olarak login yap
+        effective_role = user.role
+        if user.role == 'vendor' and not has_vendor_profile and has_client_profile:
+            effective_role = 'client'
+            logger.warning(f"User {user.email} has vendor role but no VendorProfile, using client role for login")
+        
         return Response({
             'access': str(refresh.access_token),
             'refresh': str(refresh),
             'email': user.email,
             'is_verified': user.is_verified_user,  # Güncellendi
             'verification_status': user.verification_status,  # Yeni
-            'role': user.role,
+            'role': effective_role,  # Gerçek kullanılabilir role
+            'user_role': user.role,  # Database'deki role
+            'has_vendor_profile': has_vendor_profile,
+            'has_client_profile': has_client_profile,
         })
 
     except Exception as e:
@@ -235,18 +266,26 @@ def send_verification_email(request):
 def verify_email(request):
     """Email doğrulama token'ını kontrol et"""
     try:
+        # Önce süresi dolmuş token'ları temizle
+        from datetime import timedelta
+        EmailVerification.objects.filter(expires_at__lt=timezone.now()).delete()
+        
         token = request.data.get('token')
         
         if not token:
+            logger.warning("Email verification attempted without token")
             return Response(
                 {'error': 'Doğrulama token\'ı gerekli'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        logger.info(f"Email verification attempted with token: {token[:20]}...")
+        
         # Token'ı bul
         try:
             verification = EmailVerification.objects.get(token=token)
         except EmailVerification.DoesNotExist:
+            logger.warning(f"Invalid verification token attempted: {token[:20]}...")
             return Response(
                 {'error': 'Geçersiz doğrulama linki'}, 
                 status=status.HTTP_400_BAD_REQUEST
@@ -255,11 +294,13 @@ def verify_email(request):
         # Token geçerli mi?
         if not verification.is_valid:
             if verification.is_expired:
+                logger.warning(f"Expired verification token attempted for user: {verification.user.email}")
                 return Response(
                     {'error': 'Doğrulama linki süresi dolmuş'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             else:
+                logger.warning(f"Already used verification token attempted for user: {verification.user.email}")
                 return Response(
                     {'error': 'Bu doğrulama linki zaten kullanılmış'}, 
                     status=status.HTTP_400_BAD_REQUEST
@@ -267,6 +308,8 @@ def verify_email(request):
         
         # Kullanıcıyı doğrula
         user = verification.user
+        logger.info(f"Email verification successful for user: {user.email}")
+        
         user.is_verified = True
         user.verification_method = 'email'
         user.is_verified = True  # Ana verification field
