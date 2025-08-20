@@ -12,14 +12,8 @@ from django.core.files import File
 class ClientProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='client_profile')
     
-    # Kişisel bilgiler (artık CustomUser'dan alınıyor)
-    # first_name, last_name, avatar - CustomUser'dan
-    # phone - CustomUser'dan
-    
-    # Konum bilgileri
-    city = models.CharField(max_length=100)
-    district = models.CharField(max_length=100)
-    address = models.TextField()
+    # Kişisel bilgiler (CustomUser üzerinden yönetilir)
+    # first_name, last_name, avatar, phone_number
     
     # İsteğe bağlı bilgiler
     about = models.TextField(blank=True)

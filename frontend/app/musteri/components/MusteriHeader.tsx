@@ -302,7 +302,7 @@ export default function MusteriHeader() {
                 {!isAuthenticated ? (
                   // Giriş yapılmamış
                   <>
-                    <Link href="/musteri/giris" className="musteri-dropdown-item">
+                    <Link href="/musteri/giris?next=/musteri/hizmetler" className="musteri-dropdown-item">
                       Giriş Yap
                     </Link>
                     <div className="musteri-dropdown-divider"></div>
@@ -322,7 +322,7 @@ export default function MusteriHeader() {
                     <div className="musteri-dropdown-divider"></div>
                     
                     <Link href="/musteri/profil" className="musteri-dropdown-item">
-                      Profilim
+                      Hesabım
                     </Link>
                     
                     <Link href="/musteri/mesajlar" className="musteri-dropdown-item">
