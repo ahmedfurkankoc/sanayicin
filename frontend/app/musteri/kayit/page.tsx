@@ -4,13 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, setAuthEmail } from "@/app/utils/api";
-import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import MusteriHeader from "../components/MusteriHeader";
 import MusteriFooter from "../components/MusteriFooter";
 
 export default function MusteriKayitPage() {
   const router = useRouter();
-  const { cities, loadTurkeyData, getDistricts } = useTurkeyData();
   
   // Step-based registration
   const [step, setStep] = useState(1);
@@ -20,12 +18,7 @@ export default function MusteriKayitPage() {
     password: "",
     password2: "",
     first_name: "",
-    last_name: "",
-    phone: "",
-    city: "",
-    district: "",
-    address: "",
-    about: ""
+    last_name: ""
   });
   
   // Verification state
@@ -33,26 +26,11 @@ export default function MusteriKayitPage() {
   const [verificationError, setVerificationError] = useState("");
   const [verificationEmail, setVerificationEmail] = useState("");
   
-  const [districts, setDistricts] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Şehir verisini yükle
-  React.useEffect(() => {
-    loadTurkeyData();
-  }, [loadTurkeyData]);
-
-  // İl değişince ilçeleri güncelle
-  React.useEffect(() => {
-    if (formData.city) {
-      setDistricts(getDistricts(formData.city));
-      setFormData(prev => ({ ...prev, district: "" }));
-    } else {
-      setDistricts([]);
-      setFormData(prev => ({ ...prev, district: "" }));
-    }
-  }, [formData.city, getDistricts]);
+  // Konum bilgileri kayıt aşamasında alınmıyor
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -122,8 +100,7 @@ export default function MusteriKayitPage() {
     
     // Validation
     if (!formData.first_name || !formData.last_name || !formData.email || 
-        !formData.phone || !formData.city || !formData.district || 
-        !formData.address || !formData.password || !formData.password2) {
+        !formData.password || !formData.password2) {
       setError("Lütfen tüm zorunlu alanları doldurun.");
       return;
     }
@@ -145,12 +122,7 @@ export default function MusteriKayitPage() {
       return;
     }
     
-    // Phone validation
-    const phoneRegex = /^[\d\s\-\+\(\)]{10,15}$/;
-    if (!phoneRegex.test(formData.phone)) {
-      setError("Geçerli bir telefon numarası girin.");
-      return;
-    }
+    // Telefon kayıt aşamasında zorunlu değil (vendor upgrade sırasında alınacak)
     
     setLoading(true);
 
@@ -265,93 +237,13 @@ export default function MusteriKayitPage() {
                   />
                 </div>
 
-                <div className="musteri-form-group">
-                  <label htmlFor="phone" className="musteri-form-label">
-                    Telefon Numarası *
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="musteri-form-input"
-                    placeholder="0555 123 45 67"
-                    required
-                  />
-                </div>
+                {/* Telefon numarası kayıt aşamasında alınmıyor */}
 
-                <div className="musteri-form-row">
-                  <div className="musteri-form-group">
-                    <label htmlFor="city" className="musteri-form-label">
-                      İl *
-                    </label>
-                    <select
-                      id="city"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className="musteri-form-input"
-                      required
-                    >
-                      <option value="">İl seçiniz</option>
-                      {cities.map(city => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
-                    </select>
-                  </div>
+                {/* İl/İlçe alanları kaldırıldı */}
 
-                  <div className="musteri-form-group">
-                    <label htmlFor="district" className="musteri-form-label">
-                      İlçe *
-                    </label>
-                    <select
-                      id="district"
-                      name="district"
-                      value={formData.district}
-                      onChange={handleInputChange}
-                      className="musteri-form-input"
-                      required
-                      disabled={!formData.city}
-                    >
-                      <option value="">İlçe seçiniz</option>
-                      {districts.map(district => (
-                        <option key={district} value={district}>{district}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                {/* Adres alanı kaldırıldı */}
 
-                <div className="musteri-form-group">
-                  <label htmlFor="address" className="musteri-form-label">
-                    Adres *
-                  </label>
-                  <textarea
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className="musteri-form-input"
-                    placeholder="Detaylı adres bilgisi"
-                    rows={3}
-                    required
-                  />
-                </div>
-
-                <div className="musteri-form-group">
-                  <label htmlFor="about" className="musteri-form-label">
-                    Hakkımda
-                  </label>
-                  <textarea
-                    id="about"
-                    name="about"
-                    value={formData.about}
-                    onChange={handleInputChange}
-                    className="musteri-form-input"
-                    placeholder="Kendiniz hakkında kısa bilgi (opsiyonel)"
-                    rows={3}
-                  />
-                </div>
+                {/* Hakkımda alanı kaldırıldı */}
 
                 <div className="musteri-form-row">
                   <div className="musteri-form-group">
@@ -464,7 +356,7 @@ export default function MusteriKayitPage() {
                       <div style={{ fontSize: '24px', marginBottom: '8px' }}>📱</div>
                       <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>SMS ile Doğrulama</div>
                       <div style={{ fontSize: '14px', color: '#666' }}>
-                        {formData.phone} numarasına doğrulama kodu gönderilir
+                        SMS doğrulama yakında aktif olacak
                       </div>
                       <div style={{ 
                         fontSize: '12px', 

@@ -149,14 +149,18 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
             onClick={() => router.push("/esnaf/ayarlar")}
           >
             <div className="esnaf-user-avatar">
-              {currentUser?.avatar ? (
+              {currentUser?.user?.avatar ? (
                 <img 
-                  src={currentUser.avatar} 
+                  src={currentUser.user.avatar} 
                   alt="Profil" 
                   className="esnaf-user-avatar-img"
                 />
               ) : (
-                <span className="esnaf-user-avatar-initial">{getUserInitial()}</span>
+                <span className="esnaf-user-avatar-initial">
+                  {currentUser?.display_name ? currentUser.display_name.charAt(0).toUpperCase() :
+                   currentUser?.company_title ? currentUser.company_title.charAt(0).toUpperCase() :
+                   currentEmail ? currentEmail.charAt(0).toUpperCase() : 'E'}
+                </span>
               )}
             </div>
             <div className="esnaf-user-info">

@@ -230,7 +230,6 @@ export default function EsnafOlPage() {
   
   return (
     <>
-      <MusteriHeader />
       <main className="musteri-auth-main">
         <div className="musteri-auth-container">
           <div className="musteri-auth-card">
@@ -495,7 +494,6 @@ export default function EsnafOlPage() {
           </div>
         </div>
       </main>
-      <MusteriFooter />
     </>
   );
 }

@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/app/utils/api';
 import { iconMapping } from '@/app/utils/iconMapping';
 
 interface ServiceArea {
@@ -20,105 +19,149 @@ interface Category {
   service_area: number;
 }
 
-interface Vendor {
-  id: number;
-  display_name: string;
-  city: string;
-  district: string;
-  service_areas: ServiceArea[];
-  categories: Category[];
-  slug: string;
-}
+// Statik hizmet alanları verisi
+const STATIC_SERVICE_AREAS: ServiceArea[] = [
+  {
+    id: 1,
+    name: "Mekanik Hizmetler",
+    description: "Motor, şanzıman, fren sistemi ve diğer mekanik onarımlar"
+  },
+  {
+    id: 2,
+    name: "Elektrik ve Elektronik",
+    description: "Araç elektrik sistemleri, batarya, alternator ve elektronik onarımlar"
+  },
+  {
+    id: 3,
+    name: "Kaporta ve Boya",
+    description: "Hasar onarımı, boyama, döşeme ve estetik işlemler"
+  },
+  {
+    id: 4,
+    name: "Lastik ve Jant Hizmetleri",
+    description: "Lastik değişimi, balans, rot balans ve jant işlemleri"
+  },
+  {
+    id: 5,
+    name: "Detaylı Temizlik ve Bakım",
+    description: "İç ve dış temizlik, parlatma, koruma ve bakım hizmetleri"
+  },
+  {
+    id: 6,
+    name: "Cam, Anahtar ve Güvenlik Sistemleri",
+    description: "Cam değişimi, anahtar yapımı ve güvenlik sistem kurulumu"
+  },
+  {
+    id: 7,
+    name: "Klima ve Isıtma Sistemleri",
+    description: "Klima bakımı, gaz dolumu ve ısıtma sistemi onarımları"
+  },
+  {
+    id: 8,
+    name: "Multimedya ve Donanım",
+    description: "Ses sistemi, navigasyon ve araç içi teknolojik donanım"
+  },
+  {
+    id: 9,
+    name: "Yedek Parça ve Aksesuar",
+    description: "Orijinal ve yan sanayi yedek parçalar, aksesuar satışı"
+  },
+  {
+    id: 10,
+    name: "Hafif Ticari ve Ticari Araç Hizmetleri",
+    description: "Kamyonet, kamyon ve ticari araç özel hizmetleri"
+  }
+];
+
+// Statik kategoriler verisi
+const STATIC_CATEGORIES: Category[] = [
+  // Mekanik Hizmetler kategorileri
+  { id: 1, name: "Motor Onarımı", service_area: 1 },
+  { id: 2, name: "Şanzıman Servisi", service_area: 1 },
+  { id: 3, name: "Fren Sistemi", service_area: 1 },
+  { id: 4, name: "Amortisör", service_area: 1 },
+  { id: 5, name: "Egzoz Sistemi", service_area: 1 },
+  
+  // Elektrik ve Elektronik kategorileri
+  { id: 6, name: "Batarya Servisi", service_area: 2 },
+  { id: 7, name: "Alternatör", service_area: 2 },
+  { id: 8, name: "Marş Motoru", service_area: 2 },
+  { id: 9, name: "Araç Elektroniği", service_area: 2 },
+  { id: 10, name: "Kablo Tesisatı", service_area: 2 },
+  
+  // Kaporta ve Boya kategorileri
+  { id: 11, name: "Hasar Onarımı", service_area: 3 },
+  { id: 12, name: "Boyama İşlemleri", service_area: 3 },
+  { id: 13, name: "Döşeme", service_area: 3 },
+  { id: 14, name: "Pasta Cila", service_area: 3 },
+  
+  // Lastik ve Jant kategorileri
+  { id: 15, name: "Lastik Değişimi", service_area: 4 },
+  { id: 16, name: "Balans Ayarı", service_area: 4 },
+  { id: 17, name: "Rot Balans", service_area: 4 },
+  { id: 18, name: "Jant Onarımı", service_area: 4 },
+  
+  // Detaylı Temizlik kategorileri
+  { id: 19, name: "İç Temizlik", service_area: 5 },
+  { id: 20, name: "Dış Temizlik", service_area: 5 },
+  { id: 21, name: "Motor Temizliği", service_area: 5 },
+  { id: 22, name: "Parlatma", service_area: 5 },
+  
+  // Cam, Anahtar kategorileri
+  { id: 23, name: "Cam Değişimi", service_area: 6 },
+  { id: 24, name: "Anahtar Yapımı", service_area: 6 },
+  { id: 25, name: "Alarm Sistemi", service_area: 6 },
+  { id: 26, name: "İmmobilizer", service_area: 6 },
+  
+  // Klima kategorileri
+  { id: 27, name: "Klima Bakımı", service_area: 7 },
+  { id: 28, name: "Gaz Dolumu", service_area: 7 },
+  { id: 29, name: "Kalorifer Onarımı", service_area: 7 },
+  
+  // Multimedya kategorileri
+  { id: 30, name: "Ses Sistemi", service_area: 8 },
+  { id: 31, name: "Navigasyon", service_area: 8 },
+  { id: 32, name: "Geri Vites Kamerası", service_area: 8 },
+  
+  // Yedek Parça kategorileri
+  { id: 33, name: "Orijinal Parça", service_area: 9 },
+  { id: 34, name: "Yan Sanayi Parça", service_area: 9 },
+  { id: 35, name: "Aksesuar", service_area: 9 },
+  
+  // Ticari Araç kategorileri
+  { id: 36, name: "Kamyonet Servisi", service_area: 10 },
+  { id: 37, name: "Kamyon Bakımı", service_area: 10 },
+  { id: 38, name: "Ticari Araç Modifikasyonu", service_area: 10 }
+];
 
 export default function HizmetlerPage() {
-  const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [topVendors, setTopVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const router = useRouter();
 
-  // Hizmet alanlarını yükle
-  useEffect(() => {
-    const loadServiceAreas = async () => {
-      try {
-        const response = await api.getServiceAreas();
-        setServiceAreas(response.data || []);
-      } catch (err) {
-        console.error('Hizmet alanları yüklenemedi:', err);
-        setError('Hizmet alanları yüklenirken bir hata oluştu');
+  // Statik veri kullan
+  const serviceAreas = STATIC_SERVICE_AREAS;
+  const categories = STATIC_CATEGORIES;
+
+  // Kategorileri hizmet alanına göre grupla (memoized)
+  const categoriesByService = useMemo(() => {
+    const grouped: { [serviceId: number]: Category[] } = {};
+    categories.forEach(category => {
+      if (!grouped[category.service_area]) {
+        grouped[category.service_area] = [];
       }
-    };
+      grouped[category.service_area].push(category);
+    });
+    return grouped;
+  }, [categories]);
 
-    // Kategorileri yükle
-    const loadCategories = async () => {
-      try {
-        const response = await api.getCategories();
-        setCategories(response.data || []);
-      } catch (err) {
-        console.error('Kategoriler yüklenemedi:', err);
-      }
-    };
+  // Hizmet alanına göre kategorileri getir (memoized)
+  const getCategoriesByService = useCallback((serviceId: number) => {
+    return categoriesByService[serviceId] || [];
+  }, [categoriesByService]);
 
-    // Top vendor'ları yükle
-    const loadTopVendors = async () => {
-      try {
-        const response = await api.searchVendors({});
-        const vendors = response.data?.results || [];
-        // İlk 6 vendor'ı al
-        setTopVendors(vendors.slice(0, 6));
-      } catch (err) {
-        console.error('Vendor\'lar yüklenemedi:', err);
-      }
-    };
-
-    const loadData = async () => {
-      setLoading(true);
-      await Promise.all([
-        loadServiceAreas(),
-        loadCategories(),
-        loadTopVendors()
-      ]);
-      setLoading(false);
-    };
-
-    loadData();
-  }, []);
-
-  // Hizmet alanına göre kategorileri filtrele
-  const getCategoriesByService = (serviceId: number) => {
-    return categories.filter(cat => cat.service_area === serviceId);
-  };
-
-  // Hizmet alanına tıklandığında
-  const handleServiceClick = (serviceId: number) => {
+  // Hizmet alanına tıklandığında (memoized)
+  const handleServiceClick = useCallback((serviceId: number) => {
     router.push(`/musteri/arama-sonuclari?service=${serviceId}`);
-  };
-
-  // Vendor'a tıklandığında
-  const handleVendorClick = (vendorSlug: string) => {
-    router.push(`/musteri/esnaf/${vendorSlug}`);
-  };
-
-  if (loading) {
-    return (
-      <div className="musteri-page-container">
-        <div className="musteri-loading">
-          <div>Hizmetler yükleniyor...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="musteri-page-container">
-        <div className="musteri-error">
-          <div>{error}</div>
-        </div>
-      </div>
-    );
-  }
+  }, [router]);
 
   return (
     <div className="musteri-page-container">
@@ -137,82 +180,43 @@ export default function HizmetlerPage() {
       <section className="musteri-services-section">
         <h2>Hizmet Alanları</h2>
         <div className="musteri-services-grid">
-          {serviceAreas.map((service) => (
-            <div 
-              key={service.id} 
-              className="musteri-service-card"
-              onClick={() => handleServiceClick(service.id)}
-            >
-              <div className="musteri-service-icon">
-                {React.createElement(iconMapping.wrench, { size: 32 })}
-              </div>
-              <h3>{service.name}</h3>
-              {service.description && <p>{service.description}</p>}
-              
-              {/* Bu hizmet alanındaki kategoriler */}
-              <div className="musteri-service-categories">
-                {getCategoriesByService(service.id).slice(0, 3).map((category) => (
-                  <span key={category.id} className="musteri-category-tag">
-                    {category.name}
-                  </span>
-                ))}
-                {getCategoriesByService(service.id).length > 3 && (
-                  <span className="musteri-category-more">
-                    +{getCategoriesByService(service.id).length - 3} daha
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Popüler Esnaflar */}
-      <section className="musteri-vendors-section">
-        <h2>Popüler Esnaflar</h2>
-        <div className="musteri-vendors-grid">
-          {topVendors.map((vendor) => (
-            <div 
-              key={vendor.id} 
-              className="musteri-vendor-card"
-              onClick={() => handleVendorClick(vendor.slug)}
-            >
-              <div className="musteri-vendor-avatar">
-                {vendor.display_name.charAt(0).toUpperCase()}
-              </div>
-              <div className="musteri-vendor-info">
-                <h3>{vendor.display_name}</h3>
-                <p className="musteri-vendor-location">
-                  {vendor.district}, {vendor.city}
-                </p>
-                <div className="musteri-vendor-services">
-                  {vendor.service_areas.slice(0, 2).map((service) => (
-                    <span key={service.id} className="musteri-service-tag">
-                      {service.name}
+          {serviceAreas.map((service) => {
+            const serviceCategories = getCategoriesByService(service.id);
+            const displayCategories = serviceCategories.slice(0, 3);
+            const remainingCount = serviceCategories.length - 3;
+            
+            return (
+              <div 
+                key={service.id} 
+                className="musteri-service-card"
+                onClick={() => handleServiceClick(service.id)}
+              >
+                <div className="musteri-service-icon">
+                  {React.createElement(iconMapping.wrench, { size: 32 })}
+                </div>
+                <h3>{service.name}</h3>
+                {service.description && <p>{service.description}</p>}
+                
+                {/* Bu hizmet alanındaki kategoriler */}
+                <div className="musteri-service-categories">
+                  {displayCategories.map((category) => (
+                    <span key={category.id} className="musteri-category-tag">
+                      {category.name}
                     </span>
                   ))}
+                  {remainingCount > 0 && (
+                    <span className="musteri-category-more">
+                      +{remainingCount} daha
+                    </span>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Tüm Esnafları Gör */}
-        <div className="musteri-vendors-more">
-          <Link href="/musteri/arama-sonuclari" className="musteri-btn">
-            Tüm Esnafları Gör
-          </Link>
+            );
+          })}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="musteri-cta-section">
-        <h2>Hizmet Vermek İstiyor musunuz?</h2>
-        <p>Esnaf olarak kayıt olun ve müşterilerinize hizmet verin</p>
-        <Link href="/musteri/esnaf-ol" className="musteri-btn musteri-btn-secondary">
-          Esnaf Ol
-        </Link>
-      </section>
+
     </div>
   );
 }

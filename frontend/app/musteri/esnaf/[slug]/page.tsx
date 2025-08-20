@@ -12,12 +12,13 @@ interface Vendor {
     id: number;
     email: string;
     is_verified: boolean;
+    avatar?: string;
   };
   user_id?: number; // Backend'den gelmesi gereken field
   business_type: string;
   company_title: string;
   display_name: string;
-  phone: string;
+  business_phone: string; // phone yerine business_phone
   city: string;
   district: string;
   subdistrict: string;
@@ -53,6 +54,7 @@ function VendorDetailContent() {
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [creatingChat, setCreatingChat] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
 
   // Hizmet alanlarını ve kategorileri çek
   useEffect(() => {
@@ -163,14 +165,21 @@ function VendorDetailContent() {
                 color: '#ccc',
                 overflow: 'hidden'
               }}>
-                {vendor.avatar ? (
+                {vendor.user?.avatar ? (
                   <img 
-                    src={vendor.avatar} 
+                    src={vendor.user.avatar} 
                     alt={vendor.display_name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  '🏪'
+                  <span style={{
+                    fontSize: '48px',
+                    fontWeight: 'bold',
+                    color: '#666'
+                  }}>
+                    {vendor.display_name ? vendor.display_name.charAt(0).toUpperCase() :
+                     vendor.company_title ? vendor.company_title.charAt(0).toUpperCase() : 'E'}
+                  </span>
                 )}
               </div>
             </div>
@@ -204,11 +213,63 @@ function VendorDetailContent() {
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {React.createElement(iconMapping.phone, { size: 16, color: '#666' })}
-                  <span style={{ fontSize: '14px', color: '#333' }}>
-                    {vendor.phone}
-                  </span>
+                  <button
+                    onClick={() => {
+                      setShowPhone(!showPhone);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {React.createElement(iconMapping.phone, { size: 16, color: '#666' })}
+                    <span style={{ fontSize: '14px', color: '#333' }}>
+                      {showPhone ? 'Telefon Numarasını Gizle' : 'Telefon Numarasını Göster'}
+                    </span>
+                  </button>
                 </div>
+                
+                {/* Telefon numarası gösterimi */}
+                {showPhone && (
+                  <div 
+                    style={{ 
+                      padding: '8px 12px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '6px',
+                      border: '1px solid #e9ecef'
+                    }}
+                  >
+                    <span style={{ fontSize: '14px', color: '#333', fontWeight: '500' }}>
+                      {vendor.business_phone}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const phoneNumber = vendor.business_phone;
+                        if (phoneNumber) {
+                          window.location.href = `tel:${phoneNumber}`;
+                        }
+                      }}
+                      style={{
+                        marginLeft: '12px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Ara
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* İletişim Butonları */}
@@ -286,6 +347,32 @@ function VendorDetailContent() {
                 // Normal butonları göster
                 return (
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    {/* Teklif Al butonu - sadece client'lar için */}
+                    {currentUserRole === 'client' && (
+                      <button 
+                        onClick={() => {
+                          // Teklif alma sayfasına yönlendir (henüz oluşturulmadı)
+                          alert('Teklif alma özelliği yakında eklenecek!');
+                        }}
+                        style={{
+                          backgroundColor: '#17a2b8',
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px 24px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          fontSize: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        {React.createElement(iconMapping.message, { size: 16 })}
+                        Teklif Al
+                      </button>
+                    )}
+                    
                     {/* Randevu butonu - sadece client'lar için */}
                     {currentUserRole === 'client' && (
                       <button 
@@ -571,33 +658,7 @@ function VendorDetailContent() {
               </div>
             )}
 
-            {/* İletişim Bilgileri */}
-            <div>
-              <h3 style={{ 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                margin: '0 0 16px 0',
-                color: '#333'
-              }}>
-                İletişim Bilgileri
-              </h3>
-              <div style={{ 
-                backgroundColor: '#f8f9fa', 
-                padding: '20px', 
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-              }}>
-                <p style={{ 
-                  fontSize: '16px', 
-                  lineHeight: '1.6', 
-                  color: '#333',
-                  margin: 0
-                }}>
-                  <strong>Telefon:</strong> {vendor.phone}<br />
-                  <strong>E-posta:</strong> {vendor.user.email}
-                </p>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>

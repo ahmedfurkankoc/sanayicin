@@ -66,11 +66,12 @@ export default function EsnafProfilPage() {
             
             <div className="esnaf-profile-photo">
               <div className="esnaf-photo-display">
-                {user.avatar ? (
-                  <img src={user.avatar} alt="Profil Fotoğrafı" />
+                {user.user?.avatar ? (
+                  <img src={user.user.avatar} alt="Profil Fotoğrafı" className="esnaf-avatar-image" />
                 ) : (
-                  <div className="esnaf-photo-placeholder">
-                    📷
+                  <div className="esnaf-avatar-initial">
+                    {user.display_name ? user.display_name.charAt(0).toUpperCase() : 
+                     user.company_title ? user.company_title.charAt(0).toUpperCase() : 'E'}
                   </div>
                 )}
               </div>

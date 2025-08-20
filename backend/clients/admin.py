@@ -3,8 +3,8 @@ from .models import ClientProfile
 
 @admin.register(ClientProfile)
 class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'user_email', 'user_phone', 'city', 'district', 'created_at')
-    list_filter = ('city', 'district', 'created_at')
+    list_display = ('full_name', 'user_email', 'user_phone', 'created_at')
+    list_filter = ('created_at',)
     search_fields = ('user__first_name', 'user__last_name', 'user__email', 'user__phone_number')
     readonly_fields = ('created_at', 'updated_at')
     
@@ -20,9 +20,7 @@ class ClientProfileAdmin(admin.ModelAdmin):
         ('Kullanıcı Bilgileri', {
             'fields': ('user',)
         }),
-        ('Konum Bilgileri', {
-            'fields': ('city', 'district', 'address')
-        }),
+        # Konum bilgileri kaldırıldı (vendor upgrade aşamasında alınacak)
         ('Ek Bilgiler', {
             'fields': ('about',)
         }),
