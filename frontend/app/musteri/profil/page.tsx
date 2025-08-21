@@ -23,7 +23,7 @@ import { useMusteri } from '../context/MusteriContext';
 
 function ProfileContent() {
   const router = useRouter();
-  const { role } = useMusteri();
+  const { isAuthenticated, user: currentUser } = useMusteri();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [userData, setUserData] = useState<CustomUser | null>(null);
@@ -40,11 +40,8 @@ function ProfileContent() {
     useEffect(() => {
     const load = async () => {
       try {
-        // Önce hangi role için token var kontrol et
-        const vendorToken = localStorage.getItem('esnaf_access_token');
-        const clientToken = localStorage.getItem('client_access_token');
-        
-        if (!vendorToken && !clientToken) {
+        // Context'ten authentication kontrolü
+        if (!isAuthenticated) {
           setError('Giriş yapılmamış. Lütfen önce giriş yapın.');
           setTimeout(() => {
             router.push('/musteri/giris');
@@ -52,12 +49,13 @@ function ProfileContent() {
           return;
         }
         
-        // Giriş yapan kullanıcının CustomUser bilgilerini al
-        const res = await apiClient.get('/profile/');
-        setUserData(res.data);
-        setFirstName(res.data.first_name || '');
-        setLastName(res.data.last_name || '');
-        setPhone(res.data.phone_number || '');
+        // Context'ten gelen user bilgilerini kullan
+        if (currentUser) {
+          setUserData(currentUser);
+          setFirstName(currentUser.first_name || '');
+          setLastName(currentUser.last_name || '');
+          setPhone(currentUser.phone_number || '');
+        }
               } catch (e: any) {
           console.error('Profile load error:', e);
           if (e?.response?.status === 401) {
@@ -74,7 +72,7 @@ function ProfileContent() {
       }
     };
     load();
-  }, []);
+  }, [isAuthenticated, currentUser, router]);
 
   const displayName = useMemo(() => {
     if (!userData) return '';
@@ -188,14 +186,19 @@ function ProfileContent() {
                                 setSaving(true);
                                 setInfoMsg('');
                                 await apiClient.patch('/profile/update/', { first_name: firstName, last_name: lastName });
-                                if (avatarFile) {
-                                  const fd = new FormData();
-                                  fd.append('avatar', avatarFile);
-                                  await api.uploadAvatar(fd, 'client');
-                                }
-                                // Profil bilgilerini yeniden yükle
-                                const profileRes = await apiClient.get('/profile/');
-                                setUserData(profileRes.data);
+                                        if (avatarFile) {
+          const fd = new FormData();
+          fd.append('avatar', avatarFile);
+          await api.uploadAvatar(fd, currentUser?.role || 'client');
+        }
+        // Context'ten user bilgilerini güncelle
+        if (currentUser) {
+          setUserData({
+            ...currentUser,
+            first_name: firstName,
+            last_name: lastName
+          });
+        }
                                 setEditingBasic(false);
                                 setInfoMsg('Kayıt güncellendi.');
                               } catch (e) {
