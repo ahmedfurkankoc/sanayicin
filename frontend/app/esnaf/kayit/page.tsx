@@ -669,7 +669,7 @@ export default function EsnafKayitPage() {
             {companyInfo.photoName && (
               <div className="esnaf-photo-filename">Seçilen dosya: {companyInfo.photoName}</div>
             )}
-            <label className="esnaf-register-label">İşyeri Telefon Numarası</label>
+            <label className="esnaf-register-label">İşyeri Telefon Numarası *</label>
             <input
               type="tel"
               name="phone"
@@ -678,6 +678,9 @@ export default function EsnafKayitPage() {
               onChange={handleCompanyInput}
               required
             />
+            <small className="esnaf-register-help-text">
+              Bu telefon numarası müşterileriniz tarafından görülecek ve iletişim kurulacak numaradır.
+            </small>
             <label className="esnaf-register-label">İşyeri İli</label>
             <select
               className="esnaf-register-input"

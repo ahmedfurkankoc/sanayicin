@@ -35,6 +35,8 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField()
     about = serializers.CharField(allow_blank=True, required=False)
     avatar = serializers.ImageField(required=False, allow_null=True)
+    # Yeni: mağaza logosu
+    store_logo = serializers.ImageField(required=False, allow_null=True)
     business_phone = serializers.CharField(required=True)  # İşyeri telefon numarası
     city = serializers.CharField()
     district = serializers.CharField()
@@ -50,7 +52,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         model = VendorProfile
         fields = (
             'email', 'password', 'password2', 'business_type', 'service_area', 'categories',
-            'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'avatar',
+            'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'avatar', 'store_logo',
             'business_phone', 'city', 'district', 'subdistrict', 'address',
             'first_name', 'last_name', 'manager_birthdate', 'manager_tc', 'phone_number'
         )
@@ -165,6 +167,8 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         
         # Avatar'ı çıkar (varsa)
         avatar = validated_data.pop('avatar', None)
+        # Store logo'yu çıkar (varsa)
+        store_logo = validated_data.pop('store_logo', None)
         
         # Phone number'ı çıkar (CustomUser'a kaydedilecek)
         phone_number = validated_data.pop('phone_number', None)
@@ -194,12 +198,12 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         profile.categories.set(categories)
         profile.service_areas.set([service_area])  # service_area'yı service_areas olarak set et
         
-        # Email verification gönderme - kullanıcı doğrulama yöntemi seçtikten sonra gönderilecek
-        # email_sent = user.send_verification_email()
-        # if not email_sent:
-        #     # Email gönderilemezse kullanıcı ve profili sil
-        #     user.delete()  # Bu VendorProfile'ı da silecek (CASCADE)
-        #     raise serializers.ValidationError("Email doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.")
+        # Mağaza logosu varsa kaydet
+        if store_logo:
+            try:
+                profile.save_store_logo(store_logo)
+            except Exception:
+                pass
         
         return profile
 
@@ -231,8 +235,9 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'id', 'slug', 'user', 'vendor_profile', 'business_type', 'service_areas', 'categories', 'categories_ids', 
             'car_brands', 'car_brands_ids', 'company_title', 'tax_office', 'tax_no',
             'display_name', 'about', 'business_phone', 'city', 'district', 'subdistrict', 'address',
-            'social_media', 'working_hours', 'unavailable_dates',
-            'manager_birthdate', 'manager_tc'
+            'social_media', 'working_hours', 'unavailable_dates', 'manager_birthdate', 'manager_tc',
+            # Yeni alan (read-only url)
+            'store_logo'
         )
         read_only_fields = ('id', 'slug')
 
@@ -267,7 +272,8 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'subdistrict': obj.subdistrict,
             'address': obj.address,
             'manager_birthdate': obj.manager_birthdate,
-            'manager_tc': obj.manager_tc
+            'manager_tc': obj.manager_tc,
+            'store_logo': obj.store_logo.url if obj.store_logo else None
         }
 
     def validate_business_type(self, value):
@@ -300,6 +306,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         service_areas = validated_data.pop('service_areas', None)
         categories = validated_data.pop('categories', None)
         car_brands = validated_data.pop('car_brands', None)
+        store_logo = validated_data.pop('store_logo', None)
         
         # Ana alanları güncelle
         for attr, value in validated_data.items():
@@ -316,6 +323,12 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         if car_brands is not None:
             instance.car_brands.set(car_brands)
         
+        if store_logo is not None:
+            try:
+                instance.save_store_logo(store_logo)
+            except Exception:
+                pass
+        
         return instance 
 
 
@@ -326,7 +339,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = [
-                        'id', 'vendor', 'vendor_display_name', 'client_name', 'client_phone',
+            'id', 'vendor', 'vendor_display_name', 'client_name', 'client_phone',
             'client_email', 'service_description', 'appointment_date', 'appointment_time',
             'status', 'status_display', 'notes', 'created_at', 'updated_at'
         ]

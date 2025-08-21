@@ -99,6 +99,15 @@ body, html, .esnaf-panel-layout {
   margin-bottom: 4px;
 }
 
+.esnaf-register-help-text {
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
 .esnaf-register-input {
   padding: 16px 20px;
   border-radius: 12px;

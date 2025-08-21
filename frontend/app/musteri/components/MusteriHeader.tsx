@@ -15,7 +15,8 @@ export default function MusteriHeader() {
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
-  const { isAuthenticated, user, role, logout, loading } = useMusteri();
+  const { isAuthenticated, user, logout, loading } = useMusteri();
+  const currentRole = (user?.role as 'vendor' | 'client' | undefined) || undefined;
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -31,7 +32,7 @@ export default function MusteriHeader() {
     // Auth token'ları kontrol et - hem client hem vendor
     const clientToken = getAuthToken('client');
     const vendorToken = getAuthToken('vendor');
-    const currentToken = role === 'vendor' ? vendorToken : clientToken;
+    const currentToken = vendorToken || clientToken;
 
     if (!currentToken) {
       console.warn('Auth token bulunamadı - WebSocket bağlantısı kurulamıyor');
@@ -92,7 +93,7 @@ export default function MusteriHeader() {
     } catch (error) {
       console.error('WebSocket bağlantı hatası:', error);
     }
-  }, [isAuthenticated, user, role]);
+  }, [isAuthenticated, user]);
 
   // WebSocket bağlantısını kur
   useEffect(() => {
@@ -316,7 +317,7 @@ export default function MusteriHeader() {
                     <div className="musteri-dropdown-header">
                       <strong>{getUserDisplayName()}</strong>
                       <span className="musteri-dropdown-role">
-                        {role === 'vendor' ? 'Esnaf' : 'Müşteri'}
+                        {currentRole === 'vendor' ? 'Esnaf' : 'Müşteri'}
                       </span>
                     </div>
                     <div className="musteri-dropdown-divider"></div>
@@ -333,7 +334,7 @@ export default function MusteriHeader() {
                       Taleplerim
                     </Link>
                     
-                    {role === 'client' && (
+                    {currentRole === 'client' && (
                       <>
                         <div className="musteri-dropdown-divider"></div>
                         <Link href="/musteri/esnaf-ol" className="musteri-dropdown-item">
@@ -342,7 +343,7 @@ export default function MusteriHeader() {
                       </>
                     )}
                     
-                    {role === 'vendor' && (
+                    {currentRole === 'vendor' && (
                       <>
                         <div className="musteri-dropdown-divider"></div>
                         <Link href="/esnaf/panel" className="musteri-dropdown-item">
@@ -364,7 +365,7 @@ export default function MusteriHeader() {
       </div>
       
       {/* ChatWidget - sadece authenticated kullanıcılar için */}
-      {isAuthenticated && role && (
+      {isAuthenticated && (
         <ChatWidget
           role="client"
           isOpen={showChatWidget}

@@ -18,7 +18,7 @@ export default function MusteriGirisPage() {
   // Eğer kullanıcı zaten giriş yapmışsa ana sayfaya yönlendir
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/");
+      router.replace("/musteri/hizmetler");
     }
   }, [isAuthenticated, router]);
 

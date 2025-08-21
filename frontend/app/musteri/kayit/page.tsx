@@ -175,7 +175,6 @@ export default function MusteriKayitPage() {
 
   return (
     <>
-      <MusteriHeader />
       <main className="musteri-auth-main">
         <div className="musteri-auth-container">
           <div className="musteri-auth-card">
@@ -430,7 +429,6 @@ export default function MusteriKayitPage() {
           </div>
         </div>
       </main>
-      <MusteriFooter />
     </>
   );
 }
