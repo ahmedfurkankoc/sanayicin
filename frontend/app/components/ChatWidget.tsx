@@ -345,11 +345,19 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   useEffect(() => {
     if (!isWidgetOpen || !activeId || !isAuthenticated) return;
     
-    // Role'e göre doğru token'ı al
-    const authToken = getAuthToken(mappedRole === 'vendor' ? 'vendor' : 'client');
+    // Hem client hem vendor token'ını kontrol et - ChatInterface'deki gibi
+    const clientToken = getAuthToken('client');
+    const vendorToken = getAuthToken('vendor');
+    const authToken = clientToken || vendorToken;
     
     if (!authToken) {
       console.error('Auth token bulunamadı - WebSocket bağlantısı kurulamıyor');
+      console.log('Token kontrol detayları:', {
+        mappedRole,
+        clientToken: !!clientToken,
+        vendorToken: !!vendorToken,
+        roleFromProps: role
+      });
       return;
     }
     
@@ -724,8 +732,40 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                   );
                 })
               )}
-              {typing && <div style={{ fontSize: 12, color: '#666', padding: '8px 0' }}>Yazıyor...</div>}
             </div>
+            
+            {/* Typing göstergesi - mesajların dışında, sabit pozisyonda */}
+            {typing && (
+              <div style={{ 
+                padding: '8px 12px', 
+                background: '#fff', 
+                borderTop: '1px solid #e9ecef',
+                borderBottom: '1px solid #e9ecef',
+                fontSize: 12, 
+                color: '#666', 
+                fontStyle: 'italic'
+              }}>
+                Yazıyor...
+              </div>
+            )}
+            
+            {/* Debug: typing test button */}
+            {process.env.NODE_ENV === 'development' && (
+              <div style={{ 
+                padding: '4px 8px', 
+                background: '#ffeb3b', 
+                fontSize: 10, 
+                color: '#000'
+              }}>
+                <button 
+                  onClick={() => setTyping(!typing)}
+                  style={{ fontSize: 10, padding: '2px 4px' }}
+                >
+                  Toggle Typing (Test) - Current: {typing.toString()}
+                </button>
+              </div>
+            )}
+            
             <div style={{ padding: 10, display: 'flex', gap: 8, borderTop: `2px solid ${palette.primary}` }}>
               <input
                 value={msg}

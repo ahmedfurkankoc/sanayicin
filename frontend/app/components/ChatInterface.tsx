@@ -342,17 +342,17 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
               </div>
             );
           })}
-          
-          {/* Typing göstergesi - sadece karşı taraf typing yapıyorsa */}
-          {typing && (
-            <div className={`${variant}-typing-indicator`}>
-              <div className={`${variant}-typing-text`}>
-                Yazıyor...
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Typing göstergesi - mesajların dışında, sabit pozisyonda */}
+      {typing && (
+        <div className={`${variant}-typing-indicator`}>
+          <div className={`${variant}-typing-text`}>
+            Yazıyor...
+          </div>
+        </div>
+      )}
 
       {/* Input alanı */}
       <div className={`${variant}-chat-input-container`}>
