@@ -4082,7 +4082,12 @@ body, html, .esnaf-panel-layout {
 .esnaf-typing-indicator {
   display: flex;
   justify-content: flex-start;
-  margin-top: 8px;
+  padding: 8px 16px;
+  background: #fff;
+  border-top: 1px solid #e9ecef;
+  border-bottom: 1px solid #e9ecef;
+  position: relative;
+  z-index: 10;
 }
 
 .esnaf-typing-text {
