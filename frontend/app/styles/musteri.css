@@ -873,11 +873,6 @@ body {
   background-color: #fff5f5;
 }
 
-/* User button hover effect */
-.musteri-user-btn:hover {
-  background-color: #f8f9fa;
-}
-
 /* Dropdown animation */
 .musteri-user-dropdown {
   animation: dropdownFadeIn 0.2s ease-in-out;
