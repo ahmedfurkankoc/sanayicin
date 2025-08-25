@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import VendorProfileView, VendorRegisterView, SetVendorPasswordView, VendorSearchView, VendorDetailView, AppointmentViewSet, ClientAppointmentView, CarBrandListView
+from .views import VendorProfileView, VendorRegisterView, SetVendorPasswordView, VendorSearchView, VendorDetailView, AppointmentViewSet, ClientAppointmentView, ClientAppointmentListView, CarBrandListView
 
 router = DefaultRouter()
 router.register(r'appointments', AppointmentViewSet, basename='appointment')
@@ -14,4 +14,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('<str:slug>/', VendorDetailView.as_view(), name='vendor-detail'),
     path('<str:slug>/appointments/', ClientAppointmentView.as_view(), name='client-appointment'),
+    path('client/appointments/', ClientAppointmentListView.as_view(), name='client-appointment-list'),
 ] 

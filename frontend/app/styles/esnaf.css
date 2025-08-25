@@ -355,22 +355,6 @@ body, html, .esnaf-panel-layout {
   object-fit: contain;
 }
 
-.esnaf-logo-text-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.esnaf-logo-subtitle {
-  font-size: 0.6rem;
-  color: var(--white);
-  letter-spacing: 0.5px;
-  text-decoration: none;
-  line-height: 1;
-  text-align: center;
-  margin-top: -15px;
-}
-
 
 /* Navigation */
 .esnaf-nav {

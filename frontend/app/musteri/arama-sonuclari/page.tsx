@@ -8,6 +8,8 @@ import { useCarBrands } from "@/app/hooks/useCarBrands";
 import { useServices } from "@/app/hooks/useServices";
 import { iconMapping } from "@/app/utils/iconMapping";
 import AuthModal from "@/app/components/AuthModal";
+import { useFavorites } from "../context/FavoritesContext";
+import { useMusteri } from "../context/MusteriContext";
 
 // Güvenlik: Input sanitization fonksiyonları
 const sanitizeInput = (input: string): string => {
@@ -87,7 +89,10 @@ function useDebounce<T>(value: T, delay: number): T {
 // Memoized vendor card component
 const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
   const router = useRouter();
+  const { isAuthenticated } = useMusteri();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   
   const handleVendorClick = () => {
     // Hem vendor hem client token'ları kontrol et
@@ -105,13 +110,74 @@ const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
     // Giriş yapılmışsa esnaf profil sayfasına yönlendir
     router.push(`/musteri/esnaf/${vendor.slug}`);
   };
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Parent click'i engelle
+    
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    try {
+      setFavoriteLoading(true);
+      await toggleFavorite(vendor.id);
+    } catch (error) {
+      console.error('Favori işlemi başarısız:', error);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
   
   return (
     <>
       <div 
         onClick={handleVendorClick}
         className="musteri-vendor-card"
+        style={{ position: 'relative' }}
       >
+        {/* Favori Butonu */}
+        <button
+          onClick={handleFavoriteClick}
+          disabled={favoriteLoading}
+          style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            background: 'rgba(255, 255, 255, 0.9)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: favoriteLoading ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s ease',
+            opacity: favoriteLoading ? 0.6 : 1,
+            zIndex: 10
+          }}
+          title={isFavorite(vendor.id) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+        >
+          {favoriteLoading ? (
+            <div style={{ 
+              width: '12px', 
+              height: '12px', 
+              border: '2px solid #ccc',
+              borderTop: '2px solid var(--yellow)',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          ) : (
+            React.createElement(iconMapping.heart, { 
+              size: 16, 
+              fill: isFavorite(vendor.id) ? 'var(--yellow)' : 'none',
+              color: isFavorite(vendor.id) ? 'var(--yellow)' : '#666'
+            })
+          )}
+        </button>
+
         {/* Avatar */}
         <div className="musteri-vendor-avatar">
           {vendor.user.avatar ? (
@@ -582,11 +648,11 @@ function AramaSonuclariContent() {
             
             <div style={{ 
               padding: '12px', 
-              backgroundColor: '#e3f2fd', 
+              backgroundColor: 'rgba(255, 214, 0, 0.1)', 
               borderRadius: '6px',
               marginBottom: '20px',
               fontSize: '13px',
-              color: '#1976d2'
+              color: 'var(--black)'
             }}>
               💡 <strong>İpucu:</strong> Hizmet ve araba markası seçerek, o hizmeti o marka için veren esnafları bulabilirsiniz.
             </div>
@@ -652,30 +718,31 @@ function AramaSonuclariContent() {
             <div style={{ 
               marginBottom: '1rem', 
               padding: '1rem', 
-              backgroundColor: '#e3f2fd', 
+              backgroundColor: 'rgba(255, 214, 0, 0.1)', 
               borderRadius: '8px',
-              border: '1px solid #bbdefb'
+              border: '1px solid var(--yellow)'
             }}>
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '0.5rem',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem',
+                color: 'var(--black)'
               }}>
-                <span style={{ color: '#1976d2' }}>🔍</span>
+                <span style={{ color: 'var(--yellow)' }}>🔍</span>
                 <strong>Arama Sorgusu:</strong>
                 <span style={{ 
-                  color: '#1976d2', 
+                  color: 'var(--yellow)', 
                   fontWeight: 'bold',
                   backgroundColor: '#fff',
                   padding: '0.25rem 0.5rem',
                   borderRadius: '4px',
-                  border: '1px solid #bbdefb'
+                  border: '1px solid var(--yellow)'
                 }}>
                   "{searchQuery}"
                 </span>
               </div>
-              <div style={{ fontSize: '0.9rem', color: '#1976d2' }}>
+              <div style={{ fontSize: '0.9rem', color: 'var(--black)' }}>
                 Büyük/küçük harf duyarsız arama yapılıyor • Türkçe karakter desteği mevcut
               </div>
             </div>
@@ -724,7 +791,7 @@ function AramaSonuclariContent() {
                     {searchQuery && (
                       <>
                         <span style={{ color: '#666' }}>•</span>
-                        <span style={{ color: '#1976d2', fontWeight: 'bold' }}>
+                        <span style={{ color: 'var(--yellow)', fontWeight: 'bold' }}>
                           "{searchQuery}" için
                         </span>
                       </>

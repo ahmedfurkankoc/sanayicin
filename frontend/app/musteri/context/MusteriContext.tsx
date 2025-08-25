@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, apiClient, getAuthToken, setAuthToken, setRefreshToken, setAuthEmail, clearAllAuthData } from '@/app/utils/api';
+import { FavoritesProvider } from './FavoritesContext';
 
 interface MusteriContextType {
   isAuthenticated: boolean;
@@ -149,7 +150,9 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
 
   return (
     <MusteriContext.Provider value={value}>
-      {children}
+      <FavoritesProvider>
+        {children}
+      </FavoritesProvider>
     </MusteriContext.Provider>
   );
 };

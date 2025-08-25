@@ -79,9 +79,6 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
         {/* Logo */}
         <div className="esnaf-sidebar-logo" onClick={() => router.push("/esnaf/panel")}>
           <img src="/sanayicin-esnaf-logo.png" alt="Sanayicin Logo" className="esnaf-logo" />
-          <div className="esnaf-logo-text-container">
-            <span className="esnaf-logo-subtitle">Esnaf Paneli</span>
-          </div>
         </div>
 
         

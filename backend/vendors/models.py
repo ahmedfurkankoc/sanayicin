@@ -30,7 +30,7 @@ class VendorProfile(models.Model):
 	about = models.TextField(blank=True)
 	# Mağaza logosu (kullanıcı avatarından bağımsız)
 	store_logo = models.ImageField(upload_to=avatar_upload_path, null=True, blank=True)
-	# profile_photo ve avatar artık CustomUser'dan alınıyor
+	# avatar artık CustomUser'dan alınıyor
 	business_phone = models.CharField(max_length=20)  # İşyeri telefon numarası
 	address = models.CharField(max_length=255)
 	city = models.CharField(max_length=64)
