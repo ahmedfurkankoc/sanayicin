@@ -85,16 +85,30 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
       const response = await api.login({ email, password });
       
       if (response.status === 200 && response.data.access) {
-        const { access, refresh } = response.data;
+        const { access, refresh, role } = response.data;
 
-        // Tek token yaklaşımı: her iki key altına da aynı token'ı yaz
-        setAuthToken('vendor', access);
-        setRefreshToken('vendor', refresh);
-        setAuthEmail('vendor', email);
-
-        setAuthToken('client', access);
-        setRefreshToken('client', refresh);
-        setAuthEmail('client', email);
+        // Role'e göre token kaydet - SADECE GEREKLİ OLANI
+        if (role === 'vendor') {
+          // Vendor kullanıcı - sadece vendor token'ları
+          setAuthToken('vendor', access);
+          setRefreshToken('vendor', refresh);
+          setAuthEmail('vendor', email);
+          
+          // Client token'larını temizle (eğer varsa)
+          localStorage.removeItem('client_access_token');
+          localStorage.removeItem('client_refresh_token');
+          localStorage.removeItem('client_email');
+        } else {
+          // Client kullanıcı - sadece client token'ları
+          setAuthToken('client', access);
+          setRefreshToken('client', refresh);
+          setAuthEmail('client', email);
+          
+          // Vendor token'larını temizle (eğer varsa)
+          localStorage.removeItem('esnaf_access_token');
+          localStorage.removeItem('esnaf_refresh_token');
+          localStorage.removeItem('esnaf_email');
+        }
 
         setIsAuthenticated(true);
         

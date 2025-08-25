@@ -15,6 +15,31 @@ const getEmailKey = (role: 'vendor' | 'client' = 'vendor') => {
   return role === 'vendor' ? 'esnaf_email' : 'client_email';
 };
 
+// Token'dan role bilgisini al
+export const getTokenRole = (token: string): string | null => {
+  try {
+    const tokenParts = token.split('.');
+    if (tokenParts.length === 3) {
+      const payload = JSON.parse(atob(tokenParts[1]));
+      return payload.role || null;
+    }
+  } catch (e) {
+    console.error('Token decode error:', e);
+  }
+  return null;
+};
+
+// Token'ın geçerli role için olup olmadığını kontrol et
+export const isTokenValidForRole = (token: string, expectedRole: 'vendor' | 'client'): boolean => {
+  const tokenRole = getTokenRole(token);
+  if (!tokenRole) return false;
+  
+  // Admin her iki role için de geçerli
+  if (tokenRole === 'admin') return true;
+  
+  return tokenRole === expectedRole;
+};
+
 // Auth token'ı al
 export const getAuthToken = (role: 'vendor' | 'client' = 'vendor'): string | null => {
   if (typeof window === "undefined") return null;
@@ -177,51 +202,32 @@ apiClient.interceptors.request.use((config) => {
   // Esnaf panelinde isek chat çağrıları vendor rolüyle yapılmalı
   const isEsnafContext = typeof window !== 'undefined' && window.location?.pathname?.startsWith('/esnaf');
   
-  let role: 'vendor' | 'client' = 'client'; // Default client
+  let expectedRole: 'vendor' | 'client' = 'client'; // Default client
   
-  if (isChatEndpoint) {
-    // Chat endpoint'leri için: hem vendor hem client token'ları kontrol et
-    const vendorToken = localStorage.getItem('esnaf_access_token');
-    const clientToken = localStorage.getItem('client_access_token');
-    
-    if (vendorToken && !clientToken) {
-      role = 'vendor';
-    } else if (clientToken && !vendorToken) {
-      role = 'client';
-    } else if (vendorToken && clientToken) {
-      // Her iki token da varsa, mevcut sayfadan karar ver
-      role = isEsnafContext ? 'vendor' : 'client';
-    } else {
-      // Hiç token yoksa, mevcut sayfadan karar ver
-      role = isEsnafContext ? 'vendor' : 'client';
-    }
-  } else if (isProfileEndpoint) {
-    // Profile endpoint'i için: hem vendor hem client token'ları kontrol et
-    const vendorToken = localStorage.getItem('esnaf_access_token');
-    const clientToken = localStorage.getItem('client_access_token');
-    
-    if (vendorToken && !clientToken) {
-      role = 'vendor';
-    } else if (clientToken && !vendorToken) {
-      role = 'client';
-    } else if (vendorToken && clientToken) {
-      // Her iki token da varsa, mevcut sayfadan karar ver
-      role = isEsnafContext ? 'vendor' : 'client';
-    } else {
-      // Hiç token yoksa, mevcut sayfadan karar ver
-      role = isEsnafContext ? 'vendor' : 'client';
-    }
-  } else {
-    // Diğer endpoint'ler için eski logic
-    role = isEsnafContext ? 'vendor' : (isVendorUrl ? 'vendor' : 'client');
+  if (isVendorUrl || isEsnafContext) {
+    expectedRole = 'vendor';
   }
   
-  const token = getAuthToken(role);
+  // Role'e göre geçerli token'ı bul
+  let token: string | null = null;
+  
+  if (expectedRole === 'vendor') {
+    const vendorToken = localStorage.getItem('esnaf_access_token');
+    if (vendorToken && isTokenValidForRole(vendorToken, 'vendor')) {
+      token = vendorToken;
+    }
+  } else {
+    const clientToken = localStorage.getItem('client_access_token');
+    if (clientToken && isTokenValidForRole(clientToken, 'client')) {
+      token = clientToken;
+    }
+  }
+  
+  // Geçerli token varsa header'a ekle
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // Chat endpoint'leri için artık guest token gerekmiyor - sadece authenticated user'lar
   return config;
 });
 
@@ -230,56 +236,27 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Arama endpoint'leri herkese açık olmalı - logout yapma
-      const isPublicEndpoint = error.config?.url?.includes('/vendors/search/') || 
-                              error.config?.url?.includes('/vendors/') && error.config?.url?.includes('/slug/') ||
-                              error.config?.url?.includes('/services/') ||
-                              error.config?.url?.includes('/categories/') ||
-                              error.config?.url?.includes('/vendors/car-brands/') ||
-                              error.config?.url?.includes('/profile/')
-      
-      if (isPublicEndpoint) {
-        return Promise.reject(error); // Logout yapma, sadece hatayı döndür
-      }
-      
-      // Profile endpoint'i için de logout yapma - sadece hatayı döndür
-      if (error.config?.url?.includes('/profile/')) {
-        return Promise.reject(error);
-      }
-      
       // Token geçersiz, logout yap
       if (typeof window !== "undefined") {
-        // Mevcut token'ları kontrol et - hangi role'ün token'ı varsa o role'ü kullan
-        const vendorToken = localStorage.getItem('esnaf_access_token');
-        const clientToken = localStorage.getItem('client_access_token');
+        // Hangi role'ün token'ı kullanıldıysa onu temizle
+        const isVendorUrl = error.config?.url?.includes('/vendors/') || 
+                            error.config?.url?.includes('/esnaf/') || 
+                            error.config?.url?.includes('/avatar/upload/');
         
-        let role: 'vendor' | 'client' = 'vendor'; // Default vendor
+        const isEsnafContext = window.location?.pathname?.startsWith('/esnaf');
         
-        if (vendorToken && !clientToken) {
-          role = 'vendor';
-        } else if (clientToken && !vendorToken) {
-          role = 'client';
-        } else if (vendorToken && clientToken) {
-          // Her iki token da varsa, URL'den tahmin et
-          const isVendorUrl = error.config?.url?.includes('/vendors/') || 
-                              error.config?.url?.includes('/esnaf/') || 
-                              error.config?.url?.includes('/avatar/upload/');
-          role = isVendorUrl ? 'vendor' : 'client';
+        if (isVendorUrl || isEsnafContext) {
+          // Vendor endpoint'i için vendor token'larını temizle
+          localStorage.removeItem('esnaf_access_token');
+          localStorage.removeItem('esnaf_refresh_token');
+          localStorage.removeItem('esnaf_email');
         } else {
-          // Hiç token yoksa, URL'den tahmin et
-          const isVendorUrl = error.config?.url?.includes('/vendors/') || 
-                              error.config?.url?.includes('/esnaf/') || 
-                              error.config?.url?.includes('/avatar/upload/');
-          role = isVendorUrl ? 'vendor' : 'client';
+          // Client endpoint'i için client token'larını temizle
+          localStorage.removeItem('client_access_token');
+          localStorage.removeItem('client_refresh_token');
+          localStorage.removeItem('client_email');
         }
         
-        // Token'ları temizle
-        localStorage.removeItem(getTokenKey(role));
-        localStorage.removeItem(getRefreshTokenKey(role));
-        localStorage.removeItem(getEmailKey(role));
-        
-        // Yönlendirme yapma - sadece logout yap
-        // Kullanıcı isterse kendisi giriş yapar
         console.log('Token geçersiz, logout yapıldı. Yönlendirme yapılmadı.');
       }
     }
