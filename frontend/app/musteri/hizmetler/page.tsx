@@ -24,52 +24,62 @@ const STATIC_SERVICE_AREAS: ServiceArea[] = [
   {
     id: 1,
     name: "Mekanik Hizmetler",
-    description: "Motor, şanzıman, fren sistemi ve diğer mekanik onarımlar"
+    description: "Motor, şanzıman, fren sistemi ve diğer mekanik onarımlar",
+    icon: "wrench"
   },
   {
     id: 2,
     name: "Elektrik ve Elektronik",
-    description: "Araç elektrik sistemleri, batarya, alternator ve elektronik onarımlar"
+    description: "Araç elektrik sistemleri, batarya, alternator ve elektronik onarımlar",
+    icon: "zap"
   },
   {
     id: 3,
     name: "Kaporta ve Boya",
-    description: "Hasar onarımı, boyama, döşeme ve estetik işlemler"
+    description: "Hasar onarımı, boyama, döşeme ve estetik işlemler",
+    icon: "palette"
   },
   {
     id: 4,
     name: "Lastik ve Jant Hizmetleri",
-    description: "Lastik değişimi, balans, rot balans ve jant işlemleri"
+    description: "Lastik değişimi, balans, rot balans ve jant işlemleri",
+    icon: "car"
   },
   {
     id: 5,
     name: "Detaylı Temizlik ve Bakım",
-    description: "İç ve dış temizlik, parlatma, koruma ve bakım hizmetleri"
+    description: "İç ve dış temizlik, parlatma, koruma ve bakım hizmetleri",
+    icon: "sparkles"
   },
   {
     id: 6,
     name: "Cam, Anahtar ve Güvenlik Sistemleri",
-    description: "Cam değişimi, anahtar yapımı ve güvenlik sistem kurulumu"
+    description: "Cam değişimi, anahtar yapımı ve güvenlik sistem kurulumu",
+    icon: "shield"
   },
   {
     id: 7,
     name: "Klima ve Isıtma Sistemleri",
-    description: "Klima bakımı, gaz dolumu ve ısıtma sistemi onarımları"
+    description: "Klima bakımı, gaz dolumu ve ısıtma sistemi onarımları",
+    icon: "snowflake"
   },
   {
     id: 8,
     name: "Multimedya ve Donanım",
-    description: "Ses sistemi, navigasyon ve araç içi teknolojik donanım"
+    description: "Ses sistemi, navigasyon ve araç içi teknolojik donanım",
+    icon: "smartphone"
   },
   {
     id: 9,
     name: "Yedek Parça ve Aksesuar",
-    description: "Orijinal ve yan sanayi yedek parçalar, aksesuar satışı"
+    description: "Orijinal ve yan sanayi yedek parçalar, aksesuar satışı",
+    icon: "cog"
   },
   {
     id: 10,
     name: "Hafif Ticari ve Ticari Araç Hizmetleri",
-    description: "Kamyonet, kamyon ve ticari araç özel hizmetleri"
+    description: "Kamyonet, kamyon ve ticari araç özel hizmetleri",
+    icon: "truck"
   }
 ];
 
@@ -192,7 +202,10 @@ export default function HizmetlerPage() {
                 onClick={() => handleServiceClick(service.id)}
               >
                 <div className="musteri-service-icon">
-                  {React.createElement(iconMapping.wrench, { size: 32 })}
+                  {service.icon && iconMapping[service.icon as keyof typeof iconMapping] ? 
+                    React.createElement(iconMapping[service.icon as keyof typeof iconMapping], { size: 32 }) :
+                    React.createElement(iconMapping.wrench, { size: 32 })
+                  }
                 </div>
                 <h3>{service.name}</h3>
                 {service.description && <p>{service.description}</p>}

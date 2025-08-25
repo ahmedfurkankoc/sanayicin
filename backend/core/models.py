@@ -43,6 +43,9 @@ class CustomUser(AbstractUser):
     last_name = models.CharField(max_length=100, blank=True)
     avatar = models.ImageField(upload_to=avatar_upload_path, null=True, blank=True)
     
+    # ClientProfile'dan taşınan alanlar
+    about = models.TextField(blank=True)  # Hakkında bilgisi
+    
     # SMS doğrulama
     sms_verification_code = models.CharField(max_length=6, null=True, blank=True)
     sms_code_expires_at = models.DateTimeField(null=True, blank=True)
@@ -440,8 +443,17 @@ class VendorUpgradeRequest(models.Model):
     categories = models.ManyToManyField(Category, blank=True)
     car_brands = models.ManyToManyField(CarBrand, blank=True)
     
-    # Konum bilgileri (Client'da olmayan)
-    subdistrict = models.CharField(max_length=128)
+    # Konum bilgileri
+    address = models.CharField(max_length=255)  # Tam adres
+    city = models.CharField(max_length=64)      # Şehir
+    district = models.CharField(max_length=64)  # İlçe
+    subdistrict = models.CharField(max_length=128)  # Mahalle/Semt
+    
+    # İletişim bilgileri
+    business_phone = models.CharField(max_length=20)  # İşyeri telefonu
+    
+    # İşletme açıklaması
+    about = models.TextField(blank=True)  # İşletme hakkında
     
     # Yönetici bilgileri (Client'da olmayan)
     manager_birthdate = models.DateField()
@@ -503,16 +515,16 @@ class VendorUpgradeRequest(models.Model):
                 'tax_no': self.tax_no,
                 'display_name': self.display_name,
                 'subdistrict': self.subdistrict,
-                'manager_name': f"{self.user.client_profile.first_name} {self.user.client_profile.last_name}",
+                'manager_name': f"{self.user.first_name} {self.user.last_name}",
                 'manager_birthdate': self.manager_birthdate,
                 'manager_tc': self.manager_tc,
-                'business_phone': self.user.client_profile.phone,
-                'city': self.user.client_profile.city,
-                'district': self.user.client_profile.district,
-                'address': self.user.client_profile.address,
-                'about': self.user.client_profile.about or '',
-                'profile_photo': self.user.client_profile.profile_photo,
-                'avatar': self.user.client_profile.avatar,
+                'business_phone': self.business_phone,
+                'city': self.city,
+                'district': self.district,
+                'address': self.address,
+                'about': self.about,
+
+                'avatar': self.user.avatar,
                 'social_media': self.social_media,
                 'working_hours': self.working_hours,
                 'unavailable_dates': self.unavailable_dates,
@@ -532,5 +544,21 @@ class VendorUpgradeRequest(models.Model):
             # Admin olmadan da otomatik onaylanabilir
             return self.approve(self.user)
         return False
+
+
+class Favorite(models.Model):
+    """Kullanıcıların esnaf favorileri için model"""
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='favorites')
+    vendor = models.ForeignKey('vendors.VendorProfile', on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'vendor')  # Aynı esnaf bir kullanıcı tarafından sadece bir kez favoriye eklenebilir
+        ordering = ['-created_at']
+        verbose_name = "Favori"
+        verbose_name_plural = "Favoriler"
+    
+    def __str__(self):
+        return f"{self.user.email} -> {self.vendor.display_name}"
 
 

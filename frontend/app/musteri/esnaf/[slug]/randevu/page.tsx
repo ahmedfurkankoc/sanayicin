@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@/app/utils/api";
 import { toast } from "sonner";
 import { iconMapping } from "@/app/utils/iconMapping";
+import { useMusteri } from "../../../context/MusteriContext";
 
 interface Vendor {
   id: number;
@@ -21,9 +22,6 @@ interface Vendor {
 }
 
 interface AppointmentForm {
-  client_name: string;
-  client_phone: string;
-  client_email: string;
   service_description: string;
   appointment_date: string;
   appointment_time: string;
@@ -34,19 +32,25 @@ export default function ClientAppointmentPage() {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
+  const { isAuthenticated, user, loading: userLoading } = useMusteri();
   
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<AppointmentForm>({
-    client_name: '',
-    client_phone: '',
-    client_email: '',
     service_description: '',
     appointment_date: '',
     appointment_time: '',
     notes: ''
   });
+
+  // Authentication kontrolü
+  useEffect(() => {
+    if (!userLoading && !isAuthenticated) {
+      router.push('/musteri/giris?next=' + encodeURIComponent(`/musteri/esnaf/${slug}/randevu`));
+      return;
+    }
+  }, [isAuthenticated, userLoading, router, slug]);
 
   // Vendor bilgilerini çek
   useEffect(() => {
@@ -80,21 +84,9 @@ export default function ClientAppointmentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!vendor) return;
+    if (!vendor || !user) return;
 
     // Form validasyonu
-    if (!formData.client_name.trim()) {
-      toast.error('Adınızı giriniz');
-      return;
-    }
-    if (!formData.client_phone.trim()) {
-      toast.error('Telefon numaranızı giriniz');
-      return;
-    }
-    if (!formData.client_email.trim()) {
-      toast.error('E-posta adresinizi giriniz');
-      return;
-    }
     if (!formData.service_description.trim()) {
       toast.error('Hizmet açıklamasını giriniz');
       return;
@@ -111,7 +103,15 @@ export default function ClientAppointmentPage() {
     setSubmitting(true);
     
     try {
-      await api.createAppointment(formData, vendor.slug);
+      // Kullanıcı bilgilerini formData'ya ekleyelim
+      const appointmentData = {
+        ...formData,
+        client_name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email,
+        client_phone: user.phone_number || '',
+        client_email: user.email
+      };
+      
+      await api.createAppointment(appointmentData, vendor.slug);
       toast.success('Randevu talebiniz başarıyla oluşturuldu!');
       router.push(`/musteri/esnaf/${slug}`);
     } catch (error: any) {
@@ -168,7 +168,7 @@ export default function ClientAppointmentPage() {
     return selectedDate < today;
   };
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <div style={{ 
         minHeight: '100vh', 
@@ -180,6 +180,11 @@ export default function ClientAppointmentPage() {
         <div style={{ fontSize: '18px', color: '#666' }}>Yükleniyor...</div>
       </div>
     );
+  }
+
+  // Kullanıcı giriş yapmamışsa redirect (auth kontrolü)
+  if (!isAuthenticated || !user) {
+    return null; // useEffect redirect will handle this
   }
 
   if (error || !vendor) {
@@ -214,6 +219,18 @@ export default function ClientAppointmentPage() {
 
   // Esnafın çalışma saatleri var mı kontrol et
   const hasWorkingHours = vendor.working_hours && Object.keys(vendor.working_hours).length > 0;
+
+  // Kullanıcı adını al
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    
+    if (user.first_name || user.last_name) {
+      const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+      return fullName || user.email;
+    }
+    
+    return user.email;
+  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -345,7 +362,7 @@ export default function ClientAppointmentPage() {
           ) : (
             <form onSubmit={handleSubmit} style={{ padding: '32px' }}>
             <div style={{ display: 'grid', gap: '24px' }}>
-              {/* Müşteri Bilgileri */}
+              {/* Müşteri Bilgileri - Sadece Görüntüleme */}
               <div>
                 <h3 style={{ 
                   fontSize: '18px', 
@@ -355,80 +372,37 @@ export default function ClientAppointmentPage() {
                 }}>
                   Kişisel Bilgiler
                 </h3>
-                <div style={{ display: 'grid', gap: '16px' }}>
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px', 
-                      fontWeight: '600',
-                      color: '#333'
-                    }}>
-                      Ad Soyad *
-                    </label>
-                    <input
-                      type="text"
-                                          name="client_name"
-                    value={formData.client_name}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        fontSize: '16px'
-                      }}
-                      placeholder="Adınız ve soyadınız"
-                    />
+                <div style={{ 
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #e9ecef',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  display: 'grid',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '600', color: '#666' }}>Ad Soyad:</span>
+                    <span style={{ color: '#333' }}>{getUserDisplayName()}</span>
                   </div>
-                  
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px', 
-                      fontWeight: '600',
-                      color: '#333'
-                    }}>
-                      Telefon *
-                    </label>
-                    <input
-                      type="tel"
-                                          name="client_phone"
-                    value={formData.client_phone}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        fontSize: '16px'
-                      }}
-                      placeholder="+90 5XX XXX XX XX"
-                    />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '600', color: '#666' }}>E-posta:</span>
+                    <span style={{ color: '#333' }}>{user.email}</span>
                   </div>
-                  
-                  <div>
-                    <label style={{ 
-                      display: 'block', 
-                      marginBottom: '8px', 
-                      fontWeight: '600',
-                      color: '#333'
-                    }}>
-                      E-posta *
-                    </label>
-                    <input
-                      type="email"
-                                          name="client_email"
-                    value={formData.client_email}
-                      onChange={handleInputChange}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '8px',
-                        fontSize: '16px'
-                      }}
-                      placeholder="ornek@email.com"
-                    />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '600', color: '#666' }}>Telefon:</span>
+                    <span style={{ color: '#333' }}>{user.phone_number || 'Belirtilmemiş'}</span>
+                  </div>
+                  <div style={{ 
+                    fontSize: '14px', 
+                    color: '#6c757d',
+                    fontStyle: 'italic',
+                    marginTop: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    {React.createElement(iconMapping['alert-circle'], { size: 14 })}
+                    Bilgilerinizi düzenlemek için hesap ayarlarınıza gidin.
                   </div>
                 </div>
               </div>

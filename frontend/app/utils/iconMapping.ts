@@ -60,7 +60,9 @@ import {
   ChevronUp,
   Menu,
   Bell,
-  X as Close
+  X as Close,
+  Cog,
+  Truck
 } from 'lucide-react';
 
 // İsimden Lucide ikonlarına mapping
@@ -74,6 +76,8 @@ export const iconMapping = {
   'snowflake': Snowflake,
   'shield': Shield,
   'smartphone': Smartphone,
+  'cog': Cog,
+  'truck': Truck,
   
   // Özellik ikonları
   'trending': TrendingUp,

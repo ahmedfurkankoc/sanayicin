@@ -237,10 +237,10 @@ export default function MusteriHeader() {
             <Image
               src="/sanayicin-esnaf-logo.png"
               alt="sanayicin.com"
-              width={500}
-              height={150}
+              width={400}
+              height={120}
               priority
-              style={{ width: '100%', height: 'auto' }}
+              style={{ width: '400px', height: 'auto' }}
             />
           </Link>
         </div>
@@ -316,21 +316,25 @@ export default function MusteriHeader() {
                   <>
                     <div className="musteri-dropdown-header">
                       <strong>{getUserDisplayName()}</strong>
-                      <span className="musteri-dropdown-role">
-                        {currentRole === 'vendor' ? 'Esnaf' : 'Müşteri'}
-                      </span>
                     </div>
-                    <div className="musteri-dropdown-divider"></div>
                     
-                    <Link href="/musteri/profil" className="musteri-dropdown-item">
+                    <Link href="/musteri/hesabim" className="musteri-dropdown-item">
+                      {React.createElement(iconMapping.user, { size: 16 })}
                       Hesabım
                     </Link>
                     
                     <Link href="/musteri/mesajlar" className="musteri-dropdown-item">
+                      {React.createElement(iconMapping.message, { size: 16 })}
                       Mesajlarım
                     </Link>
                     
+                    <Link href="/musteri/favorilerim" className="musteri-dropdown-item">
+                      {React.createElement(iconMapping.heart, { size: 16 })}
+                      Favorilerim
+                    </Link>
+                    
                     <Link href="/musteri/taleplerim" className="musteri-dropdown-item">
+                      {React.createElement(iconMapping.clipboard, { size: 16 })}
                       Taleplerim
                     </Link>
                     
@@ -338,6 +342,13 @@ export default function MusteriHeader() {
                       <>
                         <div className="musteri-dropdown-divider"></div>
                         <Link href="/musteri/esnaf-ol" className="musteri-dropdown-item">
+                          <Image
+                            src="/sanayicin-icon.png"
+                            alt="Hizmet Vermek İstiyorum"
+                            width={16}
+                            height={16}
+                            style={{ width: '16px', height: '16px' }}
+                          />
                           Hizmet Vermek İstiyorum
                         </Link>
                       </>
@@ -346,7 +357,14 @@ export default function MusteriHeader() {
                     {currentRole === 'vendor' && (
                       <>
                         <div className="musteri-dropdown-divider"></div>
-                        <Link href="/esnaf/panel" className="musteri-dropdown-item">
+                        <Link href="/esnaf/panel" className="musteri-dropdown-item musteri-dropdown-esnaf">
+                          <Image
+                            src="/sanayicin-icon.png"
+                            alt="Esnaf Paneli"
+                            width={16}
+                            height={16}
+                            style={{ width: '16px', height: '16px' }}
+                          />
                           Esnaf Paneli
                         </Link>
                       </>
@@ -354,6 +372,7 @@ export default function MusteriHeader() {
                     
                     <div className="musteri-dropdown-divider"></div>
                     <button onClick={handleLogout} className="musteri-dropdown-item musteri-dropdown-logout">
+                      {React.createElement(iconMapping.logout, { size: 16 })}
                       Çıkış Yap
                     </button>
                   </>

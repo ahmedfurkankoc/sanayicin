@@ -6,8 +6,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
-from .models import CustomUser, ServiceArea, Category, EmailVerification, SMSVerification, VendorUpgradeRequest
-from .serializers import CustomUserSerializer
+from .models import CustomUser, ServiceArea, Category, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite
+from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
 import logging
@@ -110,7 +110,6 @@ def login(request):
         
         # Kullanıcının hangi profil tipine sahip olduğunu kontrol et
         has_vendor_profile = False
-        has_client_profile = False
         
         if user.role == 'vendor':
             # VendorProfile var mı kontrol et
@@ -121,20 +120,8 @@ def login(request):
             except VendorProfile.DoesNotExist:
                 has_vendor_profile = False
         
-        if user.role == 'client' or user.role == 'vendor':
-            # ClientProfile var mı kontrol et
-            try:
-                from clients.models import ClientProfile
-                ClientProfile.objects.get(user=user)
-                has_client_profile = True
-            except ClientProfile.DoesNotExist:
-                has_client_profile = False
-        
-        # Eğer vendor role'ü ama VendorProfile yoksa, client olarak login yap
+        # Artık tüm kullanıcı bilgileri CustomUser'da
         effective_role = user.role
-        if user.role == 'vendor' and not has_vendor_profile and has_client_profile:
-            effective_role = 'client'
-            logger.warning(f"User {user.email} has vendor role but no VendorProfile, using client role for login")
         
         return Response({
             'access': str(refresh.access_token),
@@ -145,7 +132,6 @@ def login(request):
             'role': effective_role,  # Gerçek kullanılabilir role
             'user_role': user.role,  # Database'deki role
             'has_vendor_profile': has_vendor_profile,
-            'has_client_profile': has_client_profile,
         })
 
     except Exception as e:
@@ -759,16 +745,7 @@ def request_vendor_upgrade(request):
         # Form data'yı al
         data = request.data.copy()
         
-        # Client bilgilerini otomatik doldur
-        client_profile = request.user.client_profile
-        data.update({
-            'manager_name': f"{client_profile.first_name} {client_profile.last_name}",
-            'business_phone': client_profile.phone,
-            'city': client_profile.city,
-            'district': client_profile.district,
-            'address': client_profile.address,
-            'about': client_profile.about or ''
-        })
+        # Artık tüm bilgiler form'dan alınacak, otomatik doldurma yok
         
         # Upgrade request oluştur
         serializer = VendorUpgradeRequestSerializer(data=data)
@@ -835,7 +812,9 @@ class VendorUpgradeRequestSerializer(serializers.ModelSerializer):
         model = VendorUpgradeRequest
         fields = [
             'business_type', 'company_title', 'tax_office', 'tax_no', 'display_name',
-            'service_areas', 'categories', 'car_brands', 'subdistrict',
+            'service_areas', 'categories', 'car_brands', 
+            'address', 'city', 'district', 'subdistrict',
+            'business_phone', 'about',
             'manager_birthdate', 'manager_tc', 'business_license', 'tax_certificate',
             'identity_document', 'social_media', 'working_hours', 'unavailable_dates'
         ]
@@ -851,3 +830,228 @@ class VendorUpgradeRequestSerializer(serializers.ModelSerializer):
         if not value.isdigit() or len(value) < 9 or len(value) > 11:
             raise serializers.ValidationError("Vergi numarası 9-11 haneli olmalıdır.")
         return value
+
+
+# ===== FAVORITE API VIEWS =====
+
+class FavoriteListView(generics.ListAPIView):
+    """Kullanıcının favori esnaflarını listele"""
+    serializer_class = FavoriteSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Favorite.objects.filter(user=self.request.user).select_related('vendor')
+
+
+class FavoriteCreateView(generics.CreateAPIView):
+    """Favoriye esnaf ekle"""
+    serializer_class = FavoriteCreateSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def remove_favorite(request, vendor_id):
+    """Favoriden esnaf çıkar"""
+    try:
+        favorite = Favorite.objects.get(user=request.user, vendor_id=vendor_id)
+        favorite.delete()
+        return Response({'detail': 'Favorilerden çıkarıldı'}, status=status.HTTP_200_OK)
+    except Favorite.DoesNotExist:
+        return Response({'detail': 'Bu esnaf favorilerinizde değil'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Remove favorite error: {e}")
+        return Response({'detail': 'Favorilerden çıkarılırken hata oluştu'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_favorite(request, vendor_id):
+    """Esnafın favori olup olmadığını kontrol et"""
+    try:
+        is_favorite = Favorite.objects.filter(user=request.user, vendor_id=vendor_id).exists()
+        return Response({'is_favorite': is_favorite}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Check favorite error: {e}")
+        return Response({'detail': 'Favori durumu kontrol edilemedi'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ===== CLIENT MANAGEMENT VIEWS (ClientProfile yerine CustomUser kullanıyor) =====
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def client_register(request):
+    """Client kayıt (ClientProfile olmadan, sadece CustomUser)"""
+    try:
+        data = request.data
+        
+        # Gerekli alanları kontrol et
+        email = data.get('email')
+        password = data.get('password')
+        password2 = data.get('password2')
+        first_name = data.get('first_name', '')
+        last_name = data.get('last_name', '')
+        
+        if not all([email, password, password2]):
+            return Response({
+                'detail': 'Email, şifre ve şifre tekrarı gerekli'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if password != password2:
+            return Response({
+                'detail': 'Şifreler eşleşmiyor'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if len(password) < 6:
+            return Response({
+                'detail': 'Şifre en az 6 karakter olmalı'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Email zaten var mı kontrol et
+        if CustomUser.objects.filter(email=email).exists():
+            return Response({
+                'detail': 'Bu email ile zaten bir hesap mevcut'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Kullanıcı oluştur
+        user = CustomUser.objects.create_user(
+            username=email,
+            email=email,
+            password=password,
+            role='client',
+            first_name=first_name,
+            last_name=last_name,
+            about=data.get('about', ''),
+            is_verified=False
+        )
+        
+        # Avatar varsa kaydet
+        if 'avatar' in request.FILES:
+            user.avatar = request.FILES['avatar']
+            user.save()
+        
+        # Email verification gönder
+        email_sent = user.send_verification_email()
+        if not email_sent:
+            user.delete()
+            return Response({
+                'detail': 'Email doğrulama kodu gönderilemedi'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        return Response({
+            'detail': 'Hesabınız başarıyla oluşturuldu. Email doğrulama kodu gönderildi.',
+            'email': user.email,
+            'requires_verification': True
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Client registration error: {e}")
+        return Response({
+            'detail': 'Kayıt sırasında hata oluştu'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def client_profile(request):
+    """Client profil görüntüleme ve güncelleme (CustomUser üzerinden)"""
+    user = request.user
+    
+    if request.method == 'GET':
+        return Response({
+            'id': user.id,
+            'email': user.email,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phone_number': user.phone_number,
+            'about': user.about,
+            'avatar': user.avatar.url if user.avatar else None,
+            'role': user.role,
+            'is_verified': user.is_verified,
+        })
+    
+    elif request.method == 'PATCH':
+        try:
+            # Güncellenebilir alanlar
+            if 'first_name' in request.data:
+                user.first_name = request.data['first_name']
+            if 'last_name' in request.data:
+                user.last_name = request.data['last_name']
+            if 'phone_number' in request.data:
+                user.phone_number = request.data['phone_number']
+            if 'about' in request.data:
+                user.about = request.data['about']
+            if 'avatar' in request.FILES:
+                user.avatar = request.FILES['avatar']
+            
+            user.save()
+            
+            return Response({
+                'detail': 'Profil başarıyla güncellendi',
+                'profile': {
+                    'id': user.id,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'phone_number': user.phone_number,
+                    'about': user.about,
+                    'avatar': user.avatar.url if user.avatar else None,
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Client profile update error: {e}")
+            return Response({
+                'detail': 'Profil güncellenirken hata oluştu'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def client_set_password(request):
+    """Client şifre belirleme"""
+    try:
+        email = request.data.get('email')
+        password = request.data.get('password')
+        password2 = request.data.get('password2')
+        
+        if not all([email, password, password2]):
+            return Response({
+                'detail': 'Email, şifre ve şifre tekrarı gerekli'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if password != password2:
+            return Response({
+                'detail': 'Şifreler eşleşmiyor'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if len(password) < 6:
+            return Response({
+                'detail': 'Şifre en az 6 karakter olmalı'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Kullanıcıyı bul
+        try:
+            user = CustomUser.objects.get(email=email, role='client')
+        except CustomUser.DoesNotExist:
+            return Response({
+                'detail': 'Bu email ile kayıtlı müşteri bulunamadı'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Şifreyi güncelle
+        user.set_password(password)
+        user.save()
+        
+        return Response({
+            'detail': 'Şifre başarıyla güncellendi'
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Client set password error: {e}")
+        return Response({
+            'detail': 'Şifre güncellenirken hata oluştu'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -245,14 +245,32 @@ function VendorDetailContent() {
 
           {/* Vendor Bilgileri */}
           <div style={{ flex: 1 }}>
-            <h1 style={{ 
-              fontSize: '32px', 
-              fontWeight: 'bold', 
-              margin: '0 0 8px 0',
-              color: '#333'
-            }}>
-              {vendor.display_name}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <h1 style={{ 
+                fontSize: '32px', 
+                fontWeight: 'bold', 
+                margin: 0,
+                color: '#333'
+              }}>
+                {vendor.display_name}
+              </h1>
+              {vendor.user?.is_verified && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '600'
+                }}>
+                  {React.createElement(iconMapping.check, { size: 14 })}
+                  Doğrulanmış
+                </div>
+              )}
+            </div>
             <p style={{ fontSize: '18px', color: '#666', margin: '0 0 16px 0' }}>
               {vendor.business_type} • {vendor.company_title}
             </p>

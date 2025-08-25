@@ -515,6 +515,37 @@ class ClientAppointmentView(APIView):
         except Exception as e:
             print(f"Async email gönderme hatası: {e}")
 
+class ClientAppointmentListView(APIView):
+    """Müşterinin randevu taleplerini listeler (email ile)"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        """Müşterinin email'ine göre randevularını getirir"""
+        email = request.query_params.get('email')
+        if not email:
+            return Response({"detail": "Email parametresi gerekli"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Email'e göre randevuları getir
+            appointments = Appointment.objects.filter(
+                client_email=email
+            ).order_by('-created_at')
+            
+            # Geçmiş tarihli pending randevuları otomatik iptal et
+            for appointment in appointments.filter(status='pending'):
+                appointment.auto_cancel_if_expired()
+            
+            # Güncellenmiş randevuları getir
+            appointments = Appointment.objects.filter(
+                client_email=email
+            ).order_by('-created_at')
+            
+            serializer = AppointmentSerializer(appointments, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({"detail": "Randevular getirilemedi"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class CarBrandListView(APIView):
     """Aktif araba markalarını listele"""
     permission_classes = [AllowAny]

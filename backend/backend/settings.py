@@ -97,7 +97,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'core',
     'vendors',
-    'clients',
     'chat',
 ]
 

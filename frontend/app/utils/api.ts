@@ -413,6 +413,10 @@ export const api = {
   }, vendorSlug: string) => 
     apiClient.post(`/vendors/${vendorSlug}/appointments/`, data),
   
+  // Client appointment işlemleri
+  getClientAppointments: (email: string) => 
+    apiClient.get('/vendors/client/appointments/', { params: { email } }),
+  
   // Chat API
   chatCreateConversation: (otherUserId: number) => 
     apiClient.post('/chat/conversations/', { other_user_id: otherUserId }),
@@ -423,4 +427,10 @@ export const api = {
     apiClient.post(`/chat/conversations/${conversationId}/messages`, { content }),
   chatMarkRead: (conversationId: number) =>
     apiClient.post(`/chat/conversations/${conversationId}/read`, {}),
+  
+  // Favorites API
+  getFavorites: () => apiClient.get('/favorites/'),
+  addFavorite: (vendorId: number) => apiClient.post('/favorites/add/', { vendor_id: vendorId }),
+  removeFavorite: (vendorId: number) => apiClient.delete(`/favorites/${vendorId}/`),
+  checkFavorite: (vendorId: number) => apiClient.get(`/favorites/${vendorId}/check/`),
 }; 

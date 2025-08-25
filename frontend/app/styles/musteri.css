@@ -28,7 +28,7 @@
   --font-main: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
 
   /* Header */
-  --header-logo-width: 220px;
+  --header-logo-width: 400px;
   
   /* Loading */
   --loading-spinner-size: 40px;
@@ -71,6 +71,11 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Verification Options */
 .musteri-verification-option {
   transition: all 0.2s ease;
@@ -103,18 +108,21 @@ body {
 }
 
 .musteri-header-content {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
+  min-height: 80px;
 }
 
 /* Sol: Logo */
 .musteri-header-left {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .musteri-logo {
@@ -122,7 +130,8 @@ body {
   font-weight: bold;
   color: var(--white);
   text-decoration: none;
-  display: block;
+  display: flex;
+  align-items: center;
   width: var(--header-logo-width);
 }
 
@@ -136,6 +145,9 @@ body {
 .musteri-header-center {
   flex: 1;
   max-width: 500px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .musteri-search-form {
@@ -182,15 +194,17 @@ body {
 }
 
 .musteri-search-btn:hover {
-  background: rgba(102, 126, 234, 0.1);
+  background: rgba(255, 214, 0, 0.1);
 }
 
 /* Sağ: Bildirim ve Kullanıcı */
 .musteri-header-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 1rem;
   flex-shrink: 0;
+  min-height: 60px;
 }
 
 .musteri-notification-btn {
@@ -423,6 +437,7 @@ body {
   transform: translateY(-10px);
   transition: all 0.2s;
   z-index: 1000;
+  overflow: hidden;
 }
 
 .musteri-user-dropdown.show {
@@ -432,15 +447,37 @@ body {
 }
 
 .musteri-dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.75rem 1rem;
   color: var(--text);
   text-decoration: none;
   transition: background-color 0.2s;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-size: 0.9rem;
 }
 
 .musteri-dropdown-item:hover {
   background: var(--bg);
+}
+
+.musteri-dropdown-esnaf {
+  background: var(--yellow) !important;
+  color: var(--black) !important;
+  font-weight: 600;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.musteri-dropdown-esnaf:hover {
+  background: var(--yellow) !important;
+  opacity: 0.9;
 }
 
 .musteri-dropdown-divider {
@@ -492,7 +529,7 @@ body {
 
 .musteri-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(255, 214, 0, 0.4);
 }
 
 .musteri-btn-secondary {
@@ -799,7 +836,7 @@ body {
 
 .musteri-pagination-btn:hover:not(:disabled) {
   background: var(--gray);
-  border-color: var(--primary-500);
+  border-color: var(--yellow);
 }
 
 .musteri-pagination-btn.active {
@@ -1541,7 +1578,7 @@ body {
 }
 
 .musteri-chat-send-button:hover {
-  background: var(--primary-600);
+  background: var(--yellow);
 }
 
 .musteri-loading {
@@ -1642,8 +1679,8 @@ body {
 }
 
 .musteri-service-card:hover {
-  border-color: var(--primary-500);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: var(--yellow);
+  box-shadow: 0 8px 25px rgba(255, 214, 0, 0.2);
   transform: translateY(-4px);
 }
 
@@ -1745,20 +1782,20 @@ body {
 }
 
 .musteri-vendor-card:hover {
-  border-color: var(--primary-500);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--yellow);
+  box-shadow: 0 6px 20px rgba(255, 214, 0, 0.2);
   transform: translateY(-2px);
 }
 
 .musteri-vendor-avatar {
   width: 50px;
   height: 50px;
-  background: var(--primary-500);
+  background: var(--yellow);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
+  color: var(--dark);
   font-weight: 600;
   font-size: 1.2rem;
   flex-shrink: 0;
@@ -1813,9 +1850,9 @@ body {
 }
 
 .musteri-btn:hover {
-  background: var(--primary-600);
+  background: var(--yellow);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 20px rgba(255, 214, 0, 0.3);
 }
 
 .musteri-btn-secondary {
@@ -1877,5 +1914,770 @@ body {
   
   .musteri-hero-section {
     padding: 40px 20px;
+  }
+}
+
+/* Favorilerim Sayfası - Liste Görünümü */
+.musteri-favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.musteri-favorite-item {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.musteri-favorite-item:hover {
+  border-color: var(--yellow);
+  box-shadow: 0 6px 20px rgba(255, 214, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.musteri-favorite-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.musteri-favorite-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  background: var(--yellow);
+  color: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.musteri-favorite-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.musteri-favorite-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.musteri-favorite-name {
+  color: var(--black);
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.musteri-favorite-name:hover {
+  color: var(--yellow);
+}
+
+.musteri-favorite-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #10b981;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.musteri-favorite-type {
+  background: rgba(255, 214, 0, 0.1);
+  color: var(--black);
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.musteri-favorite-details {
+  margin-bottom: 1rem;
+}
+
+.musteri-favorite-location {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--gray);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.musteri-favorite-about {
+  color: var(--gray);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.musteri-favorite-services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.musteri-favorite-service-tag {
+  background: rgba(255, 214, 0, 0.1);
+  color: var(--black);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.musteri-favorite-service-more {
+  font-size: 0.8rem;
+  color: var(--gray);
+  font-style: italic;
+}
+
+.musteri-favorite-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.musteri-favorite-btn-primary {
+  background: var(--yellow);
+  color: var(--black);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.musteri-favorite-btn-primary:hover {
+  background: #e6c200;
+  transform: translateY(-1px);
+}
+
+.musteri-favorite-btn-remove {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.musteri-favorite-btn-remove:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.musteri-error-message {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  text-align: center;
+}
+
+.musteri-empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 2rem;
+}
+
+.musteri-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.musteri-empty-state h3 {
+  color: var(--black);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.musteri-empty-state p {
+  color: var(--gray);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.musteri-empty-btn {
+  background: var(--yellow);
+  color: var(--black);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.musteri-empty-btn:hover {
+  background: #e6c200;
+  transform: translateY(-2px);
+}
+
+/* Favorilerim Responsive */
+@media (max-width: 768px) {
+  .musteri-favorite-item {
+    padding: 1rem;
+  }
+  
+  .musteri-favorite-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .musteri-favorite-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 1.2rem;
+    margin: 0 auto;
+  }
+  
+  .musteri-favorite-header {
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .musteri-favorite-name {
+    font-size: 1.1rem;
+  }
+  
+  .musteri-favorite-actions {
+    justify-content: center;
+  }
+  
+  .musteri-favorite-btn-remove {
+    position: static;
+    margin-top: 0.5rem;
+  }
+  
+  .musteri-favorite-services {
+    justify-content: center;
+  }
+}
+
+/* Taleplerim Sayfası */
+.musteri-filter-section {
+  margin-bottom: 2rem;
+}
+
+.musteri-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.musteri-filter-btn {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.musteri-filter-btn:hover {
+  border-color: var(--yellow);
+  background: rgba(255, 214, 0, 0.1);
+}
+
+.musteri-filter-btn.active {
+  background: var(--yellow);
+  color: var(--black);
+  border-color: var(--yellow);
+}
+
+.musteri-appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.musteri-appointment-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.musteri-appointment-card:hover {
+  border-color: var(--yellow);
+  box-shadow: 0 4px 20px rgba(255, 214, 0, 0.2);
+}
+
+.musteri-appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--light-bg);
+}
+
+.musteri-appointment-vendor h3 {
+  color: var(--dark);
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.musteri-vendor-link {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.3s ease;
+}
+
+.musteri-vendor-link:hover {
+  color: var(--yellow);
+}
+
+.musteri-appointment-vendor p {
+  color: var(--gray);
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.musteri-appointment-status {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  min-width: 100px;
+}
+
+.musteri-appointment-details {
+  padding: 1.5rem;
+}
+
+.musteri-appointment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.musteri-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.musteri-info-label {
+  font-weight: 600;
+  color: var(--dark);
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.musteri-info-value {
+  color: var(--gray);
+  flex: 1;
+  word-break: break-word;
+}
+
+.musteri-appointment-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--light-bg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.musteri-appointment-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.musteri-appointment-dates small {
+  color: var(--gray);
+  font-size: 0.8rem;
+}
+
+.musteri-appointment-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.musteri-btn-outline {
+  background: transparent;
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+}
+
+.musteri-btn-outline:hover {
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.musteri-empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+/* Taleplerim Responsive Design */
+@media (max-width: 768px) {
+  .musteri-filter-buttons {
+    justify-content: flex-start;
+  }
+  
+  .musteri-filter-btn {
+    font-size: 0.8rem;
+    padding: 0.6rem 0.8rem;
+  }
+  
+  .musteri-appointment-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .musteri-appointment-status {
+    align-self: flex-start;
+  }
+  
+  .musteri-appointment-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .musteri-appointment-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .musteri-info-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .musteri-info-label {
+    min-width: auto;
+  }
+}
+
+/* Hesabım Sayfası */
+.musteri-tabs-container {
+  max-width: 1000px;
+}
+
+.musteri-tabs-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  padding-bottom: 0;
+}
+
+.musteri-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--black);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: fit-content;
+}
+
+.musteri-tab-btn:hover {
+  color: var(--black);
+  background: rgba(255, 214, 0, 0.05);
+}
+
+.musteri-tab-btn.active {
+  color: var(--black);
+  border-bottom-color: var(--yellow);
+  background: rgba(255, 214, 0, 0.1);
+}
+
+.musteri-tab-content {
+  min-height: 400px;
+}
+
+.musteri-account-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 800px;
+}
+
+.musteri-account-section {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.musteri-section-header {
+  background: var(--light-bg);
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.musteri-section-header h3 {
+  margin: 0;
+  color: var(--black);
+  font-size: 1.2rem;
+}
+
+.musteri-field-group {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.musteri-field-group:last-child {
+  border-bottom: none;
+}
+
+.musteri-field-label {
+  display: block;
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.musteri-field-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.musteri-field-value {
+  color: var(--black);
+  flex: 1;
+  min-width: 200px;
+}
+
+.musteri-field-note {
+  color: var(--black);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.musteri-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid var(--yellow);
+  border-radius: 6px;
+  color: var(--yellow);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.musteri-edit-btn:hover {
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.musteri-edit-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.musteri-name-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.musteri-input,
+.musteri-textarea {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.musteri-input:focus,
+.musteri-textarea:focus {
+  outline: none;
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.1);
+}
+
+.musteri-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.musteri-edit-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.musteri-btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.musteri-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.musteri-status-badge.verified {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.musteri-status-badge.unverified {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--red);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.musteri-loading,
+.musteri-error {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.musteri-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--yellow);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Hesabım Responsive */
+@media (max-width: 768px) {
+  .musteri-field-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .musteri-field-value {
+    min-width: auto;
+  }
+  
+  .musteri-name-inputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .musteri-edit-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .musteri-edit-actions button {
+    width: 100%;
+  }
+}
+
+.musteri-danger-section {
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.musteri-danger-section .musteri-section-header {
+  background: rgba(239, 68, 68, 0.05);
+  border-bottom-color: rgba(239, 68, 68, 0.2);
+}
+
+.musteri-btn-danger {
+  background: var(--red);
+  color: white;
+  border: 1px solid var(--red);
+}
+
+.musteri-btn-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+/* Tabs Responsive */
+@media (max-width: 768px) {
+  .musteri-tabs-nav {
+    padding: 0 1rem;
+    margin: 0 -1rem 2rem;
+  }
+  
+  .musteri-tab-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
   }
 }
