@@ -82,8 +82,7 @@ const Navbar = () => {
     if (userType === 'vendor') {
       router.push('/esnaf/panel');
     } else if (userType === 'client') {
-      // Müşteri paneli henüz mevcut değil, ana sayfaya yönlendir
-      router.push('/');
+      router.push('/musteri/hesabim');
     }
   };
 
@@ -109,7 +108,7 @@ const Navbar = () => {
           <li><a href="#yardim">Yardım</a></li>
           {userType === null && (
             <>
-          <li><a href="#giris-yap" className="sanayicin-btn-vendor">Giriş Yap</a></li>
+          <li><a href="/musteri/giris" className="sanayicin-btn-vendor">Giriş Yap</a></li>
               <li>
                 <a 
                   href="/esnaf/giris" 

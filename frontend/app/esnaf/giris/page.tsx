@@ -42,12 +42,19 @@ export default function EsnafGirisPage() {
       if (res.status === 200 && res.data.access) {
         const { access, refresh, role, is_verified } = res.data;
         
-                  // Sadece vendor'lar esnaf paneline girebilir
-          if (role === 'vendor' || role === 'admin') {
-            setAuthToken("vendor", access);
-            setRefreshToken("vendor", refresh);
-            setAuthEmail("vendor", email);
-            localStorage.removeItem("esnaf_password_set");
+        // Sadece vendor'lar esnaf paneline girebilir
+        if (role === 'vendor' || role === 'admin') {
+          // Vendor token'larını kaydet
+          setAuthToken("vendor", access);
+          setRefreshToken("vendor", refresh);
+          setAuthEmail("vendor", email);
+          
+          // Client token'larını temizle (eğer varsa)
+          localStorage.removeItem('client_access_token');
+          localStorage.removeItem('client_refresh_token');
+          localStorage.removeItem('client_email');
+          
+          localStorage.removeItem("esnaf_password_set");
           
           // Doğrulanmamışsa email verification sayfasına yönlendir
           if (!is_verified) {
@@ -65,8 +72,21 @@ export default function EsnafGirisPage() {
         } else if (role === 'client') {
           // Client hesabı varsa vendor'a upgrade et
           setError("Bu hesap müşteri hesabı. Esnaf olmak için lütfen yeni hesap açın veya mevcut hesabınızı yükseltin.");
+          
+          // Client token'larını temizle (eğer varsa)
+          localStorage.removeItem('esnaf_access_token');
+          localStorage.removeItem('esnaf_refresh_token');
+          localStorage.removeItem('esnaf_email');
         } else {
           setError("Bu hesap esnaf hesabı değil.");
+          
+          // Tüm token'ları temizle
+          localStorage.removeItem('esnaf_access_token');
+          localStorage.removeItem('esnaf_refresh_token');
+          localStorage.removeItem('esnaf_email');
+          localStorage.removeItem('client_access_token');
+          localStorage.removeItem('client_refresh_token');
+          localStorage.removeItem('client_email');
         }
       } else {
         setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
