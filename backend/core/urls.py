@@ -16,7 +16,14 @@ from .views import (
     request_vendor_upgrade,
     check_vendor_upgrade_status,
     get_profile,
-    update_profile
+    update_profile,
+    FavoriteListView,
+    FavoriteCreateView,
+    remove_favorite,
+    check_favorite,
+    client_register,
+    client_profile,
+    client_set_password
 )
 
 urlpatterns = [
@@ -39,4 +46,15 @@ urlpatterns = [
     # Vendor upgrade endpoints
     path('vendor/upgrade/', request_vendor_upgrade, name='request_vendor_upgrade'),
     path('vendor/upgrade/status/', check_vendor_upgrade_status, name='check_vendor_upgrade_status'),
+    
+    # Favorite endpoints
+    path('favorites/', FavoriteListView.as_view(), name='favorite-list'),
+    path('favorites/add/', FavoriteCreateView.as_view(), name='favorite-create'),
+    path('favorites/<int:vendor_id>/', remove_favorite, name='favorite-remove'),
+    path('favorites/<int:vendor_id>/check/', check_favorite, name='favorite-check'),
+    
+    # Client endpoints (ClientProfile yerine CustomUser kullanıyor)
+    path('clients/register/', client_register, name='client-register'),
+    path('clients/profile/', client_profile, name='client-profile'),
+    path('clients/set-password/', client_set_password, name='client-set-password'),
 ] 

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, EmailVerification, ServiceArea, Category, CarBrand, VendorUpgradeRequest
+from .models import CustomUser, EmailVerification, ServiceArea, Category, CarBrand, VendorUpgradeRequest, Favorite
 from django.utils import timezone
 
 class CustomUserAdmin(UserAdmin):
@@ -74,7 +74,13 @@ class VendorUpgradeRequestAdmin(admin.ModelAdmin):
             'fields': ('service_areas', 'categories', 'car_brands')
         }),
         ('Konum Bilgileri', {
-            'fields': ('subdistrict',)
+            'fields': ('address', 'city', 'district', 'subdistrict')
+        }),
+        ('İletişim Bilgileri', {
+            'fields': ('business_phone',)
+        }),
+        ('İşletme Açıklaması', {
+            'fields': ('about',)
         }),
         ('Yönetici Bilgileri', {
             'fields': ('manager_birthdate', 'manager_tc')
@@ -108,9 +114,22 @@ class VendorUpgradeRequestAdmin(admin.ModelAdmin):
         self.message_user(request, f'{updated} talep reddedildi.')
     reject_requests.short_description = "Seçili talepleri reddet"
 
+
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'vendor', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('user__email', 'vendor__display_name', 'vendor__company_title')
+    readonly_fields = ('created_at',)
+    ordering = ('-created_at',)
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'vendor')
+
+
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(EmailVerification, EmailVerificationAdmin)
 admin.site.register(ServiceArea, ServiceAreaAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(CarBrand, CarBrandAdmin)
 admin.site.register(VendorUpgradeRequest, VendorUpgradeRequestAdmin)
+admin.site.register(Favorite, FavoriteAdmin)
