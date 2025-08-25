@@ -106,7 +106,22 @@ def login(request):
         
         # JWT token oluştur
         from rest_framework_simplejwt.tokens import RefreshToken
+        
+        # Custom token oluştur - role bilgisini ekle
         refresh = RefreshToken.for_user(user)
+        
+        # Token'a custom claims ekle
+        refresh['role'] = user.role
+        refresh['email'] = user.email
+        refresh['is_verified'] = user.is_verified
+        refresh['user_id'] = user.id
+        
+        # Access token'a da aynı bilgileri ekle
+        access_token = refresh.access_token
+        access_token['role'] = user.role
+        access_token['email'] = user.email
+        access_token['is_verified'] = user.is_verified
+        access_token['user_id'] = user.id
         
         # Kullanıcının hangi profil tipine sahip olduğunu kontrol et
         has_vendor_profile = False
