@@ -1,15 +1,17 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import HeroSection from "../components/HeroSection";
+import Banner from "../components/Banner";
 
 export default function ContactPage() {
   return (
     <>
       <Navbar />
-      <HeroSection
+      <Banner
         title="İletişim"
         description="Bize ulaşmak için aşağıdaki formu doldurabilirsiniz. Size en kısa sürede dönüş yapacağız."
+        backgroundColor="var(--black)"
+        textColor="var(--white)"
       />
       <main className="contactPageMain">
         <section className="contactSection">

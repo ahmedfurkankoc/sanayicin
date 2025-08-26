@@ -402,10 +402,12 @@ footer {
 }
 
 .footer-logo {
-  font-weight: 800;
-  font-size: 1.2rem;
-  letter-spacing: 1px;
+  display: block;
   margin-bottom: 12px;
+  height: auto;
+  width: auto;
+  max-width: 200px;
+  object-fit: contain;
 }
 .footer-copyright {
   display: block;
@@ -1629,33 +1631,15 @@ footer {
   }
 }
 
-.heroPageSection {
-  background: var(--black);
-  padding: 180px 0 180px 0;
-  text-align: center;
-  border-bottom: 1.5px solid #f0eaea;
-}
-.heroPageTitle {
-  font-size: 2.4rem;
-  font-weight: 800;
-  margin-bottom: 12px;
-  color: var(--white);
-}
-.heroPageDescription {
-  font-size: 1.18rem;
-  color: var(--white);
-  max-width: 540px;
-  margin: 0 auto;
-}
-
+/* Hero Section Responsive */
 @media (max-width: 600px) {
-  .heroPageSection {
+  .hero-section {
     padding: 28px 0 18px 0;
   }
-  .heroPageTitle {
+  .hero-title {
     font-size: 1.3rem;
   }
-  .heroPageDescription {
+  .hero-description {
     font-size: 0.98rem;
   }
 }
@@ -2017,27 +2001,51 @@ footer {
   min-height: 100vh;
 }
 
-.neden-esnaf-page .hero-section {
-  background: var(--yellow);
-  color: var(--black);
+/* Hero Section - Global Styles */
+.hero-section {
+  position: relative;
   padding: 80px 0 60px 0;
   text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.neden-esnaf-page .hero-title {
+.hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+.hero-title {
   font-size: 3rem;
-  font-weight: 700;
+  font-weight: 800;
   margin-bottom: 20px;
   line-height: 1.2;
 }
 
-.neden-esnaf-page .hero-description {
+.hero-description {
   font-size: 1.2rem;
   margin-bottom: 40px;
   opacity: 0.9;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  line-height: 1.6;
+}
+
+/* Hero Section Responsive */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 60px 0 40px 0;
+  }
+  .hero-title {
+    font-size: 2.4rem;
+  }
+  .hero-description {
+    font-size: 1.1rem;
+  }
 }
 
 .neden-esnaf-page .main-advantages-section {
@@ -2419,28 +2427,7 @@ footer {
   min-height: 100vh;
 }
 
-.en-yakin-page .hero-section {
-  background: var(--yellow);
-  color: var(--black);
-  padding: 80px 0 60px 0;
-  text-align: center;
-}
-
-.en-yakin-page .hero-title {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  line-height: 1.2;
-}
-
-.en-yakin-page .hero-description {
-  font-size: 1.2rem;
-  margin-bottom: 40px;
-  opacity: 0.9;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
+/* En Yakın Page Styles */
 
 .en-yakin-page .location-section {
   padding: 80px 0;
@@ -2891,28 +2878,7 @@ footer {
   min-height: 100vh;
 }
 
-.hizmet-vermek-page .hero-section {
-  background: var(--yellow);
-  color: var(--black);
-  padding: 80px 0 60px 0;
-  text-align: center;
-}
-
-.hizmet-vermek-page .hero-title {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  line-height: 1.2;
-}
-
-.hizmet-vermek-page .hero-description {
-  font-size: 1.2rem;
-  margin-bottom: 40px;
-  opacity: 0.9;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
+/* Hizmet Vermek Page Styles */
 
 .hizmet-vermek-page .section-title {
   font-size: 2.5rem;

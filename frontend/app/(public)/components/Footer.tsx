@@ -1,12 +1,19 @@
 import React from "react";
 import Icon from "@/app/components/ui/Icon";
+import Image from "next/image";
 
 const Footer = () => (
   <footer>
     <div className="footer-inner">
       <div className="footer-link-groups">
         <div className="footer-link-group">
-          <span className="footer-logo">SANAYİCİN</span>
+          <Image 
+            src="/sanayicin-logo.png"
+            alt="Sanayicin Logo"
+            width={200}
+            height={40}
+            className="footer-logo"
+          />
           <a href="/nasil-calisir">Nasıl Çalışır?</a>
           <a href="/hakkimizda">Hakkımızda</a>
           <a href="#blog">Blog</a>
