@@ -2,26 +2,19 @@ import React from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Banner from "../components/Banner";
 
 const NedenEsnafPage = () => {
   return (
     <>
       <Navbar />
       <div className="neden-esnaf-page">
-        {/* Hero Section */}
-        <section className="hero-section">
-          <div className="container">
-            <div className="hero-content">
-              <h1 className="hero-title">
-                Neden Sanayicin'de Esnaf Olmalısınız?
-              </h1>
-              <p className="hero-description">
-                Türkiye'nin en büyük otomotiv hizmet platformunda yerinizi alın. 
-                Daha fazla müşteri, daha fazla kazanç ve daha fazla başarı.
-              </p>
-            </div>
-          </div>
-        </section>
+        <Banner
+          title="Neden Sanayicin'de Esnaf Olmalısınız?"
+          description="Türkiye'nin en büyük otomotiv hizmet platformunda yerinizi alın. Daha fazla müşteri, daha fazla kazanç ve daha fazla başarı."
+          backgroundColor="var(--yellow)"
+          textColor="var(--black)"
+        />
 
         {/* Ana Avantajlar */}
         <section className="main-advantages-section">

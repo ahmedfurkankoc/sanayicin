@@ -1,26 +1,17 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Banner from "../components/Banner";
 
 const HizmetVermekPage = () => {
   return (
     <>
       <Navbar />
       <div className="hizmet-vermek-page">
-        {/* Hero Section */}
-        <section className="hero-section">
-          <div className="container">
-            <div className="hero-content">
-              <h1 className="hero-title">
-                Hizmet Vermek İstiyorum
-              </h1>
-              <p className="hero-description">
-                Uzmanlığınızı paraya çevirin! Sanayicin platformunda esnaf olarak yer alın, 
-                daha fazla müşteriye ulaşın ve gelirinizi artırın.
-              </p>
-            </div>
-          </div>
-        </section>
+        <Banner
+          title="Hizmet Vermek İstiyorum"
+          description="Uzmanlığınızı paraya çevirin! Sanayicin platformunda esnaf olarak yer alın, daha fazla müşteriye ulaşın ve gelirinizi artırın."
+        />
 
         {/* Neden Katılmalı */}
         <section className="why-join-section">
