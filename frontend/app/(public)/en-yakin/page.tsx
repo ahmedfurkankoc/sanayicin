@@ -2,26 +2,17 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Icon from "@/app/components/ui/Icon";
+import Banner from "../components/Banner";
 
 const EnYakinPage = () => {
   return (
     <>
       <Navbar />
       <div className="en-yakin-page">
-        {/* Hero Section */}
-        <section className="hero-section">
-          <div className="container">
-            <div className="hero-content">
-              <h1 className="hero-title">
-                Size En Yakın Ustaları Bulun
-              </h1>
-              <p className="hero-description">
-                Konumunuza en yakın, güvenilir ve kaliteli ustalara anında ulaşın. 
-                Hızlı, güvenli ve uygun fiyatlı hizmet alın.
-              </p>
-            </div>
-          </div>
-        </section>
+        <Banner
+          title="Size En Yakın Ustaları Bulun"
+          description="Konumunuza en yakın, güvenilir ve kaliteli ustalara anında ulaşın. Hızlı, güvenli ve uygun fiyatlı hizmet alın."
+        />
 
         {/* Konum Seçimi */}
         <section className="location-section">

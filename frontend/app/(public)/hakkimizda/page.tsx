@@ -1,14 +1,16 @@
 import Navbar from "../components/Navbar";
-import HeroSection from "../components/HeroSection";
+import Banner from "../components/Banner";
 import Footer from "../components/Footer";
 
 export default function AboutPage() {
   return (
     <>
       <Navbar />
-      <HeroSection
+      <Banner
         title="Hakkımızda"
         description="Sanayicin olarak misyonumuz ve vizyonumuz hakkında bilgi edinin."
+        backgroundColor="var(--black)"
+        textColor="var(--white)"
       />
       <main className="container">
         <section className="about-section">
