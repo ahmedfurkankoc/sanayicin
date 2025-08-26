@@ -401,4 +401,15 @@ export const api = {
   addFavorite: (vendorId: number) => apiClient.post('/favorites/add/', { vendor: vendorId }),
   removeFavorite: (vendorId: number) => apiClient.delete(`/favorites/${vendorId}/`),
   checkFavorite: (vendorId: number) => apiClient.get(`/favorites/${vendorId}/check/`),
+
+  // Reviews API
+  getVendorReviews: (vendorSlug: string) => apiClient.get(`/vendors/${vendorSlug}/reviews/`),
+  createReview: (vendorSlug: string, data: {
+    service: number;
+    rating: number;
+    comment: string;
+    service_date: string;
+  }) => apiClient.post(`/vendors/${vendorSlug}/reviews/`, data),
+  getUnreadReviewCount: () => apiClient.get('/vendors/reviews/unread_count/'),
+  markReviewAsRead: (reviewId: number) => apiClient.post(`/vendors/reviews/${reviewId}/mark_as_read/`),
 }; 

@@ -3,9 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.db.models import Q
-from .serializers import VendorProfileSerializer, VendorRegisterSerializer, AppointmentSerializer, AppointmentCreateSerializer, CarBrandDetailSerializer
+from .serializers import *
 from core.models import CustomUser
-from .models import VendorProfile, Appointment
+from .models import VendorProfile, Appointment, Review
 from core.models import ServiceArea, CarBrand
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -554,3 +554,52 @@ class CarBrandListView(APIView):
         car_brands = CarBrand.objects.filter(is_active=True)
         serializer = CarBrandDetailSerializer(car_brands, many=True)
         return Response(serializer.data)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    """Değerlendirme işlemleri için ViewSet"""
+    serializer_class = ReviewSerializer
+    permission_classes = [AllowAny]  # GET için public, POST için authentication kontrolü create'de yapılacak
+    
+    def get_queryset(self):
+        vendor_slug = self.kwargs.get('vendor_slug')
+        if vendor_slug:
+            try:
+                vendor = VendorProfile.objects.get(slug=vendor_slug)
+                return Review.objects.filter(vendor=vendor)
+            except VendorProfile.DoesNotExist:
+                return Review.objects.none()
+        return Review.objects.none()
+    
+    def perform_create(self, serializer):
+        """Yeni değerlendirme oluştur"""
+        vendor_slug = self.kwargs.get('vendor_slug')
+        try:
+            vendor = VendorProfile.objects.get(slug=vendor_slug)
+            serializer.save(vendor=vendor)
+        except VendorProfile.DoesNotExist:
+            raise Http404("Vendor bulunamadı")
+    
+    @action(detail=True, methods=['post'])
+    def mark_as_read(self, request, pk=None):
+        """Değerlendirmeyi okundu olarak işaretle"""
+        review = self.get_object()
+        if not hasattr(request.user, 'vendor_profile') or review.vendor != request.user.vendor_profile:
+            return Response({"detail": "Bu işlem için yetkiniz yok"}, status=status.HTTP_403_FORBIDDEN)
+        
+        review.is_read = True
+        review.save()
+        return Response({"status": "success"})
+    
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        """Okunmamış değerlendirme sayısını döndür"""
+        if not hasattr(request.user, 'vendor_profile'):
+            return Response({"detail": "Bu işlem için yetkiniz yok"}, status=status.HTTP_403_FORBIDDEN)
+        
+        count = Review.objects.filter(
+            vendor=request.user.vendor_profile,
+            is_read=False
+        ).count()
+        
+        return Response({"unread_count": count})

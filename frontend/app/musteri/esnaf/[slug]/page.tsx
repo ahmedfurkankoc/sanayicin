@@ -5,6 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { api, getAuthToken } from '@/app/utils/api';
 import { iconMapping } from '@/app/utils/iconMapping';
 import { useMusteri } from '../../context/MusteriContext';
+import { toast } from "sonner";
+import ReviewModal from '../../components/ReviewModal';
+import Reviews from '../../components/Reviews';
 
 interface Vendor {
   id: number;
@@ -51,14 +54,21 @@ function VendorDetailContent() {
   const router = useRouter();
   const slug = params.slug as string;
   const { isAuthenticated, user } = useMusteri();
-  
   const [vendor, setVendor] = useState<Vendor | null>(null);
+  
+  // Kullanıcının kendi profilini görüntüleyip görüntülemediğini kontrol et
+  const isOwnProfile = vendor ? user?.id === vendor.user?.id : false;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [creatingChat, setCreatingChat] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   // Hizmet alanlarını ve kategorileri çek
   useEffect(() => {
@@ -74,14 +84,28 @@ function VendorDetailContent() {
     });
   }, []);
 
-  // Vendor detaylarını çek
+  // Vendor detaylarını ve değerlendirmeleri çek
   useEffect(() => {
     if (!slug) return;
 
     setLoading(true);
-    api.getVendorDetail(slug)
-      .then((res: any) => {
-        setVendor(res.data);
+    Promise.all([
+      api.getVendorDetail(slug),
+      api.getVendorReviews(slug)
+    ])
+      .then(([vendorRes, reviewsRes]: any) => {
+        setVendor(vendorRes.data);
+        setReviews(reviewsRes.data);
+        
+        // Ortalama puanı ve toplam değerlendirme sayısını hesapla
+        const reviewData = reviewsRes.data;
+        const total = reviewData.length;
+        const average = total > 0 
+          ? reviewData.reduce((acc: number, curr: any) => acc + curr.rating, 0) / total 
+          : 0;
+        
+        setTotalReviews(total);
+        setAverageRating(average);
         setError("");
       })
       .catch((err: any) => {
@@ -275,89 +299,91 @@ function VendorDetailContent() {
               {vendor.business_type} • {vendor.company_title}
             </p>
 
-            {/* Aksiyonlar */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              <button
-                onClick={handlePhoneButton}
-                style={{
-                  backgroundColor: showPhone ? '#10b981' : '#fff8cc',
-                  color: showPhone ? '#ffffff' : '#111111',
-                  border: showPhone ? '1px solid #0ea5a4' : '1px solid #ffe066',
-                  padding: '10px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}
-              >
-                {React.createElement(iconMapping.phone, { size: 18, color: showPhone ? '#ffffff' : undefined })}
-                {showPhone ? (vendor.business_phone || 'Telefon') : 'Telefonu Göster'}
-              </button>
-              <button
-                onClick={handleAppointment}
-                style={{
-                  backgroundColor: '#ffd600',
-                  color: '#111111',
-                  border: 'none',
-                  padding: '10px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}
-              >
-                {React.createElement(iconMapping.calendar, { size: 18 })}
-                Randevu Al
-              </button>
-              <button
-                onClick={handleQuote}
-                disabled={creatingChat}
-                style={{
-                  backgroundColor: '#111111',
-                  color: '#ffd600',
-                  border: 'none',
-                  padding: '10px 16px',
-                  borderRadius: '8px',
-                  cursor: creatingChat ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  opacity: creatingChat ? 0.8 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}
-              >
-                {React.createElement(iconMapping.file, { size: 18 })}
-                {creatingChat ? 'İşleniyor...' : 'Teklif Al'}
-              </button>
-              <button
-                onClick={handleMessage}
-                disabled={creatingChat}
-                style={{
-                  backgroundColor: '#f0f0f0',
-                  color: '#111111',
-                  border: '1px solid #e0e0e0',
-                  padding: '10px 16px',
-                  borderRadius: '8px',
-                  cursor: creatingChat ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  opacity: creatingChat ? 0.8 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8
-                }}
-              >
-                {React.createElement(iconMapping.message, { size: 18 })}
-                {creatingChat ? 'İşleniyor...' : 'Mesaj Gönder'}
-              </button>
-            </div>
+            {/* Aksiyonlar - Kendi profilinde gösterilmez */}
+            {!isOwnProfile && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                <button
+                  onClick={handlePhoneButton}
+                  style={{
+                    backgroundColor: showPhone ? '#10b981' : '#fff8cc',
+                    color: showPhone ? '#ffffff' : '#111111',
+                    border: showPhone ? '1px solid #0ea5a4' : '1px solid #ffe066',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}
+                >
+                  {React.createElement(iconMapping.phone, { size: 18, color: showPhone ? '#ffffff' : undefined })}
+                  {showPhone ? (vendor.business_phone || 'Telefon') : 'Telefonu Göster'}
+                </button>
+                <button
+                  onClick={handleAppointment}
+                  style={{
+                    backgroundColor: '#ffd600',
+                    color: '#111111',
+                    border: 'none',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}
+                >
+                  {React.createElement(iconMapping.calendar, { size: 18 })}
+                  Randevu Al
+                </button>
+                <button
+                  onClick={handleQuote}
+                  disabled={creatingChat}
+                  style={{
+                    backgroundColor: '#111111',
+                    color: '#ffd600',
+                    border: 'none',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    cursor: creatingChat ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    opacity: creatingChat ? 0.8 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}
+                >
+                  {React.createElement(iconMapping.file, { size: 18 })}
+                  {creatingChat ? 'İşleniyor...' : 'Teklif Al'}
+                </button>
+                <button
+                  onClick={handleMessage}
+                  disabled={creatingChat}
+                  style={{
+                    backgroundColor: '#f0f0f0',
+                    color: '#111111',
+                    border: '1px solid #e0e0e0',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    cursor: creatingChat ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    opacity: creatingChat ? 0.8 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8
+                  }}
+                >
+                  {React.createElement(iconMapping.message, { size: 18 })}
+                  {creatingChat ? 'İşleniyor...' : 'Mesaj Gönder'}
+                </button>
+              </div>
+            )}
 
           </div>
         </div>
@@ -570,9 +596,48 @@ function VendorDetailContent() {
             </div>
           )}
 
+          {/* Değerlendirmeler */}
+          <Reviews
+            reviews={reviews}
+            averageRating={averageRating}
+            totalReviews={totalReviews}
+            onReview={() => {
+              // Kendi profilini değerlendiremez
+              if (isOwnProfile) {
+                toast.error("Kendi profilinizi değerlendiremezsiniz.", {
+                  description: "Sadece diğer esnafları değerlendirebilirsiniz."
+                });
+                return;
+              }
+              
+              // Giriş yapmamış kullanıcı kontrolü
+              if (!isAuthenticated) {
+                toast.error("Değerlendirme yapmak için giriş yapmalısınız.", {
+                  description: "Üye girişi yaptıktan sonra değerlendirme yapabilirsiniz.",
+                  action: {
+                    label: "Giriş Yap",
+                    onClick: () => router.push("/musteri/giris")
+                  }
+                });
+                return;
+              }
+              
+              setShowReviewModal(true);
+            }}
+            showReviewButton={!isOwnProfile && isAuthenticated} // Sadece kendi profili değilse ve giriş yapmışsa göster
+          />
 
         </div>
       </div>
+      
+      {/* Değerlendirme Modal */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        vendorName={vendor.display_name}
+        vendorSlug={vendor.slug}
+        services={vendor.categories || []}
+      />
     </div>
   );
 }

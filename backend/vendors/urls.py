@@ -1,9 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import VendorProfileView, VendorRegisterView, SetVendorPasswordView, VendorSearchView, VendorDetailView, AppointmentViewSet, ClientAppointmentView, ClientAppointmentListView, CarBrandListView
+from .views import *
 
 router = DefaultRouter()
 router.register(r'appointments', AppointmentViewSet, basename='appointment')
+router.register(r'reviews', ReviewViewSet, basename='review')
 
 urlpatterns = [
     path('profile/', VendorProfileView.as_view(), name='vendor-profile'),
@@ -15,4 +16,9 @@ urlpatterns = [
     path('<str:slug>/', VendorDetailView.as_view(), name='vendor-detail'),
     path('<str:slug>/appointments/', ClientAppointmentView.as_view(), name='client-appointment'),
     path('client/appointments/', ClientAppointmentListView.as_view(), name='client-appointment-list'),
+    # Vendor'a özel değerlendirme endpoint'leri
+    path('<str:vendor_slug>/reviews/', ReviewViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    }), name='vendor-reviews'),
 ] 

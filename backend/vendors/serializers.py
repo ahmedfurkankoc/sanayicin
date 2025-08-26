@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import VendorProfile, Appointment
+from .models import VendorProfile, Appointment, Review
 from core.models import ServiceArea, Category, CarBrand
 
 
@@ -359,4 +359,46 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         fields = [
             'client_name', 'client_phone', 'client_email', 'service_description',
             'appointment_date', 'appointment_time', 'notes'
-        ] 
+        ]
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Değerlendirme serializer'ı"""
+    user = serializers.SerializerMethodField()
+    service_name = serializers.CharField(source='service.name', read_only=True)
+    service_date_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Review
+        fields = [
+            'id', 'user', 'service', 'service_name', 'rating',
+            'comment', 'service_date', 'service_date_display',
+            'is_read', 'created_at'
+        ]
+        read_only_fields = ['user', 'is_read', 'created_at']
+    
+    def get_user(self, obj):
+        """Kullanıcı bilgilerini döndür"""
+        return {
+            'id': obj.user.id,
+            'name': obj.user.full_name,
+            'avatar': obj.user.avatar.url if obj.user.avatar else None
+        }
+    
+    def get_service_date_display(self, obj):
+        """Hizmet tarihini Türkçe formatta döndür"""
+        months = [
+            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+        ]
+        return f"{obj.service_date.day} {months[obj.service_date.month - 1]} {obj.service_date.year}"
+    
+    def create(self, validated_data):
+        """Yeni değerlendirme oluştur"""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            raise serializers.ValidationError("Değerlendirme yapmak için giriş yapmalısınız.")
+        
+        validated_data['user'] = request.user
+        validated_data['is_read'] = False
+        return super().create(validated_data)

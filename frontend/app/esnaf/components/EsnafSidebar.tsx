@@ -7,15 +7,34 @@ import { useEsnaf } from "../context/EsnafContext";
 import { clearAuthTokens } from '@/app/utils/api';
 import Icon from "@/app/components/ui/Icon";
 
+interface NotificationCounts {
+  messages: number;
+  reviews: number;
+  appointments: number;
+  quotes: number;
+  // İleride eklenebilecek diğer bildirim tipleri
+}
+
 interface EsnafSidebarProps {
   user?: any;
   email?: string;
   onLogout?: () => void;
   activePage?: string;
-  unreadCount?: number; // Unread count prop'u ekledim
+  notifications?: NotificationCounts;
 }
 
-export default function EsnafSidebar({ user, email, onLogout, activePage = "panel", unreadCount = 0 }: EsnafSidebarProps) {
+export default function EsnafSidebar({ 
+  user, 
+  email, 
+  onLogout, 
+  activePage = "panel", 
+  notifications = {
+    messages: 0,
+    reviews: 0,
+    appointments: 0,
+    quotes: 0
+  }
+}: EsnafSidebarProps) {
   const router = useRouter();
   const { user: contextUser, email: contextEmail, loading } = useEsnaf();
 
@@ -97,26 +116,41 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
             <Link href="/esnaf/randevularim" className={`esnaf-nav-item ${getActiveClass("randevularim")}`}>
              <Icon name="clock" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Randevularım</span>
+             {notifications.appointments > 0 && (
+               <span className="esnaf-nav-badge">
+                 {notifications.appointments > 99 ? '99+' : notifications.appointments}
+               </span>
+             )}
              {activePage === "randevularim" && <span className="esnaf-nav-dot"></span>}
             </Link>
             <Link href="/esnaf/taleplerim" className={`esnaf-nav-item ${getActiveClass("taleplerim")}`}>
              <Icon name="file" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Taleplerim</span>
+             {notifications.quotes > 0 && (
+               <span className="esnaf-nav-badge">
+                 {notifications.quotes > 99 ? '99+' : notifications.quotes}
+               </span>
+             )}
              {activePage === "taleplerim" && <span className="esnaf-nav-dot"></span>}
             </Link>
-           <Link href="/esnaf/panel/mesajlar" className={`esnaf-nav-item ${getActiveClass("mesajlar")}`}>
+                       <Link href="/esnaf/panel/mesajlar" className={`esnaf-nav-item ${getActiveClass("mesajlar")}`}>
              <Icon name="message" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Mesajlarım</span>
-             {/* Unread count badge */}
-             {unreadCount > 0 && (
+             {notifications.messages > 0 && (
                <span className="esnaf-nav-badge">
-                 {unreadCount > 99 ? '99+' : unreadCount}
+                 {notifications.messages > 99 ? '99+' : notifications.messages}
                </span>
              )}
             </Link>
-            <Link href="#" className="esnaf-nav-item">
+            <Link href="/esnaf/yorumlar" className={`esnaf-nav-item ${getActiveClass("yorumlar")}`}>
              <Icon name="star" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Yorumlarım</span>
+             {notifications.reviews > 0 && (
+               <span className="esnaf-nav-badge">
+                 {notifications.reviews > 99 ? '99+' : notifications.reviews}
+               </span>
+             )}
+             {activePage === "yorumlar" && <span className="esnaf-nav-dot"></span>}
             </Link>
             <Link href="/esnaf/profil" className={`esnaf-nav-item ${getActiveClass("profil")}`}>
              <Icon name="user" className="esnaf-nav-icon" color="white" />
@@ -173,17 +207,23 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
                    <Link href="/esnaf/panel" className={`esnaf-mobile-nav-item ${getActiveClass("panel")}`}>
             <span className="esnaf-mobile-nav-icon">
               <Icon name="home" size="sm" />
-              <span className="esnaf-mobile-nav-badge">2</span>
+              {/* Toplam bildirim sayısı */}
+              {(notifications.messages + notifications.reviews + notifications.appointments + notifications.quotes) > 0 && (
+                <span className="esnaf-mobile-nav-badge">
+                  {(notifications.messages + notifications.reviews + notifications.appointments + notifications.quotes) > 99 
+                    ? '99+' 
+                    : (notifications.messages + notifications.reviews + notifications.appointments + notifications.quotes)}
+                </span>
+              )}
             </span>
             <span className="esnaf-mobile-nav-text">Özet</span>
            </Link>
          <Link href="/esnaf/panel/mesajlar" className={`esnaf-mobile-nav-item ${getActiveClass("mesajlar")}`}>
            <span className="esnaf-mobile-nav-icon">
              <Icon name="message" size="sm" />
-             {/* Mobilde de unread count badge göster */}
-             {unreadCount > 0 && (
+             {notifications.messages > 0 && (
                <span className="esnaf-mobile-nav-badge">
-                 {unreadCount > 99 ? '99+' : unreadCount}
+                 {notifications.messages > 99 ? '99+' : notifications.messages}
                </span>
              )}
            </span>
@@ -192,6 +232,11 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
          <Link href="/esnaf/randevularim" className={`esnaf-mobile-nav-item ${getActiveClass("randevularim")}`}>
            <span className="esnaf-mobile-nav-icon">
              <Icon name="calendar" size="sm" />
+             {notifications.appointments > 0 && (
+               <span className="esnaf-mobile-nav-badge">
+                 {notifications.appointments > 99 ? '99+' : notifications.appointments}
+               </span>
+             )}
            </span>
            <span className="esnaf-mobile-nav-text">Randevularım</span>
          </Link>
@@ -200,6 +245,17 @@ export default function EsnafSidebar({ user, email, onLogout, activePage = "pane
              <Icon name="calendar" size="sm" />
            </span>
            <span className="esnaf-mobile-nav-text">Takvim</span>
+         </Link>
+         <Link href="/esnaf/yorumlar" className={`esnaf-mobile-nav-item ${getActiveClass("yorumlar")}`}>
+           <span className="esnaf-mobile-nav-icon">
+             <Icon name="star" size="sm" />
+             {notifications.reviews > 0 && (
+               <span className="esnaf-mobile-nav-badge">
+                 {notifications.reviews > 99 ? '99+' : notifications.reviews}
+               </span>
+             )}
+           </span>
+           <span className="esnaf-mobile-nav-text">Yorumlarım</span>
          </Link>
          <Link href="/esnaf/ayarlar" className={`esnaf-mobile-nav-item ${getActiveClass("ayarlar")}`}>
            <span className="esnaf-mobile-nav-icon">
