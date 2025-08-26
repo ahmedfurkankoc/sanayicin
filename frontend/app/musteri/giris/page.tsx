@@ -18,7 +18,7 @@ export default function MusteriGirisPage() {
   // Eğer kullanıcı zaten giriş yapmışsa ana sayfaya yönlendir
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/musteri/hizmetler");
+      router.replace("/musteri");
     }
   }, [isAuthenticated, router]);
 
@@ -30,7 +30,7 @@ export default function MusteriGirisPage() {
     try {
       const success = await login(email, password);
       if (success) {
-        router.push("/musteri/hizmetler");
+        router.push("/musteri");
       } else {
         setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
       }

@@ -11,7 +11,7 @@ import MusteriFooter from "../components/MusteriFooter";
 
 export default function EsnafOlPage() {
   const router = useRouter();
-  const { isAuthenticated, user } = useMusteri();
+  const { isAuthenticated, user, loading: authLoading } = useMusteri();
   const { cities, loadTurkeyData, getDistricts } = useTurkeyData();
   
   const [formData, setFormData] = useState({
@@ -85,8 +85,9 @@ export default function EsnafOlPage() {
   
   // Authentication kontrolü
   useEffect(() => {
+    if (authLoading) return;
     if (!isAuthenticated) {
-      router.push('/musteri/giris');
+      router.replace('/musteri/giris?next=/musteri/esnaf-ol');
       return;
     }
     
@@ -94,7 +95,7 @@ export default function EsnafOlPage() {
     if (user && !user.is_verified) {
       setError("Esnaf olmak için önce hesabınızı doğrulamanız gerekiyor. Email veya SMS doğrulaması yapın.");
     }
-  }, [isAuthenticated, router, user]);
+  }, [authLoading, isAuthenticated, router, user]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

@@ -171,7 +171,7 @@ export default function MusteriHeader() {
       wsRef.current.close();
     }
     
-    router.push('/musteri/hizmetler');
+    router.push('/musteri');
   };
 
   const toggleDropdown = () => {
@@ -233,7 +233,7 @@ export default function MusteriHeader() {
       <div className="musteri-header-content">
         {/* Sol: Logo */}
         <div className="musteri-header-left">
-          <Link href="/musteri/hizmetler" className="musteri-logo">
+          <Link href="/musteri" className="musteri-logo">
             <Image
               src="/sanayicin-esnaf-logo.png"
               alt="sanayicin.com"
@@ -303,7 +303,7 @@ export default function MusteriHeader() {
                 {!isAuthenticated ? (
                   // Giriş yapılmamış
                   <>
-                    <Link href="/musteri/giris?next=/musteri/hizmetler" className="musteri-dropdown-item">
+                    <Link href="/musteri/giris?next=/musteri" className="musteri-dropdown-item">
                       Giriş Yap
                     </Link>
                     <div className="musteri-dropdown-divider"></div>

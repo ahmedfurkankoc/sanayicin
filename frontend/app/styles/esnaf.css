@@ -7,7 +7,16 @@
   --white: #fff;
   --gray: #f9f9f9;
   --red: #fc1c2f;
+  --dark: #2d3748;
   --font-main: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+
+  /* Chat Widget Colors - Vendor Only */
+  --chat-vendor-primary: var(--yellow);
+  --chat-vendor-text: var(--black);
+  --chat-vendor-highlight: rgba(255, 214, 0, 0.15);
+  --chat-vendor-bg: var(--white);
+  --chat-vendor-bg-secondary: #fafafa;
+  --chat-vendor-border: #e9ecef;
 }
 
 body, html, .esnaf-panel-layout {

@@ -5,7 +5,6 @@ import Head from "next/head";
 import "../styles/esnaf.css";
 import { EsnafProvider } from "./context/EsnafContext";
 import { Toaster } from "@/app/components/ui/sonner";
-import EsnafAuthGuard from "./components/EsnafAuthGuard";
 
 export default function EsnafLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,11 +19,9 @@ export default function EsnafLayout({ children }: { children: React.ReactNode })
         <meta name="theme-color" content="#1f2937" />
       </Head>
       <EsnafProvider>
-        <EsnafAuthGuard>
-          <div className="esnaf-panel-layout">
-            <main className="esnaf-panel-main-content">{children}</main>
-          </div>
-        </EsnafAuthGuard>
+        <div className="esnaf-panel-layout">
+          <main className="esnaf-panel-main-content">{children}</main>
+        </div>
       </EsnafProvider>
       <Toaster />
     </>
