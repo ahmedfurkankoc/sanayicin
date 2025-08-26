@@ -1,4 +1,5 @@
 /* ===== MÜŞTERİ SAYFALARI CSS ===== */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
 
 :root {
   /* Base palette */
@@ -8,6 +9,14 @@
   --gray: #f9f9f9;
   --text: #333333;
   --text-muted: #666666;
+
+  /* Chat Widget Colors - Client Only */
+  --chat-client-primary: var(--gradient-primary);
+  --chat-client-text: var(--white);
+  --chat-client-highlight: rgba(45, 55, 72, 0.15);
+  --chat-client-bg: var(--dark);
+  --chat-client-bg-secondary: #1a202c;
+  --chat-client-border: #4a5568;
 
   /* Brand */
   --primary-500: #667eea;
@@ -26,7 +35,7 @@
   --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.1);
 
   --font-main: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
-
+  
   /* Header */
   --header-logo-width: 400px;
   
@@ -2001,14 +2010,6 @@ body {
   font-weight: 600;
 }
 
-.musteri-favorite-type {
-  background: rgba(255, 214, 0, 0.1);
-  color: var(--black);
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
 
 .musteri-favorite-details {
   margin-bottom: 1rem;
@@ -2018,7 +2019,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--gray);
+  color: var(--black);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -2131,7 +2132,7 @@ body {
 }
 
 .musteri-empty-state p {
-  color: var(--gray);
+  color: var(--black);
   margin-bottom: 2rem;
   font-size: 1.1rem;
 }

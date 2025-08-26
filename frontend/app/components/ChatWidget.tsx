@@ -106,8 +106,8 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     }
   };
 
-  // Role mapping: 'client' -> 'client' (artık aynı)
-  const mappedRole = role;
+  // Role mapping: role prop'u gönderilmezse varsayılan olarak 'client'
+  const mappedRole = role || 'client';
 
   // Mevcut kullanıcının ID'sini al - ChatInterface'deki gibi güvenilir
   const getCurrentUserId = () => {
@@ -186,8 +186,16 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   
   const palette = useMemo(() => (
     mappedRole === 'vendor'
-      ? { primary: '#ffd600', primaryText: '#111', highlight: 'rgba(255,214,0,0.15)' }
-      : { primary: '#2d3748', primaryText: '#fff', highlight: 'rgba(45,55,72,0.15)' }
+      ? { 
+          primary: 'var(--chat-vendor-primary)',
+          primaryText: 'var(--chat-vendor-text)',
+          highlight: 'var(--chat-vendor-highlight)'
+        }
+      : { 
+          primary: 'var(--chat-client-primary)',
+          primaryText: 'var(--chat-client-text)',
+          highlight: 'var(--chat-client-highlight)'
+        }
   ), [mappedRole]);
 
   // load conversation list on open
@@ -578,24 +586,32 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
             maxWidth: '95vw',
             height: 520,
             maxHeight: '70vh',
-            background: '#fff',
+            background: mappedRole === 'vendor' ? 'var(--chat-vendor-bg)' : 'var(--chat-client-bg)',
             borderRadius: 12,
             boxShadow: '0 12px 30px rgba(0,0,0,0.25)',
+            border: `1px solid ${mappedRole === 'vendor' ? 'var(--chat-vendor-border)' : 'var(--chat-client-border)'}`,
             display: 'flex',
             overflow: 'hidden',
             zIndex: 999,
           }}
         >
           {/* Sidebar conversations */}
-          <div style={{ width: 260, borderRight: '1px solid #e9ecef', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ 
+            width: 260, 
+            borderRight: `1px solid ${mappedRole === 'vendor' ? 'var(--chat-vendor-border)' : 'var(--chat-client-border)'}`, 
+            display: 'flex', 
+            flexDirection: 'column',
+            background: mappedRole === 'vendor' ? 'var(--chat-vendor-bg)' : 'var(--chat-client-bg)',
+            color: mappedRole === 'vendor' ? 'var(--chat-vendor-text)' : 'var(--chat-client-text)'
+          }}>
             <div style={{ padding: 12, fontWeight: 700 }}>
               Mesajlarım
             </div>
             <div style={{ overflowY: 'auto' }}>
               {loadingList ? (
-                <div style={{ padding: 12, color: '#666' }}>Yükleniyor...</div>
+                <div style={{ padding: 12, color: mappedRole === 'vendor' ? 'var(--chat-vendor-text)' : 'var(--chat-client-text)', opacity: 0.7 }}>Yükleniyor...</div>
               ) : conversations.length === 0 ? (
-                <div style={{ padding: 12, color: '#666' }}>Konuşma yok</div>
+                <div style={{ padding: 12, color: mappedRole === 'vendor' ? 'var(--chat-vendor-text)' : 'var(--chat-client-text)', opacity: 0.7 }}>Konuşma yok</div>
               ) : (
                 conversations.map((c) => {
                   const unread = c.unread_count_for_current_user || 0;
@@ -641,7 +657,7 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: 12, color: '#666' }}>{c.last_message_text}</div>
+                        <div style={{ fontSize: 12, color: mappedRole === 'vendor' ? 'var(--chat-vendor-text)' : 'var(--chat-client-text)', opacity: 0.7 }}>{c.last_message_text}</div>
                       </div>
                     </div>
                   </div>
@@ -664,7 +680,7 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                 }
               })()}
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: 12, background: '#fafafa' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 12, background: mappedRole === 'vendor' ? 'var(--chat-vendor-bg-secondary)' : 'var(--chat-client-bg-secondary)' }}>
               {/* Daha fazla mesaj yükle butonu - en üstte */}
               {hasMoreMessages && (
                 <div style={{ 
@@ -698,7 +714,8 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                   justifyContent: 'center',
                   alignItems: 'center',
                   height: '100%',
-                  color: '#999',
+                  color: mappedRole === 'vendor' ? 'var(--chat-vendor-text)' : 'var(--chat-client-text)',
+                  opacity: 0.7,
                   fontSize: 14,
                   textAlign: 'center'
                 }}>
@@ -714,9 +731,21 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                   const justify = isOwn ? 'flex-end' : 'flex-start';
                   const bubbleStyle: React.CSSProperties = isOwn
                     ? (mappedRole === 'vendor'
-                        ? { background: '#ffd600', color: '#111', border: '1px solid transparent' }
-                        : { background: '#2d3748', color: '#fff', border: '1px solid transparent' })
-                    : { background: '#fff', color: '#111', border: '1px solid #e9ecef' };
+                        ? { 
+                            background: 'var(--chat-vendor-primary)',
+                            color: 'var(--chat-vendor-text)',
+                            border: '1px solid transparent'
+                          }
+                        : { 
+                            background: 'var(--chat-client-primary)',
+                            color: 'var(--chat-client-text)',
+                            border: '1px solid transparent'
+                          })
+                    : { 
+                        background: 'var(--white)',
+                        color: 'var(--text)',
+                        border: '1px solid var(--border)'
+                      };
                   
                   // Avatar için other_user bilgisini al
                   const otherUser = currentConversation?.other_user;
@@ -738,33 +767,18 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
             {typing && (
               <div style={{ 
                 padding: '8px 12px', 
-                background: '#fff', 
-                borderTop: '1px solid #e9ecef',
-                borderBottom: '1px solid #e9ecef',
+                background: mappedRole === 'vendor' ? 'var(--chat-vendor-bg)' : 'var(--chat-client-bg)', 
+                borderTop: `1px solid ${mappedRole === 'vendor' ? 'var(--chat-vendor-border)' : 'var(--chat-client-border)'}`,
+                borderBottom: `1px solid ${mappedRole === 'vendor' ? 'var(--chat-vendor-border)' : 'var(--chat-client-border)'}`,
                 fontSize: 12, 
-                color: '#666', 
+                color: mappedRole === 'vendor' ? 'var(--chat-vendor-text)' : 'var(--chat-client-text)',
+                opacity: 0.7,
                 fontStyle: 'italic'
               }}>
                 Yazıyor...
               </div>
             )}
             
-            {/* Debug: typing test button */}
-            {process.env.NODE_ENV === 'development' && (
-              <div style={{ 
-                padding: '4px 8px', 
-                background: '#ffeb3b', 
-                fontSize: 10, 
-                color: '#000'
-              }}>
-                <button 
-                  onClick={() => setTyping(!typing)}
-                  style={{ fontSize: 10, padding: '2px 4px' }}
-                >
-                  Toggle Typing (Test) - Current: {typing.toString()}
-                </button>
-              </div>
-            )}
             
             <div style={{ padding: 10, display: 'flex', gap: 8, borderTop: `2px solid ${palette.primary}` }}>
               <input

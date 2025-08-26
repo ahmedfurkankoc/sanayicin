@@ -188,38 +188,29 @@ apiClient.interceptors.request.use((config) => {
     return config; // Token ekleme, herkese açık
   }
   
-  // Role'ü URL'den ve mevcut sayfa yolundan tahmin et
-  const isVendorUrl = config.url?.includes('/vendors/') || 
-                      config.url?.includes('/esnaf/') || 
-                      config.url?.includes('/avatar/upload/');
-  
-  // Chat endpoint'leri için özel logic
-  const isChatEndpoint = config.url?.startsWith('/chat/');
-  
-  // Profile endpoint'i için özel logic
-  const isProfileEndpoint = config.url?.includes('/profile/');
-  
-  // Esnaf panelinde isek chat çağrıları vendor rolüyle yapılmalı
-  const isEsnafContext = typeof window !== 'undefined' && window.location?.pathname?.startsWith('/esnaf');
-  
-  let expectedRole: 'vendor' | 'client' = 'client'; // Default client
-  
-  if (isVendorUrl || isEsnafContext) {
-    expectedRole = 'vendor';
-  }
+  // Müşteri panelinde isek client token'ı kullan
+  const isMusteriContext = typeof window !== 'undefined' && window.location?.pathname?.startsWith('/musteri');
   
   // Role'e göre geçerli token'ı bul
   let token: string | null = null;
   
-  if (expectedRole === 'vendor') {
-    const vendorToken = localStorage.getItem('esnaf_access_token');
-    if (vendorToken && isTokenValidForRole(vendorToken, 'vendor')) {
-      token = vendorToken;
+  if (isMusteriContext) {
+    // Önce client token'ı dene
+    const clientToken = localStorage.getItem('client_access_token');
+    if (clientToken) {
+      token = clientToken;
+    } else {
+      // Client token yoksa vendor token'ı dene
+      const vendorToken = localStorage.getItem('esnaf_access_token');
+      if (vendorToken) {
+        token = vendorToken;
+      }
     }
   } else {
-    const clientToken = localStorage.getItem('client_access_token');
-    if (clientToken && isTokenValidForRole(clientToken, 'client')) {
-      token = clientToken;
+    // Diğer durumlarda vendor token'ı kullan
+    const vendorToken = localStorage.getItem('esnaf_access_token');
+    if (vendorToken) {
+      token = vendorToken;
     }
   }
   
@@ -407,7 +398,7 @@ export const api = {
   
   // Favorites API
   getFavorites: () => apiClient.get('/favorites/'),
-  addFavorite: (vendorId: number) => apiClient.post('/favorites/add/', { vendor_id: vendorId }),
+  addFavorite: (vendorId: number) => apiClient.post('/favorites/add/', { vendor: vendorId }),
   removeFavorite: (vendorId: number) => apiClient.delete(`/favorites/${vendorId}/`),
   checkFavorite: (vendorId: number) => apiClient.get(`/favorites/${vendorId}/check/`),
 }; 

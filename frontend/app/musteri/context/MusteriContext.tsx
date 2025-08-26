@@ -2,12 +2,18 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, apiClient, getAuthToken, setAuthToken, setRefreshToken, setAuthEmail, clearAllAuthData } from '@/app/utils/api';
-import { FavoritesProvider } from './FavoritesContext';
+import { api, getAuthToken, setAuthToken, setRefreshToken, setAuthEmail, clearAuthTokens, clearAllAuthData } from '@/app/utils/api';
 
 interface MusteriContextType {
   isAuthenticated: boolean;
   user: any | null;
+  role: 'client' | 'vendor' | null;
+  permissions: {
+    can_provide_services: boolean;
+    can_request_services: boolean;
+    can_access_vendor_panel: boolean;
+    can_access_client_features: boolean;
+  };
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -31,88 +37,97 @@ interface MusteriProviderProps {
 export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any | null>(null);
+  const [role, setRole] = useState<'client' | 'vendor' | null>(null);
+  const [permissions, setPermissions] = useState({
+    can_provide_services: false,
+    can_request_services: true,
+    can_access_vendor_panel: false,
+    can_access_client_features: true,
+  });
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  // Token kontrolü - herhangi bir token varsa authenticated kabul et
-  const checkAuth = (): boolean => {
-    if (!mounted) return false;
-    const clientToken = getAuthToken('client');
+  // Token kontrolü - role göre kontrol
+  const checkAuth = (): { isAuthenticated: boolean; role: 'client' | 'vendor' | null } => {
+    if (!mounted) return { isAuthenticated: false, role: null };
+    
     const vendorToken = getAuthToken('vendor');
-    return Boolean(clientToken || vendorToken);
+    const clientToken = getAuthToken('client');
+    
+    if (vendorToken) {
+      return { isAuthenticated: true, role: 'vendor' };
+    } else if (clientToken) {
+      return { isAuthenticated: true, role: 'client' };
+    }
+    
+    return { isAuthenticated: false, role: null };
   };
 
-  // Kullanıcı bilgilerini yenile
+  // Permission'ları set et - role göre ayarlanmış versiyon
+  const setUserPermissions = (userRole: 'client' | 'vendor' | null) => {
+    setPermissions({
+      can_provide_services: userRole === 'vendor',
+      can_request_services: !!userRole, // Hem vendor hem client servis talep edebilir
+      can_access_vendor_panel: userRole === 'vendor',
+      can_access_client_features: !!userRole, // Hem vendor hem client müşteri özelliklerini kullanabilir
+    });
+  };
+
+  // Kullanıcı bilgilerini yenile - role göre profil çekme
   const refreshUser = async () => {
     try {
       setLoading(true);
-      const hasAuth = checkAuth();
-      if (!hasAuth) {
+      const authCheck = checkAuth();
+      
+      if (!authCheck.isAuthenticated) {
         setIsAuthenticated(false);
         setUser(null);
-        setLoading(false);
+        setRole(null);
+        setUserPermissions(null);
         return;
       }
 
-      // Unified CustomUser profili çek
-      const response = await apiClient.get('/profile/');
+      // Role göre profil bilgilerini çek
+      if (!authCheck.role) return;
+      const response = await api.getProfile(authCheck.role);
       
       if (response.status === 200) {
-        setUser(response.data);
+        const userData = response.data.user || response.data;
+        setUser(userData);
         setIsAuthenticated(true);
+        setRole(authCheck.role);
+        setUserPermissions(authCheck.role);
       } else {
-        // Token geçersiz, sadece logout yap - yönlendirme yapma
-        console.log('Token geçersiz, logout yapıldı. Yönlendirme yapılmadı.');
         logout();
       }
     } catch (error) {
       console.error('Profil yüklenirken hata:', error);
-      // Hata durumunda da sadece logout yap - yönlendirme yapma
-      console.log('Profil yüklenirken hata, logout yapıldı. Yönlendirme yapılmadı.');
       logout();
     } finally {
       setLoading(false);
     }
   };
 
-  // Giriş yap
+  // Giriş yap - role göre token ayarlaması
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      
-      // Tek endpoint ile giriş yap
       const response = await api.login({ email, password });
       
       if (response.status === 200 && response.data.access) {
-        const { access, refresh, role } = response.data;
-
-        // Role'e göre token kaydet - SADECE GEREKLİ OLANI
-        if (role === 'vendor') {
-          // Vendor kullanıcı - sadece vendor token'ları
-          setAuthToken('vendor', access);
-          setRefreshToken('vendor', refresh);
-          setAuthEmail('vendor', email);
-          
-          // Client token'larını temizle (eğer varsa)
-          localStorage.removeItem('client_access_token');
-          localStorage.removeItem('client_refresh_token');
-          localStorage.removeItem('client_email');
-        } else {
-          // Client kullanıcı - sadece client token'ları
-          setAuthToken('client', access);
-          setRefreshToken('client', refresh);
-          setAuthEmail('client', email);
-          
-          // Vendor token'larını temizle (eğer varsa)
-          localStorage.removeItem('esnaf_access_token');
-          localStorage.removeItem('esnaf_refresh_token');
-          localStorage.removeItem('esnaf_email');
-        }
-
+        const { access, refresh, role: userRole } = response.data;
+        
+        // Role göre token ayarla
+        const tokenRole = userRole === 'vendor' ? 'vendor' : 'client';
+        setAuthToken(tokenRole, access);
+        setRefreshToken(tokenRole, refresh);
+        setAuthEmail(tokenRole, email);
+        
+        setRole(userRole);
+        setUserPermissions(userRole);
         setIsAuthenticated(true);
         
-        // Kullanıcı bilgilerini yükle
         await refreshUser();
         return true;
       }
@@ -126,13 +141,15 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     }
   };
 
-  // Çıkış yap
+  // Çıkış yap - basitleştirilmiş versiyon
   const logout = () => {
     clearAllAuthData();
     
     setIsAuthenticated(false);
     setUser(null);
-    router.push('/musteri/hizmetler'); // Çıkış yaptıktan sonra hizmetler sayfasına yönlendir
+    setRole(null);
+    setUserPermissions(null);
+    router.push('/'); // Ana sayfaya yönlendir
   };
 
   // Component mount olduktan sonra authentication kontrolü
@@ -145,8 +162,8 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     if (!mounted) return;
     
     setLoading(true);
-    const hasAuth = checkAuth();
-    if (hasAuth) {
+    const authCheck = checkAuth();
+    if (authCheck.isAuthenticated) {
       refreshUser();
     } else {
       setLoading(false);
@@ -156,6 +173,8 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
   const value: MusteriContextType = {
     isAuthenticated,
     user,
+    role,
+    permissions,
     login,
     logout,
     refreshUser,
@@ -164,9 +183,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
 
   return (
     <MusteriContext.Provider value={value}>
-      <FavoritesProvider>
-        {children}
-      </FavoritesProvider>
+      {children}
     </MusteriContext.Provider>
   );
 };

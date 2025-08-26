@@ -43,9 +43,9 @@ export default function FavorilerimPage() {
 
   // Authentication kontrolü
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/musteri/giris?next=/musteri/favorilerim');
-      return;
+    if (loading) return; // Auth hazır değilken yönlendirme yapma
+    if (!isAuthenticated) {
+      router.replace('/musteri/giris?next=/musteri/favorilerim');
     }
   }, [isAuthenticated, loading, router]);
 
@@ -124,7 +124,9 @@ export default function FavorilerimPage() {
 
       {favorites.length === 0 ? (
         <div className="musteri-empty-state">
-          <div className="musteri-empty-icon">💝</div>
+          <div className="musteri-empty-icon">
+            {React.createElement(iconMapping.heart, { size: 40 })}
+          </div>
           <h3>Henüz favori esnafınız yok</h3>
           <p>
             Beğendiğiniz esnafları favorilerinize ekleyin ve buradan kolayca erişin.
@@ -179,10 +181,7 @@ export default function FavorilerimPage() {
                         Doğrulanmış
                       </div>
                     )}
-                    
-                    <div className="musteri-favorite-type">
-                      {favorite.vendor.business_type}
-                    </div>
+                  
                   </div>
 
                   <div className="musteri-favorite-details">
