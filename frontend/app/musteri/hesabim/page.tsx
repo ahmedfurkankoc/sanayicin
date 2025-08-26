@@ -26,7 +26,7 @@ interface CustomUser {
 
 export default function MusteriHesabimPage() {
   const router = useRouter();
-  const { isAuthenticated, user: currentUser, updateUser } = useMusteri();
+  const { isAuthenticated, user: currentUser, loading: authLoading } = useMusteri();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<CustomUser | null>(null);
   const [activeTab, setActiveTab] = useState<'basic' | 'email' | 'phone' | 'password' | 'danger'>('basic');
@@ -50,8 +50,9 @@ export default function MusteriHesabimPage() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
+        if (authLoading) return; // Auth hazır değilken yönlendirme yapma
         if (!isAuthenticated) {
-          router.push('/musteri/giris');
+          router.replace('/musteri/giris?next=/musteri/hesabim');
           return;
         }
 
@@ -74,18 +75,18 @@ export default function MusteriHesabimPage() {
     };
 
     loadProfile();
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   const handleSaveName = async () => {
     setSavingName(true);
     try {
-      const response = await api.updateProfile('client', {
-        first_name: firstName,
-        last_name: lastName
-      });
+      const formData = new FormData();
+      formData.append('first_name', firstName);
+      formData.append('last_name', lastName);
+      const response = await api.updateProfile(formData, 'client');
       
       setUserData(response.data);
-      updateUser(response.data);
+      
       setEditingName(false);
       toast.success('Ad soyad güncellendi');
     } catch (error: any) {
@@ -99,12 +100,12 @@ export default function MusteriHesabimPage() {
   const handleSavePhone = async () => {
     setSavingPhone(true);
     try {
-      const response = await api.updateProfile('client', {
-        phone_number: phone
-      });
+      const formData = new FormData();
+      formData.append('phone_number', phone);
+      const response = await api.updateProfile(formData, 'client');
       
       setUserData(response.data);
-      updateUser(response.data);
+      
       setEditingPhone(false);
       toast.success('Telefon numarası güncellendi');
     } catch (error: any) {
@@ -118,12 +119,12 @@ export default function MusteriHesabimPage() {
   const handleSaveAbout = async () => {
     setSavingAbout(true);
     try {
-      const response = await api.updateProfile('client', {
-        about: about
-      });
+      const formData = new FormData();
+      formData.append('about', about);
+      const response = await api.updateProfile(formData, 'client');
       
       setUserData(response.data);
-      updateUser(response.data);
+      
       setEditingAbout(false);
       toast.success('Hakkında bilgisi güncellendi');
     } catch (error: any) {

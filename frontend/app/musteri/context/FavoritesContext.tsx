@@ -6,10 +6,8 @@ import { useMusteri } from './MusteriContext';
 
 interface FavoritesContextType {
   favorites: number[];
-  isLoading: boolean;
   isFavorite: (vendorId: number) => boolean;
-  toggleFavorite: (vendorId: number) => Promise<boolean>;
-  refreshFavorites: () => Promise<void>;
+  toggleFavorite: (vendorId: number) => Promise<void>;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
@@ -42,7 +40,17 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
       setIsLoading(true);
       const response = await api.getFavorites();
       const favoriteVendors = response.data?.results || response.data || [];
-      const vendorIds = favoriteVendors.map((fav: any) => fav.vendor.id || fav.vendor_id);
+      
+      // Vendor ID'leri çıkar - vendor.id veya vendor_id'yi kontrol et
+      const vendorIds = favoriteVendors.map((fav: any) => {
+        // Vendor objesi varsa ve ID'si varsa onu kullan
+        if (fav.vendor && (fav.vendor.id || fav.vendor_id)) {
+          return fav.vendor.id || fav.vendor_id;
+        }
+        // Direkt vendor_id varsa onu kullan
+        return fav.vendor_id;
+      }).filter(Boolean); // null/undefined değerleri filtrele
+      
       setFavorites(vendorIds);
     } catch (error) {
       console.error('Favoriler yüklenemedi:', error);
@@ -67,7 +75,7 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
   };
 
   // Favori ekleme/çıkarma
-  const toggleFavorite = async (vendorId: number): Promise<boolean> => {
+  const toggleFavorite = async (vendorId: number): Promise<void> => {
     if (!isAuthenticated) {
       throw new Error('Favorilere eklemek için giriş yapmanız gerekiyor');
     }
@@ -79,12 +87,10 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
         // Favoriden çıkar
         await api.removeFavorite(vendorId);
         setFavorites(prev => prev.filter(id => id !== vendorId));
-        return false;
       } else {
         // Favoriye ekle
         await api.addFavorite(vendorId);
         setFavorites(prev => [...prev, vendorId]);
-        return true;
       }
     } catch (error) {
       console.error('Favori işlemi başarısız:', error);
@@ -94,10 +100,8 @@ export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }
 
   const value: FavoritesContextType = {
     favorites,
-    isLoading,
     isFavorite,
     toggleFavorite,
-    refreshFavorites,
   };
 
   return (

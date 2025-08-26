@@ -17,13 +17,45 @@ class FavoriteSerializer(serializers.ModelSerializer):
     
     def get_vendor(self, obj):
         vendor = obj.vendor
+        # Build minimal nested user info
+        user_data = None
+        if getattr(vendor, 'user', None):
+            user_data = {
+                'email': vendor.user.email,
+                'is_verified': getattr(vendor.user, 'is_verified', False),
+                'avatar': (vendor.user.avatar.url if getattr(vendor.user, 'avatar', None) else None),
+            }
+
+        # Map M2M fields to simple id-name lists
+        try:
+            service_areas = [
+                { 'id': sa.id, 'name': sa.name }
+                for sa in vendor.service_areas.all()
+            ]
+        except Exception:
+            service_areas = []
+
+        try:
+            categories = [
+                { 'id': c.id, 'name': c.name }
+                for c in vendor.categories.all()
+            ]
+        except Exception:
+            categories = []
+
         return {
             'id': vendor.id,
+            'slug': getattr(vendor, 'slug', None),
             'display_name': vendor.display_name,
+            'company_title': getattr(vendor, 'company_title', ''),
+            'business_type': getattr(vendor, 'business_type', ''),
+            'about': getattr(vendor, 'about', ''),
             'city': vendor.city,
             'district': vendor.district,
             'subdistrict': vendor.subdistrict,
-            'avatar': vendor.avatar.url if vendor.avatar else None,
+            'service_areas': service_areas,
+            'categories': categories,
+            'user': user_data,
         }
 
 class FavoriteCreateSerializer(serializers.ModelSerializer):

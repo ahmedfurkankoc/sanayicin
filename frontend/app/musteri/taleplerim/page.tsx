@@ -176,7 +176,7 @@ export default function MusteriTaleplerimPage() {
             }
           </p>
           {selectedStatus === 'all' && (
-            <Link href="/musteri/hizmetler" className="musteri-btn musteri-btn-primary">
+            <Link href="/musteri" className="musteri-btn musteri-btn-primary">
               Hizmet Ara
             </Link>
           )}

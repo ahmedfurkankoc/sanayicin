@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./styles/styles.css";
-import { MusteriProvider } from "./musteri/context/MusteriContext";
 
 export const metadata: Metadata = {
   title: "Sanayicin - Size En Yakın Ustayı Hemen Bulun",
@@ -25,9 +24,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#1f2937" />
       </head>
       <body className="antialiased">
-        <MusteriProvider>
-          {children}
-        </MusteriProvider>
+        {children}
       </body>
     </html>
   );
