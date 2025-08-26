@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from core.models import CustomUser
 from core.models import ServiceArea, Category, CarBrand
 from core.utils import avatar_upload_path
@@ -171,25 +172,54 @@ class Appointment(models.Model):
 		return appointment_datetime < current_datetime
 	
 	def auto_cancel_if_expired(self):
-		"""Eğer randevu tarihi geçmişse ve pending durumda ise otomatik iptal et"""
-		if self.status == 'pending' and self.is_expired:
-			self.status = 'cancelled'
-			self.save()
-			
-			# Otomatik iptal bildirim emaili gönder
-			try:
-				from core.tasks import send_auto_cancellation_email
-				appointment_data = {
-					'client_name': self.client_name,
-					'client_email': self.client_email,
-					'vendor_name': self.vendor.display_name,
-					'appointment_date': self.appointment_date.strftime('%d.%m.%Y'),
-					'appointment_time': self.appointment_time.strftime('%H:%M'),
-					'service_description': self.service_description,
-				}
-				send_auto_cancellation_email.delay(appointment_data)
-			except Exception:
-				pass  # Email gönderim hatası randevu iptalini etkilememeli
-			
-			return True
-		return False
+			"""Eğer randevu tarihi geçmişse ve pending durumda ise otomatik iptal et"""
+			if self.status == 'pending' and self.is_expired:
+				self.status = 'cancelled'
+				self.save()
+				
+				# Otomatik iptal bildirim emaili gönder
+				try:
+					from core.tasks import send_auto_cancellation_email
+					appointment_data = {
+						'client_name': self.client_name,
+						'client_email': self.client_email,
+						'vendor_name': self.vendor.display_name,
+						'appointment_date': self.appointment_date.strftime('%d.%m.%Y'),
+						'appointment_time': self.appointment_time.strftime('%H:%M'),
+						'service_description': self.service_description,
+					}
+					send_auto_cancellation_email.delay(appointment_data)
+				except Exception:
+					pass  # Email gönderim hatası randevu iptalini etkilememeli
+				
+				return True
+			return False
+
+
+class Review(models.Model):
+	"""Müşteri değerlendirmeleri"""
+	vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='reviews')
+	user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='reviews')
+	service = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+	rating = models.IntegerField(
+		validators=[
+			MinValueValidator(1, message="Puan en az 1 olmalıdır"),
+			MaxValueValidator(5, message="Puan en fazla 5 olabilir")
+		],
+		help_text="1-5 arası puanlama"
+	)
+	comment = models.TextField()
+	service_date = models.DateField()  # Hizmetin alındığı tarih
+	is_read = models.BooleanField(default=False)  # Esnaf tarafından okundu mu?
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ['-created_at']
+		indexes = [
+			models.Index(fields=['vendor', 'is_read']),  # Okunmamış yorumları hızlı bulmak için
+			models.Index(fields=['vendor', 'created_at']),  # Tarih sıralaması için
+		]
+
+	def __str__(self):
+		return f"{self.user.full_name} -> {self.vendor.display_name} ({self.rating}★)"
