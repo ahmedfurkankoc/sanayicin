@@ -190,7 +190,12 @@ export default function EsnafPanelLayout({
           email={email} 
           onLogout={handleLogout}
           activePage={activePage}
-          unreadCount={unreadCount}
+          notifications={{
+            messages: unreadCount,
+            reviews: 0,
+            appointments: 0,
+            quotes: 0
+          }}
         />
 
         {/* Ana İçerik */}
