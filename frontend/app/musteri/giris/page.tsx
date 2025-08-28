@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMusteri } from "../context/MusteriContext";
 import MusteriHeader from "../components/MusteriHeader";
-import MusteriFooter from "../components/MusteriFooter";
 
 export default function MusteriGirisPage() {
   const [email, setEmail] = useState("");

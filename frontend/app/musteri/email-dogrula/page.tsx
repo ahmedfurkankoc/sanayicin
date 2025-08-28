@@ -4,8 +4,6 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/app/utils/api";
-import MusteriHeader from "../components/MusteriHeader";
-import MusteriFooter from "../components/MusteriFooter";
 
 function EmailVerificationContent() {
   const router = useRouter();
@@ -74,7 +72,6 @@ function EmailVerificationContent() {
   if (loading) {
     return (
       <>
-        <MusteriHeader />
         <main className="musteri-auth-main">
           <div className="musteri-auth-container">
             <div className="musteri-auth-card">
@@ -88,7 +85,6 @@ function EmailVerificationContent() {
             </div>
           </div>
         </main>
-        <MusteriFooter />
       </>
     );
   }
@@ -96,7 +92,6 @@ function EmailVerificationContent() {
   if (success) {
     return (
       <>
-        <MusteriHeader />
         <main className="musteri-auth-main">
           <div className="musteri-auth-container">
             <div className="musteri-auth-card">
@@ -141,14 +136,12 @@ function EmailVerificationContent() {
             </div>
           </div>
         </main>
-        <MusteriFooter />
       </>
     );
   }
 
   return (
     <>
-      <MusteriHeader />
       <main className="musteri-auth-main">
         <div className="musteri-auth-container">
           <div className="musteri-auth-card">
@@ -188,7 +181,6 @@ function EmailVerificationContent() {
           </div>
         </div>
       </main>
-      <MusteriFooter />
     </>
   );
 }
@@ -197,7 +189,6 @@ export default function MusteriEmailDogrulaPage() {
   return (
     <Suspense fallback={
       <>
-        <MusteriHeader />
         <main className="musteri-auth-main">
           <div className="musteri-auth-container">
             <div className="musteri-auth-card">
@@ -211,7 +202,6 @@ export default function MusteriEmailDogrulaPage() {
             </div>
           </div>
         </main>
-        <MusteriFooter />
       </>
     }>
       <EmailVerificationContent />
