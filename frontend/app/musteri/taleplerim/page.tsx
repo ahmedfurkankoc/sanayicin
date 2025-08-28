@@ -33,23 +33,24 @@ interface Appointment {
 }
 
 export default function MusteriTaleplerimPage() {
-  const { user, email } = useMusteri();
+  const { user } = useMusteri();
+  const clientEmail = user?.email;
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
   useEffect(() => {
     fetchAppointments();
-  }, [email]);
+  }, [clientEmail]);
 
   const fetchAppointments = async () => {
-    if (!email) {
+    if (!clientEmail) {
       setLoading(false);
       return;
     }
 
     try {
-      const response = await api.getClientAppointments(email);
+      const response = await api.getClientAppointments(clientEmail);
       setAppointments(response.data);
     } catch (error: any) {
       console.error('Randevu talepleri getirme hatası:', error);

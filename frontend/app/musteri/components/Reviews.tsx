@@ -153,7 +153,7 @@ const Reviews: React.FC<ReviewsProps> = ({ reviews, averageRating, totalReviews,
                     {review.user.name}
                   </div>
                   <div style={{ fontSize: '12px', color: '#666' }}>
-                    {formatDate(review.date.month, review.date.year)}
+                    {review.date ? formatDate(review.date.month, review.date.year) : new Date(review.created_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' })}
                   </div>
                 </div>
               </div>
