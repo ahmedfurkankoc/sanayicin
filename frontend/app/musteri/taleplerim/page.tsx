@@ -1,111 +1,77 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useMusteri } from '../context/MusteriContext';
 import { api } from '@/app/utils/api';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import '../../styles/musteri.css';
 
-interface Appointment {
+interface ClientRequest {
   id: number;
-  client_name: string;
-  client_phone: string;
-  client_email: string;
-  service_description: string;
-  appointment_date: string;
-  appointment_time: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rejected';
-  notes?: string;
+  vendor_info: { id: number; slug: string; display_name: string; business_phone: string; city: string; district: string };
+  request_type?: 'appointment' | 'quote' | 'emergency' | 'part';
+  vehicle_info?: string;
+  title: string;
+  description: string;
+  client_phone?: string;
+  messages?: Array<{ by: 'vendor' | 'client'; content: string; at: string }>;
+  status: 'pending' | 'responded' | 'completed' | 'cancelled' | 'closed';
   created_at: string;
-  updated_at: string;
-  vendor: {
-    id: number;
-    slug: string;
-    display_name: string;
-    business_phone: string;
-    city: string;
-    district: string;
-    user: {
-      email: string;
-    };
-  };
+  last_offered_price?: number;
+  last_offered_days?: number;
 }
 
 export default function MusteriTaleplerimPage() {
   const { user } = useMusteri();
-  const clientEmail = user?.email;
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const router = useRouter();
+  const [requests, setRequests] = useState<ClientRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
   useEffect(() => {
-    fetchAppointments();
-  }, [clientEmail]);
-
-  const fetchAppointments = async () => {
-    if (!clientEmail) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await api.getClientAppointments(clientEmail);
-      setAppointments(response.data);
-    } catch (error: any) {
-      console.error('Randevu talepleri getirme hatası:', error);
-      toast.error('Randevu talepleri yüklenirken hata oluştu');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        const res = await api.listClientServiceRequests(selectedStatus === 'all' ? {} : { status: selectedStatus as any });
+        setRequests(res.data || []);
+      } catch (error: any) {
+        console.error('Talepler getirme hatası:', error);
+        toast.error('Talepler yüklenirken hata oluştu');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRequests();
+  }, [selectedStatus]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'var(--green)';
+      case 'responded': return 'var(--green)';
       case 'pending': return 'var(--yellow)';
       case 'completed': return 'var(--blue)';
       case 'cancelled': return 'var(--red)';
-      case 'rejected': return 'var(--red)';
       default: return 'var(--gray)';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'Onaylandı';
+      case 'responded': return 'Yanıtlandı';
       case 'pending': return 'Beklemede';
       case 'completed': return 'Tamamlandı';
       case 'cancelled': return 'İptal Edildi';
-      case 'rejected': return 'Reddedildi';
       default: return 'Bilinmiyor';
     }
   };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const formatTime = (timeString: string) => {
-    return timeString.slice(0, 5); // HH:MM formatında göster
-  };
-
-  const filteredAppointments = appointments.filter(appointment => {
-    if (selectedStatus === 'all') return true;
-    return appointment.status === selectedStatus;
-  });
 
   if (loading) {
     return (
       <div className="musteri-page-container">
         <div className="musteri-loading">
           <div className="musteri-loading-spinner"></div>
-          <p>Randevu talepleri yükleniyor...</p>
+          <p>Talepler yükleniyor...</p>
         </div>
       </div>
     );
@@ -113,9 +79,9 @@ export default function MusteriTaleplerimPage() {
 
   return (
     <div className="musteri-page-container">
-      <div className="musteri-page-header">
-        <h1>Taleplerim</h1>
-        <p>Randevu taleplerinizi ve durumlarını buradan takip edebilirsiniz.</p>
+      <div className="musteri-page-header" style={{ color: '#111' }}>
+        <h1 style={{ color: '#111' }}>Taleplerim</h1>
+        <p style={{ color: '#111' }}>Taleplerinizi ve durumlarını buradan takip edebilirsiniz.</p>
       </div>
 
       {/* Status Filter */}
@@ -124,56 +90,55 @@ export default function MusteriTaleplerimPage() {
           <button
             className={`musteri-filter-btn ${selectedStatus === 'all' ? 'active' : ''}`}
             onClick={() => setSelectedStatus('all')}
+            style={{ color: '#111' }}
           >
-            Tümü ({appointments.length})
+            Tümü ({requests.length})
           </button>
           <button
             className={`musteri-filter-btn ${selectedStatus === 'pending' ? 'active' : ''}`}
             onClick={() => setSelectedStatus('pending')}
+            style={{ color: '#111' }}
           >
-            Beklemede ({appointments.filter(a => a.status === 'pending').length})
+            Beklemede ({requests.filter(a => a.status === 'pending').length})
           </button>
           <button
-            className={`musteri-filter-btn ${selectedStatus === 'confirmed' ? 'active' : ''}`}
-            onClick={() => setSelectedStatus('confirmed')}
+            className={`musteri-filter-btn ${selectedStatus === 'responded' ? 'active' : ''}`}
+            onClick={() => setSelectedStatus('responded')}
+            style={{ color: '#111' }}
           >
-            Onaylı ({appointments.filter(a => a.status === 'confirmed').length})
+            Yanıtlandı ({requests.filter(a => a.status === 'responded').length})
           </button>
           <button
             className={`musteri-filter-btn ${selectedStatus === 'completed' ? 'active' : ''}`}
             onClick={() => setSelectedStatus('completed')}
+            style={{ color: '#111' }}
           >
-            Tamamlandı ({appointments.filter(a => a.status === 'completed').length})
+            Tamamlandı ({requests.filter(a => a.status === 'completed').length})
           </button>
           <button
             className={`musteri-filter-btn ${selectedStatus === 'cancelled' ? 'active' : ''}`}
             onClick={() => setSelectedStatus('cancelled')}
+            style={{ color: '#111' }}
           >
-            İptal ({appointments.filter(a => a.status === 'cancelled').length})
-          </button>
-          <button
-            className={`musteri-filter-btn ${selectedStatus === 'rejected' ? 'active' : ''}`}
-            onClick={() => setSelectedStatus('rejected')}
-          >
-            Red ({appointments.filter(a => a.status === 'rejected').length})
+            İptal ({requests.filter(a => a.status === 'cancelled').length})
           </button>
         </div>
       </div>
 
-      {/* Appointments List */}
-      {filteredAppointments.length === 0 ? (
+      {/* Requests List */}
+      {requests.length === 0 ? (
         <div className="musteri-empty-state">
           <div className="musteri-empty-icon">📋</div>
           <h3>
             {selectedStatus === 'all' 
-              ? 'Henüz randevu talebiniz bulunmuyor' 
-              : `${getStatusText(selectedStatus)} statüsünde randevu talebiniz bulunmuyor`
+              ? 'Henüz talebiniz bulunmuyor' 
+              : `${getStatusText(selectedStatus)} statüsünde talebiniz bulunmuyor`
             }
           </h3>
           <p>
             {selectedStatus === 'all' 
-              ? 'Esnaflardan randevu taleplerinde bulunarak burada takip edebilirsiniz.'
-              : 'Diğer filtreleri kullanarak randevu taleplerinizi görüntüleyebilirsiniz.'
+              ? 'Esnaflardan taleplerde bulunarak burada takip edebilirsiniz.'
+              : 'Diğer filtreleri kullanarak taleplerinizi görüntüleyebilirsiniz.'
             }
           </p>
           {selectedStatus === 'all' && (
@@ -184,88 +149,115 @@ export default function MusteriTaleplerimPage() {
         </div>
       ) : (
         <div className="musteri-appointments-list">
-          {filteredAppointments.map((appointment) => (
-            <div key={appointment.id} className="musteri-appointment-card">
-              <div className="musteri-appointment-header">
+          {requests.map((req) => (
+            <div key={req.id} className="musteri-appointment-card" style={{ color: '#111' }}>
+              <div className="musteri-appointment-header" style={{ color: '#111' }}>
                 <div className="musteri-appointment-vendor">
                   <Link 
-                    href={`/musteri/esnaf/${appointment.vendor.slug}`}
+                    href={`/musteri/esnaf/${req.vendor_info.slug}`}
                     className="musteri-vendor-link"
                   >
-                    <h3>{appointment.vendor.display_name}</h3>
+                    <h3 style={{ color: '#111' }}>{req.vendor_info.display_name}</h3>
                   </Link>
-                  <p>{appointment.vendor.city} / {appointment.vendor.district}</p>
-                  <p>📞 {appointment.vendor.business_phone}</p>
+                  <p style={{ color: '#111' }}>{req.vendor_info.city} / {req.vendor_info.district}</p>
+                  <p style={{ color: '#111' }}>📞 {req.vendor_info.business_phone}</p>
                 </div>
                 <div 
                   className="musteri-appointment-status"
                   style={{ 
-                    backgroundColor: getStatusColor(appointment.status),
-                    color: appointment.status === 'pending' ? 'var(--black)' : 'white'
+                    backgroundColor: getStatusColor(req.status),
+                    color: '#111'
                   }}
                 >
-                  {getStatusText(appointment.status)}
+                  {getStatusText(req.status)}
                 </div>
               </div>
 
               <div className="musteri-appointment-details">
                 <div className="musteri-appointment-info">
                   <div className="musteri-info-row">
-                    <span className="musteri-info-label">📅 Tarih:</span>
-                    <span className="musteri-info-value">
-                      {formatDate(appointment.appointment_date)} - {formatTime(appointment.appointment_time)}
-                    </span>
+                    <span className="musteri-info-label" style={{ color: '#111' }}>📅 Oluşturma:</span>
+                    <span className="musteri-info-value" style={{ color: '#111' }}>{new Date(req.created_at).toLocaleString('tr-TR')}</span>
                   </div>
                   <div className="musteri-info-row">
-                    <span className="musteri-info-label">🔧 Hizmet:</span>
-                    <span className="musteri-info-value">{appointment.service_description}</span>
+                    <span className="musteri-info-label" style={{ color: '#111' }}>🔧 Talep:</span>
+                    <span className="musteri-info-value" style={{ color: '#111' }}>{req.title}</span>
                   </div>
                   <div className="musteri-info-row">
-                    <span className="musteri-info-label">👤 Ad Soyad:</span>
-                    <span className="musteri-info-value">{appointment.client_name}</span>
+                    <span className="musteri-info-label" style={{ color: '#111' }}>📞 Telefon:</span>
+                    <span className="musteri-info-value" style={{ color: '#111' }}>{req.client_phone || '—'}</span>
                   </div>
-                  <div className="musteri-info-row">
-                    <span className="musteri-info-label">📞 Telefon:</span>
-                    <span className="musteri-info-value">{appointment.client_phone}</span>
-                  </div>
-                  {appointment.notes && (
-                    <div className="musteri-info-row">
-                      <span className="musteri-info-label">📝 Notlar:</span>
-                      <span className="musteri-info-value">{appointment.notes}</span>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              <div className="musteri-appointment-footer">
-                <div className="musteri-appointment-dates">
-                  <small>
-                    Oluşturulma: {new Date(appointment.created_at).toLocaleDateString('tr-TR')}
-                  </small>
-                  {appointment.updated_at !== appointment.created_at && (
-                    <small>
-                      Güncelleme: {new Date(appointment.updated_at).toLocaleDateString('tr-TR')}
-                    </small>
-                  )}
-                </div>
-                
-                <div className="musteri-appointment-actions">
-                  <Link 
-                    href={`/musteri/esnaf/${appointment.vendor.slug}`}
-                    className="musteri-btn musteri-btn-outline"
-                  >
-                    Esnaf Profilini Gör
-                  </Link>
-                  {(appointment.status === 'confirmed' || appointment.status === 'completed') && (
-                    <Link 
-                      href={`/musteri/mesajlar?vendor=${appointment.vendor.id}`}
+              {/* Esnafın Teklifi (varsa) */}
+              {(req.last_offered_price != null || req.last_offered_days != null || (Array.isArray(req.messages) && req.messages.some(m => m.by === 'vendor'))) && (
+                <div style={{ marginTop: 12, border: '1px solid #e2e8f0', borderRadius: 12, background: '#f8fafc', padding: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <div style={{ fontWeight: 700, color: '#0f172a' }}>Esnaftan Gelen Teklif</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {req.last_offered_price != null && (
+                        <span style={{ background: '#111', color: '#ffd600', borderRadius: 8, padding: '6px 10px', fontWeight: 700 }}>
+                          {String(req.last_offered_price)} ₺
+                        </span>
+                      )}
+                      {req.last_offered_days != null && (
+                        <span style={{ background: '#e2e8f0', color: '#0f172a', borderRadius: 8, padding: '6px 10px', fontWeight: 600 }}>
+                          {String(req.last_offered_days)} gün
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {(() => {
+                    let lastVendorMessage = '' as string;
+                    if (Array.isArray(req.messages)) {
+                      const last = [...req.messages].reverse().find(m => m.by === 'vendor');
+                      if (last) lastVendorMessage = last.content;
+                    }
+                    return (
+                      <div style={{ color: '#111', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                        {lastVendorMessage || 'Mesaj belirtilmemiş.'}
+                      </div>
+                    );
+                  })()}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+                    <button
+                      onClick={async () => {
+                        try {
+                          // Vendor user id almak için detay çek
+                          const vd = await api.getVendorDetail(req.vendor_info.slug);
+                          const vendorUserId = vd?.data?.user?.id;
+                          if (!vendorUserId) return;
+                          // Konuşma oluştur
+                          const conv = await api.chatCreateConversation(vendorUserId);
+                          const conversationId = conv?.data?.id;
+                          if (!conversationId) return;
+                          // Alıntılı başlangıç mesajı
+                          const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                          const taleplerimUrl = origin ? `${origin}/musteri/taleplerim` : '/musteri/taleplerim';
+                          const payload = {
+                            type: 'offer_marker',
+                            request_id: req.id,
+                            title: req.title,
+                            vendor_name: req.vendor_info.display_name,
+                            url: taleplerimUrl,
+                            price: req.last_offered_price ?? null,
+                            days: req.last_offered_days ?? null,
+                            phone: req.client_phone ?? null,
+                          };
+                          await api.chatSendMessageREST(conversationId, `OFFER_CARD::${JSON.stringify(payload)}`);
+                          router.push(`/musteri/mesajlar/${conversationId}`);
+                        } catch (e) {
+                          // sessizce geç
+                        }
+                      }}
                       className="musteri-btn musteri-btn-primary"
                     >
                       Mesaj Gönder
-                    </Link>
-                  )}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>

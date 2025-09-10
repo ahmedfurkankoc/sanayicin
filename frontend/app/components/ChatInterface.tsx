@@ -61,6 +61,7 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
   const [nextOffset, setNextOffset] = useState<number | null>(null);
   const wsRef = useRef<ChatWSClient | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [offerModal, setOfferModal] = useState<any | null>(null);
 
   // Mevcut kullanıcının ID'sini al
   const getCurrentUserId = () => {
@@ -337,7 +338,45 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
                   </div>
                 )}
                 <div className={`${variant}-message-bubble ${isOwn ? 'own' : 'other'}`}>
-                  {m.content}
+                  {(() => {
+                    try {
+                      if (typeof m.content === 'string' && m.content.startsWith('OFFER_CARD::')) {
+                        const data = JSON.parse(m.content.replace('OFFER_CARD::', ''));
+                        return (
+                          <div style={{
+                            border: '1px dashed #94a3b8',
+                            borderRadius: 10,
+                            padding: 12,
+                            background: '#f8fafc',
+                            color: '#0f172a',
+                            maxWidth: 360
+                          }}>
+                            <div style={{ fontWeight: 700, marginBottom: 6 }}>Teklif Gönderildi</div>
+                            <div style={{ fontSize: 13, marginBottom: 8 }}>Talep: {data?.title || '-'}</div>
+                            {(data?.price != null || data?.days != null || data?.phone) && (
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13, marginBottom: 8 }}>
+                                <div><span style={{ fontWeight: 600 }}>Fiyat:</span> {data?.price != null ? `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(data.price)} ₺` : '—'}</div>
+                                <div><span style={{ fontWeight: 600 }}>Gün:</span> {data?.days != null ? String(data.days) : '—'}</div>
+                                <div style={{ gridColumn: '1 / span 2' }}><span style={{ fontWeight: 600 }}>Telefon:</span> {data?.phone || '—'}</div>
+                              </div>
+                            )}
+                            <button onClick={() => setOfferModal(data)} style={{
+                              display: 'inline-block',
+                              padding: '6px 10px',
+                              background: '#111',
+                              color: '#ffd600',
+                              borderRadius: 8,
+                              fontWeight: 700,
+                              textDecoration: 'none',
+                              border: 'none',
+                              cursor: 'pointer'
+                            }}>Detayı Gör</button>
+                          </div>
+                        );
+                      }
+                    } catch (e) {}
+                    return m.content;
+                  })()}
                 </div>
               </div>
             );
@@ -382,6 +421,30 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
           Gönder
         </button>
       </div>
+
+      {/* Teklif Detay Modal */}
+      {offerModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+          <div style={{ background: 'white', borderRadius: 12, width: '100%', maxWidth: 560, padding: 24, position: 'relative' }}>
+            <button onClick={() => setOfferModal(null)} style={{ position: 'absolute', right: 12, top: 12, background: 'none', border: 'none', fontSize: 22, color: '#666', cursor: 'pointer' }}>×</button>
+            <h3 style={{ margin: 0, marginBottom: 12, fontSize: 20, fontWeight: 700, color: '#111' }}>Teklif Detayı</h3>
+            <div style={{ display: 'grid', gap: 10 }}>
+              <div style={{ fontSize: 14, color: '#334155' }}><span style={{ fontWeight: 600 }}>Talep:</span> {offerModal?.title || '-'}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 14 }}>
+                <div><span style={{ fontWeight: 600 }}>Fiyat:</span> {offerModal?.price != null ? `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(offerModal.price)} ₺` : '—'}</div>
+                <div><span style={{ fontWeight: 600 }}>Gün:</span> {offerModal?.days != null ? String(offerModal.days) : '—'}</div>
+              </div>
+              <div style={{ fontSize: 14, color: '#334155' }}><span style={{ fontWeight: 600 }}>Telefon:</span> {offerModal?.phone || '—'}</div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16, gap: 8 }}>
+              {offerModal?.url && (
+                <button onClick={() => { try { window.open(offerModal.url, '_blank'); } catch (e) {} }} style={{ padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#fff', color: '#0f172a', fontWeight: 600, cursor: 'pointer' }}>Sayfayı Aç</button>
+              )}
+              <button onClick={() => setOfferModal(null)} style={{ padding: '10px 16px', border: 'none', borderRadius: 8, background: '#111', color: '#ffd600', fontWeight: 700, cursor: 'pointer' }}>Kapat</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

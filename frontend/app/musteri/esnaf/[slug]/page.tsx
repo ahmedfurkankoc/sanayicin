@@ -7,6 +7,7 @@ import { iconMapping } from '@/app/utils/iconMapping';
 import { useMusteri } from '../../context/MusteriContext';
 import { toast } from "sonner";
 import ReviewModal from '../../components/ReviewModal';
+import QuoteRequestModal from '@/app/musteri/components/QuoteRequestModal';
 import Reviews from '../../components/Reviews';
 
 interface Vendor {
@@ -65,6 +66,7 @@ function VendorDetailContent() {
   const [creatingChat, setCreatingChat] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
   
   const [reviews, setReviews] = useState<any[]>([]);
   const [averageRating, setAverageRating] = useState(0);
@@ -122,24 +124,16 @@ function VendorDetailContent() {
     router.push(`/musteri/esnaf/${vendor.slug}/randevu`);
   };
 
-  const handleQuote = async () => {
-    if (!vendor || creatingChat) return;
-    try {
-      setCreatingChat(true);
-      const res = await api.chatCreateConversation(vendor.user.id);
-      const conversationId = res?.data?.id;
-      if (conversationId) {
-        // İlk mesajı gönder: Teklif talebi
-        try {
-          await api.chatSendMessageREST(conversationId, 'Merhaba, hizmetiniz için teklif almak istiyorum.');
-        } catch (_) {}
-        router.push(`/musteri/mesajlar/${conversationId}`);
-      }
-    } catch (e) {
-      console.error('Teklif akışı başlatılamadı:', e);
-    } finally {
-      setCreatingChat(false);
+  const handleQuote = () => {
+    if (!vendor) return;
+    if (!isAuthenticated) {
+      toast.error('Teklif talebi için giriş yapmalısınız.', {
+        description: 'Üye girişi yaptıktan sonra talep oluşturabilirsiniz.',
+        action: { label: 'Giriş Yap', onClick: () => router.push('/musteri/giris') }
+      });
+      return;
     }
+    setShowQuoteModal(true);
   };
 
   const handleMessage = async () => {
@@ -635,6 +629,12 @@ function VendorDetailContent() {
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
         vendorName={vendor.display_name}
+        vendorSlug={vendor.slug}
+        services={vendor.categories || []}
+      />
+      <QuoteRequestModal
+        isOpen={showQuoteModal}
+        onClose={() => setShowQuoteModal(false)}
         vendorSlug={vendor.slug}
         services={vendor.categories || []}
       />

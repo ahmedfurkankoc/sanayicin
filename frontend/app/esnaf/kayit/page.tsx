@@ -40,7 +40,8 @@ const validateTC = (tc: string): boolean => {
 };
 
 const validatePhone = (phone: string): boolean => {
-  return /^[\d\s\-\+\(\)]{10,15}$/.test(phone);
+  // Accept only 10 digits (e.g., 5555555555). Country code will be prefixed as +90.
+  return /^\d{10}$/.test(phone);
 };
 
 const validateTaxNo = (taxNo: string): boolean => {
@@ -260,6 +261,15 @@ export default function EsnafKayitPage() {
   // 3. Adım: İş yeri bilgileri
   const handleCompanyInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    if (name === 'phone') {
+      const digits = value.replace(/\D/g, '').slice(0, 10);
+      let masked = digits;
+      if (digits.length > 3) masked = `${digits.slice(0,3)} ${digits.slice(3)}`;
+      if (digits.length > 6) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`;
+      if (digits.length > 8) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,8)} ${digits.slice(8)}`;
+      setCompanyInfo((prev) => ({ ...prev, phone: masked }));
+      return;
+    }
     setCompanyInfo((prev) => ({ ...prev, [name]: value }));
   };
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -294,8 +304,9 @@ export default function EsnafKayitPage() {
       }
     }
     
-    if (!validatePhone(phone)) {
-      setCompanyError("Geçersiz telefon numarası formatı.");
+    const businessPhoneDigits = phone.replace(/\D/g, '');
+    if (!validatePhone(businessPhoneDigits)) {
+      setCompanyError("Geçersiz telefon numarası (10 hane olmalı).");
       return;
     }
     
@@ -327,6 +338,15 @@ export default function EsnafKayitPage() {
   // 4. Adım: Yetkili kişi bilgileri
   const handleManagerInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    if (name === 'phone') {
+      const digits = value.replace(/\D/g, '').slice(0, 10);
+      let masked = digits;
+      if (digits.length > 3) masked = `${digits.slice(0,3)} ${digits.slice(3)}`;
+      if (digits.length > 6) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`;
+      if (digits.length > 8) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,8)} ${digits.slice(8)}`;
+      setManagerInfo((prev) => ({ ...prev, phone: masked }));
+      return;
+    }
     setManagerInfo((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -472,7 +492,7 @@ export default function EsnafKayitPage() {
       if (companyInfo.photo) {
         formData.append('profile_photo', companyInfo.photo);
       }
-      formData.append('business_phone', companyInfo.phone);
+      formData.append('business_phone', `+90${businessPhoneDigits}`);
       formData.append('city', selectedCity);
       formData.append('district', selectedDistrict);
       formData.append('subdistrict', selectedNeighbourhood);
@@ -670,14 +690,19 @@ export default function EsnafKayitPage() {
               <div className="esnaf-photo-filename">Seçilen dosya: {companyInfo.photoName}</div>
             )}
             <label className="esnaf-register-label">İşyeri Telefon Numarası *</label>
-            <input
-              type="tel"
-              name="phone"
-              className="esnaf-register-input"
-              value={companyInfo.phone}
-              onChange={handleCompanyInput}
-              required
-            />
+            <div style={{ width: '100%', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0 12px', background: '#fff' }}>
+              <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8 }}>+90</span>
+              <input
+                type="tel"
+                name="phone"
+                className="esnaf-register-input"
+                value={companyInfo.phone}
+                onChange={handleCompanyInput}
+                placeholder="555 555 55 55"
+                required
+                style={{ flex: 1, border: 'none', outline: 'none', padding: '12px 0', background: 'transparent' }}
+              />
+            </div>
             <small className="esnaf-register-help-text">
               Bu telefon numarası müşterileriniz tarafından görülecek ve iletişim kurulacak numaradır.
             </small>
@@ -787,14 +812,19 @@ export default function EsnafKayitPage() {
               required
             />
             <label className="esnaf-register-label">Cep Telefonu</label>
-            <input
-              type="tel"
-              name="phone"
-              className="esnaf-register-input"
-              value={managerInfo.phone}
-              onChange={handleManagerInput}
-              required
-            />
+            <div style={{ width: '100%', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0 12px', background: '#fff' }}>
+              <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8 }}>+90</span>
+              <input
+                type="tel"
+                name="phone"
+                className="esnaf-register-input"
+                value={managerInfo.phone}
+                onChange={handleManagerInput}
+                placeholder="555 555 55 55"
+                required
+                style={{ flex: 1, border: 'none', outline: 'none', padding: '12px 0', background: 'transparent' }}
+              />
+            </div>
             <label className="esnaf-register-label">E-posta</label>
             <input
               type="email"

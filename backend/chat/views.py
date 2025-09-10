@@ -149,15 +149,20 @@ class ConversationMessagesView(APIView):
         conv.save(update_fields=['last_message_text', 'last_message_at', 'unread_count'])
 
         # Realtime broadcast to WS group so other participant sees instantly (even if sender used REST)
-        channel_layer = get_channel_layer()
-        payload = {
-            'id': msg.id,
-            'conversation': conv.id,
-            'content': msg.content,
-            'sender_user': user.id,
-            'created_at': msg.created_at.isoformat(),
-        }
-        async_to_sync(channel_layer.group_send)(f"conv_{conv.id}", { 'type': 'message.new', 'payload': payload })
+        try:
+            channel_layer = get_channel_layer()
+            payload = {
+                'id': msg.id,
+                'conversation': conv.id,
+                'content': msg.content,
+                'sender_user': user.id,
+                'created_at': msg.created_at.isoformat(),
+            }
+            if channel_layer is not None:
+                async_to_sync(channel_layer.group_send)(f"conv_{conv.id}", { 'type': 'message.new', 'payload': payload })
+        except Exception:
+            # Realtime yayın başarısız olsa da REST cevabı dön
+            pass
 
         return Response(MessageSerializer(msg).data, status=201)
 

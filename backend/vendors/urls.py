@@ -13,12 +13,22 @@ urlpatterns = [
     path('search/', VendorSearchView.as_view(), name='vendor-search'),
     path('car-brands/', CarBrandListView.as_view(), name='car-brands'),
     path('', include(router.urls)),
-    path('<str:slug>/', VendorDetailView.as_view(), name='vendor-detail'),
-    path('<str:slug>/appointments/', ClientAppointmentView.as_view(), name='client-appointment'),
+    # Collection endpoints must come BEFORE slug routes
+    path('service-requests/unread_count/', VendorServiceRequestUnreadCountView.as_view(), name='vendor-service-requests-unread'),
+    path('service-requests/', VendorServiceRequestListView.as_view(), name='vendor-service-requests'),
+    path('service-requests/<int:pk>/reply/', VendorServiceRequestReplyView.as_view(), name='vendor-service-request-reply'),
+    path('service-requests/<int:pk>/mark_read/', VendorServiceRequestMarkReadView.as_view(), name='vendor-service-request-mark-read'),
+    path('service-requests/<int:pk>/status/', VendorServiceRequestUpdateStatusView.as_view(), name='vendor-service-request-update-status'),
+    # Client-side service requests
+    path('client/service-requests/', ClientServiceRequestListView.as_view(), name='client-service-requests'),
+    path('client/service-requests/<int:pk>/reply/', ClientServiceRequestReplyView.as_view(), name='client-service-request-reply'),
     path('client/appointments/', ClientAppointmentListView.as_view(), name='client-appointment-list'),
-    # Vendor'a özel değerlendirme endpoint'leri
+    # Slug-scoped endpoints
+    path('<str:slug>/service-requests/', ServiceRequestCreateView.as_view(), name='service-request-create'),
+    path('<str:slug>/appointments/', ClientAppointmentView.as_view(), name='client-appointment'),
     path('<str:vendor_slug>/reviews/', ReviewViewSet.as_view({
         'get': 'list',
         'post': 'create'
     }), name='vendor-reviews'),
-] 
+    path('<str:slug>/', VendorDetailView.as_view(), name='vendor-detail'),
+]
