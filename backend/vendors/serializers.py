@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import VendorProfile, Appointment, Review
+from .models import VendorProfile, Appointment, Review, ServiceRequest
 from core.models import ServiceArea, Category, CarBrand
 
 
@@ -401,4 +401,44 @@ class ReviewSerializer(serializers.ModelSerializer):
         
         validated_data['user'] = request.user
         validated_data['is_read'] = False
+        return super().create(validated_data)
+
+
+class ServiceRequestSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField(read_only=True)
+    service_name = serializers.CharField(source='service.name', read_only=True)
+    vendor_info = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ServiceRequest
+        fields = [
+            'id', 'vendor', 'vendor_info', 'user', 'service', 'service_name',
+            'request_type', 'vehicle_info', 'title', 'description', 'client_phone',
+            'attachments', 'messages', 'last_offered_price', 'last_offered_days', 'unread_for_vendor', 'status', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['vendor', 'user', 'messages', 'unread_for_vendor', 'status', 'created_at', 'updated_at']
+
+    def get_user(self, obj):
+        return {
+            'id': obj.user.id,
+            'name': obj.user.full_name,
+            'email': obj.user.email,
+        }
+
+    def get_vendor_info(self, obj):
+        return {
+            'id': obj.vendor.id,
+            'slug': obj.vendor.slug,
+            'display_name': obj.vendor.display_name,
+            'business_phone': obj.vendor.business_phone,
+            'city': obj.vendor.city,
+            'district': obj.vendor.district,
+        }
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            raise serializers.ValidationError("Talep oluşturmak için giriş yapmalısınız.")
+        validated_data['user'] = request.user
+        # vendor, view içinde set edilecek
         return super().create(validated_data)

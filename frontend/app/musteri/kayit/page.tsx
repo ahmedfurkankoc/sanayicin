@@ -17,7 +17,8 @@ export default function MusteriKayitPage() {
     password: "",
     password2: "",
     first_name: "",
-    last_name: ""
+    last_name: "",
+    phone_number: ""
   });
   
   // Verification state
@@ -33,6 +34,16 @@ export default function MusteriKayitPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    // Telefon için maskeleme: 555 555 55 55
+    if (name === 'phone_number') {
+      const digits = value.replace(/\D/g, '').slice(0, 10); // sadece 10 rakam
+      let masked = digits;
+      if (digits.length > 3) masked = `${digits.slice(0,3)} ${digits.slice(3)}`;
+      if (digits.length > 6) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`;
+      if (digits.length > 8) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,8)} ${digits.slice(8)}`;
+      setFormData(prev => ({ ...prev, phone_number: masked }));
+      return;
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -121,12 +132,19 @@ export default function MusteriKayitPage() {
       return;
     }
     
-    // Telefon kayıt aşamasında zorunlu değil (vendor upgrade sırasında alınacak)
+    // Telefon numarası zorunlu ve 10 hane olmalı (555 555 55 55)
+    const phoneDigits = formData.phone_number.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      setError("Telefon numarası 10 haneli olmalı (örn. 555 555 55 55)");
+      return;
+    }
     
     setLoading(true);
 
     try {
-      const response = await api.register(formData, 'client');
+      // Backend'e +90 prefix ile gönder
+      const payload = { ...formData, phone_number: `+90${phoneDigits}` };
+      const response = await api.register(payload, 'client');
       
       if (response.status === 201) {
         // Email bilgisini localStorage'a kaydet
@@ -234,7 +252,25 @@ export default function MusteriKayitPage() {
                   />
                 </div>
 
-                {/* Telefon numarası kayıt aşamasında alınmıyor */}
+                {/* Telefon Numarası (Zorunlu) */}
+                <div className="musteri-form-group">
+                  <label htmlFor="phone_number" className="musteri-form-label">
+                    Telefon Numarası *
+                  </label>
+                  <div style={{ width: '100%', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0 12px', background: '#fff' }}>
+                    <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8 }}>+90</span>
+                    <input
+                      type="tel"
+                      id="phone_number"
+                      name="phone_number"
+                      value={formData.phone_number}
+                      onChange={handleInputChange}
+                      placeholder="555 555 55 55"
+                      required
+                      style={{ flex: 1, border: 'none', outline: 'none', padding: '12px 0', background: 'transparent' }}
+                    />
+                  </div>
+                </div>
 
                 {/* İl/İlçe alanları kaldırıldı */}
 

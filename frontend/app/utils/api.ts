@@ -316,6 +316,7 @@ export const api = {
       district: data.district ? sanitizeString(data.district) : '',
       subdistrict: data.subdistrict ? sanitizeString(data.subdistrict) : '',
       address: data.address ? sanitizeString(data.address) : '',
+      phone_number: data.phone_number ? data.phone_number.trim() : '',
     };
 
     // Validation
@@ -412,4 +413,25 @@ export const api = {
   }) => apiClient.post(`/vendors/${vendorSlug}/reviews/`, data),
   getUnreadReviewCount: () => apiClient.get('/vendors/reviews/unread_count/'),
   markReviewAsRead: (reviewId: number) => apiClient.post(`/vendors/reviews/${reviewId}/mark_as_read/`),
+
+  // Service Requests (Teklif/Talep)
+  createServiceRequest: (
+    vendorSlug: string,
+    data: { service?: number; title: string; description: string; request_type?: 'appointment' | 'quote' | 'emergency' | 'part'; vehicle_info?: string }
+  ) => apiClient.post(`/vendors/${vendorSlug}/service-requests/`, data),
+  listVendorServiceRequests: (params?: { status?: 'pending' | 'responded' | 'completed' | 'cancelled' | 'closed'; last_days?: number; only_pending?: boolean; only_quotes?: boolean }) =>
+    apiClient.get('/vendors/service-requests/', { params }),
+  getVendorServiceRequestsUnreadCount: () =>
+    apiClient.get('/vendors/service-requests/unread_count/'),
+  vendorReplyServiceRequest: (id: number, data: { message: string; phone?: string; price?: number; days?: number }) =>
+    apiClient.post(`/vendors/service-requests/${id}/reply/`, data),
+  vendorMarkServiceRequestRead: (id: number) =>
+    apiClient.post(`/vendors/service-requests/${id}/mark_read/`, {}),
+  vendorUpdateServiceRequestStatus: (id: number, status: 'pending' | 'responded' | 'completed' | 'cancelled') =>
+    apiClient.post(`/vendors/service-requests/${id}/status/`, { status }),
+  // Client-side requests
+  listClientServiceRequests: (params?: { status?: 'pending' | 'responded' | 'completed' | 'cancelled' | 'closed'; last_days?: number }) =>
+    apiClient.get('/vendors/client/service-requests/', { params }),
+  clientReplyServiceRequest: (id: number, data: { message: string }) =>
+    apiClient.post(`/vendors/client/service-requests/${id}/reply/`, data),
 }; 
