@@ -4,6 +4,8 @@ projede 3 farklı panel/sayfa mevcut; esnaf paneli, müşterilerin/clientsların
 esnaf paneli, müşteri ve ana sayfa css dosyaları farklı dosyalar halinde
 proje Ubuntu serverda test olarak deploy edildi ve aynı anda local de Windows ve Mac bir pc de de test ediliyor. 
 
+CustomUser modeli kullanılmakta tüm sayfalarda, Esnaf paneli hariç orada vendor modelini kullanıyoruz.
+
 backend de console ile bir şey yapacakken venv aktif etmeyi unutma.
 
 

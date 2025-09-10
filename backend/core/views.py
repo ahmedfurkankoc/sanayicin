@@ -909,10 +909,11 @@ def client_register(request):
         password2 = data.get('password2')
         first_name = data.get('first_name', '')
         last_name = data.get('last_name', '')
+        phone_number = data.get('phone_number')
         
-        if not all([email, password, password2]):
+        if not all([email, password, password2, phone_number]):
             return Response({
-                'detail': 'Email, şifre ve şifre tekrarı gerekli'
+                'detail': 'Email, şifre, şifre tekrarı ve telefon numarası gerekli'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         if password != password2:
@@ -940,7 +941,8 @@ def client_register(request):
             first_name=first_name,
             last_name=last_name,
             about=data.get('about', ''),
-            is_verified=False
+            is_verified=False,
+            phone_number=phone_number
         )
         
         # Avatar varsa kaydet

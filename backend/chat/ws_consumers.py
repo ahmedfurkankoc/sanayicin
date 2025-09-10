@@ -56,6 +56,13 @@ class GlobalChatConsumer(AsyncJsonWebsocketConsumer):
             'data': event['payload']
         })
 
+    async def notification_new(self, event):
+        """Yeni push notification iletimi"""
+        await self.send_json({
+            'event': 'notification.new',
+            'data': event['payload']
+        })
+
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):

@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from .serializers import *
 from core.models import CustomUser
-from .models import VendorProfile, Appointment, Review
+from .models import VendorProfile, Appointment, Review, ServiceRequest
 from core.models import ServiceArea, CarBrand
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -22,6 +22,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 import logging
 
 logger = logging.getLogger(__name__)
@@ -314,6 +316,26 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         
         # Email bildirimi gönder
         self.send_confirmation_notification(appointment)
+        # Push notification - client'a
+        try:
+            channel_layer = get_channel_layer()
+            from core.models import CustomUser
+            target_user = CustomUser.objects.filter(email=appointment.client_email).first()
+            if channel_layer is not None and target_user is not None:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target_user.id}",
+                    {
+                        'type': 'notification.new',
+                        'payload': {
+                            'kind': 'appointment_confirmed',
+                            'title': 'Randevunuz Onaylandı',
+                            'message': appointment.service_description,
+                            'link': '/musteri/taleplerim'
+                        }
+                    }
+                )
+        except Exception:
+            pass
         
         return Response({'status': 'confirmed'})
     
@@ -326,6 +348,26 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         
         # Email bildirimi gönder
         self.send_rejection_notification(appointment)
+        # Push notification - client'a
+        try:
+            channel_layer = get_channel_layer()
+            from core.models import CustomUser
+            target_user = CustomUser.objects.filter(email=appointment.client_email).first()
+            if channel_layer is not None and target_user is not None:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target_user.id}",
+                    {
+                        'type': 'notification.new',
+                        'payload': {
+                            'kind': 'appointment_rejected',
+                            'title': 'Randevunuz Reddedildi',
+                            'message': appointment.service_description,
+                            'link': '/musteri/taleplerim'
+                        }
+                    }
+                )
+        except Exception:
+            pass
         
         return Response({'status': 'rejected'})
     
@@ -376,6 +418,26 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         
         # Email bildirimi gönder
         self.send_cancellation_notification(appointment)
+        # Push notification - client'a
+        try:
+            channel_layer = get_channel_layer()
+            from core.models import CustomUser
+            target_user = CustomUser.objects.filter(email=appointment.client_email).first()
+            if channel_layer is not None and target_user is not None:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target_user.id}",
+                    {
+                        'type': 'notification.new',
+                        'payload': {
+                            'kind': 'appointment_cancelled',
+                            'title': 'Randevunuz İptal Edildi',
+                            'message': appointment.service_description,
+                            'link': '/musteri/taleplerim'
+                        }
+                    }
+                )
+        except Exception:
+            pass
         
         return Response({'status': 'cancelled'})
     
@@ -603,3 +665,207 @@ class ReviewViewSet(viewsets.ModelViewSet):
         ).count()
         
         return Response({"unread_count": count})
+
+
+class ServiceRequestCreateView(APIView):
+    """Belirli bir vendor'a müşteri talebi oluşturur"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, slug):
+        try:
+            vendor = VendorProfile.objects.get(slug=slug, user__is_verified=True, user__is_active=True)
+        except VendorProfile.DoesNotExist:
+            return Response({"detail": "Esnaf bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ServiceRequestSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            service_request = serializer.save(vendor=vendor, status='pending')
+            # Push to vendor
+            try:
+                channel_layer = get_channel_layer()
+                if channel_layer is not None:
+                    async_to_sync(channel_layer.group_send)(
+                        f"user_{vendor.user.id}",
+                        {
+                            'type': 'notification.new',
+                            'payload': {
+                                'kind': 'service_request_created',
+                                'title': 'Yeni Talep',
+                                'message': service_request.title,
+                                'link': '/esnaf/taleplerim'
+                            }
+                        }
+                    )
+            except Exception:
+                pass
+            return Response(ServiceRequestSerializer(service_request).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VendorServiceRequestListView(APIView):
+    """Vendor tarafı: kendi taleplerini listeler"""
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def get(self, request):
+        status_filter = request.query_params.get('status')  # pending/responded/completed/cancelled
+        last_days = request.query_params.get('last_days')
+        only_pending = request.query_params.get('only_pending')
+        only_quotes = request.query_params.get('only_quotes')
+        queryset = ServiceRequest.objects.filter(vendor=request.user.vendor_profile)
+        if status_filter in ['pending', 'responded', 'completed', 'cancelled', 'closed']:
+            queryset = queryset.filter(status=status_filter)
+        if only_pending == 'true':
+            queryset = queryset.filter(status='pending')
+        if only_quotes == 'true':
+            queryset = queryset.filter(request_type='quote')
+        if last_days and str(last_days).isdigit():
+            from datetime import timedelta
+            since = timezone.now() - timedelta(days=int(last_days))
+            queryset = queryset.filter(created_at__gte=since)
+        queryset = queryset.order_by('-created_at')
+        serializer = ServiceRequestSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class VendorServiceRequestUnreadCountView(APIView):
+    """Vendor tarafı: bekleyen talep sayısı"""
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def get(self, request):
+        pending_count = ServiceRequest.objects.filter(vendor=request.user.vendor_profile, status='pending').count()
+        return Response({"unread_count": pending_count})
+
+
+class VendorServiceRequestReplyView(APIView):
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def post(self, request, pk):
+        """Vendor talebe cevap verir; mesajı ekler ve status responded yapar"""
+        try:
+            sr = ServiceRequest.objects.get(id=pk, vendor=request.user.vendor_profile)
+        except ServiceRequest.DoesNotExist:
+            return Response({"detail": "Talep bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        content = (request.data.get('message') or '').strip()
+        phone = (request.data.get('phone') or '').strip()
+        price = request.data.get('price')
+        days = request.data.get('days')
+        if not content:
+            return Response({"detail": "Mesaj zorunlu"}, status=status.HTTP_400_BAD_REQUEST)
+        # messages alanına ekle
+        msgs = list(sr.messages or [])
+        offer_payload = {
+            'by': 'vendor',
+            'content': content,
+            'at': timezone.now().isoformat()
+        }
+        if price is not None:
+            try:
+                price_val = float(price)
+                offer_payload['price'] = price_val
+                sr.last_offered_price = price_val
+            except Exception:
+                pass
+        if days is not None:
+            try:
+                days_val = int(days)
+                offer_payload['days'] = days_val
+                sr.last_offered_days = days_val
+            except Exception:
+                pass
+        msgs.append(offer_payload)
+        sr.messages = msgs
+        sr.unread_for_vendor = False
+        if phone:
+            sr.client_phone = phone
+        if sr.status == 'pending':
+            sr.status = 'responded'
+        sr.save()
+        # Push to client
+        try:
+            channel_layer = get_channel_layer()
+            if channel_layer is not None:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{sr.user.id}",
+                    {
+                        'type': 'notification.new',
+                        'payload': {
+                            'kind': 'vendor_offer_sent',
+                            'title': 'Yeni Teklif',
+                            'message': sr.title,
+                            'link': '/musteri/taleplerim'
+                        }
+                    }
+                )
+        except Exception:
+            pass
+        return Response(ServiceRequestSerializer(sr).data)
+
+
+class VendorServiceRequestMarkReadView(APIView):
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def post(self, request, pk):
+        try:
+            sr = ServiceRequest.objects.get(id=pk, vendor=request.user.vendor_profile)
+        except ServiceRequest.DoesNotExist:
+            return Response({"detail": "Talep bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        sr.unread_for_vendor = False
+        sr.save(update_fields=['unread_for_vendor'])
+        return Response({"status": "ok"})
+
+
+class VendorServiceRequestUpdateStatusView(APIView):
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def post(self, request, pk):
+        try:
+            sr = ServiceRequest.objects.get(id=pk, vendor=request.user.vendor_profile)
+        except ServiceRequest.DoesNotExist:
+            return Response({"detail": "Talep bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        new_status = request.data.get('status')
+        if new_status not in ['pending', 'responded', 'completed', 'cancelled']:
+            return Response({"detail": "Geçersiz durum"}, status=status.HTTP_400_BAD_REQUEST)
+        sr.status = new_status
+        sr.save(update_fields=['status'])
+        return Response(ServiceRequestSerializer(sr).data)
+
+
+class ClientServiceRequestListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        status_filter = request.query_params.get('status')
+        last_days = request.query_params.get('last_days')
+        queryset = ServiceRequest.objects.filter(user=request.user)
+        if status_filter in ['pending', 'responded', 'completed', 'cancelled', 'closed']:
+            queryset = queryset.filter(status=status_filter)
+        if last_days and str(last_days).isdigit():
+            from datetime import timedelta
+            since = timezone.now() - timedelta(days=int(last_days))
+            queryset = queryset.filter(created_at__gte=since)
+        queryset = queryset.order_by('-created_at')
+        serializer = ServiceRequestSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class ClientServiceRequestReplyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            sr = ServiceRequest.objects.get(id=pk, user=request.user)
+        except ServiceRequest.DoesNotExist:
+            return Response({"detail": "Talep bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        content = (request.data.get('message') or '').trim() if hasattr(str, 'trim') else str(request.data.get('message') or '').strip()
+        if not content:
+            return Response({"detail": "Mesaj zorunlu"}, status=status.HTTP_400_BAD_REQUEST)
+        msgs = list(sr.messages or [])
+        msgs.append({
+            'by': 'client',
+            'content': content,
+            'at': timezone.now().isoformat()
+        })
+        sr.messages = msgs
+        sr.unread_for_vendor = True
+        sr.save()
+        return Response(ServiceRequestSerializer(sr).data)

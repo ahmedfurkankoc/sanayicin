@@ -23,6 +23,7 @@ export default function EsnafPanelLayout({
   const { user, email, loading, isAdmin, emailVerified: contextEmailVerified, handleLogout } = useEsnaf();
   const isVerified = user?.is_verified === true || contextEmailVerified === true;
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -172,6 +173,22 @@ export default function EsnafPanelLayout({
     setUnreadCount(totalUnread);
   };
 
+  // Polling: Pending service request count for sidebar badge
+  useEffect(() => {
+    let intervalId: any;
+    const fetchUnreadRequests = async () => {
+      try {
+        const res = await api.getVendorServiceRequestsUnreadCount();
+        setPendingRequestCount(res.data?.unread_count ?? 0);
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchUnreadRequests();
+    intervalId = setInterval(fetchUnreadRequests, 15000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -194,7 +211,7 @@ export default function EsnafPanelLayout({
             messages: unreadCount,
             reviews: 0,
             appointments: 0,
-            quotes: 0
+            quotes: activePage === 'taleplerim' ? 0 : pendingRequestCount
           }}
         />
 

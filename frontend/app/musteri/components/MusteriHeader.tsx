@@ -14,6 +14,7 @@ export default function MusteriHeader() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<Array<{ title: string; message: string; link?: string }>>([]);
   const router = useRouter();
   const { isAuthenticated, user, logout, loading } = useMusteri();
   const currentRole = (user?.role as 'vendor' | 'client' | undefined) || undefined;
@@ -60,6 +61,10 @@ export default function MusteriHeader() {
           // Yeni mesaj geldiğinde unread count'u güncelle
           if (data.event === 'message.new' || data.event === 'conversation.update') {
             loadUnreadCount();
+          }
+          if (data.event === 'notification.new') {
+            const payload = data.data || {};
+            setNotifications(prev => [{ title: payload.title || 'Bildirim', message: payload.message || '', link: payload.link }, ...prev].slice(0, 20));
           }
           
           // Typing event'leri
@@ -265,9 +270,27 @@ export default function MusteriHeader() {
         
         {/* Sağ: Bildirim ve Kullanıcı */}
         <div className="musteri-header-right">
-          <button className="musteri-notification-btn">
-            {React.createElement(iconMapping.bell, { size: 20 })}
-          </button>
+          <div className="musteri-user-menu">
+            <button className="musteri-notification-btn" onClick={() => setShowDropdown(false)}>
+              {React.createElement(iconMapping.bell, { size: 20 })}
+              {notifications.length > 0 && (
+                <span className="musteri-message-badge">{notifications.length > 99 ? '99+' : notifications.length}</span>
+              )}
+            </button>
+            {notifications.length > 0 && (
+              <div className="musteri-user-dropdown show" style={{ right: 0, left: 'auto', minWidth: 280 }}>
+                <div className="musteri-dropdown-header"><strong>Bildirimler</strong></div>
+                <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+                  {notifications.map((n, i) => (
+                    <div key={i} className="musteri-dropdown-item" onClick={() => { if (n.link) router.push(n.link); }} style={{ cursor: n.link ? 'pointer' : 'default' }}>
+                      <div style={{ fontWeight: 600 }}>{n.title}</div>
+                      <div style={{ fontSize: 12, color: '#475569' }}>{n.message}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <button 
             className={`musteri-message-btn ${showChatWidget ? 'active' : ''}`} 
             onClick={toggleChatWidget}

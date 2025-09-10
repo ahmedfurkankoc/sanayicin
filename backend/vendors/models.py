@@ -223,3 +223,46 @@ class Review(models.Model):
 
 	def __str__(self):
 		return f"{self.user.full_name} -> {self.vendor.display_name} ({self.rating}★)"
+
+
+class ServiceRequest(models.Model):
+	"""Müşterilerin esnaflardan teklif/talep oluşturduğu kayıt"""
+	vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='service_requests')
+	user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='service_requests')
+	service = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+	REQUEST_TYPE_CHOICES = [
+		('appointment', 'Randevu'),
+		('quote', 'Fiyat Teklifi'),
+		('emergency', 'Acil Yardım'),
+		('part', 'Parça Talebi'),
+	]
+	request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default='quote')
+	vehicle_info = models.CharField(max_length=200, blank=True)
+	title = models.CharField(max_length=150)
+	description = models.TextField()
+	client_phone = models.CharField(max_length=20, blank=True)
+	messages = models.JSONField(default=list, blank=True)
+	# örn: teklif fiyatı ve gün sayısı (opsiyonel, son mesajda da taşıyacağız)
+	last_offered_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+	last_offered_days = models.IntegerField(null=True, blank=True)
+	attachments = models.JSONField(default=list, blank=True)
+	unread_for_vendor = models.BooleanField(default=True)
+	status = models.CharField(max_length=20, default='pending', choices=[
+		('pending', 'Beklemede'),
+		('responded', 'Yanıtlandı'),
+		('completed', 'Tamamlandı'),
+		('cancelled', 'İptal Edildi'),
+		('closed', 'Kapatıldı'),  # legacy/support
+	])
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ['-created_at']
+		indexes = [
+			models.Index(fields=['vendor', 'status']),
+			models.Index(fields=['user', 'status']),
+		]
+
+	def __str__(self):
+		return f"{self.title} -> {self.vendor.display_name} ({self.status})"
