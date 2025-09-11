@@ -29,7 +29,7 @@ export default function EsnafPanelPage() {
   }, []);
 
   return (
-    <EsnafPanelLayout activePage="panel" title="Özet">
+    <EsnafPanelLayout activePage="panel">
       {/* Dashboard Stats */}
       <div className="esnaf-dashboard-list">
         <div className="esnaf-dashboard-card esnaf-yellow-card">

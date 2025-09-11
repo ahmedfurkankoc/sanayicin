@@ -11,13 +11,11 @@ import { api, getAuthToken } from "@/app/utils/api";
 interface EsnafPanelLayoutProps {
   children: React.ReactNode;
   activePage: string;
-  title?: string;
 }
 
 export default function EsnafPanelLayout({ 
   children, 
-  activePage, 
-  title 
+  activePage
 }: EsnafPanelLayoutProps) {
   const router = useRouter();
   const { user, email, loading, isAdmin, emailVerified: contextEmailVerified, handleLogout } = useEsnaf();
@@ -217,16 +215,6 @@ export default function EsnafPanelLayout({
 
         {/* Ana İçerik */}
         <div className="esnaf-main-content">
-          {/* Header */}
-          <div className="esnaf-content-header">
-            <h1 className="esnaf-page-title">
-              {title}
-              {isAdmin && <span style={{ fontSize: '14px', color: '#666', marginLeft: '10px' }}>
-                (Admin Test Modu)
-              </span>}
-            </h1>
-          </div>
-
           {/* Sayfa İçeriği */}
           {children}
         </div>

@@ -145,7 +145,7 @@ export default function EsnafRandevularimPage() {
 
   if (loading) {
     return (
-      <EsnafPanelLayout activePage="randevularim" title="Randevularım">
+      <EsnafPanelLayout activePage="randevularim">
         <div className="esnaf-appointments-loading">
           Yükleniyor...
         </div>
@@ -154,7 +154,7 @@ export default function EsnafRandevularimPage() {
   }
 
   return (
-    <EsnafPanelLayout activePage="randevularim" title="Randevularım">
+    <EsnafPanelLayout activePage="randevularim">
       {/* Çalışma Saatleri Uyarısı */}
       {showWorkingHoursWarning && (
         <div className="esnaf-appointments-warning">

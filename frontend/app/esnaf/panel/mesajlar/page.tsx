@@ -6,7 +6,7 @@ import ConversationList from '@/app/components/ConversationList';
 
 export default function EsnafMessagesListPage() {
   return (
-    <EsnafPanelLayout activePage="mesajlar" title="Mesajlar">
+    <EsnafPanelLayout activePage="mesajlar">
       <div className="esnaf-panel-content">
         <h2>Tüm Mesajlarım</h2>
         <div className="esnaf-card">
