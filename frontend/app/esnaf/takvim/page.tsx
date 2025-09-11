@@ -193,7 +193,7 @@ export default function EsnafTakvimPage() {
   }, [currentDate, events, selectedDate, handleDateSelect]);
 
   return (
-    <EsnafPanelLayout activePage="takvim" title="Takvim">
+    <EsnafPanelLayout activePage="takvim">
       {/* Header */}
       <div className="esnaf-calendar-header">
         <div className="esnaf-calendar-header-inner">
