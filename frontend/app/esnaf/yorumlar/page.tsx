@@ -79,7 +79,7 @@ export default function EsnafYorumlarPage() {
 
   if (loading) {
     return (
-      <EsnafPanelLayout activePage="yorumlar" title="Yorumlarım">
+      <EsnafPanelLayout activePage="yorumlar">
         <div className="esnaf-reviews-loading">
           Yükleniyor...
         </div>
@@ -88,7 +88,7 @@ export default function EsnafYorumlarPage() {
   }
 
   return (
-    <EsnafPanelLayout activePage="yorumlar" title="Yorumlarım">
+    <EsnafPanelLayout activePage="yorumlar">
       {/* Header */}
       <div className="esnaf-reviews-header">
         <div className="esnaf-reviews-header-inner">

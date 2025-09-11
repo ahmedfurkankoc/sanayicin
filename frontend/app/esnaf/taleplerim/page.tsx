@@ -429,20 +429,23 @@ export default function TaleplerimPage() {
                     >
                       Teklifi Göster
                     </button>
-                  ) : <span />}
-                  <button
-                    onClick={() => {
-                      setOfferForId(request.id);
-                      setOfferMessage('');
-                      setOfferPrice('');
-                      setOfferDays('');
-                      setOfferPhone(request.client_phone || '');
-                      setOfferModalOpen(true);
-                    }}
-                    style={{ padding: '8px 16px', background: '#111', color: '#ffd600', border: 'none', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    Teklif Ver
-                  </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setOfferForId(request.id);
+                        setOfferMessage('');
+                        setOfferPrice('');
+                        setOfferDays('');
+                        setOfferPhone(request.client_phone || '');
+                        setOfferModalOpen(true);
+                      }}
+                      style={{ padding: '8px 16px', background: '#111', color: '#ffd600', border: 'none', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Teklif Ver
+                    </button>
+                  )}
+                  {/* Eğer teklif verilmişse sağ tarafı boş bırak */}
+                  {(request as any).last_offered_price != null || (request as any).last_offered_days != null ? <span /> : <span />}
                 </div>
 
                 {/* Quick Actions (row-level) */}

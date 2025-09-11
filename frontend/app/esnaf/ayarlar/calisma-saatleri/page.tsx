@@ -108,7 +108,7 @@ export default function EsnafCalismaSaatleriPage() {
 
   if (loading) {
     return (
-      <EsnafPanelLayout activePage="ayarlar" title="Çalışma Saatleri">
+      <EsnafPanelLayout activePage="ayarlar">
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -123,7 +123,7 @@ export default function EsnafCalismaSaatleriPage() {
   }
 
   return (
-    <EsnafPanelLayout activePage="ayarlar" title="Çalışma Saatleri">
+    <EsnafPanelLayout activePage="ayarlar">
       {/* Header */}
       <div style={{ padding: '24px 32px', borderBottom: '1px solid #e0e0e0' }}>
                   <div>
