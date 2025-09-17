@@ -55,6 +55,115 @@ section[aria-label="Notifications alt+T"] {
   padding: 0;
 }
 
+/* Visibility helpers */
+.mobile-only { display: none; }
+.desktop-only { display: block; }
+@media (max-width: 900px) {
+  .mobile-only { display: block; }
+  /* Ensure desktop sections are truly hidden on mobile */
+  .desktop-only { display: none !important; }
+}
+
+/* Public mobile home */
+.public-mobile-home {
+  background: #0d0d0d;
+  color: var(--white);
+  padding: 16px 0 8px 0;
+}
+.public-mobile-home .container { padding-top: 8px; }
+.mobile-hero-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 10px 0 14px 0;
+}
+.mobile-search { margin: 6px 0 12px 0; }
+.mobile-cta-row { display: flex; gap: 10px; }
+.btn-primary {
+  background: var(--yellow);
+  color: var(--black);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn-secondary {
+  background: var(--white);
+  color: var(--black);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-block;
+}
+.mobile-quick-cats {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 0 4px 0;
+  scrollbar-width: none;
+}
+.mobile-quick-cats::-webkit-scrollbar { display: none; }
+.category-chip {
+  background: #1a1a1a;
+  color: var(--white);
+  border: 1px solid #2a2a2a;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.mobile-trust-badges { display: flex; gap: 10px; padding: 10px 0; }
+.mobile-trust-badges .badge {
+  background: #141414;
+  border: 1px solid #232323;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.mobile-trust-badges .icon { font-weight: 800; color: var(--yellow); }
+.mobile-nearby { padding: 8px 0 2px 0; }
+.h-scroll-cards { display: grid; grid-auto-flow: column; gap: 12px; overflow-x: auto; padding-bottom: 10px; }
+.h-scroll-cards .vendorCard { min-width: 240px; }
+.mobile-promo { padding: 8px 0 22px 0; }
+.promo-card { background: var(--yellow); color: var(--black); border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+.promo-text { font-weight: 800; }
+
+/* Mobile bottom nav */
+.mobile-bottom-nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 64px;
+  background: #111;
+  border-top: 1px solid #222;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 9999;
+}
+.mbn-item { 
+  color: #bbb; 
+  text-decoration: none; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 4px;
+  font-size: 12px;
+  padding-top: 6px; 
+}
+.mbn-item.active { color: var(--yellow); }
+.mbn-icon { font-size: 18px; line-height: 18px; }
+.mbn-label { font-weight: 600; }
+.mobile-bottom-spacer { height: calc(64px + env(safe-area-inset-bottom)); }
+
+@media (min-width: 901px) {
+  .mobile-bottom-nav { display: none; }
+  .mobile-bottom-spacer { display: none; }
+}
+
 .sanayicin-logo-link {
   display: flex;
   align-items: center;
@@ -134,6 +243,7 @@ section[aria-label="Notifications alt+T"] {
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  background: var(--black);
 }
 
 .heroSection::before {
@@ -151,6 +261,50 @@ section[aria-label="Notifications alt+T"] {
   position: relative;
   z-index: 2;
 }
+.hero-grid {
+  display: grid;
+  grid-template-columns: 600px 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.hero-card {
+  padding: 36px;
+}
+
+.hero-card-title {
+  font-weight: 800;
+  font-size: 28px;
+  margin: 0 0 14px 0;
+}
+.hero-copy-title {
+  font-size: 74px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -1px;
+}
+.hero-copy-title .accent { color: var(--yellow); }
+.hero-copy-desc { font-size: 18px; max-width: 540px; opacity: .9; }
+.hero-copy-desc.small { opacity: .8; font-size: 16px; margin-top: 6px; }
+
+/* Decorative logo shape as background-like element attached to hero section */
+.heroSection::after {
+  content: '';
+  position: absolute;
+  right: -120px;
+  bottom: -60px;
+  width: 980px;
+  height: 980px;
+  background-image: url('/sanayicin-icon.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  pointer-events: none;
+  opacity: 0.55;
+  filter: drop-shadow(0 20px 50px rgba(0,0,0,0.25));
+  z-index: 0;
+}
+
 .heroTitle {
   justify-self: center;
   font-size: 2.6rem;
@@ -804,6 +958,23 @@ footer {
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   overflow: hidden;
+}
+.modernSearchBar--stacked {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 10px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: none;
+  padding: 12px;
+  max-width: none;
+}
+.modernSearchBar--stacked .modernSearchInput { border-radius: 10px; }
+.modernSearchBar--stacked .modernSearchButton {
+  border-radius: 10px;
+  padding: 16px 24px;
+  grid-column: span 2;
 }
 .modernSearchInput {
   border: none;
@@ -2871,6 +3042,11 @@ footer {
   .en-yakin-page .cta-content h2 {
     font-size: 2rem;
   }
+}
+
+/* Hero grid responsive fix */
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 24px; }
 }
 
 /* Hizmet Vermek Sayfası Styles */

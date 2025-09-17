@@ -4,9 +4,13 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
-import Link from "next/link";
+type SearchBarVariant = 'default' | 'stacked';
 
-const SearchBar = () => {
+interface SearchBarProps {
+  variant?: SearchBarVariant;
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
   const router = useRouter();
   const { cities, loadTurkeyData, getDistricts } = useTurkeyData();
   const [selectedCity, setSelectedCity] = useState("");
@@ -46,7 +50,7 @@ const SearchBar = () => {
 
   return (
     <>
-      <form className="modernSearchBar" autoComplete="off" onSubmit={handleSubmit}>
+      <form className={`modernSearchBar ${variant === 'stacked' ? 'modernSearchBar--stacked' : ''}`} autoComplete="off" onSubmit={handleSubmit}>
         <select
           className="modernSearchInput"
           value={selectedCity}

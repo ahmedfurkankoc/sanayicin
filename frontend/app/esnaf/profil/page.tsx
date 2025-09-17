@@ -50,6 +50,7 @@ export default function EsnafProfilPage() {
   return (
     <EsnafPanelLayout activePage="profil">
       <div className="esnaf-modern-profile">
+        
         {/* Modern Header */}
         <div className="esnaf-profile-hero">
           <div className="esnaf-profile-hero-bg"></div>
