@@ -492,6 +492,7 @@ export default function EsnafKayitPage() {
       if (companyInfo.photo) {
         formData.append('profile_photo', companyInfo.photo);
       }
+      const businessPhoneDigits = companyInfo.phone.replace(/\D/g, '');
       formData.append('business_phone', `+90${businessPhoneDigits}`);
       formData.append('city', selectedCity);
       formData.append('district', selectedDistrict);

@@ -341,13 +341,14 @@ body, html, .esnaf-panel-layout {
 /* Sidebar */
 .esnaf-sidebar {
   background: var(--light-black);
-  border-right: 1px solid #e0e0e0;
+  border-right: none;
   display: flex;
   flex-direction: column;
   position: fixed;
   height: 100vh;
   left: 0;
   top: 0;
+  width: 280px;
   border-radius: 0 20px 20px 0;
 }
 
