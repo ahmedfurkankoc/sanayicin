@@ -696,7 +696,8 @@ def forgot_password(request):
         )
         
         # Email gönder
-        email_sent = EmailService.send_password_reset_email(email, reset_url)
+        EmailService.send_password_reset_email(email, user.first_name or user.email, reset_url)
+        email_sent = True  # Asenkron gönderim, her zaman True döndür
         
         if email_sent:
             return Response({

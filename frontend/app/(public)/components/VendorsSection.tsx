@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import VendorCard from "./VendorCard";
+import Link from "next/link";
 
 const serviceAreas = [
   {
@@ -56,14 +56,33 @@ const VendorsSection = () => {
         <h2 className="sectionTitle">Hizmet Alanları</h2>
         <div className="vendorCardsWrapper vendorCardsWrapper-4col">
           {memoizedServiceAreas.map((serviceArea, index) => (
-            <VendorCard 
-              key={index} 
-              name={serviceArea.name} 
-              experience="" 
-              type={serviceArea.name} 
-              city="" 
-              img={serviceArea.image} 
-            />
+            <div key={index} className="vendorCard">
+              <div className="vendorImgContainer">
+                <img 
+                  src={serviceArea.image} 
+                  alt={serviceArea.name}
+                  className="vendorImg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = `
+                        <div class="vendorImgTextAvatar">
+                          <span class="avatarText">${serviceArea.name.charAt(0)}</span>
+                        </div>
+                      `;
+                    }
+                  }}
+                />
+              </div>
+              <div className="vendorInfo">
+                <h3 className="vendorName">{serviceArea.name}</h3>
+                <div className="vendorExp"></div>
+                <div className="vendorType">{serviceArea.name} · </div>
+                <button className="vendorCardActionBtn">Esnaf Bul</button>
+              </div>
+            </div>
           ))}
         </div>
       </div>

@@ -38,6 +38,83 @@ export default function AboutPage() {
             Sanayicin ekibi olarak, sizlere en iyi deneyimi sunmak için sürekli çalışıyoruz. Bize her türlü öneri ve geri bildiriminizi iletebilirsiniz.
           </p>
         </section>
+
+      </main>
+      
+      <section className="company-history-section">
+        <div className="container">
+          <div className="history-header">
+            <div className="history-badge">MİLESTONE</div>
+            <h2 className="sectionTitle white">Kuruluş Hikayemiz</h2>
+            <p className="history-description">
+              Sanayicin'in kuruluşundan bugüne kadar geçen süreçte yaşadığımız önemli dönüm noktalarını keşfedin. 
+              Her adımda daha iyi hizmet sunmak için nasıl büyüdüğümüzü ve geliştiğimizi görün.
+            </p>
+          </div>
+          
+          <div className="history-timeline">
+            <div className="timeline-line"></div>
+            
+            <div className="timeline-item">
+              <div className="timeline-marker">
+                <div className="marker-outer">
+                  <div className="marker-inner"></div>
+                </div>
+              </div>
+              <div className="timeline-content">
+                <div className="timeline-year">2024</div>
+                <div className="timeline-description">
+                  Sanayicin projesi fikri ortaya çıktı ve ilk adımlar atıldı. Otomotiv sektöründeki dijital dönüşüm ihtiyacı tespit edildi.
+                </div>
+              </div>
+            </div>
+
+            <div className="timeline-item">
+              <div className="timeline-marker">
+                <div className="marker-outer">
+                  <div className="marker-inner"></div>
+                </div>
+              </div>
+              <div className="timeline-content">
+                <div className="timeline-year">2025</div>
+                <div className="timeline-description">
+                  Test ve yazılım geliştirme aşamalarına başlandı. Platform altyapısı oluşturuldu ve ilk prototipler geliştirildi.
+                </div>
+              </div>
+            </div>
+
+            <div className="timeline-item">
+              <div className="timeline-marker">
+                <div className="marker-outer">
+                  <div className="marker-inner"></div>
+                </div>
+              </div>
+              <div className="timeline-content">
+                <div className="timeline-year">2025</div>
+                <div className="timeline-description">
+                  Beta test süreci başlatıldı ve ilk kullanıcı geri bildirimleri alındı. Platform sürekli iyileştirildi.
+                </div>
+              </div>
+            </div>
+
+            <div className="timeline-item">
+              <div className="timeline-marker">
+                <div className="marker-outer">
+                  <div className="marker-inner"></div>
+                </div>
+              </div>
+              <div className="timeline-content">
+                <div className="timeline-year">2025</div>
+                <div className="timeline-description">
+                  Resmi lansman yapıldı ve kullanıcılara hizmet vermeye başladık. Türkiye genelinde hizmet ağı genişletildi.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <main className="container">
       </main>
       <Footer />
     </>
