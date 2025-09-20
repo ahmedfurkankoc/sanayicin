@@ -38,6 +38,7 @@ urlpatterns = [
     path('auth/check-verification-status/', check_verification_status, name='check_verification_status'),
     path('auth/forgot-password/', forgot_password, name='forgot_password'),
     path('auth/reset-password/', reset_password, name='reset_password'),
+    path('auth/reset-password-confirm/<str:uidb64>/<str:token>/', reset_password, name='reset_password_confirm'),
     path('avatar/upload/', upload_avatar, name='upload_avatar'),
     path('profile/', get_profile, name='get_profile'),
     path('profile/update/', update_profile, name='update_profile'),

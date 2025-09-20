@@ -20,6 +20,18 @@ body {
   font-family: var(--font-main);
 }
 
+.white {
+  color: var(--white) !important;
+}
+
+.yellow {
+  color: var(--yellow) !important;
+}
+
+.black {
+  color: var(--black) !important;
+}
+
 .mainContent {
   padding: 0;
   margin: 0;
@@ -874,6 +886,349 @@ section[aria-label="Notifications alt+T"] {
 .vendorCard:hover .vendorInfo {
   transform: translateY(-4px);
 } 
+
+/* ===== COMPANY HISTORY SECTION ===== */
+.company-history-section {
+  padding: 100px 0;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+}
+
+.company-history-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(255, 193, 7, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255, 193, 7, 0.1) 0%, transparent 50%),
+    linear-gradient(45deg, transparent 30%, rgba(255, 193, 7, 0.03) 50%, transparent 70%);
+  pointer-events: none;
+}
+
+.history-header {
+  text-align: center;
+  margin-bottom: 80px;
+  position: relative;
+  z-index: 2;
+}
+
+.history-description {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 600px;
+  margin: 0 auto;
+  margin-top: 20px;
+  font-weight: 400;
+}
+
+.history-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--yellow) 0%, #ffd700 100%);
+  color: var(--black);
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.history-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.history-badge:hover::before {
+  left: 100%;
+}
+
+.history-timeline {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.timeline-line {
+  position: absolute;
+  top: 50%;
+  left: 50px;
+  right: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 193, 7, 0.3) 10%, 
+    var(--yellow) 20%, 
+    var(--yellow) 80%, 
+    rgba(255, 193, 7, 0.3) 90%, 
+    transparent 100%
+  );
+  transform: translateY(-50%);
+  z-index: 1;
+  border-radius: 2px;
+  box-shadow: 0 0 20px rgba(255, 193, 7, 0.2);
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 80px;
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.timeline-item:nth-child(1) { animation-delay: 0.1s; }
+.timeline-item:nth-child(2) { animation-delay: 0.2s; }
+.timeline-item:nth-child(3) { animation-delay: 0.3s; }
+.timeline-item:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.timeline-item:nth-child(even) {
+  flex-direction: row-reverse;
+}
+
+.timeline-item:nth-child(even) .timeline-content {
+  text-align: right;
+  margin-right: 60px;
+  margin-left: 0;
+}
+
+.timeline-marker {
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.timeline-item:hover .timeline-marker {
+  transform: scale(1.2);
+}
+
+.marker-outer {
+  width: 24px;
+  height: 24px;
+  border: 4px solid var(--white);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--black) 0%, #2a2a2a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 
+    0 0 0 6px var(--yellow),
+    0 0 20px rgba(255, 193, 7, 0.4),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.timeline-item:hover .marker-outer {
+  box-shadow: 
+    0 0 0 8px var(--yellow),
+    0 0 30px rgba(255, 193, 7, 0.6),
+    0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.marker-inner {
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, var(--white) 0%, #f0f0f0 100%);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.timeline-content {
+  flex: 1;
+  margin-left: 60px;
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 30px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--yellow), #ffd700);
+  border-radius: 20px 20px 0 0;
+}
+
+.timeline-item:hover .timeline-content {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 193, 7, 0.3);
+}
+
+.timeline-year {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--yellow) 0%, #ffd700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 15px;
+  text-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+.timeline-description {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.95);
+  max-width: 450px;
+  font-weight: 400;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .company-history-section {
+    padding: 80px 0;
+  }
+  
+  .history-header {
+    margin-bottom: 60px;
+  }
+  
+  .history-badge {
+    padding: 10px 20px;
+    font-size: 0.8rem;
+  }
+  
+  .history-description {
+    font-size: 1rem;
+    margin-top: 15px;
+    padding: 0 20px;
+  }
+  
+  .history-timeline {
+    padding: 0 20px;
+  }
+  
+  .timeline-line {
+    left: 30px;
+    right: 30px;
+    height: 2px;
+  }
+  
+  .timeline-item {
+    flex-direction: column !important;
+    text-align: center;
+    margin-bottom: 60px;
+    align-items: center;
+  }
+  
+  .timeline-item:nth-child(even) .timeline-content {
+    text-align: center;
+    margin-right: 0;
+    margin-left: 0;
+  }
+  
+  .timeline-content {
+    margin-left: 0;
+    margin-top: 30px;
+    padding: 25px;
+    max-width: 100%;
+  }
+  
+  .timeline-description {
+    max-width: 100%;
+  }
+  
+  .marker-outer {
+    width: 20px;
+    height: 20px;
+    border-width: 3px;
+  }
+  
+  .marker-inner {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .timeline-year {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .company-history-section {
+    padding: 60px 0;
+  }
+  
+  .history-header {
+    margin-bottom: 40px;
+  }
+  
+  .history-badge {
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+  
+  .history-description {
+    font-size: 0.95rem;
+    margin-top: 12px;
+    padding: 0 15px;
+  }
+  
+  .timeline-content {
+    padding: 20px;
+    margin-top: 25px;
+  }
+  
+  .timeline-year {
+    font-size: 1.5rem;
+  }
+  
+  .timeline-description {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .marker-outer {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .marker-inner {
+    width: 7px;
+    height: 7px;
+  }
+}
 
 /* Sanayicin Footer */
 footer {

@@ -27,7 +27,7 @@ export default function SifremiUnuttumPage() {
       }
     } catch (err: any) {
       console.error("Şifre sıfırlama hatası:", err);
-      const errorMessage = err.response?.data?.detail || "Bir hata oluştu. Lütfen tekrar deneyin.";
+      const errorMessage = err.response?.data?.error || err.response?.data?.detail || "Bir hata oluştu. Lütfen tekrar deneyin.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
