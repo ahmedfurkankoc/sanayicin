@@ -14,7 +14,7 @@ export default function AboutPage() {
       />
       <main className="container">
         <section className="about-section">
-          <h2 className="about-title">Sanayicin Nedir?</h2>
+          <h2 className="sectionTitle">Sanayicin Nedir?</h2>
           <p className="about-text">
             Sanayicin, otomotiv sektöründe hizmet veren ustalar ile hizmet almak isteyen kullanıcıları bir araya getiren modern bir platformdur. Amacımız, güvenilir ve hızlı bir şekilde en yakın ustaya ulaşmanızı sağlamak ve sektördeki dijital dönüşüme öncülük etmektir.
           </p>

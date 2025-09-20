@@ -3,6 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     ServiceAreaListView, 
     CategoryListView, 
+    CarBrandListView,
     login,
     send_verification_email,
     verify_email,
@@ -42,6 +43,7 @@ urlpatterns = [
     path('profile/update/', update_profile, name='update_profile'),
     path('services/', ServiceAreaListView.as_view(), name='servicearea-list'),
     path('categories/', CategoryListView.as_view(), name='category-list'),
+    path('car-brands/', CarBrandListView.as_view(), name='carbrand-list'),
     
     # Vendor upgrade endpoints
     path('vendor/upgrade/', request_vendor_upgrade, name='request_vendor_upgrade'),

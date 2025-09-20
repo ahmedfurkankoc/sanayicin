@@ -59,7 +59,7 @@ class VendorSearchView(generics.ListAPIView):
         queryset = VendorProfile.objects.filter(
             user__is_verified=True,  # Sadece doğrulanmış kullanıcılar
             user__is_active=True     # Sadece aktif kullanıcılar
-        ).select_related('user').prefetch_related('service_areas', 'categories', 'car_brands')
+        ).select_related('user').prefetch_related('service_areas', 'categories', 'car_brands', 'reviews')
         
         # Filtreleme parametreleri
         city = self.request.query_params.get('city', '')
@@ -149,7 +149,12 @@ class VendorSearchView(generics.ListAPIView):
             except Category.DoesNotExist:
                 pass
         
-        return queryset.order_by('-id')  # En yeni vendor'lar önce
+        # Rating'e göre sırala (yüksek rating önce), sonra en yeni
+        from django.db.models import Avg, Count
+        return queryset.annotate(
+            avg_rating=Avg('reviews__rating'),
+            review_count=Count('reviews')
+        ).order_by('-avg_rating', '-review_count', '-id')
 
 class VendorDetailView(generics.RetrieveAPIView):
     serializer_class = VendorProfileSerializer

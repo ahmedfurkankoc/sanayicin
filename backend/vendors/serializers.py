@@ -228,6 +228,8 @@ class VendorProfileSerializer(serializers.ModelSerializer):
     )
     user = serializers.SerializerMethodField()
     vendor_profile = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
     
     class Meta:
         model = VendorProfile
@@ -237,7 +239,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'display_name', 'about', 'business_phone', 'city', 'district', 'subdistrict', 'address',
             'social_media', 'working_hours', 'unavailable_dates', 'manager_birthdate', 'manager_tc',
             # Yeni alan (read-only url)
-            'store_logo'
+            'store_logo', 'rating', 'review_count'
         )
         read_only_fields = ('id', 'slug')
 
@@ -275,6 +277,16 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'manager_tc': obj.manager_tc,
             'store_logo': obj.store_logo.url if obj.store_logo else None
         }
+    
+    def get_rating(self, obj):
+        """Vendor'ın ortalama puanını hesapla"""
+        from django.db.models import Avg
+        avg_rating = obj.reviews.aggregate(avg_rating=Avg('rating'))['avg_rating']
+        return round(avg_rating, 1) if avg_rating else 0.0
+    
+    def get_review_count(self, obj):
+        """Vendor'ın toplam değerlendirme sayısını döndür"""
+        return obj.reviews.count()
 
     def validate_business_type(self, value):
         # Business type whitelist kontrolü
