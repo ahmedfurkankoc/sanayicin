@@ -2,6 +2,9 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Banner from "../components/Banner";
+import PlatformFeatures from "../components/PlatformFeatures";
+import SuccessStories from "../components/SuccessStories";
+import { iconMapping } from "../../utils/iconMapping";
 
 const HizmetVermekPage = () => {
   return (
@@ -61,7 +64,9 @@ const HizmetVermekPage = () => {
             
             <div className="service-areas-grid">
               <div className="service-area-card">
-                <div className="service-icon">🔧</div>
+                <div className="service-icon">
+                  {React.createElement(iconMapping.wrench, { size: 32 })}
+                </div>
                 <h3>Mekanik Hizmetler</h3>
                 <p>Motor, şanzıman, fren sistemi, genel mekanik arızalar</p>
                 <div className="service-tags">
@@ -71,7 +76,9 @@ const HizmetVermekPage = () => {
               </div>
               
               <div className="service-area-card">
-                <div className="service-icon">⚡</div>
+                <div className="service-icon">
+                  {React.createElement(iconMapping.zap, { size: 32 })}
+                </div>
                 <h3>Elektrik & Elektronik</h3>
                 <p>Araç elektrik sistemi, akü, şarj dinamosu, elektronik arızalar</p>
                 <div className="service-tags">
@@ -81,7 +88,9 @@ const HizmetVermekPage = () => {
               </div>
               
               <div className="service-area-card">
-                <div className="service-icon">🎨</div>
+                <div className="service-icon">
+                  {React.createElement(iconMapping.palette, { size: 32 })}
+                </div>
                 <h3>Kaporta ve Boya</h3>
                 <p>Kaporta tamiri, boya işleri, çizik giderme, dış görünüm</p>
                 <div className="service-tags">
@@ -91,7 +100,9 @@ const HizmetVermekPage = () => {
               </div>
               
               <div className="service-area-card">
-                <div className="service-icon">🧽</div>
+                <div className="service-icon">
+                  {React.createElement(iconMapping.sparkles, { size: 32 })}
+                </div>
                 <h3>Detaylı Temizlik</h3>
                 <p>İç-dış detaylı temizlik, motor yıkama, genel bakım</p>
                 <div className="service-tags">
@@ -101,7 +112,9 @@ const HizmetVermekPage = () => {
               </div>
               
               <div className="service-area-card">
-                <div className="service-icon">🛞</div>
+                <div className="service-icon">
+                  {React.createElement(iconMapping.car, { size: 32 })}
+                </div>
                 <h3>Lastik ve Jant</h3>
                 <p>Lastik değişimi, balans ayarı, jant tamiri, lastik bakımı</p>
                 <div className="service-tags">
@@ -111,7 +124,9 @@ const HizmetVermekPage = () => {
               </div>
               
               <div className="service-area-card">
-                <div className="service-icon">❄️</div>
+                <div className="service-icon">
+                  {React.createElement(iconMapping.snowflake, { size: 32 })}
+                </div>
                 <h3>Klima Sistemleri</h3>
                 <p>Klima bakımı, gaz doldurma, ısıtma sistemi, havalandırma</p>
                 <div className="service-tags">
@@ -153,85 +168,10 @@ const HizmetVermekPage = () => {
         </section>
 
         {/* Platform Özellikleri */}
-        <section className="platform-features-section">
-          <div className="container">
-            <h2 className="section-title">Platform Özellikleri</h2>
-            <div className="features-grid">
-              <div className="feature-card">
-                <div className="feature-icon">📱</div>
-                <h3>Mobil Uygulama</h3>
-                <p>İşlerinizi her yerden yönetin, müşterilerle anında iletişim kurun</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">📊</div>
-                <h3>Detaylı Raporlar</h3>
-                <p>Kazancınızı, müşteri memnuniyetini ve performansınızı takip edin</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">💬</div>
-                <h3>Anlık Mesajlaşma</h3>
-                <p>Müşterilerle platform üzerinden güvenli iletişim kurun</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">📅</div>
-                <h3>Randevu Sistemi</h3>
-                <p>Müşterileriniz online randevu alabilsin, işlerinizi planlayın</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">⭐</div>
-                <h3>Değerlendirme Sistemi</h3>
-                <p>Müşteri yorumları ve puanları ile itibarınızı artırın</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">🆘</div>
-                <h3>7/24 Destek</h3>
-                <p>Teknik destek ekibimiz her zaman yanınızda</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <PlatformFeatures />
 
         {/* Başarı Hikayeleri */}
-        <section className="success-stories-section">
-          <div className="container">
-            <h2 className="section-title">Başarı Hikayeleri</h2>
-            <div className="stories-grid">
-              <div className="story-card">
-                <div className="story-avatar">👨‍🔧</div>
-                <div className="story-content">
-                  <h3>Mehmet Usta - Oto Servis</h3>
-                  <p>"Sanayicin sayesinde aylık müşteri sayım %60 arttı. Artık daha fazla iş alıyorum ve gelirim çok daha iyi. Platform gerçekten işimi büyüttü."</p>
-                  <div className="story-stats">
-                    <span>3 yıldır üye</span>
-                    <span>4.9 ⭐</span>
-                  </div>
-                </div>
-              </div>
-              <div className="story-card">
-                <div className="story-avatar">👩‍🔧</div>
-                <div className="story-content">
-                  <h3>Ayşe Hanım - Kaporta & Boya</h3>
-                  <p>"Platform üzerinden gelen müşteriler çok kaliteli. İşlerim düzenli hale geldi ve kazancım arttı. Artık kendi işimi yapabiliyorum."</p>
-                  <div className="story-stats">
-                    <span>2 yıldır üye</span>
-                    <span>4.8 ⭐</span>
-                  </div>
-                </div>
-              </div>
-              <div className="story-card">
-                <div className="story-avatar">👨‍🔧</div>
-                <div className="story-content">
-                  <h3>Ahmet Usta - Elektrik & Elektronik</h3>
-                  <p>"Sanayicin ile tanıştıktan sonra işletmemi büyüttüm. Şimdi 3 kişilik ekiple çalışıyorum. Platform sayesinde işim çok gelişti."</p>
-                  <div className="story-stats">
-                    <span>4 yıldır üye</span>
-                    <span>4.9 ⭐</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <SuccessStories />
 
         {/* CTA Section */}
         <section className="cta-section">

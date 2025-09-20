@@ -6,7 +6,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
-from .models import CustomUser, ServiceArea, Category, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite
+from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite
 from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
@@ -27,6 +27,22 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ("id", "name", "description", "service_area")
 
+class CarBrandSerializer(serializers.ModelSerializer):
+    logo_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CarBrand
+        fields = ("id", "name", "logo", "logo_url", "description", "is_active")
+    
+    def get_logo_url(self, obj):
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            # Fallback: relative URL
+            return f"/media/{obj.logo.name}"
+        return None
+
 class ServiceAreaListView(generics.ListAPIView):
     queryset = ServiceArea.objects.all()
     serializer_class = ServiceAreaSerializer
@@ -42,6 +58,16 @@ class CategoryListView(generics.ListAPIView):
         if service_area:
             qs = qs.filter(service_area_id=service_area)
         return qs
+
+class CarBrandListView(generics.ListAPIView):
+    queryset = CarBrand.objects.filter(is_active=True)
+    serializer_class = CarBrandSerializer
+    permission_classes = []
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 # Rate limiting için cache key'leri
 def get_rate_limit_key(email: str, action: str) -> str:

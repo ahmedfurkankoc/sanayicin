@@ -271,7 +271,7 @@ export default function MusteriHeader() {
         {/* Sağ: Bildirim ve Kullanıcı */}
         <div className="musteri-header-right">
           <div className="musteri-user-menu">
-            <button className="musteri-notification-btn" onClick={() => setShowDropdown(false)}>
+            <button className="musteri-header-btn musteri-notification-btn" onClick={() => setShowDropdown(false)}>
               {React.createElement(iconMapping.bell, { size: 20 })}
               {notifications.length > 0 && (
                 <span className="musteri-message-badge">{notifications.length > 99 ? '99+' : notifications.length}</span>
@@ -292,7 +292,7 @@ export default function MusteriHeader() {
             )}
           </div>
           <button 
-            className={`musteri-message-btn ${showChatWidget ? 'active' : ''}`} 
+            className={`musteri-header-btn musteri-message-btn ${showChatWidget ? 'active' : ''}`} 
             onClick={toggleChatWidget}
           >
             {React.createElement(iconMapping.message, { size: 20 })}
@@ -304,7 +304,7 @@ export default function MusteriHeader() {
             )}
           </button>
           <div className="musteri-user-menu">
-            <button className="musteri-user-btn" onClick={toggleDropdown}>
+            <button className="musteri-header-btn musteri-user-btn" onClick={toggleDropdown}>
               {React.createElement(iconMapping.user, { size: 20 })}
               {isAuthenticated && !loading && user && (
                 <span className="musteri-user-name">

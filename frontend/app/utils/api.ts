@@ -182,7 +182,7 @@ apiClient.interceptors.request.use((config) => {
                           config.url?.includes('/vendors/') && config.url?.includes('/slug/') ||
                           config.url?.includes('/services/') ||
                           config.url?.includes('/categories/') ||
-                          config.url?.includes('/vendors/car-brands/');
+                          config.url?.includes('/car-brands/');
   
   if (isPublicEndpoint) {
     return config; // Token ekleme, herkese açık
@@ -273,10 +273,10 @@ export const api = {
     apiClient.get(`/categories/?service_area=${serviceAreaId}`),
   
   // Araba markaları
-  getCarBrands: () => apiClient.get('/vendors/car-brands/'),
+  getCarBrands: () => apiClient.get('/car-brands/'),
   
   // Vendor arama sonuçları
-  searchVendors: (params: { city?: string; district?: string; service?: string; category?: string; carBrand?: string; page?: string; q?: string }) => 
+  searchVendors: (params: { city?: string; district?: string; service?: string; category?: string; carBrand?: string; page?: string; page_size?: number; q?: string }) => 
     apiClient.get('/vendors/search/', { params }),
   
   // Vendor detay sayfası

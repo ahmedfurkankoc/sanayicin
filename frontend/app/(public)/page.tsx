@@ -1,6 +1,9 @@
+"use client";
+
 import Navbar from "./components/Navbar";
 import SearchBar from "./components/SearchBar";
 import VendorCard from "./components/VendorCard";
+import VendorCardSkeleton from "../components/VendorCardSkeleton";
 import MobileBottomNav from "./components/MobileBottomNav";
 import AppBanner from "./components/AppBanner";
 import Footer from "./components/Footer";
@@ -9,14 +12,21 @@ import PlatformAdvantages from "./components/PlatformAdvantages";
 import HowItWorks from "./components/HowItWorks";
 import CityVendorsSection from "./components/CityVendorsSection";
 import VendorsSection from "./components/VendorsSection";
+import { useMobileVendors } from "../hooks/useMobileVendors";
 
 export default function Home() {
-  const mobileVendors = [
+  const { vendors, loading, error } = useMobileVendors();
+  
+  // Fallback mock data
+  const mockVendors = [
     { name: "Usta Otomotiv", experience: "10+ yıl deneyim", type: "Renair Servisi", city: "İstanbul", img: "/images/vendor-1.jpg" },
     { name: "Yılmaz Elektrik", experience: "7 yıl deneyim", type: "Elektrik Servisi", city: "Ankara", img: "/images/vendor-2.jpg" },
     { name: "Kaporta Ustası", experience: "12 yıl deneyim", type: "Kaporta", city: "İzmir", img: "/images/vendor-3.jpg" },
     { name: "Boya Merkezi", experience: "9 yıl deneyim", type: "Boya", city: "Bursa", img: "/images/vendor-4.jpg" },
   ];
+
+  // Gerçek veri varsa onu kullan, yoksa mock data
+  const displayVendors = vendors.length > 0 ? vendors : mockVendors;
   return (
     <>
       <Navbar />
@@ -53,9 +63,36 @@ export default function Home() {
             <div className="mobile-nearby">
               <h3 className="sectionTitle">Sana En Yakın Esnaflar</h3>
               <div className="h-scroll-cards">
-                {mobileVendors.map((v) => (
-                  <VendorCard key={v.name} {...v} />
-                ))}
+                {loading ? (
+                  // Skeleton loading göster
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <VendorCardSkeleton key={`skeleton-${index}`} />
+                  ))
+                ) : error ? (
+                  // Hata durumunda mock data göster
+                  mockVendors.map((v) => (
+                    <VendorCard key={v.name} {...v} />
+                  ))
+                ) : (
+                  // Gerçek veri göster
+                  displayVendors.slice(0, 5).map((vendor, index) => {
+                    // API'den gelen veri formatını VendorCard'a uygun hale getir
+                    const vendorData = {
+                      name: 'display_name' in vendor ? (vendor.display_name || vendor.company_title || 'Esnaf') : vendor.name,
+                      experience: `${Math.floor(Math.random() * 10) + 1}+ yıl deneyim`, // Geçici olarak random
+                      type: 'service_areas' in vendor ? (vendor.service_areas?.[0]?.name || 'Hizmet') : vendor.type,
+                      city: 'city' in vendor ? vendor.city : (vendor as any).city,
+                      img: 'avatar' in vendor ? (vendor.avatar || '/images/vendor-default.jpg') : vendor.img,
+                      slug: 'slug' in vendor ? vendor.slug : undefined,
+                      rating: 'rating' in vendor ? (vendor.rating || 0) : 0, // Rating yoksa 0 göster
+                      reviewCount: 'review_count' in vendor ? (vendor.review_count || 0) : 0,
+                      about: 'about' in vendor ? vendor.about : undefined,
+                      serviceAreas: 'service_areas' in vendor ? vendor.service_areas : undefined,
+                      categories: 'categories' in vendor ? vendor.categories : undefined
+                    };
+                    return <VendorCard key={'id' in vendor ? vendor.id : index} {...vendorData} />;
+                  })
+                )}
               </div>
             </div>
 
