@@ -32,6 +32,7 @@ import {
   CheckCircle,
   AlertCircle,
   ChevronRight,
+  ChevronLeft,
   Instagram,
   Twitter,
   Youtube,
@@ -62,7 +63,8 @@ import {
   Bell,
   X as Close,
   Cog,
-  Truck
+  Truck,
+  BarChart3
 } from 'lucide-react';
 
 // İsimden Lucide ikonlarına mapping
@@ -85,6 +87,7 @@ export const iconMapping = {
   'calendar': Calendar,
   'star': Star,
   'alert': AlertCircle,
+  'bar-chart': BarChart3,
   
   // Ayarlar ikonları
   'user': User,
@@ -134,6 +137,7 @@ export const iconMapping = {
   'arrow-right': ArrowRight,
   'arrow-left': ArrowLeft,
   'chevron-right': ChevronRight,
+  'chevron-left': ChevronLeft,
   'chevron-down': ChevronDown,
   'chevron-up': ChevronUp,
   'menu': Menu,

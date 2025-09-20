@@ -3,6 +3,8 @@ import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Banner from "../components/Banner";
+import PlatformFeatures from "../components/PlatformFeatures";
+import SuccessStories from "../components/SuccessStories";
 
 const NedenEsnafPage = () => {
   return (
@@ -20,7 +22,7 @@ const NedenEsnafPage = () => {
         <section className="main-advantages-section">
           <div className="container">
             <div className="advantages-header">
-              <h2 className="section-title">Sanayicin'in Esnaflara Sunduğu Avantajlar</h2>
+              <h2 className="sectionTitle">Sanayicin'in Esnaflara Sunduğu Avantajlar</h2>
               <p className="section-subtitle">Platformumuzda esnaf olarak yer alarak işinizi büyütün ve daha fazla müşteriye ulaşın</p>
             </div>
             
@@ -87,7 +89,7 @@ const NedenEsnafPage = () => {
         {/* Nasıl Çalışır */}
         <section className="how-it-works-section">
           <div className="container">
-            <h2 className="section-title">Nasıl Çalışır?</h2>
+            <h2 className="sectionTitle">Nasıl Çalışır?</h2>
             <div className="steps-grid">
               <div className="step-card">
                 <div className="step-number">1</div>
@@ -114,76 +116,10 @@ const NedenEsnafPage = () => {
         </section>
 
         {/* Platform Özellikleri */}
-        <section className="features-section">
-          <div className="container">
-            <h2 className="section-title">Platform Özellikleri</h2>
-            <div className="features-grid">
-              <div className="feature-card">
-                <div className="feature-icon">📱</div>
-                <h3>Kolay Yönetim</h3>
-                <p>Mobil uygulama ve web paneli ile işlerinizi kolayca yönetin</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">📊</div>
-                <h3>Detaylı Raporlar</h3>
-                <p>İş performansınızı ve gelir durumunuzu takip edin</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">💬</div>
-                <h3>Anlık İletişim</h3>
-                <p>Müşterilerle anında mesajlaşın ve hızlı iletişim kurun</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">📅</div>
-                <h3>Randevu Sistemi</h3>
-                <p>Online randevu alma sistemi ile işlerinizi planlayın</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">⭐</div>
-                <h3>Değerlendirme Sistemi</h3>
-                <p>Müşteri yorumları ve puanları ile itibarınızı artırın</p>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">🆘</div>
-                <h3>7/24 Destek</h3>
-                <p>Teknik destek ekibimiz her zaman yanınızda, sorularınızı yanıtlar</p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <PlatformFeatures />
 
         {/* Başarı Hikayeleri */}
-        <section className="success-stories-section">
-          <div className="container">
-            <h2 className="section-title">Başarı Hikayeleri</h2>
-            <div className="stories-grid">
-              <div className="story-card">
-                <div className="story-avatar">👨‍🔧</div>
-                <div className="story-content">
-                  <h3>Mehmet Usta - Oto Servis</h3>
-                  <p>"Sanayiçin sayesinde aylık müşteri sayım %60 arttı. Artık daha fazla iş alıyorum ve gelirim çok daha iyi."</p>
-                  <div className="story-rating">⭐⭐⭐⭐⭐</div>
-                </div>
-              </div>
-              <div className="story-card">
-                <div className="story-avatar">👩‍🔧</div>
-                <div className="story-content">
-                  <h3>Ayşe Hanım - Kaporta & Boya</h3>
-                  <p>"Platform üzerinden gelen müşteriler çok kaliteli. İşlerim düzenli hale geldi ve kazancım arttı."</p>
-                  <div className="story-rating">⭐⭐⭐⭐⭐</div>
-                </div>
-              </div>
-              <div className="story-card">
-                <div className="story-avatar">👨‍🔧</div>
-                <div className="story-content">
-                  <h3>Ahmet Usta - Elektrik & Elektronik</h3>
-                  <p>"Sanayiçin ile tanıştıktan sonra işletmemi büyüttüm. Şimdi 3 kişilik ekiple çalışıyorum."</p>
-                  <div className="story-rating">⭐⭐⭐⭐⭐</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <SuccessStories />
 
         {/* CTA Section */}
         <section className="cta-section">
