@@ -141,7 +141,6 @@ body {
   text-decoration: none;
   display: flex;
   align-items: center;
-  width: var(--header-logo-width);
 }
 
 /* Container for next/image fill usage */

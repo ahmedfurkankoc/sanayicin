@@ -938,6 +938,7 @@ section[aria-label="Notifications alt+T"] {
   font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 2px;
+  margin-top: 24px;
   margin-bottom: 24px;
   text-transform: uppercase;
   box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
@@ -1075,6 +1076,9 @@ section[aria-label="Notifications alt+T"] {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
 }
 
 .timeline-content::before {
@@ -1101,16 +1105,23 @@ section[aria-label="Notifications alt+T"] {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 15px;
   text-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+  flex-shrink: 0;
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 0.8;
+  position: relative;
 }
 
 .timeline-description {
   font-size: 1.1rem;
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.95);
-  max-width: 450px;
   font-weight: 400;
+  flex: 1;
 }
 
 /* Responsive Design */
@@ -1131,7 +1142,7 @@ section[aria-label="Notifications alt+T"] {
   .history-description {
     font-size: 1rem;
     margin-top: 15px;
-    padding: 0 20px;
+    text-align: left;
   }
   
   .history-timeline {
@@ -1162,6 +1173,8 @@ section[aria-label="Notifications alt+T"] {
     margin-top: 30px;
     padding: 25px;
     max-width: 100%;
+    flex-direction: column;
+    gap: 15px;
   }
   
   .timeline-description {
@@ -1181,6 +1194,8 @@ section[aria-label="Notifications alt+T"] {
   
   .timeline-year {
     font-size: 1.8rem;
+    min-width: auto;
+    text-align: center;
   }
 }
 
@@ -1202,7 +1217,6 @@ section[aria-label="Notifications alt+T"] {
   .history-description {
     font-size: 0.95rem;
     margin-top: 12px;
-    padding: 0 15px;
   }
   
   .timeline-content {
@@ -1212,6 +1226,8 @@ section[aria-label="Notifications alt+T"] {
   
   .timeline-year {
     font-size: 1.5rem;
+    min-width: auto;
+    text-align: center;
   }
   
   .timeline-description {
@@ -2709,10 +2725,6 @@ footer {
   gap: 8px;
 }
 
-  .about-section {
-    padding: 22px 8px 18px 8px;
-    border-radius: 12px;
-  }
   .about-subtitle {
     font-size: 1.05rem;
   }

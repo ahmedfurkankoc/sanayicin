@@ -2,6 +2,7 @@ import React from "react";
 
 const AppBanner = () => (
   <section className="appBannerSection">
+    <div className="container">
       <div className="appBanner">
           <div className="appBannerText">
             <h2 className="appBannerTitle">Hemen indir, Sanayicin ile ustaları hızlıca bul!</h2>
@@ -19,6 +20,7 @@ const AppBanner = () => (
             <img src="/images/app.jpg" alt="Mobil uygulama mockup" />
           </div>
       </div>
+    </div>
   </section>
 );
 
