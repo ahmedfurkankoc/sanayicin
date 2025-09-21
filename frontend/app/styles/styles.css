@@ -1390,7 +1390,7 @@ footer {
   opacity: 0;
 }
 .hamburger-bar.open:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
+  transform: translateY(-25px) rotate(-45deg);
 }
 @media (max-width: 900px) {
   .container {
@@ -1504,7 +1504,8 @@ footer {
     align-items: center;
     gap: 12px;
     width: 100%;
-    margin-top: 16px;
+    margin-top: 20px;
+    padding-bottom: 1.5rem;
   }
   .sanayicin-menu-links li {
     width: 100%;
@@ -2436,7 +2437,7 @@ footer {
 
   .howitworks-card-2col {
     padding: 30px;
-    width: 50%;
+    width: 75%;
   }
 
   .howitworks-card-content-2col {
