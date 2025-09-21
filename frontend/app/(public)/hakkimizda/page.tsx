@@ -44,12 +44,13 @@ export default function AboutPage() {
       <section className="company-history-section">
         <div className="container">
           <div className="history-header">
-            <div className="history-badge">MİLESTONE</div>
             <h2 className="sectionTitle white">Kuruluş Hikayemiz</h2>
             <p className="history-description">
               Sanayicin'in kuruluşundan bugüne kadar geçen süreçte yaşadığımız önemli dönüm noktalarını keşfedin. 
               Her adımda daha iyi hizmet sunmak için nasıl büyüdüğümüzü ve geliştiğimizi görün.
             </p>
+            <div className="history-badge">Aşamalar</div>
+            
           </div>
           
           <div className="history-timeline">

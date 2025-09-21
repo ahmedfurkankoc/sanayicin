@@ -245,7 +245,7 @@ export default function MusteriHeader() {
               width={400}
               height={120}
               priority
-              style={{ width: '400px', height: 'auto' }}
+              style={{ width: '240px', height: 'auto' }}
             />
           </Link>
         </div>
