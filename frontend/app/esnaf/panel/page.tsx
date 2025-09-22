@@ -31,6 +31,7 @@ export default function EsnafPanelPage() {
   return (
     <EsnafPanelLayout activePage="panel">
       {/* Dashboard Stats */}
+      <div className="container">
       <div className="esnaf-dashboard-list">
         <div className="esnaf-dashboard-card esnaf-yellow-card">
           <div className="esnaf-dashboard-header">
@@ -148,7 +149,8 @@ export default function EsnafPanelPage() {
           
           <div className="esnaf-dashboard-tags">
             <span className="esnaf-stat-tag">📞 +15%</span>
-            <span className="esnaf-stat-tag">🎯 Yüksek ilgi</span>
+              <span className="esnaf-stat-tag">🎯 Yüksek ilgi</span>
+            </div>
           </div>
         </div>
       </div>

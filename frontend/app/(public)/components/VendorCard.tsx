@@ -37,32 +37,31 @@ const VendorCard = ({
   const displayLocation = city;
   // Avatar gösterimi - resim yoksa şirket adının ilk harfi
   const renderAvatar = () => {
-    if (img && img !== '/images/vendor-default.jpg') {
-      return (
-        <img 
-          src={img} 
-          alt={displayName} 
-          className="vendorImg" 
-          loading="lazy"
-          onError={(e) => {
-            // Resim yüklenemezse avatar'a geç
-            e.currentTarget.style.display = 'none';
-            e.currentTarget.nextElementSibling?.classList.remove('hidden');
-          }}
-        />
-      );
-    }
-    return null;
-  };
-
-  const renderTextAvatar = () => {
     const firstLetter = displayName.charAt(0).toUpperCase();
     return (
-      <div className="vendorImgTextAvatar hidden">
-        <span className="avatarText">{firstLetter}</span>
+      <div className="vendorAvatar">
+        {img && img !== '/images/vendor-default.jpg' ? (
+          <>
+            <img
+              src={img}
+              alt={displayName}
+              className="vendorAvatarImg"
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                (e.currentTarget.nextElementSibling as HTMLElement | null)?.classList.remove('hidden');
+              }}
+            />
+            <span className="avatarText hidden">{firstLetter}</span>
+          </>
+        ) : (
+          <span className="avatarText">{firstLetter}</span>
+        )}
       </div>
     );
   };
+
+  const renderTextAvatar = () => null;
   
   // Rating gösterimi - her zaman göster, rating yoksa 0 göster
   const renderRating = () => {
@@ -87,10 +86,7 @@ const VendorCard = ({
 
   const cardContent = (
     <div className="vendorCard">
-      <div className="vendorImgContainer">
-        {renderAvatar()}
-        {renderTextAvatar()}
-      </div>
+      {renderAvatar()}
       <div className="vendorInfo">
         <h3 className="vendorName">{displayName}</h3>
         <div className="vendorExp">{experience}</div>

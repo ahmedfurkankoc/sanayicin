@@ -46,29 +46,29 @@ const serviceAreas = [
   }
 ];
 
-const VendorsSection = () => {
+const ServicesSection = () => {
   // Performans için useMemo ile service area'ları memoize et
   const memoizedServiceAreas = useMemo(() => serviceAreas, []);
 
   return (
-    <section className="vendorsSection">
+    <section className="servicesSection">
       <div className="container">
         <h2 className="sectionTitle">Hizmet Alanları</h2>
-        <div className="vendorCardsWrapper vendorCardsWrapper-4col">
+        <div className="servicesCardsWrapper servicesCardsWrapper-4col">
           {memoizedServiceAreas.map((serviceArea, index) => (
-            <div key={index} className="vendorCard">
-              <div className="vendorImgContainer">
+            <div key={index} className="serviceCard">
+              <div className="serviceImgContainer">
                 <img 
                   src={serviceArea.image} 
                   alt={serviceArea.name}
-                  className="vendorImg"
+                  className="serviceImg"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
                     const parent = target.parentElement;
                     if (parent) {
                       parent.innerHTML = `
-                        <div class="vendorImgTextAvatar">
+                        <div class="serviceImgTextAvatar">
                           <span class="avatarText">${serviceArea.name.charAt(0)}</span>
                         </div>
                       `;
@@ -76,13 +76,13 @@ const VendorsSection = () => {
                   }}
                 />
               </div>
-              <div className="vendorInfo">
-                <h3 className="vendorName">{serviceArea.name}</h3>
-                <div className="vendorExp"></div>
-                <div className="vendorType">{serviceArea.name} · </div>
+              <div className="serviceInfo">
+                <h3 className="serviceName">{serviceArea.name}</h3>
+                <div className="serviceExp"></div>
+                <div className="serviceType">{serviceArea.name} · </div>
                 <Link 
                   href={{ pathname: "/musteri/arama-sonuclari", query: { q: serviceArea.name } }} 
-                  className="vendorCardActionBtn"
+                  className="serviceCardActionBtn"
                 >
                   Esnaf Bul
                 </Link>
@@ -95,4 +95,4 @@ const VendorsSection = () => {
   );
 };
 
-export default VendorsSection; 
+export default ServicesSection; 
