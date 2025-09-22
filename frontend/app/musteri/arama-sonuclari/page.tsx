@@ -640,7 +640,7 @@ function AramaSonuclariContent() {
   );
 
   return (
-    <div className="musteri-page-container">
+    <div className="container">
         <div style={{ display: 'flex', minHeight: 'calc(100vh - 200px)' }}>
           {/* Sol Sütun - Filtreler */}
           <div className="musteri-filters-sidebar">
@@ -654,7 +654,7 @@ function AramaSonuclariContent() {
               fontSize: '13px',
               color: 'var(--black)'
             }}>
-              💡 <strong>İpucu:</strong> Hizmet ve araba markası seçerek, o hizmeti o marka için veren esnafları bulabilirsiniz.
+              💡 <strong>İpucu:</strong> Şehir/ilçe, hizmet ve marka seçerek sonuçları hızla daraltabilirsiniz.
             </div>
 
             <FilterSelect
@@ -726,7 +726,6 @@ function AramaSonuclariContent() {
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '0.5rem',
-                marginBottom: '0.5rem',
                 color: 'var(--black)'
               }}>
                 <span style={{ color: 'var(--yellow)' }}>🔍</span>
@@ -741,9 +740,6 @@ function AramaSonuclariContent() {
                 }}>
                   "{searchQuery}"
                 </span>
-              </div>
-              <div style={{ fontSize: '0.9rem', color: 'var(--black)' }}>
-                Büyük/küçük harf duyarsız arama yapılıyor • Türkçe karakter desteği mevcut
               </div>
             </div>
           )}
@@ -803,16 +799,6 @@ function AramaSonuclariContent() {
                       </>
                     )}
                   </div>
-                  {searchQuery && (
-                    <div style={{ 
-                      marginTop: '0.5rem', 
-                      fontSize: '0.9rem', 
-                      color: '#666',
-                      fontStyle: 'italic'
-                    }}>
-                      Büyük/küçük harf duyarsız arama yapılıyor
-                    </div>
-                  )}
                 </div>
                 
                 <div className="musteri-search-results">

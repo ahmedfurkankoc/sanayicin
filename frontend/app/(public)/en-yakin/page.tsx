@@ -3,6 +3,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Icon from "@/app/components/ui/Icon";
 import Banner from "../components/Banner";
+import Link from "next/link";
+import SearchBar from "../components/SearchBar";
 
 const EnYakinPage = () => {
   return (
@@ -14,25 +16,15 @@ const EnYakinPage = () => {
           description="Konumunuza en yakın, güvenilir ve kaliteli ustalara anında ulaşın. Hızlı, güvenli ve uygun fiyatlı hizmet alın."
         />
 
-        {/* Konum Seçimi */}
+        {/* Hızlı Arama */}
         <section className="location-section">
           <div className="container">
             <div className="location-content">
-              <h2 className="section-title">Konumunuzu Belirleyin</h2>
-              <p className="section-subtitle">Size en yakın ustaları görmek için il ve ilçe seçin</p>
-              
+              <h2 className="section-title">Hızlı Arama</h2>
+              <p className="section-subtitle">İl, ilçe, hizmet ve marka seçerek anında sonuçlara gidin</p>
               <div className="location-options">
                 <div className="location-option">
-                  <div className="option-icon">
-                    <Icon name="search" size={32} />
-                  </div>
-                  <h3>Manuel Arama</h3>
-                  <p>İl ve ilçe seçerek size en yakın ustaları bulun</p>
-                  <div className="search-inputs">
-                    <input type="text" placeholder="İl seçin" className="location-input" />
-                    <input type="text" placeholder="İlçe seçin" className="location-input" />
-                    <button className="location-btn primary">Usta Ara</button>
-                  </div>
+                  <SearchBar variant="stacked" />
                 </div>
               </div>
             </div>
@@ -46,45 +38,45 @@ const EnYakinPage = () => {
             <div className="cities-grid">
               <div className="city-card">
                 <div className="city-icon">
-                  <Icon name="building" size={32} />
+                  <Icon name="map-pin" size={32} color="primary" />
                 </div>
                 <h3>İstanbul</h3>
-                <button className="city-btn">Ustaları Gör</button>
+                <Link href={{ pathname: "/musteri/arama-sonuclari", query: { city: "İstanbul" } }} className="city-btn">Ustaları Gör</Link>
               </div>
               <div className="city-card">
                 <div className="city-icon">
-                  <Icon name="landmark" size={32} />
+                  <Icon name="map-pin" size={32} color="primary" />
                 </div>
                 <h3>Ankara</h3>
-                <button className="city-btn">Ustaları Gör</button>
+                <Link href={{ pathname: "/musteri/arama-sonuclari", query: { city: "Ankara" } }} className="city-btn">Ustaları Gör</Link>
               </div>
               <div className="city-card">
                 <div className="city-icon">
-                  <Icon name="ocean" size={32} />
+                  <Icon name="map-pin" size={32} color="primary" />
                 </div>
                 <h3>İzmir</h3>
-                <button className="city-btn">Ustaları Gör</button>
+                <Link href={{ pathname: "/musteri/arama-sonuclari", query: { city: "İzmir" } }} className="city-btn">Ustaları Gör</Link>
               </div>
               <div className="city-card">
                 <div className="city-icon">
-                  <Icon name="mountain" size={32} />
+                  <Icon name="map-pin" size={32} color="primary" />
                 </div>
                 <h3>Bursa</h3>
-                <button className="city-btn">Ustaları Gör</button>
+                <Link href={{ pathname: "/musteri/arama-sonuclari", query: { city: "Bursa" } }} className="city-btn">Ustaları Gör</Link>
               </div>
               <div className="city-card">
                 <div className="city-icon">
-                  <Icon name="sunset" size={32} />
+                  <Icon name="map-pin" size={32} color="primary" />
                 </div>
                 <h3>Antalya</h3>
-                <button className="city-btn">Ustaları Gör</button>
+                <Link href={{ pathname: "/musteri/arama-sonuclari", query: { city: "Antalya" } }} className="city-btn">Ustaları Gör</Link>
               </div>
               <div className="city-card">
                 <div className="city-icon">
-                  <Icon name="factory" size={32} />
+                  <Icon name="map-pin" size={32} color="primary" />
                 </div>
                 <h3>Adana</h3>
-                <button className="city-btn">Ustaları Gör</button>
+                <Link href={{ pathname: "/musteri/arama-sonuclari", query: { city: "Adana" } }} className="city-btn">Ustaları Gör</Link>
               </div>
             </div>
           </div>

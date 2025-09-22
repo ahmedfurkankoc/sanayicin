@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { iconMapping } from '@/app/utils/iconMapping';
+import { getAuthToken } from '@/app/utils/api';
+import Sidebar from './components/Sidebar';
 
 interface ServiceArea {
   id: number;
@@ -147,6 +149,15 @@ const STATIC_CATEGORIES: Category[] = [
 export default function HizmetlerPage() {
   const router = useRouter();
 
+  // Auth guard: sadece giriş yapanlar erişebilsin (client veya vendor)
+  useEffect(() => {
+    const vendorToken = getAuthToken('vendor');
+    const clientToken = getAuthToken('client');
+    if (!vendorToken && !clientToken) {
+      router.push('/musteri/giris?next=/musteri');
+    }
+  }, [router]);
+
   // Statik veri kullan
   const serviceAreas = STATIC_SERVICE_AREAS;
   const categories = STATIC_CATEGORIES;
@@ -174,62 +185,67 @@ export default function HizmetlerPage() {
   }, [router]);
 
   return (
-    <div className="musteri-page-container">
-      {/* Hero Section */}
-      <div className="musteri-hero-section">
-        <h1>Hizmet Arayın, Esnaf Bulun</h1>
-        <p>İhtiyacınız olan hizmeti bulun ve güvenilir esnaflarla çalışın</p>
-        
-        {/* Arama Butonu */}
-        <Link href="/musteri/arama-sonuclari" className="musteri-hero-search-btn">
-          Tüm Esnafları Gör
-        </Link>
-      </div>
-
-      {/* Hizmet Alanları */}
-      <section className="musteri-services-section">
-        <h2>Hizmet Alanları</h2>
-        <div className="musteri-services-grid">
-          {serviceAreas.map((service) => {
-            const serviceCategories = getCategoriesByService(service.id);
-            const displayCategories = serviceCategories.slice(0, 3);
-            const remainingCount = serviceCategories.length - 3;
+    <div className="musteri-page-container" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', minHeight: '100vh' }}>
+      <Sidebar />
+      <div className="musteri-page">
+        <div className="container" >
+          {/* Hero Section */}
+          <div className="musteri-hero-section">
+            <h1>Hizmet Arayın, Esnaf Bulun</h1>
+            <p>İhtiyacınız olan hizmeti bulun ve güvenilir esnaflarla çalışın</p>
             
-            return (
-              <div 
-                key={service.id} 
-                className="musteri-service-card"
-                onClick={() => handleServiceClick(service.id)}
-              >
-                <div className="musteri-service-icon">
-                  {service.icon && iconMapping[service.icon as keyof typeof iconMapping] ? 
-                    React.createElement(iconMapping[service.icon as keyof typeof iconMapping], { size: 32 }) :
-                    React.createElement(iconMapping.wrench, { size: 32 })
-                  }
+            {/* Arama Butonu */}
+            <Link href="/musteri/arama-sonuclari" className="musteri-hero-search-btn">
+              Tüm Esnafları Gör
+            </Link>
+          </div>
+
+        {/* Hizmet Alanları */}
+        <section className="musteri-services-section">
+          <h2>Hizmet Alanları</h2>
+          <div className="musteri-services-grid">
+            {serviceAreas.map((service) => {
+              const serviceCategories = getCategoriesByService(service.id);
+              const displayCategories = serviceCategories.slice(0, 3);
+              const remainingCount = serviceCategories.length - 3;
+              
+              return (
+                <div 
+                  key={service.id} 
+                  className="musteri-service-card"
+                  onClick={() => handleServiceClick(service.id)}
+                >
+                  <div className="musteri-service-icon">
+                    {service.icon && iconMapping[service.icon as keyof typeof iconMapping] ? 
+                      React.createElement(iconMapping[service.icon as keyof typeof iconMapping], { size: 32 }) :
+                      React.createElement(iconMapping.wrench, { size: 32 })
+                    }
+                  </div>
+                  <h3>{service.name}</h3>
+                  {service.description && <p>{service.description}</p>}
+                  
+                  {/* Bu hizmet alanındaki kategoriler */}
+                  <div className="musteri-service-categories">
+                    {displayCategories.map((category) => (
+                      <span key={category.id} className="musteri-category-tag">
+                        {category.name}
+                      </span>
+                    ))}
+                    {remainingCount > 0 && (
+                      <span className="musteri-category-more">
+                        +{remainingCount} daha
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <h3>{service.name}</h3>
-                {service.description && <p>{service.description}</p>}
-                
-                {/* Bu hizmet alanındaki kategoriler */}
-                <div className="musteri-service-categories">
-                  {displayCategories.map((category) => (
-                    <span key={category.id} className="musteri-category-tag">
-                      {category.name}
-                    </span>
-                  ))}
-                  {remainingCount > 0 && (
-                    <span className="musteri-category-more">
-                      +{remainingCount} daha
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        </section>
+
+
         </div>
-      </section>
-
-
+      </div>
     </div>
   );
 }

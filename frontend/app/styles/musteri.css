@@ -54,7 +54,6 @@ body {
     color: var(--dark);
     min-height: 100vh;
     font-family: var(--font-main);
-    background-color: var(--gray);
 }
 
 /* Temel Layout */
@@ -62,7 +61,6 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text);
-  background-color: var(--bg);
 }
 
 /* Loading Spinner */
@@ -486,7 +484,6 @@ body {
 /* Müşteri Ana Container */
 .musteri-main {
   min-height: calc(100vh - 200px);
-  background-color: var(--bg);
 }
 
 .musteri-container {
@@ -1609,18 +1606,9 @@ body {
   font-size: 16px;
 }
 
-/* Sayfa Container */
-.musteri-page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
-
-.musteri-page-container h1 {
-  margin-bottom: 2rem;
-  color: var(--text);
-  font-size: 2rem;
-  font-weight: 600;
+.musteri-page {
+  padding: 24px;
+  background: var(--bg);
 }
 
 /* Main content area */
