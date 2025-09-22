@@ -16,6 +16,7 @@ html, body, main {
 }
 
 body {
+  background-color: var(--yellow);
   color: var(--black);
   min-height: 100vh;
   font-family: var(--font-main);
@@ -259,7 +260,7 @@ section[aria-label="Notifications alt+T"] {
   position: relative;
   color: var(--black);
   text-align: left;
-  height:75vh;
+  height: 85vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -428,8 +429,41 @@ section[aria-label="Notifications alt+T"] {
   }
 }
 
+/* Services Section (Hizmetler) - vendor eşdeğerleri */
+.servicesSection {
+  background-color: var(--gray);
+  padding: 48px 0;
+}
+.servicesCardsWrapper {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.servicesCardsWrapper-4col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Responsive için 4'erli grid - services */
+@media (max-width: 1200px) {
+  .servicesCardsWrapper-4col { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .servicesCardsWrapper-4col { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .servicesCardsWrapper-4col { grid-template-columns: 1fr; }
+}
+
 /* App Banner */
 .appBannerSection {
+  background-color: var(--white);
   padding: 0;
 }
 
@@ -504,9 +538,36 @@ section[aria-label="Notifications alt+T"] {
 .vendorCard:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.10);
 }
-.vendorImg {
+.vendorAvatar {
+  width: 50px;
+  height: 50px;
+  background: var(--yellow);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark);
+  font-weight: 600;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.vendorAvatarImg {
   width: 100%;
+  height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+/* Ensure avatar text inside vendorAvatar matches musteri avatar look */
+.vendorAvatar .avatarText {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--dark);
+  text-shadow: none;
 }
 .vendorInfo {
   text-align: center;
@@ -557,6 +618,50 @@ section[aria-label="Notifications alt+T"] {
   transform: translateY(-2px);
 }
 
+/* Service Card (Hizmet Kartı) - vendor eşdeğerleri */
+.serviceCard {
+  background: var(--gray);
+  color: var(--black);
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.04);
+  padding: 20px 0 16px 0;
+  width: 260px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
+.serviceCard:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+
+.serviceInfo { text-align: center; }
+.serviceName { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+.serviceExp { font-size: 0.98rem; color: #444; margin-bottom: 2px; }
+.serviceType { font-size: 0.8rem; color: #666; margin-bottom: 12px; }
+
+.serviceCardActionBtn {
+  background: var(--yellow);
+  color: var(--black);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  visibility: hidden;
+  width: 100%;
+  max-width: 120px;
+  margin: 8px auto 0 auto;
+  transform: translateY(10px);
+  text-decoration: none;
+}
+.serviceCard:hover .serviceCardActionBtn {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.serviceCardActionBtn:hover { background: #e6c200; transform: translateY(-2px); }
+
 /* Skeleton Loading Animation */
 .vendor-card-skeleton {
   background: var(--gray);
@@ -586,6 +691,16 @@ section[aria-label="Notifications alt+T"] {
   margin-bottom: 12px;
   animation: skeleton-shimmer 1.5s infinite;
   object-fit: cover;
+}
+
+.skeleton-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  margin-bottom: 10px;
 }
 
 .skeleton-content {
@@ -842,6 +957,33 @@ section[aria-label="Notifications alt+T"] {
   color: var(--black);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+/* Service Image Container - vendor eşdeğeri */
+.serviceImgContainer {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.serviceImgTextAvatar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--yellow), #e6c200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+.serviceImg { width: 100%; object-fit: cover; }
+
+/* Service image responsive heights */
+@media (max-width: 768px) { .serviceImgContainer { height: 100px; } }
+@media (max-width: 480px) { .serviceImgContainer { height: 90px; } }
 
 /* Vendor Rating Styles */
 .vendorRating {
@@ -1582,7 +1724,7 @@ footer {
     align-items: center;
   }
   footer {
-    padding: 18px 0 10px 0;
+    padding: 18px 0 40px 0;
   }
   .footer-link-groups {
     flex-direction: column;
@@ -2084,6 +2226,7 @@ footer {
   align-items: center;
   position: relative;
   z-index: 1;
+  background-color: var(--white);
 }
 .advantages-title {
   font-size: 2.1rem;
@@ -2496,13 +2639,12 @@ footer {
 }
 
 .cityVendorsSection {
-  background: linear-gradient(135deg, #fffbe6 0%, #f0f8ff 100%);
+  background: var(--white);
   background-image: 
     radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
     linear-gradient(45deg, transparent 40%, rgba(255, 215, 0, 0.05) 50%, transparent 60%);
   text-align: center;
-  border-radius: 24px;
   position: relative;
   overflow: hidden;
 }
