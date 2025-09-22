@@ -690,10 +690,11 @@ def forgot_password(request):
         # Şifre sıfırlama token'ı oluştur
         token = default_token_generator.make_token(user)
         
-        # Reset URL oluştur
-        reset_url = request.build_absolute_uri(
-            reverse('reset_password_confirm', kwargs={'uidb64': user.pk, 'token': token})
-        )
+        # Reset URL oluştur - kullanıcı rolüne göre frontend URL'i
+        if user.role == 'vendor':
+            reset_url = f"https://test.sanayicin.com/esnaf/sifre-yenile/{user.pk}/{token}/"
+        else:  # client veya diğer roller için
+            reset_url = f"https://test.sanayicin.com/musteri/sifre-yenile/{user.pk}/{token}/"
         
         # Email gönder
         EmailService.send_password_reset_email(email, user.first_name or user.email, reset_url)

@@ -96,7 +96,7 @@ export default function FavorilerimPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="musteri-page-container">
+      <div className="container">
         <div className="musteri-loading">
           <div className="musteri-loading-spinner"></div>
           <div>Favoriler yükleniyor...</div>
@@ -110,7 +110,7 @@ export default function FavorilerimPage() {
   }
 
   return (
-    <div className="musteri-page-container">
+    <div className="container">
       <div className="musteri-page-header">
         <h1>Favorilerim</h1>
         <p>Favori esnaflarınızı buradan takip edebilirsiniz</p>

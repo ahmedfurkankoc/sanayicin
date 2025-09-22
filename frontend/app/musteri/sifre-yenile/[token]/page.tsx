@@ -5,8 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { api } from "@/app/utils/api";
-import EsnafAuthHeader from "../../components/EsnafAuthHeader";
-import EsnafFooter from "../../components/EsnafFooter";
+import MusteriHeader from "../../components/MusteriHeader";
 
 export default function SifreYenilePage() {
   const [password, setPassword] = useState("");
@@ -63,9 +62,9 @@ export default function SifreYenilePage() {
   if (!tokenValid) {
     return (
       <>
-        <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
-        <main className="esnaf-login-main">
-          <div className="esnaf-login-container">
+        <MusteriHeader />
+        <main className="musteri-login-main">
+          <div className="musteri-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
               <div style={{ fontSize: '48px', marginBottom: '20px' }}>❌</div>
               <h1 style={{ color: '#333', marginBottom: '16px' }}>Geçersiz Link</h1>
@@ -74,7 +73,7 @@ export default function SifreYenilePage() {
                 Lütfen yeni bir şifre sıfırlama linki talep edin.
               </p>
               <Link 
-                href="/esnaf/sifremi-unuttum"
+                href="/musteri/sifremi-unuttum"
                 style={{
                   backgroundColor: '#ffd600',
                   color: '#111111',
@@ -90,7 +89,6 @@ export default function SifreYenilePage() {
             </div>
           </div>
         </main>
-        <EsnafFooter />
       </>
     );
   }
@@ -98,9 +96,9 @@ export default function SifreYenilePage() {
   if (success) {
     return (
       <>
-        <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
-        <main className="esnaf-login-main">
-          <div className="esnaf-login-container">
+        <MusteriHeader />
+        <main className="musteri-login-main">
+          <div className="musteri-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
               <div style={{ fontSize: '48px', marginBottom: '20px' }}>✅</div>
               <h1 style={{ color: '#333', marginBottom: '16px' }}>Şifre Güncellendi!</h1>
@@ -108,7 +106,7 @@ export default function SifreYenilePage() {
                 Şifreniz başarıyla güncellendi. Artık yeni şifrenizle giriş yapabilirsiniz.
               </p>
               <Link 
-                href="/esnaf/giris"
+                href="/musteri/giris"
                 style={{
                   backgroundColor: '#ffd600',
                   color: '#111111',
@@ -124,17 +122,16 @@ export default function SifreYenilePage() {
             </div>
           </div>
         </main>
-        <EsnafFooter />
       </>
     );
   }
 
   return (
     <>
-      <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
-      <main className="esnaf-login-main">
-        <div className="esnaf-login-container">
-          <h1 className="esnaf-login-title">Yeni Şifrenizi Belirleyin</h1>
+      <MusteriHeader />
+      <main className="musteri-login-main">
+        <div className="musteri-login-container">
+          <h1 className="musteri-login-title">Yeni Şifrenizi Belirleyin</h1>
           <p style={{ 
             textAlign: 'center', 
             color: '#666', 
@@ -144,12 +141,12 @@ export default function SifreYenilePage() {
             Güvenli bir şifre seçin ve tekrar girin.
           </p>
           
-          <form onSubmit={handleSubmit} className="esnaf-login-form">
-            <div className="esnaf-input-group">
-              <label className="esnaf-login-label">Yeni Şifre</label>
+          <form onSubmit={handleSubmit} className="musteri-login-form">
+            <div className="musteri-input-group">
+              <label className="musteri-login-label">Yeni Şifre</label>
               <input
                 type="password"
-                className="esnaf-login-input"
+                className="musteri-login-input"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -158,11 +155,11 @@ export default function SifreYenilePage() {
               />
             </div>
             
-            <div className="esnaf-input-group">
-              <label className="esnaf-login-label">Yeni Şifre Tekrar</label>
+            <div className="musteri-input-group">
+              <label className="musteri-login-label">Yeni Şifre Tekrar</label>
               <input
                 type="password"
-                className="esnaf-login-input"
+                className="musteri-login-input"
                 value={password2}
                 onChange={e => setPassword2(e.target.value)}
                 placeholder="••••••••"
@@ -171,22 +168,21 @@ export default function SifreYenilePage() {
               />
             </div>
             
-            <button type="submit" className="esnaf-login-btn" disabled={loading}>
+            <button type="submit" className="musteri-login-btn" disabled={loading}>
               {loading ? "Güncelleniyor..." : "Şifreyi Güncelle"}
             </button>
           </form>
 
-          <div className="esnaf-login-footer">
+          <div className="musteri-login-footer">
             <p>
-              <Link href="/esnaf/giris" style={{ color: '#666', textDecoration: 'none' }}>
+              <Link href="/musteri/giris" style={{ color: '#666', textDecoration: 'none' }}>
                 ← Giriş Sayfasına Dön
               </Link>
             </p>
-            <Link className="esnaf-modal-btn text-black" href="/">Ana Sayfaya Dön</Link>
+            <Link className="musteri-modal-btn text-black" href="/">Ana Sayfaya Dön</Link>
           </div>
         </div>
       </main>
-      <EsnafFooter />
     </>
   );
-} 
+}

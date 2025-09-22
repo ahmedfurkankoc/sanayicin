@@ -155,7 +155,7 @@ export default function MusteriHesabimPage() {
 
   if (loading) {
     return (
-      <div className="musteri-page-container">
+      <div className="container">
         <div className="musteri-loading">
           <div className="musteri-loading-spinner"></div>
           <p>Hesap bilgileri yükleniyor...</p>
@@ -166,7 +166,7 @@ export default function MusteriHesabimPage() {
 
   if (!userData) {
     return (
-      <div className="musteri-page-container">
+      <div className="container">
         <div className="musteri-error">
           <p>Hesap bilgileri yüklenemedi</p>
         </div>
@@ -175,7 +175,7 @@ export default function MusteriHesabimPage() {
   }
 
   return (
-    <div className="musteri-page-container">
+    <div className="container">
       <div className="musteri-page-header">
         <h1>Hesabım</h1>
         <p>Hesap bilgilerinizi görüntüleyebilir ve düzenleyebilirsiniz.</p>

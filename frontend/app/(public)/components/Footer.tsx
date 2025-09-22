@@ -30,9 +30,11 @@ const Footer = () => (
           <a href="/hizmet-vermek">Hizmet Vermek İstiyorum</a>
         </div>
         <div className="footer-link-group">
-          <div className="footer-link-title">Gizlilik ve Kullanım</div>
-          <a href="#kvkk">KVKK ve Gizlilik Politikası</a>
-          <a href="#kullanim">Kullanım Koşulları</a>
+          <div className="footer-link-title">Sözleşmeler ve Kurallar</div>
+          <a href="/kullanici-sozlesmesi">Kullanıcı Sözleşmesi</a>
+          <a href="/kullanim-kosullari">Kullanım Koşulları</a>
+          <a href="/kvkk-aydinlatma-metni">Kişisel Verilerin Korunması</a>
+          <a href="/cerez-aydinlatma-metni">Çerez Yönetimi</a>
         </div>
       </div>
       

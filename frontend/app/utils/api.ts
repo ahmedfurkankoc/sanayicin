@@ -361,7 +361,7 @@ export const api = {
   forgotPassword: (data: { email: string }) => 
     apiClient.post('/auth/forgot-password/', data),
   
-  resetPassword: (data: { token: string; password: string; password2: string }) => 
+  resetPassword: (data: { uidb64: string; token: string; new_password: string }) => 
     apiClient.post('/auth/reset-password/', data),
 
   // Appointment işlemleri

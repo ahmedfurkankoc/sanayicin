@@ -68,7 +68,7 @@ export default function MusteriTaleplerimPage() {
 
   if (loading) {
     return (
-      <div className="musteri-page-container">
+      <div className="container">
         <div className="musteri-loading">
           <div className="musteri-loading-spinner"></div>
           <p>Talepler yükleniyor...</p>
@@ -78,7 +78,7 @@ export default function MusteriTaleplerimPage() {
   }
 
   return (
-    <div className="musteri-page-container">
+    <div className="container">
       <div className="musteri-page-header" style={{ color: '#111' }}>
         <h1 style={{ color: '#111' }}>Taleplerim</h1>
         <p style={{ color: '#111' }}>Taleplerinizi ve durumlarını buradan takip edebilirsiniz.</p>

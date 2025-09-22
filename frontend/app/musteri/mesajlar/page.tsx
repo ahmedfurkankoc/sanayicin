@@ -25,7 +25,7 @@ export default function MessagesListPage() {
   if (!userRole) return <div>Yükleniyor...</div>;
 
   return (
-    <div className="musteri-page-container">
+    <div className="container">
       <h1>Tüm Mesajlarım</h1>
       
       <div className="musteri-card">

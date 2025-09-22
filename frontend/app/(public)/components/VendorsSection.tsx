@@ -80,7 +80,12 @@ const VendorsSection = () => {
                 <h3 className="vendorName">{serviceArea.name}</h3>
                 <div className="vendorExp"></div>
                 <div className="vendorType">{serviceArea.name} · </div>
-                <button className="vendorCardActionBtn">Esnaf Bul</button>
+                <Link 
+                  href={{ pathname: "/musteri/arama-sonuclari", query: { q: serviceArea.name } }} 
+                  className="vendorCardActionBtn"
+                >
+                  Esnaf Bul
+                </Link>
               </div>
             </div>
           ))}

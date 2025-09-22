@@ -5,6 +5,7 @@
   --black: #111111;
   --white: #fff;
   --gray: #f9f9f9;
+  --dark-gray: #b4b4b4;
   --font-main: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
 }
 
@@ -464,7 +465,7 @@ section[aria-label="Notifications alt+T"] {
 
 .appStoreBtn, .googlePlayBtn {
   background: var(--black);
-  color: var(--yellow);
+  color: var(--white);
   border-radius: 10px;
   padding: 12px 22px;
   font-weight: 600;
@@ -477,7 +478,8 @@ section[aria-label="Notifications alt+T"] {
 }
 
 .appStoreBtn:hover, .googlePlayBtn:hover {
-  background: #222;
+  background: var(--yellow);
+  color: var(--black);
 }
 
 .appBannerImg img {
@@ -1351,7 +1353,7 @@ footer {
 /* Tüm başlıkları aynı seviyeye getir */
 .footer-link-title {
   font-weight: 700;
-  font-size: 1.08rem;
+  font-size: 1.2rem;
   margin-bottom: 12px;
   color: var(--black);
   height: 40px; /* Logo ile aynı yükseklik */
@@ -1848,30 +1850,32 @@ footer {
 }
   
   /* Custom Select Mobile Responsive */
-  .custom-select-trigger {
-    padding: 14px 16px;
-    font-size: 1rem;
-    color: var(--black) !important;
-  }
-  
-  .custom-select-options {
-    max-height: 250px;
-    min-width: 180px;
-  }
-  
-  .custom-select-option {
-    padding: 10px 14px;
-    font-size: 0.95rem;
-    color: var(--black) !important;
-  }
-  
-  .custom-select-option span {
-    color: var(--black) !important;
-  }
-  
-  .brand-logo-option {
-    width: 32px;
-    height: 32px;
+  @media (max-width: 768px) {
+    .custom-select-trigger {
+      padding: 14px 16px;
+      font-size: 1rem;
+      color: var(--black) !important;
+    }
+    
+    .custom-select-options {
+      max-height: 250px;
+      min-width: 180px;
+    }
+    
+    .custom-select-option {
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      color: var(--black) !important;
+    }
+    
+    .custom-select-option span {
+      color: var(--black) !important;
+    }
+    
+    .brand-logo-option {
+      width: 32px;
+      height: 32px;
+    }
   }
   
   /* How It Works Tablet */
@@ -3639,15 +3643,10 @@ footer {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
 }
 
-.en-yakin-page .city-icon {
-  font-size: 2.5rem;
-  margin-bottom: 15px;
-}
-
 .en-yakin-page .city-card h3 {
   font-size: 1.3rem;
   font-weight: 600;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   color: var(--black);
 }
 
@@ -3666,6 +3665,7 @@ footer {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-decoration: none;
 }
 
 .en-yakin-page .city-btn:hover {
@@ -3889,6 +3889,128 @@ footer {
 /* Hizmet Vermek Sayfası Styles */
 .hizmet-vermek-page {
   min-height: 100vh;
+}
+
+/* Policy Pages */
+.policy-page {
+  padding: 60px 0;
+  background: var(--white);
+}
+
+.policy-header {
+  margin-bottom: 24px;
+}
+
+.policy-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--black);
+  margin: 0 0 6px 0;
+}
+
+.policy-updated {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.policy-layout-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+}
+
+.policy-sidebar {
+  align-self: start;
+  position: sticky;
+  top: 86px;
+}
+
+.policy-sidebar-nav {
+  background: var(--black);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.policy-sidebar-group + .policy-sidebar-group {
+  margin-top: 16px;
+}
+
+.policy-sidebar-group-title {
+  font-weight: 800;
+  color: var(--white);
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.policy-sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.policy-sidebar-link {
+  display: block;
+  text-decoration: none;
+  color: var(--dark-gray);
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background .2s, color .2s, transform .15s;
+}
+
+.policy-sidebar-link:hover {
+  background: #f2f2f2;
+  color: var(--black);
+  transform: translateX(2px);
+}
+
+.policy-content {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 24px;
+}
+
+.policy-section {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 0;
+}
+
+.policy-section:last-child {
+  border-bottom: none;
+}
+
+.policy-section-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0 0 10px 0;
+  color: var(--black);
+}
+
+.policy-section-body p {
+  color: #444;
+  line-height: 1.7;
+  margin: 0 0 10px 0;
+}
+
+.policy-section-body ul {
+  margin: 0 0 10px 18px;
+  padding: 0;
+  color: #444;
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  .policy-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  .policy-sidebar {
+    position: static;
+  }
 }
 
 /* Hizmet Vermek Page Styles */
