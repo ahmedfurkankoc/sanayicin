@@ -16,18 +16,20 @@ export default function SifreYenilePage() {
   const [tokenValid, setTokenValid] = useState(true);
   const router = useRouter();
   const params = useParams();
-  const token = params.token as string;
+  const parts = (params.parts as string[] | undefined) ?? [];
+
+  const uidb64 = parts[0];
+  const token = parts[1];
 
   useEffect(() => {
-    // Token kontrolü yapılabilir (opsiyonel)
-    if (!token) {
+    if (!uidb64 || !token) {
       setTokenValid(false);
     }
-  }, [token]);
+  }, [uidb64, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== password2) {
       toast.error("Şifreler eşleşmiyor.");
       return;
@@ -42,8 +44,8 @@ export default function SifreYenilePage() {
 
     try {
       const response = await api.resetPassword({ 
-        uidb64: token.split('/')[0], // URL'den uidb64'ü al
-        token: token.split('/')[1], // URL'den token'ı al
+        uidb64: uidb64!,
+        token: token!,
         new_password: password
       });
       
@@ -189,4 +191,5 @@ export default function SifreYenilePage() {
       <EsnafFooter />
     </>
   );
-} 
+}
+

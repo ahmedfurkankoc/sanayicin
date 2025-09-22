@@ -11,7 +11,7 @@ import CTASection from "./components/CTASection";
 import PlatformAdvantages from "./components/PlatformAdvantages";
 import HowItWorks from "./components/HowItWorks";
 import CityVendorsSection from "./components/CityVendorsSection";
-import VendorsSection from "./components/VendorsSection";
+import ServicesSection from "./components/ServicesSection";
 import { useMobileVendors } from "../hooks/useMobileVendors";
 
 export default function Home() {
@@ -82,7 +82,7 @@ export default function Home() {
                       experience: `${Math.floor(Math.random() * 10) + 1}+ yıl deneyim`, // Geçici olarak random
                       type: 'service_areas' in vendor ? (vendor.service_areas?.[0]?.name || 'Hizmet') : vendor.type,
                       city: 'city' in vendor ? vendor.city : (vendor as any).city,
-                      img: 'avatar' in vendor ? (vendor.avatar || '/images/vendor-default.jpg') : vendor.img,
+                      img: 'store_logo' in vendor ? (vendor.store_logo || (vendor as any).avatar || '/images/vendor-default.jpg') : (vendor as any).img,
                       slug: 'slug' in vendor ? vendor.slug : undefined,
                       rating: 'rating' in vendor ? (vendor.rating || 0) : 0, // Rating yoksa 0 göster
                       reviewCount: 'review_count' in vendor ? (vendor.review_count || 0) : 0,
@@ -121,9 +121,6 @@ export default function Home() {
                 <p className="hero-copy-desc" style={{marginTop: 12}}>
                   Türkiye'nin en iyi otomobil servisleri ve otomobil ustaları bu adreste!
                 </p>
-                <p className="hero-copy-desc small">
-                  Ayrıca aldığınız hizmete göre işletmeleri siz değerlendiriyorsunuz.
-                </p>
                 <SearchBar variant="stacked" />
               </div>
             </div>
@@ -145,7 +142,7 @@ export default function Home() {
             imageAlt="Hizmet verenler için kayıt görseli"
           />
           
-          <VendorsSection />
+          <ServicesSection />
 
           <CityVendorsSection />
 
