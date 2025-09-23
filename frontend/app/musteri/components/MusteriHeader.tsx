@@ -15,6 +15,7 @@ export default function MusteriHeader() {
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Array<{ title: string; message: string; link?: string }>>([]);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const router = useRouter();
   const { isAuthenticated, user, logout, loading } = useMusteri();
   const currentRole = (user?.role as 'vendor' | 'client' | undefined) || undefined;
@@ -209,6 +210,11 @@ export default function MusteriHeader() {
         setShowDropdown(false);
       }
       
+      // Mobil search dışına tıklanırsa kapat
+      if (!target.closest('.musteri-mobile-search') && !target.closest('.musteri-mobile-search-btn')) {
+        setShowMobileSearch(false);
+      }
+
       // ChatWidget dışına tıklanırsa kapat
       if (!target.closest('.musteri-chat-widget-container')) {
         setShowChatWidget(false);
@@ -245,7 +251,7 @@ export default function MusteriHeader() {
               width={400}
               height={120}
               priority
-              style={{ width: '240px', height: 'auto' }}
+              className="musteri-logo-img"
             />
           </Link>
         </div>
@@ -270,6 +276,15 @@ export default function MusteriHeader() {
         
         {/* Sağ: Bildirim ve Kullanıcı */}
         <div className="musteri-header-right">
+          {/* Mobil: arama butonu */}
+          <button
+            className="musteri-header-btn musteri-mobile-search-btn"
+            onClick={() => setShowMobileSearch((v) => !v)}
+            aria-label="Ara"
+          >
+            {React.createElement(iconMapping.search, { size: 20 })}
+          </button>
+
           <div className="musteri-user-menu">
             <button className="musteri-header-btn musteri-notification-btn" onClick={() => setShowDropdown(false)}>
               {React.createElement(iconMapping.bell, { size: 20 })}
@@ -390,7 +405,7 @@ export default function MusteriHeader() {
                             alt="Esnaf Paneli"
                             width={16}
                             height={16}
-                            style={{ width: '16px', height: '16px' }}
+                            className="musteri-logo-img"
                           />
                           Esnaf Paneli
                         </div>
@@ -420,6 +435,29 @@ export default function MusteriHeader() {
           onUnreadCountUpdate={handleChatWidgetUpdate}
         />
       )}
+
+      {/* Mobil Arama Overlay */}
+      <div className={`musteri-mobile-search ${showMobileSearch ? 'show' : ''}`}>
+        <div className="musteri-mobile-search-inner">
+          <form onSubmit={(e) => { handleSearch(e); setShowMobileSearch(false); }} className="musteri-mobile-search-form">
+            <input
+              type="text"
+              placeholder="Hizmet ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="musteri-mobile-search-input"
+              autoFocus
+            />
+            <button type="submit" className="musteri-mobile-search-submit">
+              {React.createElement(iconMapping.search, { size: 18 })}
+              <span style={{ marginLeft: 6 }}>Ara</span>
+            </button>
+          </form>
+          <button className="musteri-mobile-search-close" onClick={() => setShowMobileSearch(false)} aria-label="Kapat">
+            {React.createElement(iconMapping['x'], { size: 18 })}
+          </button>
+        </div>
+      </div>
     </header>
   );
 }

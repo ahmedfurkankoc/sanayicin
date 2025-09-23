@@ -221,49 +221,21 @@ function VendorDetailContent() {
   const logoUrl = vendor.store_logo || vendor.user?.avatar || null;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff' }}>
-      <div style={{
-        background: '#fff',
-        borderRadius: '12px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
-        margin: '24px auto',
-        maxWidth: '1100px'
-      }}>
+    <div className="m-vendor-page">
+      <div className="m-vendor-card">
         {/* Header */}
-        <div style={{
-          padding: '32px',
-          borderBottom: '1px solid #f0f0f0',
-          display: 'flex',
-          gap: '24px',
-          alignItems: 'flex-start'
-        }}>
+        <div className="m-vendor-header">
           {/* Logo / Avatar */}
-          <div style={{ flexShrink: 0 }}>
-            <div style={{
-              width: '120px',
-              height: '120px',
-              borderRadius: '12px',
-              backgroundColor: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '48px',
-              color: '#ccc',
-              overflow: 'hidden'
-            }}>
+          <div className="m-vendor-logo-wrap">
+            <div className="m-vendor-logo">
               {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img 
                   src={logoUrl} 
                   alt={vendor.display_name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
               ) : (
-                <span style={{
-                  fontSize: '48px',
-                  fontWeight: 'bold',
-                  color: '#666'
-                }}>
+                <span style={{ fontSize: '48px', fontWeight: 'bold', color: '#666' }}>
                   {vendor.display_name ? vendor.display_name.charAt(0).toUpperCase() :
                    vendor.company_title ? vendor.company_title.charAt(0).toUpperCase() : 'E'}
                 </span>
@@ -272,74 +244,35 @@ function VendorDetailContent() {
           </div>
 
           {/* Vendor Bilgileri */}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <h1 style={{ 
-                fontSize: '32px', 
-                fontWeight: 'bold', 
-                margin: 0,
-                color: '#333'
-              }}>
+          <div className="m-vendor-body">
+            <div className="m-vendor-title-row">
+              <h1 className="m-vendor-title">
                 {vendor.display_name}
               </h1>
               {vendor.user?.is_verified && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  backgroundColor: '#10b981',
-                  color: 'white',
-                  padding: '4px 8px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: '600'
-                }}>
+                <div className="m-vendor-verified">
                   {React.createElement(iconMapping.check, { size: 14 })}
                   Doğrulanmış
                 </div>
               )}
             </div>
-            <p style={{ fontSize: '18px', color: '#666', margin: '0 0 16px 0' }}>
+            <p className="m-vendor-subtitle">
               {vendor.business_type} • {vendor.company_title}
             </p>
 
             {/* Aksiyonlar - Kendi profilinde gösterilmez */}
             {!isOwnProfile && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+              <div className="m-vendor-actions">
                 <button
                   onClick={handlePhoneButton}
-                  style={{
-                    backgroundColor: showPhone ? '#10b981' : '#fff8cc',
-                    color: showPhone ? '#ffffff' : '#111111',
-                    border: showPhone ? '1px solid #0ea5a4' : '1px solid #ffe066',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
+                  className={`m-btn m-btn-phone ${showPhone ? 'active' : ''}`}
                 >
                   {React.createElement(iconMapping.phone, { size: 18, color: showPhone ? '#ffffff' : undefined })}
                   {showPhone ? (vendor.business_phone || 'Telefon') : 'Telefonu Göster'}
                 </button>
                 <button
                   onClick={handleAppointment}
-                  style={{
-                    backgroundColor: '#ffd600',
-                    color: '#111111',
-                    border: 'none',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
+                  className="m-btn m-btn-apt"
                 >
                   {React.createElement(iconMapping.calendar, { size: 18 })}
                   Randevu Al
@@ -347,20 +280,7 @@ function VendorDetailContent() {
                 <button
                   onClick={handleQuote}
                   disabled={creatingChat}
-                  style={{
-                    backgroundColor: '#111111',
-                    color: '#ffd600',
-                    border: 'none',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    cursor: creatingChat ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    opacity: creatingChat ? 0.8 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
+                  className="m-btn m-btn-quote"
                 >
                   {React.createElement(iconMapping.file, { size: 18 })}
                   {creatingChat ? 'İşleniyor...' : 'Teklif Al'}
@@ -368,20 +288,7 @@ function VendorDetailContent() {
                 <button
                   onClick={handleMessage}
                   disabled={creatingChat}
-                  style={{
-                    backgroundColor: '#f0f0f0',
-                    color: '#111111',
-                    border: '1px solid #e0e0e0',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
-                    cursor: creatingChat ? 'not-allowed' : 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    opacity: creatingChat ? 0.8 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
+                  className="m-btn m-btn-msg"
                 >
                   {React.createElement(iconMapping.message, { size: 18 })}
                   {creatingChat ? 'İşleniyor...' : 'Mesaj Gönder'}
@@ -392,24 +299,14 @@ function VendorDetailContent() {
           </div>
         </div>
         {/* Detaylı Bilgiler */}
-        <div style={{ padding: '32px' }}>
+        <div className="m-vendor-sections">
           {/* Hakkında */}
           {vendor.about && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                margin: '0 0 16px 0',
-                color: '#333'
-              }}>
+            <div className="m-vendor-section">
+              <h3 className="m-vendor-section-title">
                 Hakkında
               </h3>
-              <p style={{ 
-                fontSize: '16px', 
-                lineHeight: '1.6', 
-                color: '#666',
-                margin: 0
-              }}>
+              <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#666', margin: 0 }}>
                 {vendor.about}
               </p>
             </div>
@@ -417,25 +314,13 @@ function VendorDetailContent() {
 
           {/* Hizmet Alanları */}
           {vendor.service_areas && vendor.service_areas.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                margin: '0 0 16px 0',
-                color: '#333'
-              }}>
+            <div className="m-vendor-section">
+              <h3 className="m-vendor-section-title">
                 Hizmet Alanları
               </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div className="m-chip-row">
                 {vendor.service_areas.map((service: any) => (
-                  <span key={service.id} style={{
-                    backgroundColor: '#f0f0f0',
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    color: '#333',
-                    fontWeight: '500'
-                  }}>
+                  <span key={service.id} className="m-chip">
                     {service.name}
                   </span>
                 ))}
@@ -445,25 +330,13 @@ function VendorDetailContent() {
 
           {/* Kategoriler */}
           {vendor.categories && vendor.categories.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                margin: '0 0 16px 0',
-                color: '#333'
-              }}>
+            <div className="m-vendor-section">
+              <h3 className="m-vendor-section-title">
                 Kategoriler
               </h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div className="m-chip-row">
                 {vendor.categories.map((category: any) => (
-                  <span key={category.id} style={{
-                    backgroundColor: '#e3f2fd',
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    color: '#1976d2',
-                    fontWeight: '500'
-                  }}>
+                  <span key={category.id} className="m-chip blue">
                     {category.name}
                   </span>
                 ))}
@@ -478,41 +351,26 @@ function VendorDetailContent() {
             vendor.social_media.twitter || 
             vendor.social_media.website
           ) && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                margin: '0 0 16px 0',
-                color: '#333'
-              }}>
+            <div className="m-vendor-section">
+              <h3 className="m-vendor-section-title">
                 Sosyal Medya
               </h3>
-              <div style={{ 
-                backgroundColor: '#f8f9fa', 
-                padding: '20px', 
-                borderRadius: '8px',
-                border: '1px solid #e9ecef'
-              }}>
+              <div className="m-social-box">
                 {vendor.social_media.instagram && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div className="m-social-row">
                     {React.createElement(iconMapping.instagram, { 
                       size: 20, 
                       color: '#E4405F',
                       style: { flexShrink: 0 }
                     })}
-                    <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
+                    <span className="m-social-label">
                       Instagram:
                     </span>
                     <a 
                       href={vendor.social_media.instagram.startsWith('http') ? vendor.social_media.instagram : `https://instagram.com/${vendor.social_media.instagram}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ 
-                        color: '#0066cc',
-                        textDecoration: 'none',
-                        fontSize: '16px',
-                        wordBreak: 'break-all'
-                      }}
+                      className="m-link"
                     >
                       {vendor.social_media.instagram}
                     </a>
@@ -520,25 +378,20 @@ function VendorDetailContent() {
                 )}
                 
                 {vendor.social_media.facebook && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div className="m-social-row">
                     {React.createElement(iconMapping.facebook, { 
                       size: 20, 
                       color: '#1877F2',
                       style: { flexShrink: 0 }
                     })}
-                    <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
+                    <span className="m-social-label">
                       Facebook:
                     </span>
                     <a 
                       href={vendor.social_media.facebook.startsWith('http') ? vendor.social_media.facebook : `https://facebook.com/${vendor.social_media.facebook}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ 
-                        color: '#0066cc',
-                        textDecoration: 'none',
-                        fontSize: '16px',
-                        wordBreak: 'break-all'
-                      }}
+                      className="m-link"
                     >
                       {vendor.social_media.facebook}
                     </a>
@@ -546,25 +399,20 @@ function VendorDetailContent() {
                 )}
                 
                 {vendor.social_media.twitter && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div className="m-social-row">
                     {React.createElement(iconMapping.twitter, { 
                       size: 20, 
                       color: '#1DA1F2',
                       style: { flexShrink: 0 }
                     })}
-                    <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
+                    <span className="m-social-label">
                       Twitter:
                     </span>
                     <a 
                       href={vendor.social_media.twitter.startsWith('http') ? vendor.social_media.twitter : `https://twitter.com/${vendor.social_media.twitter}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ 
-                        color: '#0066cc',
-                        textDecoration: 'none',
-                        fontSize: '16px',
-                        wordBreak: 'break-all'
-                      }}
+                      className="m-link"
                     >
                       {vendor.social_media.twitter}
                     </a>
@@ -572,25 +420,20 @@ function VendorDetailContent() {
                 )}
                 
                 {vendor.social_media.website && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <div className="m-social-row">
                     {React.createElement(iconMapping.globe, { 
                       size: 20, 
                       color: '#0066cc',
                       style: { flexShrink: 0 }
                     })}
-                    <span style={{ fontSize: '16px', color: '#333', fontWeight: '500', minWidth: '80px' }}>
+                    <span className="m-social-label">
                       Web Sitesi:
                     </span>
                     <a 
                       href={vendor.social_media.website.startsWith('http') ? vendor.social_media.website : `https://${vendor.social_media.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ 
-                        color: '#0066cc',
-                        textDecoration: 'none',
-                        fontSize: '16px',
-                        wordBreak: 'break-all'
-                      }}
+                      className="m-link"
                     >
                       {vendor.social_media.website}
                     </a>

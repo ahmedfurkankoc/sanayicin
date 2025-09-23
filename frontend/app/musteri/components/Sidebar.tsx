@@ -20,6 +20,7 @@ function Sidebar() {
 
   return (
     <aside
+      className="musteri-sidebar"
       style={{
         width: "100%",
         alignSelf: "stretch",
