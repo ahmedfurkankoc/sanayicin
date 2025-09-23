@@ -36,38 +36,12 @@ const Reviews: React.FC<ReviewsProps> = ({ reviews, averageRating, totalReviews,
   };
 
   return (
-    <div style={{ marginBottom: '32px' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px'
-      }}>
-        <h3 style={{ 
-          fontSize: '20px', 
-          fontWeight: 'bold', 
-          margin: 0,
-          color: '#333',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
+    <div className="m-reviews">
+      <div className="m-reviews-header">
+        <h3 className="m-reviews-title">
           Değerlendirmeler
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-            color: '#666',
-            fontWeight: 'normal'
-          }}>
-            <span style={{
-              background: '#ffd600',
-              color: '#111',
-              padding: '4px 8px',
-              borderRadius: '6px',
-              fontWeight: '600'
-            }}>
+          <div className="m-reviews-stats">
+            <span className="m-reviews-badge">
               {averageRating.toFixed(1)} ★
             </span>
             <span>({totalReviews} değerlendirme)</span>
@@ -75,73 +49,24 @@ const Reviews: React.FC<ReviewsProps> = ({ reviews, averageRating, totalReviews,
         </h3>
 
         {showReviewButton && (
-          <button
-            onClick={onReview}
-            style={{
-              backgroundColor: '#fff8cc',
-              color: '#111111',
-              border: '1px solid #ffe066',
-              padding: '10px 16px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
+          <button onClick={onReview} className="m-btn m-btn-phone">
             ★ Değerlendir
           </button>
         )}
       </div>
 
       {/* Değerlendirme Kartları */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="m-reviews-list">
         {reviews.map((review) => (
-          <div
-            key={review.id}
-            style={{
-              background: '#fff',
-              border: '1px solid #e0e0e0',
-              borderRadius: '12px',
-              padding: '20px',
-              transition: 'all 0.2s ease'
-            }}
-          >
+          <div key={review.id} className="m-review-card">
             {/* Üst Kısım: Kullanıcı Bilgisi ve Puan */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'flex-start',
-              marginBottom: '16px'
-            }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div className="m-review-top">
+              <div className="m-review-user">
                 {/* Avatar */}
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  background: '#f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
-                  color: '#666',
-                  fontWeight: '600'
-                }}>
+                <div className="m-review-avatar">
                   {review.user.avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={review.user.avatar}
-                      alt={review.user.name}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '50%',
-                        objectFit: 'cover'
-                      }}
-                    />
+                    <img src={review.user.avatar} alt={review.user.name} />
                   ) : (
                     review.user.name.charAt(0).toUpperCase()
                   )}
@@ -149,59 +74,33 @@ const Reviews: React.FC<ReviewsProps> = ({ reviews, averageRating, totalReviews,
                 
                 {/* İsim ve Tarih */}
                 <div>
-                  <div style={{ fontWeight: '600', color: '#333' }}>
+                  <div className="m-review-name">
                     {review.user.name}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
+                  <div className="m-review-date">
                     {review.date ? formatDate(review.date.month, review.date.year) : new Date(review.created_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' })}
                   </div>
                 </div>
               </div>
 
               {/* Puan */}
-              <div style={{
-                background: '#fff8cc',
-                color: '#111',
-                padding: '6px 10px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
+              <div className="m-review-rating">
                 {review.rating} ★
               </div>
             </div>
 
             {/* Hizmet */}
-            <div style={{
-              fontSize: '14px',
-              color: '#666',
-              marginBottom: '12px',
-              padding: '6px 12px',
-              background: '#f8f9fa',
-              borderRadius: '6px',
-              display: 'inline-block'
-            }}>
+            <div className="m-review-service">
               {review.service}
             </div>
 
             {/* Yorum */}
-            <div style={{
-              fontSize: '15px',
-              color: '#333',
-              lineHeight: '1.6'
-            }}>
+            <div className="m-review-comment">
               {review.comment}
             </div>
 
             {/* Tarih */}
-            <div style={{
-              fontSize: '12px',
-              color: '#999',
-              marginTop: '16px'
-            }}>
+            <div className="m-review-created">
               {new Date(review.created_at).toLocaleDateString('tr-TR', {
                 year: 'numeric',
                 month: 'long',
@@ -213,22 +112,12 @@ const Reviews: React.FC<ReviewsProps> = ({ reviews, averageRating, totalReviews,
       </div>
 
       {reviews.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px',
-          background: '#f8f9fa',
-          borderRadius: '12px',
-          color: '#666',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '16px'
-        }}>
-          <div style={{ fontSize: '48px' }}>★</div>
-          <div style={{ fontSize: '16px', fontWeight: 500 }}>
+        <div className="m-reviews-empty">
+          <div className="m-reviews-empty-icon">★</div>
+          <div className="m-reviews-empty-title">
             Henüz değerlendirme yapılmamış
           </div>
-          <div style={{ fontSize: '14px', color: '#888' }}>
+          <div className="m-reviews-empty-sub">
             İlk değerlendirmeyi siz yapın ve diğer kullanıcılara yardımcı olun.
           </div>
         </div>

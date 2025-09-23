@@ -317,6 +317,28 @@ function AramaSonuclariContent() {
   const [selectedDistrict, setSelectedDistrict] = useState(district);
   const [selectedCarBrand, setSelectedCarBrand] = useState(searchParams.get("carBrand") || "");
   const [districts, setDistricts] = useState<string[]>([]);
+  const [showFiltersMobileModal, setShowFiltersMobileModal] = useState(false);
+  const [sortOption, setSortOption] = useState<string>(""); // name_asc | name_desc | city_asc | reviews_asc | reviews_desc
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (isSortOpen && sortRef.current && !target.closest('.custom-select')) {
+        setIsSortOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsSortOpen(false);
+    };
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('keydown', onKey as any);
+    return () => {
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey as any);
+    };
+  }, [isSortOpen]);
   
   // Pagination state'leri
   const [currentPage, setCurrentPage] = useState(parseInt(page));
@@ -629,33 +651,123 @@ function AramaSonuclariContent() {
   }, [hasPreviousPage, currentPage, handlePageChange]);
 
   // Memoized vendor list with virtualization for high traffic
+  const sortedVendors = useMemo(() => {
+    const copy = [...vendors];
+    if (sortOption === 'name_asc') {
+      copy.sort((a, b) => a.display_name.localeCompare(b.display_name, 'tr'));
+    } else if (sortOption === 'name_desc') {
+      copy.sort((a, b) => b.display_name.localeCompare(a.display_name, 'tr'));
+    } else if (sortOption === 'city_asc') {
+      copy.sort((a, b) => (a.city || '').localeCompare(b.city || '', 'tr'));
+    } else if (sortOption === 'reviews_asc' || sortOption === 'reviews_desc') {
+      const getReviewCount = (v: any) => {
+        const count = (v.reviews_count ?? v.review_count ?? (Array.isArray(v.reviews) ? v.reviews.length : 0));
+        return typeof count === 'number' ? count : 0;
+      };
+      copy.sort((a, b) => {
+        const ca = getReviewCount(a);
+        const cb = getReviewCount(b);
+        return sortOption === 'reviews_asc' ? ca - cb : cb - ca;
+      });
+    }
+    return copy;
+  }, [vendors, sortOption]);
+
   const vendorList = useMemo(() => 
-    vendors.map((vendor, index) => (
+    sortedVendors.map((vendor, index) => (
       <VendorCard 
         key={`${vendor.id}-${index}`} 
         vendor={vendor} 
       />
     )), 
-    [vendors]
+    [sortedVendors]
   );
 
   return (
     <div className="container">
-        <div style={{ display: 'flex', minHeight: 'calc(100vh - 200px)' }}>
-          {/* Sol Sütun - Filtreler */}
-          <div className="musteri-filters-sidebar">
-            <h3 style={{ marginBottom: '20px', color: '#333' }}>Filtreler</h3>
-            
-            <div style={{ 
-              padding: '12px', 
-              backgroundColor: 'rgba(255, 214, 0, 0.1)', 
-              borderRadius: '6px',
-              marginBottom: '20px',
-              fontSize: '13px',
-              color: 'var(--black)'
-            }}>
-              💡 <strong>İpucu:</strong> Şehir/ilçe, hizmet ve marka seçerek sonuçları hızla daraltabilirsiniz.
+        <div className="musteri-search-layout">
+          {/* Mobile actions */}
+          <div className="musteri-mobile-actions mobile-only">
+            <button 
+              className="m-filter-btn"
+              onClick={() => setShowFiltersMobileModal(true)}
+            >
+              Filtreler
+            </button>
+            <div ref={sortRef} className="custom-select">
+              <button
+                type="button"
+                className="custom-select-trigger"
+                onClick={() => setIsSortOpen(v => !v)}
+                aria-haspopup="listbox"
+                aria-expanded={isSortOpen}
+              >
+                <span>
+                  {sortOption === 'name_asc' ? 'İsim (A-Z)' :
+                   sortOption === 'name_desc' ? 'İsim (Z-A)' :
+                   sortOption === 'city_asc' ? 'Şehir (A-Z)' : 'Sırala'}
+                </span>
+                {React.createElement(iconMapping['chevron-down'], { size: 18, color: '#111' })}
+              </button>
+                  {isSortOpen && (
+                <div className="custom-select-options" role="listbox">
+                  <div
+                    className="custom-select-option"
+                    role="option"
+                    aria-selected={sortOption === ''}
+                    onClick={() => { setSortOption(""); setIsSortOpen(false); }}
+                  >
+                    <span>Sırala</span>
+                  </div>
+                  <div
+                    className="custom-select-option"
+                    role="option"
+                    aria-selected={sortOption === 'name_asc'}
+                    onClick={() => { setSortOption('name_asc'); setIsSortOpen(false); }}
+                  >
+                    <span>İsim (A-Z)</span>
+                  </div>
+                  <div
+                    className="custom-select-option"
+                    role="option"
+                    aria-selected={sortOption === 'name_desc'}
+                    onClick={() => { setSortOption('name_desc'); setIsSortOpen(false); }}
+                  >
+                    <span>İsim (Z-A)</span>
+                  </div>
+                  <div
+                    className="custom-select-option"
+                    role="option"
+                    aria-selected={sortOption === 'city_asc'}
+                    onClick={() => { setSortOption('city_asc'); setIsSortOpen(false); }}
+                  >
+                    <span>Şehir (A-Z)</span>
+                  </div>
+                      <div
+                        className="custom-select-option"
+                        role="option"
+                        aria-selected={sortOption === 'reviews_asc'}
+                        onClick={() => { setSortOption('reviews_asc'); setIsSortOpen(false); }}
+                      >
+                        <span>Yorum sayısı (artan)</span>
+                      </div>
+                      <div
+                        className="custom-select-option"
+                        role="option"
+                        aria-selected={sortOption === 'reviews_desc'}
+                        onClick={() => { setSortOption('reviews_desc'); setIsSortOpen(false); }}
+                      >
+                        <span>Yorum sayısı (azalan)</span>
+                      </div>
+                </div>
+              )}
             </div>
+          </div>
+          {/* Sol Sütun - Filtreler */}
+          <div className={`musteri-filters-sidebar`}>
+            <h3 className="musteri-filters-title">Filtreler</h3>
+            
+            <div className="musteri-tip-box">💡 <strong>İpucu:</strong> Şehir/ilçe, hizmet ve marka seçerek sonuçları hızla daraltabilirsiniz.</div>
 
             <FilterSelect
               label="Şehir"
@@ -700,14 +812,7 @@ function AramaSonuclariContent() {
             />
 
             {/* Sonuç Sayısı */}
-            <div style={{ 
-              padding: '16px', 
-              backgroundColor: '#f8f9fa', 
-              borderRadius: '8px',
-              marginTop: '20px'
-            }}>
-              <strong>{vendors.length}</strong> usta bulundu
-            </div>
+            <div className="musteri-filters-summary"><strong>{vendors.length}</strong> usta bulundu</div>
           </div>
 
           {/* Sağ Sütun - Arama Sonuçları */}
@@ -715,87 +820,47 @@ function AramaSonuclariContent() {
                   <div className="musteri-search-results-container">
           {/* Arama sorgusu göster */}
           {searchQuery && (
-            <div style={{ 
-              marginBottom: '1rem', 
-              padding: '1rem', 
-              backgroundColor: 'rgba(255, 214, 0, 0.1)', 
-              borderRadius: '8px',
-              border: '1px solid var(--yellow)'
-            }}>
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem',
-                color: 'var(--black)'
-              }}>
-                <span style={{ color: 'var(--yellow)' }}>🔍</span>
+            <div className="musteri-query-box">
+              <div className="musteri-query-row">
+                <span className="musteri-query-icon">🔍</span>
                 <strong>Arama Sorgusu:</strong>
-                <span style={{ 
-                  color: 'var(--yellow)', 
-                  fontWeight: 'bold',
-                  backgroundColor: '#fff',
-                  padding: '0.25rem 0.5rem',
-                  borderRadius: '4px',
-                  border: '1px solid var(--yellow)'
-                }}>
-                  "{searchQuery}"
-                </span>
+                <span className="musteri-query-chip">"{searchQuery}"</span>
               </div>
             </div>
           )}
           
           {loading ? (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <div style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center',
-                  gap: '1rem'
-                }}>
+              <div className="musteri-loading">
+                <div>
                   <div className="musteri-loading-spinner"></div>
                   <div>Aranıyor...</div>
-                  <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                  <div className="musteri-loading-hint">
                     {searchQuery ? `"${searchQuery}" için sonuçlar aranıyor...` : 'Sonuçlar yükleniyor...'}
                   </div>
                 </div>
               </div>
             ) : error ? (
-              <div style={{ color: 'red', textAlign: 'center', padding: '2rem' }}>
-                {error}
-              </div>
+              <div className="musteri-error">{error}</div>
             ) : vendors.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <div style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>
-                  {searchQuery ? `"${searchQuery}" için sonuç bulunamadı` : 'Sonuç bulunamadı'}
-                </div>
-                <div style={{ marginTop: '1rem', fontSize: '0.9rem', color: '#666' }}>
-                  {searchQuery ? (
-                    <>
-                      <div>"{searchQuery}" için arama sonucu bulunamadı.</div>
-                      <div style={{ marginTop: '0.5rem' }}>Farklı kelimeler deneyin veya filtreleri değiştirin.</div>
-                    </>
-                  ) : (
-                    'Filtreleri değiştirmeyi deneyin.'
-                  )}
-                </div>
+              <div className="musteri-empty-state">
+                <h3>{searchQuery ? `"${searchQuery}" için sonuç bulunamadı` : 'Sonuç bulunamadı'}</h3>
+                <p>{searchQuery ? 'Farklı kelimeler deneyin veya filtreleri değiştirin.' : 'Filtreleri değiştirmeyi deneyin.'}</p>
               </div>
             ) : (
               <>
-                <div style={{ marginBottom: '1rem', color: '#666' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span>{totalCount} sonuç bulundu</span>
+                <div className="musteri-results-meta">
+                  <div className="musteri-results-meta-row">
+                    <span className="musteri-results-count">{totalCount} sonuç bulundu</span>
                     {searchQuery && (
                       <>
-                        <span style={{ color: '#666' }}>•</span>
-                        <span style={{ color: 'var(--yellow)', fontWeight: 'bold' }}>
-                          "{searchQuery}" için
-                        </span>
+                        <span className="mrm-sep">•</span>
+                        <span className="mrm-chip">"{searchQuery}" için</span>
                       </>
                     )}
                     {totalPages > 1 && (
                       <>
-                        <span style={{ color: '#666' }}>•</span>
-                        <span>Sayfa {currentPage} / {totalPages}</span>
+                        <span className="mrm-sep">•</span>
+                        <span className="mrm-page">Sayfa {currentPage} / {totalPages}</span>
                       </>
                     )}
                   </div>
@@ -853,6 +918,64 @@ function AramaSonuclariContent() {
             )}
           </div>
         </div>
+        {/* Mobile Filters Modal */}
+        {showFiltersMobileModal && (
+          <div className="musteri-filter-modal">
+            <div className="mfm-content">
+              <div className="mfm-header">
+                <h3>Filtreler</h3>
+                <button className="mfm-close" onClick={() => setShowFiltersMobileModal(false)}>Kapat</button>
+              </div>
+              <div className="mfm-body">
+                {/* Same filters duplicated for modal */}
+                <FilterSelect
+                  label="Şehir"
+                  value={selectedCity}
+                  onChange={(value) => setSelectedCity(value)}
+                  options={cityOptions}
+                  placeholder="İl seçiniz"
+                />
+
+                <FilterSelect
+                  label="İlçe"
+                  value={selectedDistrict}
+                  onChange={(value) => setSelectedDistrict(value)}
+                  options={districtOptions}
+                  disabled={!selectedCity}
+                  placeholder="İlçe seçiniz"
+                />
+
+                <FilterSelect
+                  label="Hizmet Alanı"
+                  value={selectedService}
+                  onChange={(value) => { setSelectedService(value); setSelectedCategory(""); }}
+                  options={serviceOptions}
+                  placeholder="Hizmet seçiniz"
+                />
+
+                <FilterSelect
+                  label="Kategori"
+                  value={selectedCategory}
+                  onChange={(value) => setSelectedCategory(value)}
+                  options={categoryOptions}
+                  disabled={!selectedService}
+                  placeholder="Kategori seçiniz"
+                />
+
+                <FilterSelect
+                  label="Araba Markası"
+                  value={selectedCarBrand}
+                  onChange={(value) => setSelectedCarBrand(value)}
+                  options={carBrandOptions}
+                  placeholder="Marka seçiniz"
+                />
+              </div>
+              <div className="mfm-footer">
+                <button className="mfm-apply" onClick={() => { handleSearch(); setShowFiltersMobileModal(false); }}>Uygula</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
   );
 }
