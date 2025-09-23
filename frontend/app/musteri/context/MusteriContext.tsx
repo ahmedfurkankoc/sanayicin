@@ -48,12 +48,22 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  // Token kontrolü - role göre kontrol
+  // Token kontrolü - role göre kontrol (cookie tabanlı)
   const checkAuth = (): { isAuthenticated: boolean; role: 'client' | 'vendor' | null } => {
     if (!mounted) return { isAuthenticated: false, role: null };
     
-    const vendorToken = getAuthToken('vendor');
-    const clientToken = getAuthToken('client');
+    // Cookie'den token kontrolü
+    const getCookieValue = (name: string): string | null => {
+      if (typeof document === 'undefined') return null;
+      const value = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(`${name}=`))
+        ?.split('=')[1];
+      return value || null;
+    };
+    
+    const vendorToken = getCookieValue('vendor_token');
+    const clientToken = getCookieValue('client_token');
     
     if (vendorToken) {
       return { isAuthenticated: true, role: 'vendor' };

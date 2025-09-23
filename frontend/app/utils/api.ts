@@ -40,10 +40,18 @@ export const isTokenValidForRole = (token: string, expectedRole: 'vendor' | 'cli
   return tokenRole === expectedRole;
 };
 
-// Auth token'ı al
+// Auth token'ı al - sadece cookie'den
 export const getAuthToken = (role: 'vendor' | 'client' = 'vendor'): string | null => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(getTokenKey(role));
+  
+  // Sadece cookie'den kontrol et
+  const cookieName = role === 'vendor' ? 'vendor_token' : 'client_token';
+  const cookieValue = document.cookie
+    .split('; ')
+    .find(row => row.startsWith(`${cookieName}=`))
+    ?.split('=')[1];
+  
+  return cookieValue || null;
 };
 
 // Auth header'ı oluştur
@@ -52,42 +60,64 @@ export const getAuthHeaders = (role: 'vendor' | 'client' = 'vendor') => {
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-// Token'ı kaydet
+// Token'ı kaydet - sadece cookie'ye
 export const setAuthToken = (role: 'vendor' | 'client', token: string) => {
   if (typeof window === "undefined") return;
-  localStorage.setItem(getTokenKey(role), token);
+  
+  // Cookie'ye kaydet (7 gün geçerli)
+  const cookieName = role === 'vendor' ? 'vendor_token' : 'client_token';
+  const expires = new Date();
+  expires.setDate(expires.getDate() + 7);
+  document.cookie = `${cookieName}=${token}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
 };
 
-// Refresh token'ı kaydet
+// Refresh token'ı kaydet - sadece cookie'ye
 export const setRefreshToken = (role: 'vendor' | 'client', token: string) => {
   if (typeof window === "undefined") return;
-  const refreshKey = role === 'vendor' ? 'esnaf_refresh_token' : 'client_refresh_token';
-  localStorage.setItem(refreshKey, token);
+  
+  // Cookie'ye kaydet (30 gün geçerli)
+  const cookieName = role === 'vendor' ? 'vendor_refresh_token' : 'client_refresh_token';
+  const expires = new Date();
+  expires.setDate(expires.getDate() + 30);
+  document.cookie = `${cookieName}=${token}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
 };
 
-// Email'i kaydet
+// Email'i kaydet - sadece cookie'ye
 export const setAuthEmail = (role: 'vendor' | 'client', email: string) => {
   if (typeof window === "undefined") return;
-  localStorage.setItem(getEmailKey(role), email);
+  
+  // Cookie'ye kaydet (7 gün geçerli)
+  const cookieName = role === 'vendor' ? 'esnaf_email' : 'client_email';
+  const expires = new Date();
+  expires.setDate(expires.getDate() + 7);
+  document.cookie = `${cookieName}=${email}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
 };
 
-// Token'ları sil
+// Token'ları sil - sadece cookie'den
 export const clearAuthTokens = (role: 'vendor' | 'client') => {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(getTokenKey(role));
-  localStorage.removeItem(getRefreshTokenKey(role));
-  localStorage.removeItem(getEmailKey(role));
+  
+  // Cookie'lerden sil
+  const tokenCookieName = role === 'vendor' ? 'vendor_token' : 'client_token';
+  const refreshCookieName = role === 'vendor' ? 'vendor_refresh_token' : 'client_refresh_token';
+  const emailCookieName = role === 'vendor' ? 'esnaf_email' : 'client_email';
+  
+  document.cookie = `${tokenCookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  document.cookie = `${refreshCookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+  document.cookie = `${emailCookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 };
 
-// Tüm auth verilerini sil
+// Tüm auth verilerini sil - sadece cookie'den
 export const clearAllAuthData = () => {
   if (typeof window === "undefined") return;
-  localStorage.removeItem('esnaf_access_token');
-  localStorage.removeItem('esnaf_refresh_token');
-  localStorage.removeItem('esnaf_email');
-  localStorage.removeItem('client_access_token');
-localStorage.removeItem('client_refresh_token');
-localStorage.removeItem('client_email');
+  
+  // Cookie'lerden sil
+  document.cookie = 'vendor_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'vendor_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'client_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'client_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'esnaf_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = 'client_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 };
 
 // Güvenlik: Input sanitization fonksiyonları
@@ -191,24 +221,34 @@ apiClient.interceptors.request.use((config) => {
   // Müşteri panelinde isek client token'ı kullan
   const isMusteriContext = typeof window !== 'undefined' && window.location?.pathname?.startsWith('/musteri');
   
-  // Role'e göre geçerli token'ı bul
+  // Role'e göre geçerli token'ı bul (cookie tabanlı)
   let token: string | null = null;
+  
+  // Cookie'den token alma fonksiyonu
+  const getCookieValue = (name: string): string | null => {
+    if (typeof document === 'undefined') return null;
+    const value = document.cookie
+      .split('; ')
+      .find(row => row.startsWith(`${name}=`))
+      ?.split('=')[1];
+    return value || null;
+  };
   
   if (isMusteriContext) {
     // Önce client token'ı dene
-    const clientToken = localStorage.getItem('client_access_token');
+    const clientToken = getCookieValue('client_token');
     if (clientToken) {
       token = clientToken;
     } else {
       // Client token yoksa vendor token'ı dene
-      const vendorToken = localStorage.getItem('esnaf_access_token');
+      const vendorToken = getCookieValue('vendor_token');
       if (vendorToken) {
         token = vendorToken;
       }
     }
   } else {
     // Diğer durumlarda vendor token'ı kullan
-    const vendorToken = localStorage.getItem('esnaf_access_token');
+    const vendorToken = getCookieValue('vendor_token');
     if (vendorToken) {
       token = vendorToken;
     }
@@ -237,15 +277,13 @@ apiClient.interceptors.response.use(
         const isEsnafContext = window.location?.pathname?.startsWith('/esnaf');
         
         if (isVendorUrl || isEsnafContext) {
-          // Vendor endpoint'i için vendor token'larını temizle
-          localStorage.removeItem('esnaf_access_token');
-          localStorage.removeItem('esnaf_refresh_token');
-          localStorage.removeItem('esnaf_email');
+          // Vendor endpoint'i için vendor token'larını temizle (cookie tabanlı)
+          document.cookie = 'vendor_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'esnaf_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         } else {
-          // Client endpoint'i için client token'larını temizle
-          localStorage.removeItem('client_access_token');
-          localStorage.removeItem('client_refresh_token');
-          localStorage.removeItem('client_email');
+          // Client endpoint'i için client token'larını temizle (cookie tabanlı)
+          document.cookie = 'client_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'client_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         }
         
         console.log('Token geçersiz, logout yapıldı. Yönlendirme yapılmadı.');

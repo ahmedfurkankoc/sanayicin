@@ -4,7 +4,6 @@ import React, { useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { iconMapping } from '@/app/utils/iconMapping';
-import { getAuthToken } from '@/app/utils/api';
 import Sidebar from './components/Sidebar';
 
 interface ServiceArea {
@@ -149,14 +148,7 @@ const STATIC_CATEGORIES: Category[] = [
 export default function HizmetlerPage() {
   const router = useRouter();
 
-  // Auth guard: sadece giriş yapanlar erişebilsin (client veya vendor)
-  useEffect(() => {
-    const vendorToken = getAuthToken('vendor');
-    const clientToken = getAuthToken('client');
-    if (!vendorToken && !clientToken) {
-      router.push('/musteri/giris?next=/musteri');
-    }
-  }, [router]);
+  // Auth guard artık middleware'de yapılıyor, burada gerek yok
 
   // Statik veri kullan
   const serviceAreas = STATIC_SERVICE_AREAS;
