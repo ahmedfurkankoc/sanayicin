@@ -44,7 +44,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     can_access_vendor_panel: false,
     can_access_client_features: true,
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 

@@ -102,7 +102,8 @@ export default function EsnafAyarlarPage() {
                   <div className="esnaf-ayarlar-item-arrow">→</div>
                 </div>
 
-                <div className="esnaf-ayarlar-item">
+                <div className="esnaf-ayarlar-item" onClick={() => router.push("/musteri/hesabim")}
+                >
                   <div className="esnaf-ayarlar-item-icon">
                     <Icon name="settings" />
                   </div>
@@ -151,7 +152,8 @@ export default function EsnafAyarlarPage() {
                   <div className="esnaf-ayarlar-item-arrow">→</div>
                 </div>
 
-                <div className="esnaf-ayarlar-item">
+                <div className="esnaf-ayarlar-item" onClick={() => router.push("/musteri")}
+                >
                   <div className="esnaf-ayarlar-item-icon">
                     <Icon name="refresh" />
                   </div>

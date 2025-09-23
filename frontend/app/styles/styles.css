@@ -7,17 +7,57 @@
   --gray: #f9f9f9;
   --dark-gray: #b4b4b4;
   --font-main: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
+
+  /* Extended tokens consolidated from panel styles */
+  --dark: #2d3748;
+  --light-black: #191b1d;
+  --red: #fc1c2f;
+  --green: #10b981;
+  --light-bg: #f9fafb;
+
+  /* Client brand tokens */
+  --primary-500: #667eea;
+  --primary-600: #764ba2;
+  --gradient-primary: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+
+  /* UI tokens */
+  --bg: #f8f9fa;
+  --text: #333333;
+  --text-muted: #666666;
+  --border: #e0e0e0;
+  --border-strong: #e9ecef;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.1);
+
+  /* Header & loading */
+  --header-logo-width: 400px;
+  --loading-spinner-size: 40px;
+  --loading-spinner-color: #1976d2;
+
+  /* Chat colors */
+  --chat-vendor-primary: var(--yellow);
+  --chat-vendor-text: var(--black);
+  --chat-vendor-highlight: rgba(255, 214, 0, 0.15);
+  --chat-vendor-bg: var(--white);
+  --chat-vendor-bg-secondary: #fafafa;
+  --chat-vendor-border: #e9ecef;
+
+  --chat-client-primary: var(--gradient-primary);
+  --chat-client-text: var(--white);
+  --chat-client-highlight: rgba(45, 55, 72, 0.15);
+  --chat-client-bg: var(--dark);
+  --chat-client-bg-secondary: #1a202c;
+  --chat-client-border: #4a5568;
 }
 
 html, body, main {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-/* Mobile: offset for fixed navbar */
-@media (max-width: 900px) {
-  main { padding-top: 86px; }
 }
 
 body {
@@ -271,6 +311,7 @@ section[aria-label="Notifications alt+T"] {
   align-items: center;
   overflow: hidden;
   background: var(--yellow);
+  padding-top: 0;
 }
 
 .heroSection::before {
@@ -1542,11 +1583,6 @@ footer {
   transform: translateY(-20px) rotate(-45deg);
 }
 @media (max-width: 900px) {
-  .container {
-    max-width: 100vw;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
   /* Mobile: make navbar always fixed */
   .sanayicin-navbar {
     position: fixed;
@@ -1555,6 +1591,11 @@ footer {
     right: 0;
     width: 100vw;
     z-index: 10000;
+  }
+  
+  /* Ana içeriğe navbar yüksekliği kadar padding-top ekle */
+  .public-layout {
+    padding-top: 86px;
   }
   .sanayicin-hamburger {
     display: flex;
