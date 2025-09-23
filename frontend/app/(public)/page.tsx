@@ -41,8 +41,8 @@ export default function Home() {
                 <SearchBar />
               </div>
               <div className="mobile-cta-row">
-                <a className="btn-primary" href="#usta-ara">Hemen Usta Bul</a>
-                <a className="btn-secondary" href="/esnaf/kayit">Ben de Esnafım</a>
+                <a className="btn-primary" href="/musteri/arama-sonuclari">Hemen Usta Bul</a>
+                <a className="btn-secondary" href="/esnaf/giris">Ben de Esnafım</a>
               </div>
             </div>
 

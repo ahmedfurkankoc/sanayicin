@@ -15,6 +15,11 @@ html, body, main {
   box-sizing: border-box;
 }
 
+/* Mobile: offset for fixed navbar */
+@media (max-width: 900px) {
+  main { padding-top: 86px; }
+}
+
 body {
   background-color: var(--yellow);
   color: var(--black);
@@ -1534,13 +1539,22 @@ footer {
   opacity: 0;
 }
 .hamburger-bar.open:nth-child(3) {
-  transform: translateY(-25px) rotate(-45deg);
+  transform: translateY(-20px) rotate(-45deg);
 }
 @media (max-width: 900px) {
   .container {
     max-width: 100vw;
     padding-left: 10px;
     padding-right: 10px;
+  }
+  /* Mobile: make navbar always fixed */
+  .sanayicin-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    z-index: 10000;
   }
   .sanayicin-hamburger {
     display: flex;
