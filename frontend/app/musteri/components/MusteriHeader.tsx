@@ -405,7 +405,6 @@ export default function MusteriHeader() {
                             alt="Esnaf Paneli"
                             width={16}
                             height={16}
-                            className="musteri-logo-img"
                           />
                           Esnaf Paneli
                         </div>

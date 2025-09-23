@@ -109,14 +109,9 @@ export default function EsnafCalismaSaatleriPage() {
   if (loading) {
     return (
       <EsnafPanelLayout activePage="ayarlar">
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '400px',
-          color: '#666'
-        }}>
-          Yükleniyor...
+        <div className="esnaf-panel-loading">
+          <div className="esnaf-loading-spinner" />
+          <div>Yükleniyor...</div>
         </div>
       </EsnafPanelLayout>
     );
@@ -124,167 +119,94 @@ export default function EsnafCalismaSaatleriPage() {
 
   return (
     <EsnafPanelLayout activePage="ayarlar">
-      {/* Header */}
-      <div style={{ padding: '24px 32px', borderBottom: '1px solid #e0e0e0' }}>
-                  <div>
-            <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#111111', margin: '0 0 8px 0' }}>
-              Çalışma Saatleri
-            </h1>
-            <p style={{ color: '#666', margin: '0' }}>
-              Müşterilerin randevu alabilmesi için çalışma saatlerinizi belirleyin
-            </p>
+      <div className="esnaf-page-container">
+        {/* Header */}
+        <div className="esnaf-page-header">
+          <div>
+            <h1 className="esnaf-page-title">Çalışma Saatleri</h1>
+            <p className="esnaf-page-subtitle">Müşterilerin randevu alabilmesi için çalışma saatlerinizi belirleyin</p>
           </div>
-      </div>
+        </div>
 
-      {/* Çalışma Saatleri Formu */}
-      <div style={{ padding: '24px 32px' }}>
-        <div style={{ 
-          background: 'white', 
-          borderRadius: '12px', 
-          border: '1px solid #e0e0e0',
-          overflow: 'hidden'
-        }}>
+        {/* Çalışma Saatleri Formu */}
+        <div className="esnaf-profile-section">
           {Object.entries(dayNames).map(([dayKey, dayName]) => (
-            <div key={dayKey} style={{
-              padding: '20px 24px',
-              borderBottom: '1px solid #f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px'
-            }}>
+            <div key={dayKey} className="esnaf-working-day">
               {/* Gün Adı */}
-              <div style={{ 
-                minWidth: '120px',
-                fontWeight: '600',
-                color: '#333',
-                fontSize: '16px'
-              }}>
-                {dayName}
-              </div>
+              <div className="esnaf-day-header esnaf-day-label">{dayName}</div>
 
               {/* Kapalı/Açık Toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="esnaf-checkbox-label" style={{ background: 'transparent', border: 'none', padding: 0 }}>
                 <input
                   type="checkbox"
                   id={`closed-${dayKey}`}
                   checked={!workingHours[dayKey].closed}
                   onChange={(e) => handleDayChange(dayKey, 'closed', !e.target.checked)}
-                  style={{ width: '18px', height: '18px' }}
+                  className="esnaf-checkbox"
                 />
-                <label htmlFor={`closed-${dayKey}`} style={{ fontSize: '14px', color: '#666' }}>
-                  Açık
-                </label>
+                <label htmlFor={`closed-${dayKey}`}>Açık</label>
               </div>
 
               {/* Saat Seçiciler */}
               {!workingHours[dayKey].closed && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '14px', color: '#666' }}>Açılış:</span>
-                    <input
-                      type="time"
-                      value={workingHours[dayKey].open}
-                      onChange={(e) => handleDayChange(dayKey, 'open', e.target.value)}
-                      style={{
-                        padding: '8px 12px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '6px',
-                        fontSize: '14px'
-                      }}
-                    />
-                  </div>
-                  
-                  <span style={{ fontSize: '14px', color: '#666' }}>-</span>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '14px', color: '#666' }}>Kapanış:</span>
-                    <input
-                      type="time"
-                      value={workingHours[dayKey].close}
-                      onChange={(e) => handleDayChange(dayKey, 'close', e.target.value)}
-                      style={{
-                        padding: '8px 12px',
-                        border: '1px solid #e0e0e0',
-                        borderRadius: '6px',
-                        fontSize: '14px'
-                      }}
-                    />
-                  </div>
+                <div className="esnaf-time-inputs">
+                  <label className="esnaf-time-label">Açılış:</label>
+                  <select
+                    className="esnaf-select"
+                    value={(workingHours[dayKey].open || '09:00').split(':')[0]}
+                    onChange={(e) => handleDayChange(dayKey, 'open', `${e.target.value}:00`)}
+                  >
+                    {Array.from({ length: 24 }).map((_, h) => (
+                      <option key={`open-${dayKey}-${h}`} value={String(h).padStart(2, '0')}>
+                        {String(h).padStart(2, '0')}:00
+                      </option>
+                    ))}
+                  </select>
+                  <label className="esnaf-time-label">Kapanış:</label>
+                  <select
+                    className="esnaf-select"
+                    value={(workingHours[dayKey].close || '18:00').split(':')[0]}
+                    onChange={(e) => handleDayChange(dayKey, 'close', `${e.target.value}:00`)}
+                  >
+                    {Array.from({ length: 24 }).map((_, h) => (
+                      <option key={`close-${dayKey}-${h}`} value={String(h).padStart(2, '0')}>
+                        {String(h).padStart(2, '0')}:00
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 
               {/* Kapalı Durumu */}
               {workingHours[dayKey].closed && (
-                <span style={{ 
-                  color: '#ef4444', 
-                  fontSize: '14px', 
-                  fontWeight: '500',
-                  marginLeft: '16px'
-                }}>
-                  Kapalı
-                </span>
+                <span className="esnaf-appointment-status cancelled">Kapalı</span>
               )}
             </div>
           ))}
         </div>
 
         {/* Tatil Günleri Bölümü */}
-        <div style={{ 
-          marginTop: '32px',
-          background: 'white',
-          borderRadius: '12px',
-          border: '1px solid #e0e0e0',
-          overflow: 'hidden'
-        }}>
+        <div className="esnaf-profile-section" style={{ marginTop: 16 }}>
           {/* Tatil Günleri Header */}
-          <div style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid #f0f0f0',
-            background: '#fef2f2'
-          }}>
-            <h3 style={{ 
-              fontSize: '18px', 
-              fontWeight: '700', 
-              color: '#dc2626', 
-              margin: '0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
+          <div className="esnaf-content-header" style={{ background: '#fef2f2' }}>
+            <h3 className="esnaf-dashboard-title" style={{ color: '#dc2626', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Icon name="calendar" size={18} color="#dc2626" />
               Tatil Günleri
             </h3>
-            <p style={{ 
-              color: '#666', 
-              fontSize: '13px', 
-              margin: '8px 0 0 0',
-              lineHeight: '1.4'
-            }}>
+            <p className="esnaf-dashboard-description" style={{ marginTop: 8 }}>
               Bu tarihlerde çalışmayacaksınız. Müşteriler bu tarihlerde randevu alamayacaktır.
             </p>
           </div>
 
           {/* Tatil Günleri İçerik */}
-          <div style={{ padding: '20px 24px' }}>
+          <div>
             {/* Tarih Ekleme */}
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '12px', 
-              marginBottom: '20px',
-              flexWrap: 'wrap'
-            }}>
+            <div className="esnaf-action-bar" style={{ borderBottom: 'none', padding: 0, marginBottom: 16 }}>
               <input
                 type="date"
                 id="unavailable-date"
                 min={new Date().toISOString().split('T')[0]}
-                style={{
-                  padding: '10px 12px',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  minWidth: '150px'
-                }}
+                className="esnaf-input"
               />
               <button
                 type="button"
@@ -298,16 +220,7 @@ export default function EsnafCalismaSaatleriPage() {
                     toast.error('Lütfen bir tarih seçin');
                   }
                 }}
-                style={{
-                  backgroundColor: '#dc2626',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 16px',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
+                className="esnaf-btn esnaf-btn-red"
               >
                 Tatil Günü Ekle
               </button>
@@ -329,11 +242,7 @@ export default function EsnafCalismaSaatleriPage() {
                   Seçili Tatil Günleri ({unavailableDates.length})
                 </h4>
                 
-                <div style={{ 
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                  gap: '12px'
-                }}>
+                <div className="esnaf-dashboard-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
                   {unavailableDates.map((date, index) => (
                     <div key={index} style={{
                       background: '#fef2f2',
@@ -385,39 +294,24 @@ export default function EsnafCalismaSaatleriPage() {
                 </div>
               </div>
             ) : (
-              <div style={{
-                textAlign: 'center',
-                padding: '40px 20px',
-                color: '#999',
-                fontSize: '14px'
-              }}>
+              <div className="esnaf-calendar-empty-state">
                 <Icon name="calendar" size={32} color="#ccc" />
-                <p style={{ margin: '12px 0 0 0' }}>
-                  Henüz tatil günü eklenmemiş
-                </p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>
-                  Yukarıdan tarih seçip "Tatil Günü Ekle" butonuna tıklayın
-                </p>
+                <p>Henüz tatil günü eklenmemiş</p>
+                <p style={{ fontSize: 12 }}>Yukarıdan tarih seçip "Tatil Günü Ekle" butonuna tıklayın</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Bilgi Kutusu */}
-        <div style={{
-          background: '#f0f9ff',
-          border: '1px solid #b3d9ff',
-          borderRadius: '8px',
-          padding: '16px',
-          marginTop: '24px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+        <div className="esnaf-profile-section" style={{ background: '#f0f9ff', borderColor: '#b3d9ff' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
             <Icon name="info" size={20} color="#0066cc" />
             <div>
-              <h4 style={{ margin: '0 0 8px 0', color: '#0066cc', fontSize: '16px', fontWeight: '600' }}>
+              <h4 style={{ margin: '0 0 8px 0', color: '#0066cc', fontSize: 16, fontWeight: 600 }}>
                 Önemli Bilgi
               </h4>
-              <p style={{ margin: '0', color: '#0066cc', fontSize: '14px', lineHeight: '1.5' }}>
+              <p style={{ margin: 0, color: '#0066cc', fontSize: 14, lineHeight: '1.5' }}>
                 Çalışma saatlerinizi belirledikten sonra müşteriler bu saatler içinde randevu talebi oluşturabilecek. 
                 Kapalı olarak işaretlediğiniz günlerde randevu alınamayacaktır.
               </p>
@@ -426,63 +320,19 @@ export default function EsnafCalismaSaatleriPage() {
         </div>
 
         {/* Kaydet ve İptal Butonları */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '12px',
-          marginTop: '24px',
-          padding: '24px 0',
-          borderTop: '1px solid #e0e0e0'
-        }}>
+        <div className="esnaf-form-actions" style={{ justifyContent: 'flex-end' }}>
           <button 
+            type="button"
             onClick={() => router.push('/esnaf/ayarlar')}
-            style={{
-              background: 'transparent',
-              color: '#666',
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f5f5f5';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            className="esnaf-cancel-btn"
           >
             İptal
           </button>
           <button 
+            type="button"
             onClick={handleSave}
             disabled={saving}
-            style={{
-              background: saving ? '#ccc' : '#ffd600',
-              color: '#111111',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '12px 24px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              if (!saving) {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            className="esnaf-save-btn"
           >
             <Icon name="save" size={16} />
             {saving ? 'Kaydediliyor...' : 'Kaydet'}

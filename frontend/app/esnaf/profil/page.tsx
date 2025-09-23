@@ -214,20 +214,6 @@ export default function EsnafProfilPage() {
                 <p className="esnaf-about-text">
                   {user.about || "Hakkında bilgi henüz eklenmemiş."}
                 </p>
-                <div className="esnaf-about-features">
-                  <div className="esnaf-feature-item">
-                    <Icon name="zap" size="sm" color="var(--yellow)" />
-                    <span>Hızlı hizmet</span>
-                  </div>
-                  <div className="esnaf-feature-item">
-                    <Icon name="wrench" size="sm" color="var(--yellow)" />
-                    <span>Uzman ekip</span>
-                  </div>
-                  <div className="esnaf-feature-item">
-                    <Icon name="award" size="sm" color="var(--yellow)" />
-                    <span>Kaliteli işçilik</span>
-                  </div>
-                </div>
               </div>
             </div>
 

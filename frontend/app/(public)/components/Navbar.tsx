@@ -15,7 +15,7 @@ const Navbar = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Disable sticky behavior on mobile (<= 900px)
+    // Disable sticky behavior on mobile (<= 900px) - navbar is always fixed on mobile
     if (window.innerWidth <= 900) {
       setShowSticky(false);
       return;

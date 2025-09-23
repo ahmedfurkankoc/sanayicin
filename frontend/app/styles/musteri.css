@@ -1,103 +1,18 @@
 /* ===== MÜŞTERİ SAYFALARI CSS ===== */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
 
-:root {
-  /* Base palette */
-  --yellow: #ffd600;
-  --dark: #2d3748;
-  --white: #fff;
-  --gray: #f9f9f9;
-  --text: #333333;
-  --text-muted: #666666;
 
-  /* Chat Widget Colors - Client Only */
-  --chat-client-primary: var(--gradient-primary);
-  --chat-client-text: var(--white);
-  --chat-client-highlight: rgba(45, 55, 72, 0.15);
-  --chat-client-bg: var(--dark);
-  --chat-client-bg-secondary: #1a202c;
-  --chat-client-border: #4a5568;
 
-  /* Brand */
-  --primary-500: #667eea;
-  --primary-600: #764ba2;
-  --gradient-primary: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
 
-  /* UI tokens */
-  --bg: #f8f9fa;
-  --border: #e0e0e0;
-  --border-strong: #e9ecef;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.1);
 
-  --font-main: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
-  
-  /* Header */
-  --header-logo-width: 400px;
-  
-  /* Loading */
-  --loading-spinner-size: 40px;
-  --loading-spinner-color: #1976d2;
-}
 
-/* ===== CONTAINER STYLES ===== */
-/* Sanayicin Responsive Container */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-left: 24px;
-  padding-right: 24px;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: visible;
-}
-
-/* Container Responsive */
-@media (max-width: 900px) {
-  .container {
-    max-width: 100vw;
-    padding-left: 10px;
-    padding-right: 10px;
-    overflow-x: hidden;
-  }
-}
-
-@media (max-width: 900px) {
-  .container {
-    max-width: 100%;
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-}
-
-html, body, main {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-  
-body {
-    color: var(--dark);
-    min-height: 100vh;
-    font-family: var(--font-main);
-}
+ 
 
 /* Temel Layout */
 .musteri-layout {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text);
+  background-color: var(--white);
 }
 
 /* Loading Spinner */
@@ -879,7 +794,7 @@ body {
 .musteri-loading-hint { font-size: .9rem; color: #666; }
 .musteri-results-meta { margin-bottom: 1rem; color: #666; }
 .musteri-results-meta-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
-.musteri-results-count {}
+.musteri-results-count { margin-left: 0; }
 .mrm-sep { color: #666; }
 .mrm-chip { color: var(--yellow); font-weight: 700; }
 .mrm-page { color: #666; }
@@ -2606,6 +2521,7 @@ body {
 /* Hesabım Sayfası */
 .musteri-tabs-container {
   max-width: 1000px;
+  height: 800px;
 }
 
 .musteri-tabs-nav {
@@ -2614,11 +2530,28 @@ body {
   margin-bottom: 2rem;
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
   padding-bottom: 0;
 }
 
+/* Optional: subtle horizontal scrollbar styling */
+.musteri-tabs-nav::-webkit-scrollbar {
+  height: 6px;
+}
+.musteri-tabs-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.musteri-tabs-nav::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 999px;
+}
+
 .musteri-tab-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
@@ -2631,7 +2564,9 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
   white-space: nowrap;
-  min-width: fit-content;
+  min-width: max-content;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
 }
 
 .musteri-tab-btn:hover {
@@ -2870,13 +2805,14 @@ body {
 /* Tabs Responsive */
 @media (max-width: 768px) {
   .musteri-tabs-nav {
-    padding: 0 1rem;
-    margin: 0 -1rem 2rem;
+    padding: 0 0.5rem;
+    margin: 0 -0.5rem 1.5rem;
+    gap: 0.25rem;
   }
   
   .musteri-tab-btn {
     padding: 0.75rem 1rem;
-    font-size: 0.8rem;
+    font-size: 0.88rem;
   }
 }
 
