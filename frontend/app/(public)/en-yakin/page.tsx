@@ -1,6 +1,6 @@
 import React from "react";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
 import Icon from "@/app/components/ui/Icon";
 import Banner from "../components/Banner";
 import Link from "next/link";
