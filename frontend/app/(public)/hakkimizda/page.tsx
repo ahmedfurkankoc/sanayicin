@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import Banner from "../components/Banner";
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
 
 export default function AboutPage() {
   return (

@@ -1,6 +1,6 @@
 import React from "react";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
 import Banner from "../components/Banner";
 import PlatformFeatures from "../components/PlatformFeatures";
 import SuccessStories from "../components/SuccessStories";

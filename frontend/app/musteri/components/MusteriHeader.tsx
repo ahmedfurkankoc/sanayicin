@@ -380,7 +380,11 @@ export default function MusteriHeader() {
                     {currentRole === 'vendor' && (
                       <>
                         <div className="musteri-dropdown-divider"></div>
-                        <Link href="/esnaf/panel" className="musteri-dropdown-item musteri-dropdown-esnaf">
+                        <div 
+                          className="musteri-dropdown-item musteri-dropdown-esnaf"
+                          onClick={() => window.location.href = "/esnaf/panel"}
+                          style={{ cursor: 'pointer' }}
+                        >
                           <Image
                             src="/sanayicin-icon.png"
                             alt="Esnaf Paneli"
@@ -389,7 +393,7 @@ export default function MusteriHeader() {
                             style={{ width: '16px', height: '16px' }}
                           />
                           Esnaf Paneli
-                        </Link>
+                        </div>
                       </>
                     )}
                     

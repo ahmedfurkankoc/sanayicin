@@ -19,15 +19,16 @@
   --chat-vendor-border: #e9ecef;
 }
 
-body, html, .esnaf-panel-layout {
+/* Esnaf sayfaları için özel CSS - sadece .esnaf-panel-layout içinde geçerli */
+.esnaf-panel-layout body, 
+.esnaf-panel-layout html, 
+.esnaf-panel-layout {
   font-family: var(--font-main);
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* ===== CONTAINER STYLES ===== */
-/* Sanayicin Responsive Container */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -36,30 +37,6 @@ body, html, .esnaf-panel-layout {
   width: 100%;
   box-sizing: border-box;
   overflow-x: visible;
-}
-
-/* Container Responsive */
-@media (max-width: 900px) {
-  .container {
-    max-width: 100vw;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-}
-
-@media (max-width: 900px) {
-  .container {
-    max-width: 100%;
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
 }
 
 .text-black {
