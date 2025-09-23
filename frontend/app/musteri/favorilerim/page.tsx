@@ -139,88 +139,73 @@ export default function FavorilerimPage() {
           </button>
         </div>
       ) : (
-        <div className="musteri-favorites-list">
+        <div className="musteri-search-results">
           {favorites.map((favorite) => (
-            <div key={favorite.id} className="musteri-favorite-item">
+            <div 
+              key={favorite.id} 
+              className="musteri-vendor-card"
+              onClick={() => goToVendor(favorite.vendor)}
+              style={{ position: 'relative' }}
+            >
               {/* Favoriden Çıkar Butonu */}
               <button
-                onClick={() => removeFavorite(favorite.vendor.id)}
-                className="musteri-favorite-btn-remove"
+                onClick={(e) => { e.stopPropagation(); removeFavorite(favorite.vendor.id); }}
                 title="Favorilerden Çıkar"
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  background: 'rgba(255,255,255,0.9)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
               >
-                {React.createElement(iconMapping.heart, { size: 16, fill: '#ef4444' })}
+                {React.createElement(iconMapping.heart, { size: 16, fill: '#ef4444', color: '#ef4444' })}
               </button>
 
-              <div className="musteri-favorite-content">
-                {/* Avatar */}
-                <div className="musteri-favorite-avatar">
-                  {favorite.vendor.user.avatar ? (
-                    <img 
-                      src={favorite.vendor.user.avatar} 
-                      alt={favorite.vendor.display_name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    getInitials(favorite.vendor)
-                  )}
-                </div>
+              {/* Avatar */}
+              <div className="musteri-vendor-avatar">
+                {favorite.vendor.user.avatar ? (
+                  <img src={favorite.vendor.user.avatar} alt={favorite.vendor.display_name} />
+                ) : (
+                  getInitials(favorite.vendor)
+                )}
+              </div>
 
-                {/* Vendor Bilgileri */}
-                <div className="musteri-favorite-info">
-                  <div className="musteri-favorite-header">
-                    <h3 
-                      className="musteri-favorite-name"
-                      onClick={() => goToVendor(favorite.vendor)}
-                    >
-                      {favorite.vendor.display_name || favorite.vendor.company_title}
-                    </h3>
-                    
-                    {favorite.vendor.user.is_verified && (
-                      <div className="musteri-favorite-verified">
-                        {React.createElement(iconMapping.check, { size: 12 })}
-                        Doğrulanmış
-                      </div>
-                    )}
-                  
-                  </div>
-
-                  <div className="musteri-favorite-details">
-                    <div className="musteri-favorite-location">
-                      {React.createElement(iconMapping['map-pin'], { size: 16 })}
-                      {favorite.vendor.district}, {favorite.vendor.city}
-                    </div>
-                    
-                    {favorite.vendor.about && (
-                      <div className="musteri-favorite-about">
-                        {favorite.vendor.about}
-                      </div>
-                    )}
-
-                    {favorite.vendor.service_areas && favorite.vendor.service_areas.length > 0 && (
-                      <div className="musteri-favorite-services">
-                        {favorite.vendor.service_areas.slice(0, 4).map((area: any, index: number) => (
-                          <span key={area.id || index} className="musteri-favorite-service-tag">
-                            {area.name}
-                          </span>
-                        ))}
-                        {favorite.vendor.service_areas.length > 4 && (
-                          <span className="musteri-favorite-service-more">
-                            +{favorite.vendor.service_areas.length - 4} daha
-                          </span>
-                        )}
-                      </div>
+              {/* İçerik */}
+              <div className="musteri-vendor-info">
+                <h3 className="musteri-vendor-name">
+                  {favorite.vendor.display_name || favorite.vendor.company_title}
+                </h3>
+                <p className="musteri-vendor-location" style={{ marginBottom: 8 }}>
+                  {favorite.vendor.district}, {favorite.vendor.city}
+                </p>
+                {favorite.vendor.service_areas && favorite.vendor.service_areas.length > 0 && (
+                  <div className="musteri-vendor-services">
+                    {favorite.vendor.service_areas.slice(0, 4).map((service: any, index: number) => (
+                      <span key={service.id || index} className="musteri-service-tag">
+                        {service.name}
+                      </span>
+                    ))}
+                    {favorite.vendor.service_areas.length > 4 && (
+                      <span className="musteri-service-tag">+{favorite.vendor.service_areas.length - 4} daha</span>
                     )}
                   </div>
-
-                  {/* Aksiyon Butonları */}
-                  <div className="musteri-favorite-actions">
-                    <button
-                      onClick={() => goToVendor(favorite.vendor)}
-                      className="musteri-favorite-btn-primary"
-                    >
-                      Detayları Gör
-                    </button>
-                  </div>
+                )}
+                <div style={{ marginTop: 12 }}>
+                  <button
+                    className="m-btn m-btn-apt"
+                    onClick={(e) => { e.stopPropagation(); goToVendor(favorite.vendor); }}
+                  >
+                    Detayları Gör
+                  </button>
                 </div>
               </div>
             </div>
