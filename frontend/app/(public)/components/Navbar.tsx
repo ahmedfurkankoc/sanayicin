@@ -15,6 +15,11 @@ const Navbar = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Disable sticky behavior on mobile (<= 900px)
+    if (window.innerWidth <= 900) {
+      setShowSticky(false);
+      return;
+    }
     const handleScroll = () => {
       const currentY = window.scrollY;
       if (currentY < 80) {
