@@ -320,6 +320,10 @@ export const api = {
   // Vendor detay sayfası
   getVendorDetail: (slug: string) => 
     apiClient.get(`/vendors/${slug}/`),
+  // Analytics & Summary
+  vendorTrackView: (slug: string) => apiClient.post(`/vendors/${slug}/analytics/view/`, {}),
+  vendorTrackCall: (slug: string, phone: string) => apiClient.post(`/vendors/${slug}/analytics/call/`, { phone }),
+  getVendorDashboardSummary: () => apiClient.get(`/vendors/dashboard/summary/`),
   
   // Avatar upload - vendor ve client için ortak endpoint
   uploadAvatar: (data: FormData, role: 'vendor' | 'client' = 'vendor') => 

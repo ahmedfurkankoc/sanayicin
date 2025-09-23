@@ -10,6 +10,7 @@ from io import BytesIO
 from django.core.files import File
 from django.utils import timezone
 from datetime import datetime, timedelta
+from django.contrib.auth import get_user_model
 
 class VendorProfile(models.Model):
 	BUSINESS_TYPE_CHOICES = [
@@ -257,12 +258,43 @@ class ServiceRequest(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 
-	class Meta:
-		ordering = ['-created_at']
-		indexes = [
-			models.Index(fields=['vendor', 'status']),
-			models.Index(fields=['user', 'status']),
-		]
 
-	def __str__(self):
-		return f"{self.title} -> {self.vendor.display_name} ({self.status})"
+# ========== Analytics Models ==========
+class VendorView(models.Model):
+    """Vendor profil görüntüleme kayıtları (owner hariç)."""
+    vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='views')
+    viewer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True, related_name='vendor_views')
+    ip_hash = models.CharField(max_length=64, blank=True)
+    ua_hash = models.CharField(max_length=64, blank=True)
+    month_bucket = models.CharField(max_length=7, help_text="YYYY-MM")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['vendor', 'month_bucket']),
+            models.Index(fields=['vendor', 'created_at']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['vendor', 'ip_hash', 'ua_hash', 'month_bucket'], name='uniq_view_vendor_ip_ua_month')
+        ]
+
+
+class VendorCall(models.Model):
+    """Müşteri sayfasından telefon araması tıklamaları."""
+    vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='calls')
+    viewer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True, related_name='vendor_calls')
+    phone = models.CharField(max_length=32, blank=True)
+    ip_hash = models.CharField(max_length=64, blank=True)
+    month_bucket = models.CharField(max_length=7, help_text="YYYY-MM")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['vendor', 'month_bucket']),
+            models.Index(fields=['vendor', 'created_at']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['vendor', 'ip_hash', 'month_bucket'], name='uniq_call_vendor_ip_month')
+        ]
+
+ 

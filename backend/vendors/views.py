@@ -5,7 +5,9 @@ from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from .serializers import *
 from core.models import CustomUser
-from .models import VendorProfile, Appointment, Review, ServiceRequest
+from .models import VendorProfile, Appointment, Review, ServiceRequest, VendorView, VendorCall
+from chat.models import Conversation, Message
+import hashlib
 from core.models import ServiceArea, CarBrand
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -173,6 +175,79 @@ class VendorDetailView(generics.RetrieveAPIView):
         except VendorProfile.DoesNotExist:
             from rest_framework.exceptions import NotFound
             raise NotFound("Vendor bulunamadı")
+
+
+class VendorDashboardSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not hasattr(request.user, 'vendor_profile'):
+            return Response({"detail": "Vendor bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        vendor = request.user.vendor_profile
+        now = timezone.now()
+        month_bucket = now.strftime('%Y-%m')
+
+        profile_views_month = VendorView.objects.filter(vendor=vendor, month_bucket=month_bucket).count()
+        calls_month = VendorCall.objects.filter(vendor=vendor, month_bucket=month_bucket).count()
+
+        # messages_total: vendor kullanıcısının dahil olduğu tüm konuşmalardaki mesaj sayısı
+        user_obj = vendor.user
+        conv_ids = Conversation.objects.filter(Q(user1=user_obj) | Q(user2=user_obj)).values_list('id', flat=True)
+        messages_total = Message.objects.filter(conversation_id__in=conv_ids).count()
+
+        reviews_qs = vendor.reviews.all()
+        reviews_total = reviews_qs.count()
+        from django.db.models import Avg
+        average_rating = reviews_qs.aggregate(avg=Avg('rating'))['avg'] or 0
+
+        data = {
+            "profile_views_month": profile_views_month,
+            "calls_month": calls_month,
+            "messages_total": messages_total,
+            "appointments_total": vendor.appointments.count(),
+            "appointments_today": vendor.appointments.filter(appointment_date=now.date()).count(),
+            "favorites_total": 0,
+            "reviews_total": reviews_total,
+            "average_rating": round(float(average_rating), 1)
+        }
+        return Response(data)
+
+
+class VendorAnalyticsViewEvent(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, slug):
+        try:
+            vendor = VendorProfile.objects.get(slug=slug, user__is_active=True)
+        except VendorProfile.DoesNotExist:
+            return Response({"detail": "Vendor bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        viewer = request.user if request.user.is_authenticated else None
+        if viewer and viewer == vendor.user:
+            return Response({"status": "ignored"})
+        ip = request.META.get('REMOTE_ADDR', '')
+        ua = request.META.get('HTTP_USER_AGENT', '')
+        ip_hash = hashlib.sha256(ip.encode()).hexdigest() if ip else ''
+        ua_hash = hashlib.sha256(ua.encode()).hexdigest() if ua else ''
+        month_bucket = timezone.now().strftime('%Y-%m')
+        VendorView.objects.create(vendor=vendor, viewer=viewer, ip_hash=ip_hash, ua_hash=ua_hash, month_bucket=month_bucket)
+        return Response({"status": "ok"})
+
+
+class VendorAnalyticsCallEvent(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, slug):
+        try:
+            vendor = VendorProfile.objects.get(slug=slug, user__is_active=True)
+        except VendorProfile.DoesNotExist:
+            return Response({"detail": "Vendor bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        viewer = request.user if request.user.is_authenticated else None
+        ip = request.META.get('REMOTE_ADDR', '')
+        phone = request.data.get('phone', '')
+        ip_hash = hashlib.sha256(ip.encode()).hexdigest() if ip else ''
+        month_bucket = timezone.now().strftime('%Y-%m')
+        VendorCall.objects.create(vendor=vendor, viewer=viewer, phone=phone, ip_hash=ip_hash, month_bucket=month_bucket)
+        return Response({"status": "ok"})
 
 class VendorProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = VendorProfileSerializer

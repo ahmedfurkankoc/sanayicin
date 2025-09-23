@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import *
+from django.urls import re_path
 
 router = DefaultRouter()
 router.register(r'appointments', AppointmentViewSet, basename='appointment')
@@ -23,9 +24,13 @@ urlpatterns = [
     path('client/service-requests/', ClientServiceRequestListView.as_view(), name='client-service-requests'),
     path('client/service-requests/<int:pk>/reply/', ClientServiceRequestReplyView.as_view(), name='client-service-request-reply'),
     path('client/appointments/', ClientAppointmentListView.as_view(), name='client-appointment-list'),
+    # Dashboard summary
+    path('dashboard/summary/', VendorDashboardSummaryView.as_view(), name='vendor-dashboard-summary'),
     # Slug-scoped endpoints
     path('<str:slug>/service-requests/', ServiceRequestCreateView.as_view(), name='service-request-create'),
     path('<str:slug>/appointments/', ClientAppointmentView.as_view(), name='client-appointment'),
+    path('<str:slug>/analytics/view/', VendorAnalyticsViewEvent.as_view(), name='vendor-analytics-view'),
+    path('<str:slug>/analytics/call/', VendorAnalyticsCallEvent.as_view(), name='vendor-analytics-call'),
     path('<str:vendor_slug>/reviews/', ReviewViewSet.as_view({
         'get': 'list',
         'post': 'create'

@@ -177,14 +177,12 @@ export default function EsnafRandevularimPage() {
       )}
 
       {/* Header */}
-      <div className="esnaf-appointments-header">
-        <div className="esnaf-appointments-header-inner">
-          <div>
-            <h1 className="esnaf-page-title">Randevularım</h1>
-            <p className="esnaf-appointments-stats">
-              Toplam {appointments.length} randevu • {appointments.filter(a => a.status === 'pending').length} bekleyen
-            </p>
-          </div>
+      <div className="esnaf-page-header">
+        <div>
+          <h1 className="esnaf-page-title">Randevularım</h1>
+          <p className="esnaf-page-subtitle">
+            Toplam {appointments.length} randevu • {appointments.filter(a => a.status === 'pending').length} bekleyen
+          </p>
         </div>
       </div>
 
@@ -335,9 +333,9 @@ export default function EsnafRandevularimPage() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
     </EsnafPanelLayout>
   );
 } 
