@@ -4,9 +4,9 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import EsnafPanelLayout from "../../components/EsnafPanelLayout";
-import EsnafSidebar from "../../components/EsnafSidebar";
 import { useEsnaf } from "../../context/EsnafContext";
 import { api } from "@/app/utils/api";
+import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 
@@ -23,6 +23,11 @@ export default function EsnafProfilDuzenlePage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [carBrandsDropdownOpen, setCarBrandsDropdownOpen] = useState(false);
   const [carBrandSearch, setCarBrandSearch] = useState("");
+
+  // Turkey data (city/district/neighbourhood)
+  const { cities, loadTurkeyData, getDistricts, getNeighbourhoods } = useTurkeyData();
+  const [districtOptions, setDistrictOptions] = useState<string[]>([]);
+  const [neighbourhoodOptions, setNeighbourhoodOptions] = useState<string[]>([]);
 
   // Profil ve veri yükleme
   useEffect(() => {
@@ -66,6 +71,32 @@ export default function EsnafProfilDuzenlePage() {
       loadData();
     }
   }, [loading, user]);
+
+  // Load TR data on mount
+  useEffect(() => {
+    loadTurkeyData();
+  }, [loadTurkeyData]);
+
+  // When profile.city changes, populate districts
+  useEffect(() => {
+    if (!profile?.city) {
+      setDistrictOptions([]);
+      setNeighbourhoodOptions([]);
+      return;
+    }
+    const d = getDistricts(profile.city);
+    setDistrictOptions(d);
+  }, [profile?.city, getDistricts]);
+
+  // When profile.city & district change, populate neighbourhoods
+  useEffect(() => {
+    if (!profile?.city || !profile?.district) {
+      setNeighbourhoodOptions([]);
+      return;
+    }
+    const n = getNeighbourhoods(profile.city, profile.district);
+    setNeighbourhoodOptions(n);
+  }, [profile?.city, profile?.district, getNeighbourhoods]);
 
 
 
@@ -275,20 +306,16 @@ export default function EsnafProfilDuzenlePage() {
   }
 
   return (
-    <>
-      <div className="esnaf-dashboard">
-        {/* Sol Sidebar */}
-        <EsnafSidebar 
-          user={profile} 
-          email={email} 
-          onLogout={handleLogout}
-          activePage="profil"
-        />
-        
-        {/* Ana İçerik */}
-        <div className="esnaf-main-content">
-          <div className="esnaf-profile-container">
-            <h1 className="esnaf-profile-title">Profil Bilgilerinizi Düzenleyin</h1>
+    <EsnafPanelLayout activePage="profil">
+      <div className="esnaf-page-container">
+        <div className="esnaf-page-header">
+          <div>
+            <h1 className="esnaf-page-title">Profil Düzenle</h1>
+            <p className="esnaf-page-subtitle">
+              Profil bilgilerinizi güncelleyin
+            </p>
+          </div>
+        </div>
             
             <form onSubmit={handleSubmit} className="esnaf-profile-form">
               
@@ -539,36 +566,60 @@ export default function EsnafProfilDuzenlePage() {
                 <div className="esnaf-form-row">
                   <div className="esnaf-form-group">
                     <label>İl</label>
-                    <input
-                      type="text"
-                      value={profile.city}
-                      onChange={(e) => handleInputChange("city", e.target.value)}
-                      placeholder="İstanbul"
-                      className="esnaf-input"
-                    />
+                    <select
+                      className="esnaf-select"
+                      value={profile.city || ""}
+                      onChange={(e) => {
+                        const newCity = e.target.value;
+                        handleInputChange("city", newCity);
+                        // Reset dependent fields
+                        handleInputChange("district", "");
+                        handleInputChange("subdistrict", "");
+                        setDistrictOptions(newCity ? getDistricts(newCity) : []);
+                        setNeighbourhoodOptions([]);
+                      }}
+                    >
+                      <option value="">İl seçiniz</option>
+                      {cities.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="esnaf-form-group">
                     <label>İlçe</label>
-                    <input
-                      type="text"
-                      value={profile.district}
-                      onChange={(e) => handleInputChange("district", e.target.value)}
-                      placeholder="Kadıköy"
-                      className="esnaf-input"
-                    />
+                    <select
+                      className="esnaf-select"
+                      value={profile.district || ""}
+                      onChange={(e) => {
+                        const newDistrict = e.target.value;
+                        handleInputChange("district", newDistrict);
+                        handleInputChange("subdistrict", "");
+                        setNeighbourhoodOptions(newDistrict && profile.city ? getNeighbourhoods(profile.city, newDistrict) : []);
+                      }}
+                      disabled={!profile.city}
+                    >
+                      <option value="">İlçe seçiniz</option>
+                      {districtOptions.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 <div className="esnaf-form-row">
                   <div className="esnaf-form-group">
                     <label>Mahalle</label>
-                    <input
-                      type="text"
-                      value={profile.subdistrict}
+                    <select
+                      className="esnaf-select"
+                      value={profile.subdistrict || ""}
                       onChange={(e) => handleInputChange("subdistrict", e.target.value)}
-                      placeholder="Fenerbahçe"
-                      className="esnaf-input"
-                    />
+                      disabled={!profile.city || !profile.district}
+                    >
+                      <option value="">Mahalle seçiniz</option>
+                      {neighbourhoodOptions.map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="esnaf-form-group">
                     <label>Açık Adres</label>
@@ -666,19 +717,29 @@ export default function EsnafProfilDuzenlePage() {
                     {!hours.closed && (
                       <div className="esnaf-time-inputs">
                         <label className="esnaf-time-label">Açılış:</label>
-                        <input
-                          type="time"
-                          value={hours.open}
-                          onChange={(e) => handleWorkingHoursChange(day, "open", e.target.value)}
-                          className="esnaf-time-input"
-                        />
+                        <select
+                          className="esnaf-select"
+                          value={(hours.open || "09:00").split(":")[0]}
+                          onChange={(e) => handleWorkingHoursChange(day, "open", `${e.target.value}:00`)}
+                        >
+                          {Array.from({ length: 24 }).map((_, h) => (
+                            <option key={`open-${h}`} value={String(h).padStart(2, '0')}>
+                              {String(h).padStart(2, '0')}:00
+                            </option>
+                          ))}
+                        </select>
                         <label className="esnaf-time-label">Kapanış:</label>
-                        <input
-                          type="time"
-                          value={hours.close}
-                          onChange={(e) => handleWorkingHoursChange(day, "close", e.target.value)}
-                          className="esnaf-time-input"
-                        />
+                        <select
+                          className="esnaf-select"
+                          value={(hours.close || "18:00").split(":")[0]}
+                          onChange={(e) => handleWorkingHoursChange(day, "close", `${e.target.value}:00`)}
+                        >
+                          {Array.from({ length: 24 }).map((_, h) => (
+                            <option key={`close-${h}`} value={String(h).padStart(2, '0')}>
+                              {String(h).padStart(2, '0')}:00
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     )}
                   </div>
@@ -703,9 +764,7 @@ export default function EsnafProfilDuzenlePage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
       </div>
-    </>
+    </EsnafPanelLayout>
   );
 } 

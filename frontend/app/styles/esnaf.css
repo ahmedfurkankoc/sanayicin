@@ -1,25 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
 
-:root {
-  --yellow: #ffd600;
-  --black: #111111;
-  --light-black: #191b1d;
-  --white: #fff;
-  --gray: #f9f9f9;
-  --red: #fc1c2f;
-  --dark: #2d3748;
-  --font-main: 'Plus Jakarta Sans', Arial, Helvetica, sans-serif;
 
-  /* Chat Widget Colors - Vendor Only */
-  --chat-vendor-primary: var(--yellow);
-  --chat-vendor-text: var(--black);
-  --chat-vendor-highlight: rgba(255, 214, 0, 0.15);
-  --chat-vendor-bg: var(--white);
-  --chat-vendor-bg-secondary: #fafafa;
-  --chat-vendor-border: #e9ecef;
-}
 
-body, html, .esnaf-panel-layout {
+.esnaf-panel-layout {
   font-family: var(--font-main);
   margin: 0;
   padding: 0;
@@ -27,8 +9,7 @@ body, html, .esnaf-panel-layout {
 }
 
 /* ===== CONTAINER STYLES ===== */
-/* Sanayicin Responsive Container - deprecated for esnaf pages (use .esnaf-page-container) */
-.container { max-width: 100%; }
+
 
 /* Unified container for all esnaf pages */
 .esnaf-page-container {
@@ -48,6 +29,24 @@ body, html, .esnaf-panel-layout {
 @media (max-width: 480px) {
   .esnaf-page-container {
     padding: 16px 12px;
+    overflow-x: hidden;
+  }
+  
+  .esnaf-profile-section {
+    padding: 1rem;
+    margin: 0 -0.25rem 1.5rem;
+  }
+  
+  .esnaf-input,
+  .esnaf-textarea,
+  .esnaf-select {
+    font-size: 16px; /* iOS zoom önleme */
+    padding: 10px 12px;
+  }
+  
+  .esnaf-time-input {
+    font-size: 16px;
+    padding: 10px 12px;
   }
 }
 
@@ -60,9 +59,20 @@ body, html, .esnaf-panel-layout {
 
 /* Unified page header for esnaf pages */
 .esnaf-page-header {
-  padding: 24px 0;
+  padding: 24px 24px;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .esnaf-page-header {
+    padding: 16px 16px;
+    gap: 10px;
+  }
 }
 
 .esnaf-page-subtitle {
@@ -1600,14 +1610,6 @@ body, html, .esnaf-panel-layout {
 }
 
 /* Profile Edit Styles - Used in düzenle page */
-.esnaf-profile-container {
-  max-width: 100%;
-  margin: 0;
-  background: white;
-  border-radius: 20px;
-  overflow: hidden;
-  padding: 4rem;
-}
 
 .esnaf-profile-title {
   text-align: center;
@@ -1660,6 +1662,8 @@ body, html, .esnaf-panel-layout {
   font-size: 1rem;
   transition: all 0.3s ease;
   background: white;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .esnaf-input:focus,
@@ -1679,6 +1683,13 @@ body, html, .esnaf-panel-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .esnaf-form-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 }
 
 .esnaf-photo-upload {
@@ -1787,6 +1798,19 @@ body, html, .esnaf-panel-layout {
   border: 1px solid #e9ecef;
   border-radius: 6px;
   font-size: 0.9rem;
+  box-sizing: border-box;
+  max-width: 100%;
+  font-family: 'Courier New', monospace;
+}
+
+/* Force 24-hour format for time inputs */
+.esnaf-time-input::-webkit-datetime-edit-ampm-field {
+  display: none;
+}
+
+.esnaf-time-input::-webkit-datetime-edit-hour-field,
+.esnaf-time-input::-webkit-datetime-edit-minute-field {
+  font-family: 'Courier New', monospace;
 }
 
 .esnaf-form-actions {
@@ -1839,21 +1863,18 @@ body, html, .esnaf-panel-layout {
 
 /* Responsive Profile Edit - Used in düzenle page */
 @media (max-width: 768px) {
-  .esnaf-profile-container {
-    margin: 1rem;
-    border-radius: 15px;
-  }
-  
   .esnaf-profile-form {
     padding: 0 1rem 1rem;
   }
   
   .esnaf-profile-section {
     padding: 1.5rem;
+    margin: 0 -0.5rem 2rem;
   }
   
   .esnaf-form-row {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
   
   .esnaf-categories-grid {
@@ -1864,10 +1885,29 @@ body, html, .esnaf-panel-layout {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .esnaf-time-inputs {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .esnaf-time-input {
+    width: 100%;
+    max-width: 200px;
   }
   
   .esnaf-form-actions {
     flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .esnaf-save-btn,
+  .esnaf-cancel-btn {
+    width: 100%;
+    padding: 14px 24px;
   }
 }
 
@@ -4667,27 +4707,11 @@ body, html, .esnaf-panel-layout {
   font-size: 16px;
 }
 
-.esnaf-about-features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
 
-.esnaf-feature-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #f7fafc;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #2d3748;
-}
 
-.esnaf-feature-icon {
-  font-size: 16px;
-}
+
+
+
 
 /* Contact Grid */
 .esnaf-contact-grid {

@@ -1538,6 +1538,21 @@ footer {
   transform: translateY(-25px) rotate(-45deg);
 }
 @media (max-width: 900px) {
+  /* Mobile: make navbar always fixed */
+  .sanayicin-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    z-index: 10000;
+  }
+  
+  /* Ana içeriğe navbar yüksekliği kadar padding-top ekle */
+  .public-layout {
+    padding-top: 86px;
+  }
+  
   .container {
     max-width: 100vw;
     padding-left: 10px;
