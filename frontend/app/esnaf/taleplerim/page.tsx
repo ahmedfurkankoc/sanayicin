@@ -181,47 +181,11 @@ export default function TaleplerimPage() {
 
   return (
     <EsnafPanelLayout activePage="taleplerim">
-      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '32px',
-          flexWrap: 'wrap',
-          gap: '16px'
-        }}>
+        <div className="esnaf-page-header">
           <div>
-            <h1 style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: '#111111',
-              margin: '0 0 8px 0'
-            }}>
-              Taleplerim
-            </h1>
-            <p style={{
-              fontSize: '16px',
-              color: '#666',
-              margin: '0'
-            }}>
-              Müşterilerinizden gelen hizmet taleplerini yönetin
-            </p>
-          </div>
-          
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            backgroundColor: '#f9f9f9',
-            borderRadius: '8px',
-            border: '1px solid #e0e0e0'
-          }}>
-            <Icon name="filter" size="sm" color="#666" />
-            <span style={{ fontSize: '14px', color: '#666' }}>
-              {filteredRequests.length} talep
-            </span>
+            <h1 className="esnaf-page-title">Taleplerim</h1>
+            <p className="esnaf-page-subtitle">Müşterilerinizden gelen hizmet taleplerini yönetin</p>
           </div>
         </div>
 
@@ -278,18 +242,12 @@ export default function TaleplerimPage() {
 
         {/* Requests List */}
         {filteredRequests.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '60px 20px',
-            color: '#666'
-          }}>
-            <div style={{ marginBottom: '16px' }}>
+          <div className="esnaf-requests-empty">
+            <div className="esnaf-requests-empty-icon">
               <Icon name="file" size="lg" color="#ccc" />
             </div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>
-              Talep Bulunamadı
-            </h3>
-            <p style={{ margin: '0', fontSize: '14px' }}>
+            <h3 className="esnaf-requests-empty-title">Talep Bulunamadı</h3>
+            <p className="esnaf-requests-empty-text">
               {searchTerm || filterStatus !== 'all' 
                 ? 'Arama kriterlerinize uygun talep bulunamadı.'
                 : 'Henüz hiç talep bulunmuyor.'
@@ -297,44 +255,19 @@ export default function TaleplerimPage() {
             </p>
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gap: '16px',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))'
-          }}>
+          <div className="esnaf-requests-grid">
             {filteredRequests.map((request) => (
-              <div key={request.id} style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '20px',
-                border: '1px solid #e0e0e0',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                transition: 'all 0.2s ease'
-              }}>
+              <div key={request.id} className="esnaf-request-card">
                 {/* Header */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: '16px'
-                }}>
+                <div className="esnaf-request-card-header">
                   <div>
-                    <h3 style={{
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      margin: '0 0 4px 0',
-                      color: '#111111'
-                    }}>
+                    <h3 className="esnaf-request-client-name">
                       {request.user?.name || request.user?.email || 'Müşteri'}
                       {request.unread_for_vendor && (
-                        <span style={{ marginLeft: 8, display: 'inline-block', width: 8, height: 8, background: '#ef4444', borderRadius: 9999 }}></span>
+                        <span className="esnaf-unread-dot"></span>
                       )}
                     </h3>
-                    <p style={{
-                      fontSize: '14px',
-                      color: '#666',
-                      margin: '0'
-                    }}>
+                    <p className="esnaf-request-subinfo">
                       {(request.request_type ? {
                         appointment: 'Randevu',
                         quote: 'Fiyat Teklifi',
@@ -346,63 +279,25 @@ export default function TaleplerimPage() {
                       {request.service_name || request.title}
                     </p>
                   </div>
-                  
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    alignItems: 'center'
-                  }}>
-                    {/* Placeholder for future priority/urgency */}
-                    
-                    {/* Status Badge */}
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: '600',
-                      backgroundColor: getStatusColor(request.status) + '20',
-                      color: getStatusColor(request.status)
-                    }}>
+                  <div className="esnaf-request-header-right">
+                    <span className={`esnaf-status-badge ${request.status}`}>
                       {getStatusText(request.status)}
                     </span>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p style={{
-                  fontSize: '14px',
-                  color: '#444',
-                  margin: '0 0 16px 0',
-                  lineHeight: '1.5'
-                }}>
+                <p className="esnaf-request-desc">
                   {request.description}
                 </p>
 
                 {/* Details */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '12px',
-                  marginBottom: '16px'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '13px',
-                    color: '#666'
-                  }}>
+                <div className="esnaf-request-details">
+                  <div className="esnaf-request-detail">
                     <Icon name="phone" size="sm" color="#666" />
                     <span>{request.client_phone || '—'}</span>
                   </div>
-                  
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '13px',
-                    color: '#666'
-                  }}>
+                  <div className="esnaf-request-detail">
                     <Icon name="clock" size="sm" color="#666" />
                     <span>{formatDate(request.created_at)}</span>
                   </div>
@@ -410,9 +305,9 @@ export default function TaleplerimPage() {
 
                 {/* Ekler */}
                 {Array.isArray((request as any).attachments) && (request as any).attachments.length > 0 && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                  <div className="esnaf-attachments">
                     {(request as any).attachments.map((url: string, i: number) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#0066cc' }}>Ek {i+1}</a>
+                      <a key={i} href={url} target="_blank" rel="noreferrer" className="esnaf-attachment-link">Ek {i+1}</a>
                     ))}
                   </div>
                 )}
@@ -420,12 +315,12 @@ export default function TaleplerimPage() {
                 {/* Mesajlar kaldırıldı */}
 
                 {/* Teklif Aksiyonları */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                <div className="esnaf-offer-actions">
                   {/* Teklif Göster butonu: varsa */}
                   {(request as any).last_offered_price != null || (request as any).last_offered_days != null ? (
                     <button
                       onClick={() => setViewOfferId(request.id)}
-                      style={{ padding: '8px 16px', background: '#f1f5f9', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: 6, fontWeight: 600, cursor: 'pointer' }}
+                      className="esnaf-btn esnaf-btn-secondary"
                     >
                       Teklifi Göster
                     </button>
@@ -439,7 +334,7 @@ export default function TaleplerimPage() {
                         setOfferPhone(request.client_phone || '');
                         setOfferModalOpen(true);
                       }}
-                      style={{ padding: '8px 16px', background: '#111', color: '#ffd600', border: 'none', borderRadius: 6, fontWeight: 700, cursor: 'pointer' }}
+                      className="esnaf-btn esnaf-btn-primary"
                     >
                       Teklif Ver
                     </button>
@@ -450,45 +345,16 @@ export default function TaleplerimPage() {
 
                 {/* Quick Actions (row-level) */}
                 {request.status === 'pending' && (
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    marginTop: '16px'
-                  }}>
+                  <div className="esnaf-quick-actions">
                     <button
                       onClick={() => handleStatusChange(request.id, 'responded')}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#10b981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#059669'}
-                      onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#10b981'}
+                      className="esnaf-btn esnaf-btn-green"
                     >
                       Yanıtlandı
                     </button>
-                    
                     <button
                       onClick={() => handleStatusChange(request.id, 'cancelled')}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseOver={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#dc2626'}
-                      onMouseOut={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#ef4444'}
+                      className="esnaf-btn esnaf-btn-red"
                     >
                       İptal Et
                     </button>
@@ -498,14 +364,14 @@ export default function TaleplerimPage() {
             ))}
           </div>
         )}
-      </div>
+      
 
       {/* Teklif Ver Modal */}
       {offerModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-          <div style={{ background: 'white', borderRadius: 12, width: '100%', maxWidth: 640, padding: 24, position: 'relative' }}>
-            <button onClick={() => setOfferModalOpen(false)} style={{ position: 'absolute', right: 12, top: 12, background: 'none', border: 'none', fontSize: 22, color: '#666', cursor: 'pointer' }}>×</button>
-            <h3 style={{ margin: 0, marginBottom: 12, fontSize: 20, fontWeight: 700, color: '#111' }}>Teklif Ver</h3>
+        <div className="esnaf-modal-overlay esnaf-modal-centered">
+          <div className="esnaf-modal-popup" style={{ maxWidth: 640, width: '100%' }}>
+            <button onClick={() => setOfferModalOpen(false)} className="esnaf-modal-close">×</button>
+            <h3 className="esnaf-modal-title">Teklif Ver</h3>
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (!offerForId) return;
@@ -526,28 +392,28 @@ export default function TaleplerimPage() {
               }
             }}>
               {/* Mesaj (üstte ve geniş) */}
-              <div style={{ marginBottom: 12, position: 'relative' }}>
-                <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Cevabınız</label>
+              <div className="esnaf-offer-message">
+                <label className="esnaf-offer-label">Cevabınız</label>
                 <textarea
                   value={offerMessage}
                   onChange={(e) => setOfferMessage(e.target.value)}
                   placeholder="Müşteriye iletmek istediğiniz teklifi ve detayları yazın"
                   required
                   maxLength={1000}
-                  style={{ width: '100%', padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14, minHeight: 160, resize: 'vertical' }}
+                  className="esnaf-offer-textarea"
                 />
-                <span style={{ position: 'absolute', right: 8, bottom: 8, fontSize: 12, color: '#64748b' }}>{offerMessage.length}/1000</span>
+                <span className="esnaf-offer-counter">{offerMessage.length}/1000</span>
               </div>
 
               {/* Alt alanlar (fiyat, gün, telefon) */}
-              <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '140px 120px 1fr' }}>
-                <input value={offerPrice} onChange={(e) => setOfferPrice(e.target.value)} name="price" type="number" step="0.01" min="0" placeholder="Fiyat" style={{ padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14 }} />
-                <input value={offerDays} onChange={(e) => setOfferDays(e.target.value)} name="days" type="number" min="0" placeholder="Gün" style={{ padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14 }} />
-                <input value={offerPhone} onChange={(e) => setOfferPhone(e.target.value)} name="phone" placeholder="Telefon (opsiyonel)" style={{ padding: 12, border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 14 }} />
+              <div className="esnaf-offer-fields">
+                <input value={offerPrice} onChange={(e) => setOfferPrice(e.target.value)} name="price" type="number" step="0.01" min="0" placeholder="Fiyat" className="esnaf-offer-input" />
+                <input value={offerDays} onChange={(e) => setOfferDays(e.target.value)} name="days" type="number" min="0" placeholder="Gün" className="esnaf-offer-input" />
+                <input value={offerPhone} onChange={(e) => setOfferPhone(e.target.value)} name="phone" placeholder="Telefon (opsiyonel)" className="esnaf-offer-input" />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 12 }}>
-                <button type="button" onClick={() => setOfferModalOpen(false)} style={{ padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer' }}>Vazgeç</button>
-                <button type="submit" disabled={offerSubmitting} style={{ padding: '10px 16px', border: 'none', borderRadius: 8, background: '#111', color: '#ffd600', fontWeight: 700, cursor: offerSubmitting ? 'not-allowed' : 'pointer', opacity: offerSubmitting ? 0.8 : 1 }}>{offerSubmitting ? 'Gönderiliyor...' : 'Gönder'}</button>
+              <div className="esnaf-modal-actions">
+                <button type="button" onClick={() => setOfferModalOpen(false)} className="esnaf-btn esnaf-btn-outline">Vazgeç</button>
+                <button type="submit" disabled={offerSubmitting} className="esnaf-btn esnaf-btn-primary">{offerSubmitting ? 'Gönderiliyor...' : 'Gönder'}</button>
               </div>
             </form>
           </div>
@@ -556,10 +422,10 @@ export default function TaleplerimPage() {
 
       {/* Teklifi Göster Modal */}
       {viewOfferId && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-          <div style={{ background: 'white', borderRadius: 12, width: '100%', maxWidth: 520, padding: 24, position: 'relative' }}>
-            <button onClick={() => setViewOfferId(null)} style={{ position: 'absolute', right: 12, top: 12, background: 'none', border: 'none', fontSize: 22, color: '#666', cursor: 'pointer' }}>×</button>
-            <h3 style={{ margin: 0, marginBottom: 12, fontSize: 20, fontWeight: 700, color: '#111' }}>Verilen Teklif</h3>
+        <div className="esnaf-modal-overlay esnaf-modal-centered">
+          <div className="esnaf-modal-popup" style={{ maxWidth: 520, width: '100%' }}>
+            <button onClick={() => setViewOfferId(null)} className="esnaf-modal-close">×</button>
+            <h3 className="esnaf-modal-title">Verilen Teklif</h3>
             {(() => {
               const req = requests.find(r => r.id === viewOfferId);
               if (!req) return null;
@@ -573,21 +439,21 @@ export default function TaleplerimPage() {
                 if (last) lastVendorMessage = last.content;
               }
               return (
-                <div style={{ display: 'grid', gap: 10 }}>
-                  <div style={{ fontSize: 14, color: '#334155' }}>
-                    <span style={{ fontWeight: 600 }}>Mesaj:</span>
-                    <div style={{ whiteSpace: 'pre-wrap', marginTop: 6 }}>{lastVendorMessage || '—'}</div>
+                <div className="esnaf-view-offer-body">
+                  <div className="esnaf-view-offer-row">
+                    <span className="esnaf-view-offer-label">Mesaj:</span>
+                    <div className="esnaf-view-offer-message">{lastVendorMessage || '—'}</div>
                   </div>
-                  <div style={{ display: 'grid', gap: 8, gridTemplateColumns: '1fr 1fr' }}>
-                    <div style={{ fontSize: 14, color: '#334155' }}><span style={{ fontWeight: 600 }}>Fiyat:</span> {price != null ? `${formatPrice(price)} ₺` : '—'}</div>
-                    <div style={{ fontSize: 14, color: '#334155' }}><span style={{ fontWeight: 600 }}>Gün:</span> {days != null ? String(days) : '—'}</div>
+                  <div className="esnaf-view-offer-grid">
+                    <div className="esnaf-view-offer-field"><span className="esnaf-view-offer-label">Fiyat:</span> {price != null ? `${formatPrice(price)} ₺` : '—'}</div>
+                    <div className="esnaf-view-offer-field"><span className="esnaf-view-offer-label">Gün:</span> {days != null ? String(days) : '—'}</div>
                   </div>
-                  <div style={{ fontSize: 14, color: '#334155' }}><span style={{ fontWeight: 600 }}>Telefon:</span> {phone || '—'}</div>
+                  <div className="esnaf-view-offer-row"><span className="esnaf-view-offer-label">Telefon:</span> {phone || '—'}</div>
                 </div>
               );
             })()}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-              <button onClick={() => setViewOfferId(null)} style={{ padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer' }}>Kapat</button>
+            <div className="esnaf-modal-actions">
+              <button onClick={() => setViewOfferId(null)} className="esnaf-btn esnaf-btn-outline">Kapat</button>
             </div>
           </div>
         </div>

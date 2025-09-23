@@ -198,7 +198,7 @@ export default function EsnafTakvimPage() {
       <div className="esnaf-calendar-header">
         <div className="esnaf-calendar-header-inner">
           <div>
-            <h1 className="esnaf-calendar-title">
+            <h1 className="esnaf-page-title">
               Takvim
             </h1>
             <p className="esnaf-calendar-subtitle">
