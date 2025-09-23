@@ -198,7 +198,7 @@ export default function EsnafPanelLayout({
 
   return (
     <>
-      <div className="esnaf-dashboard">
+      <div>
         {/* Sol Sidebar */}
         <EsnafSidebar 
           user={user} 
@@ -215,8 +215,10 @@ export default function EsnafPanelLayout({
 
         {/* Ana İçerik */}
         <div className="esnaf-main-content">
-          {/* Sayfa İçeriği */}
-          {children}
+          <div className="esnaf-page-container">
+            {/* Sayfa İçeriği */}
+            {children}
+          </div>
         </div>
       </div>
       

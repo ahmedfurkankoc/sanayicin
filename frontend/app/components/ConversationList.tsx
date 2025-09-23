@@ -4,6 +4,21 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/app/utils/api';
 
+const getLastMessagePreview = (text?: string) => {
+  if (!text) return '';
+  try {
+    if (text.startsWith('OFFER_CARD::')) {
+      const data = JSON.parse(text.replace('OFFER_CARD::', ''));
+      const title = data?.title || 'Teklif';
+      const price = data?.price != null ? `${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(data.price))} ₺` : null;
+      const days = data?.days != null ? `${data.days} gün` : null;
+      const parts = [price, days].filter(Boolean).join(' • ');
+      return parts ? `Teklif: ${title} (${parts})` : `Teklif: ${title}`;
+    }
+  } catch (_) {}
+  return text;
+};
+
 interface ConversationItem {
   id: number;
   other_user?: {
@@ -69,23 +84,30 @@ export default function ConversationList({ userRole, baseUrl, className = '' }: 
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {items.map((c) => (
-            <li key={c.id} style={{ padding: '12px 0', borderBottom: '1px solid var(--border-strong, #eee)' }}>
-              <Link href={`${baseUrl}/${c.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>
+            <li key={c.id} style={{ padding: '12px 0', borderBottom: '1px solid #eee' }}>
+              <Link href={`${baseUrl}/${c.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#0f172a' }}>
+                      {(c.other_user?.first_name || c.other_user?.display_name || c.other_user?.username || c.other_user?.email || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 14, marginBottom: 2 }}>
                       {c.other_user?.first_name || 
                        c.other_user?.display_name || 
                        c.other_user?.username || 
                        c.other_user?.email || 
                        (userRole === 'vendor' ? 'Müşteri' : 'Esnaf')}
                     </div>
-                    <div style={{ color: 'var(--text-muted, #666)' }}>{c.last_message_text}</div>
+                    <div style={{ color: '#64748b', fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getLastMessagePreview(c.last_message_text)}</div>
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted, #666)' }}>
-                    {userRole === 'vendor' 
-                      ? (c.vendor_unread_count ? `${c.vendor_unread_count}` : '') 
-                      : (c.client_unread_count ? `${c.client_unread_count}` : '')}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {(userRole === 'vendor' ? c.vendor_unread_count : c.client_unread_count) ? (
+                      <span style={{ background: '#ef4444', color: 'white', borderRadius: 999, padding: '2px 6px', fontSize: 11, fontWeight: 700 }}>
+                        {(userRole === 'vendor' ? c.vendor_unread_count : c.client_unread_count)}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </Link>

@@ -119,6 +119,15 @@ function VendorDetailContent() {
       });
   }, [slug]);
 
+  // View analytics: owner değilse sayfa yüklenince kaydet
+  useEffect(() => {
+    if (!vendor) return;
+    const isOwner = user?.id && vendor.user?.id && user.id === vendor.user.id;
+    if (!isOwner) {
+      try { api.vendorTrackView(vendor.slug); } catch {}
+    }
+  }, [vendor, user?.id]);
+
   const handleAppointment = () => {
     if (!vendor) return;
     router.push(`/musteri/esnaf/${vendor.slug}/randevu`);
@@ -156,6 +165,7 @@ function VendorDetailContent() {
     if (!vendor) return;
     if (!showPhone) {
       setShowPhone(true);
+      try { api.vendorTrackCall(vendor.slug, vendor.business_phone || ''); } catch {}
     } else {
       const sanitized = (vendor.business_phone || '').replace(/[^\d+]/g, '');
       if (sanitized) {

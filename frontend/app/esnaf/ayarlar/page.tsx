@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import "../../styles/esnaf.css";
-import EsnafSidebar from "../components/EsnafSidebar";
+import EsnafPanelLayout from "../components/EsnafPanelLayout";
 import { useEsnaf } from "../context/EsnafContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import Icon from "@/app/components/ui/Icon";
@@ -17,31 +17,26 @@ export default function EsnafAyarlarPage() {
   }
 
   return (
-    <>
-      <div className="esnaf-dashboard">
-        {/* Sol Sidebar */}
-        <EsnafSidebar 
-          user={user} 
-          email={email} 
-          onLogout={handleLogout}
-          activePage="ayarlar"
-        />
-        
-        {/* Ana İçerik */}
-        <div className="esnaf-main-content">
-          <div className="esnaf-ayarlar-container">
+    <EsnafPanelLayout activePage="ayarlar">
+     
             {/* Header */}
-            <div className="esnaf-ayarlar-header">
-              <div className="esnaf-ayarlar-title-section">
-                <h1 className="esnaf-ayarlar-title">Ayarlar</h1>
-                <p className="esnaf-ayarlar-greeting">
+            <div className="esnaf-page-header">
+              <div>
+                <h1 className="esnaf-page-title">Ayarlar</h1>
+                <p className="esnaf-page-subtitle">
                   Merhaba, <strong>{user?.display_name || "Kullanıcı"}</strong>
                 </p>
               </div>
               <div className="esnaf-ayarlar-avatar">
-                {user?.avatar ? (
+                {user?.store_logo ? (
                   <img 
-                    src={user.avatar} 
+                    src={user.store_logo} 
+                    alt="Logo" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                  />
+                ) : user?.user?.avatar ? (
+                  <img 
+                    src={user.user.avatar} 
                     alt="Profil" 
                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                   />
@@ -187,10 +182,7 @@ export default function EsnafAyarlarPage() {
                 </div>
               </div>
             </div>
-
-          </div>
-        </div>
-      </div>
-    </>
+    
+    </EsnafPanelLayout>
   );
 } 

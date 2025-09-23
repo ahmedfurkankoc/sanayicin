@@ -8,7 +8,9 @@ export default function EsnafMessagesListPage() {
   return (
     <EsnafPanelLayout activePage="mesajlar">
       <div className="esnaf-panel-content">
-        <h2>Tüm Mesajlarım</h2>
+        <div className="esnaf-page-header">
+          <h1 className="esnaf-page-title">Tüm Mesajlarım</h1>
+        </div>
         <div className="esnaf-card">
           <ConversationList 
             userRole="vendor" 

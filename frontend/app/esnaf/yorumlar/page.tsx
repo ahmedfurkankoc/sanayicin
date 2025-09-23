@@ -90,14 +90,12 @@ export default function EsnafYorumlarPage() {
   return (
     <EsnafPanelLayout activePage="yorumlar">
       {/* Header */}
-      <div className="esnaf-reviews-header">
-        <div className="esnaf-reviews-header-inner">
-          <div>
-            <h1 className="esnaf-page-title">Yorumlarım</h1>
-            <p className="esnaf-reviews-stats">
-              Toplam {totalReviews} değerlendirme • Ortalama {averageRating.toFixed(1)} ★
-            </p>
-          </div>
+      <div className="esnaf-page-header">
+        <div>
+          <h1 className="esnaf-page-title">Yorumlarım</h1>
+          <p className="esnaf-page-subtitle">
+            Toplam {totalReviews} değerlendirme • Ortalama {averageRating.toFixed(1)} ★
+          </p>
         </div>
       </div>
 
