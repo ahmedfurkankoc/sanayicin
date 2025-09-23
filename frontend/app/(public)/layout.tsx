@@ -59,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div>
+    <div className="public-layout">
       {children}
       <Toaster />
     </div>

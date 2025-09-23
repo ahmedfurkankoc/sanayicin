@@ -1,7 +1,7 @@
 import React from "react";
 import SearchBar from "../components/SearchBar";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
 import Icon from "@/app/components/ui/Icon";
 
 const UstaAriyorumPage = () => {

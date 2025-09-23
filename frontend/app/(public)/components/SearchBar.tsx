@@ -114,7 +114,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
       params.append('carBrand', selectedCarBrand);
     }
     
-    router.push(`/musteri/arama-sonuclari?${params.toString()}`);
+    // Refresh ile yönlendir
+    window.location.href = `/musteri/arama-sonuclari?${params.toString()}`;
   };
 
   return (

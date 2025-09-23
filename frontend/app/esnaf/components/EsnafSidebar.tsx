@@ -166,7 +166,7 @@ export default function EsnafSidebar({
         {/* Ana Sayfaya Dön Butonu */}
         <div 
           className="esnaf-home-button"
-          onClick={() => router.push("/")}
+          onClick={() => window.location.href = "/"}
           title="Ana Sayfaya Dön"
         >
           <Icon name="home" size="sm" color="black" />

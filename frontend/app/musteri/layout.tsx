@@ -4,7 +4,7 @@ import React from "react";
 import { MusteriProvider } from "./context/MusteriContext";
 import { FavoritesProvider } from "./context/FavoritesContext";
 import MusteriHeader from "./components/MusteriHeader";
-import Footer from "../(public)/components/Footer";
+import Footer from "../components/Footer";
 import { Toaster } from "@/app/components/ui/sonner";
 import "../styles/musteri.css";
 

@@ -44,49 +44,16 @@
   --loading-spinner-color: #1976d2;
 }
 
-/* ===== CONTAINER STYLES ===== */
-/* Sanayicin Responsive Container */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-left: 24px;
-  padding-right: 24px;
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: visible;
-}
-
-/* Container Responsive */
-@media (max-width: 900px) {
-  .container {
-    max-width: 100vw;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-}
-
-@media (max-width: 900px) {
-  .container {
-    max-width: 100%;
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .container {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-}
-
-html, body, main {
+/* Müşteri sayfaları için özel CSS - sadece .musteri-layout içinde geçerli */
+.musteri-layout html, 
+.musteri-layout body, 
+.musteri-layout main {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
   
-body {
+.musteri-layout body {
     color: var(--dark);
     min-height: 100vh;
     font-family: var(--font-main);
@@ -730,6 +697,7 @@ body {
   background-color: var(--white);
   padding: 24px;
   border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 
 .musteri-search-results-container {
@@ -2716,218 +2684,5 @@ body {
   .musteri-tab-btn {
     padding: 0.75rem 1rem;
     font-size: 0.8rem;
-  }
-}
-
-/* ===== FOOTER STYLES ===== */
-/* Sanayicin Footer */
-footer {
-  background: var(--yellow);
-  color: var(--black);
-  padding: 24px 0 16px 0;
-  width: 100%;
-}
-
-.footer-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 0;
-}
-
-.footer-logo {
-  display: block;
-  height: auto;
-  width: auto;
-  max-width: 120px;
-  object-fit: contain;
-}
-
-.footer-copyright {
-  display: block;
-  width: 100%;
-  text-align: center;
-  font-size: 1rem;
-  color: #222;
-}
-
-.footer-socials {
-  display: flex;
-  gap: 14px;
-  margin-top: 56px;
-  margin-bottom: 12px;
-  align-items: center;
-  justify-content: center;
-}
-
-.footer-social-link svg {
-  display: block;
-  transition: transform 0.2s, opacity 0.2s;
-  opacity: 0.85;
-}
-
-.footer-social-link:hover svg {
-  transform: scale(1.12);
-  opacity: 1;
-}
-
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-  margin: 8px 0 8px 0;
-}
-
-.footer-links a {
-  color: var(--black);
-  text-decoration: none;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.footer-links a:hover {
-  color: #333;
-  text-decoration: underline;
-}
-
-.footer-links span {
-  color: #888;
-  font-size: 1.1rem;
-  user-select: none;
-}
-
-.footer-link-groups {
-  display: flex;
-  flex-direction: row;
-  gap: 5rem; 
-  align-items: flex-start;
-  margin: 12px 0 12px 0;
-}
-
-.footer-link-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 150px;
-  row-gap: 12px;
-  align-items: flex-start;
-}
-
-/* Logo grubunu diğerleriyle hizala */
-.footer-link-group:first-child {
-  align-items: flex-start;
-}
-
-.footer-link-group:first-child .footer-logo {
-  margin-bottom: 12px;
-  height: 40px; /* Logo yüksekliğini sabitle */
-}
-
-/* Tüm başlıkları aynı seviyeye getir */
-.footer-link-title {
-  font-weight: 700;
-  font-size: 1.2rem;
-  margin-bottom: 12px;
-  color: var(--black);
-  height: 40px; /* Logo ile aynı yükseklik */
-  display: flex;
-  align-items: center;
-}
-
-.footer-link-group a {
-  color: var(--black);
-  text-decoration: none;
-  font-size: 1rem;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.footer-link-group a:hover {
-  color: #333;
-  text-decoration: underline;
-}
-
-/* Footer Responsive */
-@media (max-width: 900px) {
-  footer {
-    padding: 18px 0 40px 0;
-  }
-  
-  .footer-link-groups {
-    flex-direction: column;
-    width: 100%;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-  
-  .footer-link-group {
-    align-items: center;
-    min-width: 0;
-    margin: 16px;
-    text-align: center;
-  }
-  
-  .footer-link-group:first-child {
-    align-items: center;
-    text-align: center;
-  }
-  
-  .footer-link-title {
-    font-size: 1rem;
-    margin-bottom: 4px;
-  }
-  
-  .footer-link-group a {
-    font-size: 0.98rem;
-    padding: 2px 0;
-  }
-  
-  .footer-socials {
-    margin-top: 12px;
-    margin-bottom: 12px;
-    justify-content: center;
-  }
-  
-  .footer-copyright {
-    margin-top: 18px;
-    font-size: 0.98rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .footer-logo {
-    font-size: 1rem;
-  }
-  
-  .footer-link-title {
-    font-size: 0.98rem;
-  }
-  
-  .footer-link-group a {
-    font-size: 0.95rem;
-  }
-  
-  .footer-copyright {
-    font-size: 0.95rem;
-  }
-  
-  .footer-inner {
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    padding: 0 4px;
-    text-align: center;
-  }
-  
-  .footer-logo {
-    margin-bottom: 12px;
-    font-size: 1.1rem;
   }
 }
