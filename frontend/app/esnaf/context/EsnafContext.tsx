@@ -52,15 +52,36 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
 
   const checkAuthStatus = (): boolean => {
     if (typeof window === "undefined") return false;
-    const token = getAuthToken("vendor");
+    
+    // Cookie'den token kontrolü
+    const getCookieValue = (name: string): string | null => {
+      if (typeof document === 'undefined') return null;
+      const value = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(`${name}=`))
+        ?.split('=')[1];
+      return value || null;
+    };
+    
+    const token = getCookieValue('vendor_token');
     return !!token;
   };
 
   const refreshUser = async () => {
     if (typeof window === "undefined") return;
     
-    const token = getAuthToken("vendor");
-    const userEmail = localStorage.getItem("esnaf_email") || "";
+    // Cookie'den token ve email kontrolü
+    const getCookieValue = (name: string): string | null => {
+      if (typeof document === 'undefined') return null;
+      const value = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(`${name}=`))
+        ?.split('=')[1];
+      return value || null;
+    };
+    
+    const token = getCookieValue('vendor_token');
+    const userEmail = getCookieValue('esnaf_email') || "";
     
     if (!token) {
       setIsAuthenticated(false);
