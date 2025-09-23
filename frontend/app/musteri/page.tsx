@@ -177,7 +177,7 @@ export default function HizmetlerPage() {
   }, [router]);
 
   return (
-    <div className="musteri-page-container" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', minHeight: '100vh' }}>
+    <div className="musteri-page-container">
       <Sidebar />
       <div className="musteri-page">
         <div className="container" >
