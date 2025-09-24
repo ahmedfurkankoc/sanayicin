@@ -102,7 +102,7 @@ const Navbar = () => {
     if (userType === 'vendor') {
       router.push('/esnaf/panel');
     } else if (userType === 'client') {
-      router.push('/musteri');
+      router.push('/musteri/hesabim');
     }
   };
 
