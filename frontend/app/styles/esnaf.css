@@ -59,7 +59,7 @@
 
 /* Unified page header for esnaf pages */
 .esnaf-page-header {
-  padding: 24px 24px;
+  padding: 24px 0;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 16px;
   display: flex;
@@ -3064,7 +3064,7 @@
 }
 
 .esnaf-appointments-filters {
-  padding: 20px 32px;
+  padding: 20px 0;
   border-bottom: 1px solid #e0e0e0;
   padding-bottom: 40px;
 }

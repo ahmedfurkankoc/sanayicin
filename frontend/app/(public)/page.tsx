@@ -90,7 +90,8 @@ export default function Home() {
                       serviceAreas: 'service_areas' in vendor ? vendor.service_areas : undefined,
                       categories: 'categories' in vendor ? vendor.categories : undefined
                     };
-                    return <VendorCard key={'id' in vendor ? vendor.id : index} {...vendorData} />;
+                    const key = 'id' in vendor ? vendor.id : index;
+                    return <VendorCard key={key} {...vendorData} />;
                   })
                 )}
               </div>

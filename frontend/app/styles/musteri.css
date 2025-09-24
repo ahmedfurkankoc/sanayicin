@@ -72,7 +72,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-
 }
 
 /* Sol: Logo */
@@ -200,6 +199,9 @@
   position: relative;
   box-sizing: border-box;
 }
+
+/* Masaüstünde mobil arama butonunu gizle (spesifiklik ile) */
+.musteri-header-btn.musteri-mobile-search-btn { display: none; }
 
 .musteri-header-btn:hover {
   background: rgba(255, 255, 255, 0.1);
@@ -1662,36 +1664,38 @@
   position: relative;
 }
 
-/* Mobil arama overlay */
+/* Mobil arama dropdown (mobilde, tam ekran değil) */
 .musteri-mobile-search {
-  position: fixed;
-  left: 0;
+  position: absolute;
+  top: 100%;
   right: 0;
-  top: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(3px);
+  left: auto;
+  background: var(--white);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
   display: none;
-  align-items: flex-start;
-  justify-content: center;
   z-index: 1100;
+  width: min(90vw, 480px);
+  margin-top: 8px;
 }
 
-.musteri-mobile-search.show {
-  display: flex;
-}
+.musteri-mobile-search.show { display: block; }
 
 .musteri-mobile-search-inner {
-  
-  width: 100%;
-  max-width: 480px;
-  margin: 12px auto 0 auto;
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
   padding: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Sadece mobilde görünür olsun */
+@media (max-width: 768px) {
+  .musteri-mobile-search.show { display: block; }
+}
+@media (min-width: 769px) {
+  .musteri-mobile-search { display: none !important; }
+  .musteri-mobile-search.show { display: none !important; }
 }
 
 .musteri-mobile-search-form { 

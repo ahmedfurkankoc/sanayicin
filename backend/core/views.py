@@ -13,6 +13,7 @@ from .utils.sms_service import IletiMerkeziSMS
 import logging
 import secrets
 from django.urls import reverse
+import os
 from django.contrib.auth.tokens import default_token_generator
 
 logger = logging.getLogger(__name__)
@@ -164,16 +165,36 @@ def login(request):
         # Artık tüm kullanıcı bilgileri CustomUser'da
         effective_role = user.role
         
-        return Response({
+        # HttpOnly refresh cookie ayarla
+        response = Response({
             'access': str(refresh.access_token),
-            'refresh': str(refresh),
             'email': user.email,
-            'is_verified': user.is_verified_user,  # Güncellendi
-            'verification_status': user.verification_status,  # Yeni
-            'role': effective_role,  # Gerçek kullanılabilir role
-            'user_role': user.role,  # Database'deki role
+            'is_verified': user.is_verified_user,
+            'verification_status': user.verification_status,
+            'role': effective_role,
+            'user_role': user.role,
             'has_vendor_profile': has_vendor_profile,
         })
+
+        # Cookie ayarları
+        secure_cookie = True
+        samesite_policy = 'None'
+        cookie_domain = os.environ.get('REFRESH_COOKIE_DOMAIN') or None
+        cookie_path = '/api/auth/'
+
+        # Rotation açık olduğu için yeni refresh'i cookie'ye yaz
+        response.set_cookie(
+            key='refresh_token',
+            value=str(refresh),
+            httponly=True,
+            secure=secure_cookie,
+            samesite=samesite_policy,
+            domain=cookie_domain,
+            path=cookie_path,
+            max_age=60 * 60 * 24 * int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
+        )
+
+        return response
 
     except Exception as e:
         logger.error(f"Login error: {e}")
@@ -181,6 +202,124 @@ def login(request):
             {'error': 'Giriş yapılırken hata oluştu'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_access_token(request):
+    """HttpOnly refresh cookie'den yeni access token üretir ve refresh cookie'yi döndürür."""
+    try:
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh_cookie = request.COOKIES.get('refresh_token')
+        if not refresh_cookie:
+            return Response({'error': 'Refresh token bulunamadı'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Refresh token doğrula ve access üret
+        refresh = RefreshToken(refresh_cookie)
+        access_token = refresh.access_token
+
+        # Custom claim'leri koru
+        user_id = refresh.get('user_id')
+        role = refresh.get('role')
+        email = refresh.get('email')
+        is_verified = refresh.get('is_verified')
+
+        if role is not None:
+            access_token['role'] = role
+        if email is not None:
+            access_token['email'] = email
+        if is_verified is not None:
+            access_token['is_verified'] = is_verified
+        if user_id is not None:
+            access_token['user_id'] = user_id
+
+        # Token rotasyonu açıksa yeni refresh üret ve cookie'ye yaz
+        new_refresh = None
+        try:
+            # .rotate() yok, for_user alternatifi yerine jti yenilemek için yeni RefreshToken oluşturulamaz
+            # simplejwt, RefreshToken(refresh).blacklist() + new RefreshToken.for_user ile yapılabilir.
+            from rest_framework_simplejwt.settings import api_settings as sj_settings
+            if getattr(sj_settings, 'ROTATE_REFRESH_TOKENS', False):
+                # Eski refresh'i blacklist'e al (opsiyonel, blacklist yüklü ise)
+                try:
+                    from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+                    BlacklistedToken.objects.get_or_create(token=refresh)
+                except Exception:
+                    pass
+                # Kullanıcıyı bulup yeni refresh üret
+                from core.models import CustomUser
+                user = CustomUser.objects.get(id=user_id)
+                new_refresh = RefreshToken.for_user(user)
+                # Custom claim'leri yeni refresh'e de yaz
+                new_refresh['role'] = role
+                new_refresh['email'] = email
+                new_refresh['is_verified'] = is_verified
+                new_refresh['user_id'] = user_id
+        except Exception:
+            new_refresh = None
+
+        response = Response({'access': str(access_token)})
+
+        # Cookie ayarları
+        secure_cookie = True
+        samesite_policy = 'None'
+        cookie_domain = os.environ.get('REFRESH_COOKIE_DOMAIN') or None
+        cookie_path = '/api/auth/'
+
+        if new_refresh is not None:
+            response.set_cookie(
+                key='refresh_token',
+                value=str(new_refresh),
+                httponly=True,
+                secure=secure_cookie,
+                samesite=samesite_policy,
+                domain=cookie_domain,
+                path=cookie_path,
+                max_age=60 * 60 * 24 * int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
+            )
+
+        return response
+    except Exception as e:
+        logger.error(f"Refresh error: {e}")
+        return Response({'error': 'Token yenileme başarısız'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout(request):
+    """Refresh cookie'yi temizler."""
+    response = Response({'detail': 'Logged out'})
+    cookie_domain = os.environ.get('REFRESH_COOKIE_DOMAIN') or None
+    response.delete_cookie('refresh_token', path='/api/auth/', domain=cookie_domain)
+    return response
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def clear_notifications(request):
+    """Kullanıcının bildirilen mesajlarını temizle (persist)."""
+    try:
+        user = request.user
+        payload = request.data or {}
+        message_ids = payload.get('message_ids') or []
+        if not isinstance(message_ids, list):
+            message_ids = []
+
+        cache_key = f"notifications_cleared:{user.id}"
+        cleared: set[int] = set(cache.get(cache_key, []))
+        # Sadece int değerleri al
+        for mid in message_ids:
+            try:
+                cleared.add(int(mid))
+            except Exception:
+                continue
+        # 30 gün sakla
+        cache.set(cache_key, list(cleared), 60 * 60 * 24 * 30)
+
+        return Response({"status": "ok", "cleared_count": len(message_ids)})
+    except Exception as e:
+        logger.error(f"clear_notifications error: {e}")
+        return Response({"error": "Bildirimler silinemedi"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -368,13 +507,48 @@ def verify_email(request):
                 logger.error(f"Auto upgrade error for user {user.email}: {e}")
                 # Hata olsa bile email verification başarılı
         
-        return Response({
+        # Doğrulama sonrası otomatik login için JWT üret
+        from rest_framework_simplejwt.tokens import RefreshToken
+        refresh = RefreshToken.for_user(user)
+        # Custom claims
+        refresh['role'] = user.role
+        refresh['email'] = user.email
+        refresh['is_verified'] = user.is_verified
+        refresh['user_id'] = user.id
+
+        access_token = refresh.access_token
+        access_token['role'] = user.role
+        access_token['email'] = user.email
+        access_token['is_verified'] = user.is_verified
+        access_token['user_id'] = user.id
+
+        response = Response({
             'message': f'Email başarıyla doğrulandı{upgrade_message}',
             'email': user.email,
             'is_verified': True,
             'role': user.role,
-            'auto_upgraded': user.role == 'vendor'
+            'auto_upgraded': user.role == 'vendor',
+            'access': str(access_token),
         })
+
+        # Refresh cookie ayarla (HttpOnly)
+        secure_cookie = True
+        samesite_policy = 'None'
+        cookie_domain = os.environ.get('REFRESH_COOKIE_DOMAIN') or None
+        cookie_path = '/api/auth/'
+
+        response.set_cookie(
+            key='refresh_token',
+            value=str(refresh),
+            httponly=True,
+            secure=secure_cookie,
+            samesite=samesite_policy,
+            domain=cookie_domain,
+            path=cookie_path,
+            max_age=60 * 60 * 24 * int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
+        )
+
+        return response
         
     except Exception as e:
         logger.error(f"Verify email error: {e}")

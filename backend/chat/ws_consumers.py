@@ -8,6 +8,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.conf import settings
 from channels.db import database_sync_to_async
 import jwt
+from django.core.cache import cache
 
 from .models import Conversation, Message
 
@@ -137,13 +138,26 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             # Karşı tarafa bildir
             other_user_id = event['payload'].get('other_user_id')
             if other_user_id:
-                await self.channel_layer.group_send(
-                    f"user_{other_user_id}",
-                    {
-                        'type': 'message_new',
-                        'payload': event['payload']
-                    }
-                )
+                # Eğer karşı kullanıcı bu mesaj ID'sini cleared olarak işaretlediyse global bildirimi atla
+                try:
+                    cleared = set(cache.get(f"notifications_cleared:{other_user_id}", []))
+                    if int(event['payload'].get('id')) not in cleared:
+                        await self.channel_layer.group_send(
+                            f"user_{other_user_id}",
+                            {
+                                'type': 'message_new',
+                                'payload': event['payload']
+                            }
+                        )
+                except Exception:
+                    # Hata durumunda yine de mesajı iletmeye çalış
+                    await self.channel_layer.group_send(
+                        f"user_{other_user_id}",
+                        {
+                            'type': 'message_new',
+                            'payload': event['payload']
+                        }
+                    )
                 
                 # Conversation update'i de gönder
                 await self.channel_layer.group_send(

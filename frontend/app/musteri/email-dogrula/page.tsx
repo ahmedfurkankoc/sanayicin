@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { api } from "@/app/utils/api";
+import { api, setAuthToken, setAuthEmail, getTokenRole } from "@/app/utils/api";
 
 function EmailVerificationContent() {
   const router = useRouter();
@@ -33,11 +33,24 @@ function EmailVerificationContent() {
           console.log('Email verification successful:', response.data);
           setSuccess(true);
           setVerificationData(response.data);
-          
-          // 3 saniye sonra giriş sayfasına yönlendir
+
+          // Backend access döndürür ve refresh cookie'yi set eder
+          const access: string | undefined = response.data?.access;
+          const email: string | undefined = response.data?.email;
+          if (access) {
+            // Role'a göre doğru cookie'ye yaz
+            const roleFromToken = getTokenRole(access);
+            const tokenRole = roleFromToken === 'vendor' || roleFromToken === 'admin' ? 'vendor' : 'client';
+            setAuthToken(tokenRole, access);
+          }
+          if (email) {
+            setAuthEmail('client', email);
+          }
+
+          // Kısa gecikme ile müşteri paneline yönlendir
           setTimeout(() => {
-            router.push('/musteri/giris?verified=true');
-          }, 3000);
+            router.push('/musteri');
+          }, 1500);
         } else {
           console.error('Email verification failed with status:', response.status, response.data);
           setError(response.data?.error || "Email doğrulama başarısız.");
