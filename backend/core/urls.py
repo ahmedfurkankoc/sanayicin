@@ -24,12 +24,18 @@ from .views import (
     check_favorite,
     client_register,
     client_profile,
-    client_set_password
+    client_set_password,
+    refresh_access_token,
+    logout,
+    clear_notifications
 )
 
 urlpatterns = [
     path('auth/login/', login, name='login'),
-    path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # Cookie-based refresh endpoint
+    path('auth/token/refresh/', refresh_access_token, name='token_refresh'),
+    path('auth/logout/', logout, name='logout'),
+    path('notifications/clear/', clear_notifications, name='clear_notifications'),
     path('auth/send-verification/', send_verification_email, name='send_verification'),
     path('auth/verify-email/', verify_email, name='verify_email'),
     path('auth/resend-verification/', resend_verification_email, name='resend_verification'),

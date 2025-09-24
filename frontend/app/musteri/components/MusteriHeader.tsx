@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useGlobalWS } from '@/app/hooks/useGlobalWS';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { iconMapping } from '@/app/utils/iconMapping';
 import Image from 'next/image';
 import { useMusteri } from '../context/MusteriContext';
 import ChatWidget from '@/app/components/ChatWidget';
+import NotificationBell from '@/app/components/NotificationBell';
 import { api, getAuthToken } from '@/app/utils/api';
 
 export default function MusteriHeader() {
@@ -15,12 +17,14 @@ export default function MusteriHeader() {
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<Array<{ title: string; message: string; link?: string }>>([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const router = useRouter();
   const { isAuthenticated, user, logout, loading } = useMusteri();
   const currentRole = (user?.role as 'vendor' | 'client' | undefined) || undefined;
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const globalWS = useGlobalWS();
 
   // Global WebSocket bağlantısı kur
   const connectGlobalWebSocket = useCallback(() => {
@@ -59,13 +63,27 @@ export default function MusteriHeader() {
         try {
           const data = JSON.parse(event.data);
           
-          // Yeni mesaj geldiğinde unread count'u güncelle
-          if (data.event === 'message.new' || data.event === 'conversation.update') {
+          // Yeni mesaj: badge'i güncelle ve mesaj içeriği ile bildirim oluştur (tek kaynak)
+          if (data.event === 'message.new') {
+            loadUnreadCount();
+            try {
+              const msg = data.data || {};
+              const previewSrc = (msg.content || '').toString();
+              const preview = previewSrc.slice(0, 80) + (previewSrc.length > 80 ? '…' : '');
+              const senderName = msg.sender_name || msg.sender || msg.sender_user_name || '';
+              const title = senderName ? `Yeni mesaj - ${senderName}` : 'Yeni mesaj';
+              const notifItem = { title, message: preview || 'Yeni bir mesajınız var.', link: '/musteri/mesajlar' };
+              setNotifications(prev => [notifItem, ...prev].slice(0, 20));
+            } catch (_e) {}
+          }
+          if (data.event === 'conversation.update') {
+            // Sadece unread badge güncellemesi için kullan
             loadUnreadCount();
           }
           if (data.event === 'notification.new') {
             const payload = data.data || {};
-            setNotifications(prev => [{ title: payload.title || 'Bildirim', message: payload.message || '', link: payload.link }, ...prev].slice(0, 20));
+            const mapped = mapNotificationPayload(payload);
+            setNotifications(prev => [mapped, ...prev].slice(0, 20));
           }
           
           // Typing event'leri
@@ -101,21 +119,30 @@ export default function MusteriHeader() {
     }
   }, [isAuthenticated, user]);
 
-  // WebSocket bağlantısını kur
+  // Global WS: shared connection - subscribe only
   useEffect(() => {
-    if (isAuthenticated && user) {
-      connectGlobalWebSocket();
-    }
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
+    if (!(isAuthenticated && user)) return;
+    const onMsg = (e: CustomEvent<any>) => {
+      const data = e.detail;
+      if (data?.event === 'message.new' || data?.event === 'conversation.update') {
+        // Defer to next tick to ensure callbacks are defined
+        setTimeout(() => loadUnreadCount(), 0);
       }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      if (data?.event === 'notification.new') {
+        const payload = data.data || {};
+        const mapped = mapNotificationPayload(payload);
+        setNotifications(prev => [mapped, ...prev].slice(0, 20));
       }
     };
-  }, [isAuthenticated, user, connectGlobalWebSocket]);
+    globalWS.on('message.new', onMsg);
+    globalWS.on('conversation.update', onMsg);
+    globalWS.on('notification.new', onMsg);
+    return () => {
+      globalWS.off('message.new', onMsg);
+      globalWS.off('conversation.update', onMsg);
+      globalWS.off('notification.new', onMsg);
+    };
+  }, [isAuthenticated, user, globalWS]);
 
   // loadUnreadCount fonksiyonunu useCallback ile sarmala
   const loadUnreadCount = useCallback(async () => {
@@ -209,6 +236,10 @@ export default function MusteriHeader() {
       if (!target.closest('.musteri-user-menu')) {
         setShowDropdown(false);
       }
+      // Notification dropdown dışına tıklanırsa kapat
+      if (!target.closest('.musteri-notification-btn') && !target.closest('.musteri-notification-dropdown')) {
+        setShowNotifDropdown(false);
+      }
       
       // Mobil search dışına tıklanırsa kapat
       if (!target.closest('.musteri-mobile-search') && !target.closest('.musteri-mobile-search-btn')) {
@@ -224,6 +255,49 @@ export default function MusteriHeader() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Backend'den gelen notification payload'unu UI item'ına dönüştür
+  const mapNotificationPayload = (payload: any): { title: string; message: string; link?: string } => {
+    const kind = payload?.kind as string | undefined;
+    switch (kind) {
+      case 'appointment_confirmed':
+        return {
+          title: 'Randevun onaylandı',
+          message: payload?.vendor_name ? `${payload.vendor_name} randevunu onayladı.` : 'Randevunuz onaylandı.',
+          link: '/musteri/taleplerim',
+        };
+      case 'appointment_rejected':
+        return {
+          title: 'Randevu reddedildi',
+          message: payload?.vendor_name ? `${payload.vendor_name} randevunu reddetti.` : 'Randevunuz reddedildi.',
+          link: '/musteri/taleplerim',
+        };
+      case 'appointment_cancelled':
+        return {
+          title: 'Randevu iptal edildi',
+          message: payload?.vendor_name ? `${payload.vendor_name} randevuyu iptal etti.` : 'Randevunuz iptal edildi.',
+          link: '/musteri/taleplerim',
+        };
+      case 'vendor_offer_sent':
+        return {
+          title: 'Yeni teklif',
+          message: payload?.vendor_name ? `${payload.vendor_name} bir teklif gönderdi.` : 'Size yeni bir teklif geldi.',
+          link: '/musteri/mesajlar',
+        };
+      case 'service_request_created':
+        return {
+          title: 'Yeni talep oluşturuldu',
+          message: payload?.title || 'Yeni bir hizmet talebi oluşturuldu.',
+          link: '/musteri/taleplerim',
+        };
+      default:
+        return {
+          title: payload?.title || 'Bildirim',
+          message: payload?.message || '',
+          link: payload?.link,
+        };
+    }
+  };
 
   // Kullanıcı adını al
   const getUserDisplayName = () => {
@@ -284,28 +358,30 @@ export default function MusteriHeader() {
           >
             {React.createElement(iconMapping.search, { size: 20 })}
           </button>
-
-          <div className="musteri-user-menu">
-            <button className="musteri-header-btn musteri-notification-btn" onClick={() => setShowDropdown(false)}>
-              {React.createElement(iconMapping.bell, { size: 20 })}
-              {notifications.length > 0 && (
-                <span className="musteri-message-badge">{notifications.length > 99 ? '99+' : notifications.length}</span>
-              )}
-            </button>
-            {notifications.length > 0 && (
-              <div className="musteri-user-dropdown show" style={{ right: 0, left: 'auto', minWidth: 280 }}>
-                <div className="musteri-dropdown-header"><strong>Bildirimler</strong></div>
-                <div style={{ maxHeight: 360, overflowY: 'auto' }}>
-                  {notifications.map((n, i) => (
-                    <div key={i} className="musteri-dropdown-item" onClick={() => { if (n.link) router.push(n.link); }} style={{ cursor: n.link ? 'pointer' : 'default' }}>
-                      <div style={{ fontWeight: 600 }}>{n.title}</div>
-                      <div style={{ fontSize: 12, color: '#475569' }}>{n.message}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          {/* Mobil Arama Dropdown */}
+          <div className={`musteri-mobile-search ${showMobileSearch ? 'show' : ''}`}>
+            <div className="musteri-mobile-search-inner">
+              <form onSubmit={(e) => { handleSearch(e); setShowMobileSearch(false); }} className="musteri-mobile-search-form">
+                <input
+                  type="text"
+                  placeholder="Hizmet ara..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="musteri-mobile-search-input"
+                  autoFocus
+                />
+                <button type="submit" className="musteri-mobile-search-submit">
+                  {React.createElement(iconMapping.search, { size: 18 })}
+                  <span style={{ marginLeft: 6 }}>Ara</span>
+                </button>
+              </form>
+              <button className="musteri-mobile-search-close" onClick={() => setShowMobileSearch(false)} aria-label="Kapat">
+                {React.createElement(iconMapping['x'], { size: 18 })}
+              </button>
+            </div>
           </div>
+
+          <NotificationBell iconColor="var(--white)" />
           <button 
             className={`musteri-header-btn musteri-message-btn ${showChatWidget ? 'active' : ''}`} 
             onClick={toggleChatWidget}
@@ -434,29 +510,6 @@ export default function MusteriHeader() {
           onUnreadCountUpdate={handleChatWidgetUpdate}
         />
       )}
-
-      {/* Mobil Arama Overlay */}
-      <div className={`musteri-mobile-search ${showMobileSearch ? 'show' : ''}`}>
-        <div className="musteri-mobile-search-inner">
-          <form onSubmit={(e) => { handleSearch(e); setShowMobileSearch(false); }} className="musteri-mobile-search-form">
-            <input
-              type="text"
-              placeholder="Hizmet ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="musteri-mobile-search-input"
-              autoFocus
-            />
-            <button type="submit" className="musteri-mobile-search-submit">
-              {React.createElement(iconMapping.search, { size: 18 })}
-              <span style={{ marginLeft: 6 }}>Ara</span>
-            </button>
-          </form>
-          <button className="musteri-mobile-search-close" onClick={() => setShowMobileSearch(false)} aria-label="Kapat">
-            {React.createElement(iconMapping['x'], { size: 18 })}
-          </button>
-        </div>
-      </div>
     </header>
   );
 }

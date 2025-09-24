@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { api, setAuthToken, setRefreshToken, setAuthEmail } from "@/app/utils/api";
+import { api, setAuthToken, setAuthEmail } from "@/app/utils/api";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
 import EsnafFooter from "../components/EsnafFooter";
 import { useEsnaf } from "../context/EsnafContext";
@@ -40,50 +40,23 @@ function EmailDogrulaContent() {
         setSuccess(true);
         toast.success("Email başarıyla doğrulandı!");
         
-        // Email doğrulandıktan sonra otomatik login yap
+        // Backend artık access döndürüyor ve refresh cookie set ediyor
         try {
-          // Email'i localStorage'dan al
-          const email = localStorage.getItem("esnaf_email");
-          const hashedPassword = localStorage.getItem("esnaf_temp_password_hash");
-          
-          if (email && hashedPassword) {
-            const password = atob(hashedPassword); // Base64 decode
-            
-            // Login yap
-            const loginResponse = await api.login({ email, password });
-            
-            if (loginResponse.status === 200) {
-              // Token'ları localStorage'a kaydet
-              const { access, refresh } = loginResponse.data;
-              setAuthToken("vendor", access);
-              setRefreshToken("vendor", refresh);
-              setAuthEmail("vendor", email);
-              
-              // Context'i güncelle
-              await refreshUser();
-              
-              // localStorage'ı temizle
-              localStorage.removeItem("esnaf_temp_password_hash");
-              
-              // 2 saniye sonra panele yönlendir
-              setTimeout(() => {
-                router.push("/esnaf/panel");
-              }, 2000);
-            } else {
-              // Login başarısız, giriş sayfasına yönlendir
-              setTimeout(() => {
-                router.push("/esnaf/giris");
-              }, 2000);
-            }
+          const access = response.data?.access;
+          const email = response.data?.email;
+          if (access && email) {
+            setAuthToken("vendor", access);
+            setAuthEmail("vendor", email);
+            await refreshUser();
+            setTimeout(() => {
+              router.push("/esnaf/panel");
+            }, 1500);
           } else {
-            // Email/password bulunamadı, giriş sayfasına yönlendir
             setTimeout(() => {
               router.push("/esnaf/giris");
             }, 2000);
           }
-        } catch (loginError) {
-          console.error("Login error:", loginError);
-          // Login başarısız, giriş sayfasına yönlendir
+        } catch (e) {
           setTimeout(() => {
             router.push("/esnaf/giris");
           }, 2000);
@@ -104,8 +77,8 @@ function EmailDogrulaContent() {
     setError("");
 
     try {
-      // Email'i localStorage'dan al
-      const email = localStorage.getItem("esnaf_email");
+      // Email bilgisini cookie'den veya son adım state'inden beklemiyoruz; kullanıcıdan tekrar isteriz
+      const email = null;
       
       if (!email) {
         toast.error("Email bilgisi bulunamadı. Lütfen tekrar giriş yapın.");

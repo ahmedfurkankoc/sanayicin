@@ -72,15 +72,7 @@ export const setAuthToken = (role: 'vendor' | 'client', token: string) => {
 };
 
 // Refresh token'ı kaydet - sadece cookie'ye
-export const setRefreshToken = (role: 'vendor' | 'client', token: string) => {
-  if (typeof window === "undefined") return;
-  
-  // Cookie'ye kaydet (30 gün geçerli)
-  const cookieName = role === 'vendor' ? 'vendor_refresh_token' : 'client_refresh_token';
-  const expires = new Date();
-  expires.setDate(expires.getDate() + 30);
-  document.cookie = `${cookieName}=${token}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
-};
+// Refresh token'ı JS tarafında saklamıyoruz (HttpOnly cookie server set edecek)
 
 // Email'i kaydet - sadece cookie'ye
 export const setAuthEmail = (role: 'vendor' | 'client', email: string) => {
@@ -99,11 +91,9 @@ export const clearAuthTokens = (role: 'vendor' | 'client') => {
   
   // Cookie'lerden sil
   const tokenCookieName = role === 'vendor' ? 'vendor_token' : 'client_token';
-  const refreshCookieName = role === 'vendor' ? 'vendor_refresh_token' : 'client_refresh_token';
   const emailCookieName = role === 'vendor' ? 'esnaf_email' : 'client_email';
   
   document.cookie = `${tokenCookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-  document.cookie = `${refreshCookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   document.cookie = `${emailCookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 };
 
@@ -113,9 +103,7 @@ export const clearAllAuthData = () => {
   
   // Cookie'lerden sil
   document.cookie = 'vendor_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-  document.cookie = 'vendor_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   document.cookie = 'client_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-  document.cookie = 'client_refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   document.cookie = 'esnaf_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   document.cookie = 'client_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 };
@@ -203,6 +191,7 @@ const validateRegisterData = (data: any, role: 'vendor' | 'client' = 'vendor'): 
 // API instance oluştur
 export const apiClient = axios.create({
   baseURL: apiUrl,
+  withCredentials: true, // refresh cookie gönderilsin
 });
 
 // Request interceptor - her istekte token ekle
@@ -265,28 +254,34 @@ apiClient.interceptors.request.use((config) => {
 // Response interceptor - 401 hatası durumunda logout
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token geçersiz, logout yap
-      if (typeof window !== "undefined") {
-        // Hangi role'ün token'ı kullanıldıysa onu temizle
-        const isVendorUrl = error.config?.url?.includes('/vendors/') || 
-                            error.config?.url?.includes('/esnaf/') || 
-                            error.config?.url?.includes('/avatar/upload/');
-        
-        const isEsnafContext = window.location?.pathname?.startsWith('/esnaf');
-        
-        if (isVendorUrl || isEsnafContext) {
-          // Vendor endpoint'i için vendor token'larını temizle (cookie tabanlı)
-          document.cookie = 'vendor_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'esnaf_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        } else {
-          // Client endpoint'i için client token'larını temizle (cookie tabanlı)
-          document.cookie = 'client_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'client_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        // HttpOnly refresh cookie ile access token'ı yenile
+        const refreshRes = await axios.post(`${apiUrl}/auth/token/refresh/`, {}, { withCredentials: true });
+        if (refreshRes.status === 200 && refreshRes.data.access) {
+          const newAccess: string = refreshRes.data.access;
+          // Access token'dan role'u al ve doğru cookie'ye yaz
+          const tokenRole = ((): 'vendor' | 'client' => {
+            const role = getTokenRole(newAccess);
+            if (role === 'vendor' || role === 'admin') return 'vendor';
+            return 'client';
+          })();
+          setAuthToken(tokenRole, newAccess);
+
+          // Orijinal isteği yeni header ile tekrar dene
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
+          return apiClient(originalRequest);
         }
-        
-        console.log('Token geçersiz, logout yapıldı. Yönlendirme yapılmadı.');
+      } catch (e) {
+        // Refresh başarısız, tokenları temizle
+        if (typeof window !== 'undefined') {
+          document.cookie = 'vendor_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'client_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        }
       }
     }
     return Promise.reject(error);
@@ -334,6 +329,12 @@ export const api = {
   // Auth işlemleri - Tek endpoint kullan
   login: (data: { email: string; password: string }) => 
     apiClient.post('/auth/login/', data),
+
+  // Access refresh - HttpOnly cookie kullanır
+  refreshAccessToken: () => axios.post(`${apiUrl}/auth/token/refresh/`, {}, { withCredentials: true }),
+
+  // Logout - refresh cookie server tarafında temizlenir
+  logout: () => apiClient.post('/auth/logout/', {}),
   
   // Register - Role'e göre farklı endpoint'ler
   register: (data: any, role: 'vendor' | 'client' = 'vendor') => {
@@ -438,6 +439,10 @@ export const api = {
     apiClient.post(`/chat/conversations/${conversationId}/messages`, { content }),
   chatMarkRead: (conversationId: number) =>
     apiClient.post(`/chat/conversations/${conversationId}/read`, {}),
+
+  // Notifications API
+  clearNotifications: (messageIds: number[] = []) =>
+    apiClient.post('/notifications/clear/', { message_ids: messageIds }),
   
   // Favorites API
   getFavorites: () => apiClient.get('/favorites/'),

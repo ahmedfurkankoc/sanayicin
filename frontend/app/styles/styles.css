@@ -203,14 +203,18 @@ section[aria-label="Notifications alt+T"] {
 .mobile-bottom-nav {
   position: fixed;
   left: 0; right: 0; bottom: 0;
-  height: 64px;
+  width: 100%;
+  min-height: 64px;
+  height: auto;
   background: #111;
   border-top: 1px solid #222;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  padding-bottom: env(safe-area-inset-bottom);
   z-index: 9999;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  contain: layout paint;
 }
 .mbn-item { 
   color: #bbb; 
@@ -225,7 +229,7 @@ section[aria-label="Notifications alt+T"] {
 .mbn-item.active { color: var(--yellow); }
 .mbn-icon { font-size: 18px; line-height: 18px; }
 .mbn-label { font-weight: 600; }
-.mobile-bottom-spacer { height: calc(64px + env(safe-area-inset-bottom)); }
+.mobile-bottom-spacer { height: calc(64px + 10px); }
 
 @media (min-width: 901px) {
   .mobile-bottom-nav { display: none; }
@@ -248,6 +252,10 @@ section[aria-label="Notifications alt+T"] {
   padding: 0 24px;
   height: 86px;
   position: relative;
+}
+.public-mobile-search { display: none; }
+.public-mobile-search-toggle {
+  display: none;
 }
 .sanayicin-logo-section {
   display: flex;
@@ -311,7 +319,7 @@ section[aria-label="Notifications alt+T"] {
   align-items: center;
   overflow: hidden;
   background: var(--yellow);
-  padding-top: 0;
+  padding-top: 24px;
 }
 
 .heroSection::before {
@@ -358,8 +366,8 @@ section[aria-label="Notifications alt+T"] {
   content: '';
   position: absolute;
   right: 0;
-  bottom: 40;
-  width: 850px;
+  bottom: 0;
+  width: 650px;
   height: 900px;
   background-image: url('/sanayicin-icon.png');
   background-repeat: no-repeat;
@@ -369,6 +377,19 @@ section[aria-label="Notifications alt+T"] {
   filter: drop-shadow(0 20px 50px rgba(0,0,0,0.25));
   z-index: 0;
   animation: rotateGear 40s linear infinite;
+}
+
+/* Mobile/tablet: keep gear to the right and reduce size; protect left text */
+@media (max-width: 900px) {
+  .heroSection { padding: 28px 0 18px 0; }
+  .heroSection::after {
+    right: -40px;
+    bottom: 0;
+    width: 420px;
+    height: 420px;
+    opacity: 0.15;
+    z-index: 0;
+  }
 }
 
 /* Çark döndürme animasyonu */
@@ -1562,7 +1583,6 @@ footer {
 
 .sanayicin-hamburger {
   display: none;
-  margin-top: 5px;
 }
 .hamburger-bar {
   display: block;
@@ -1607,9 +1627,7 @@ footer {
     background: transparent;
     border: none;
     box-shadow: none;
-    position: absolute;
-    right: 16px;
-    top: 16px;
+    position: static;
     z-index: 100;
     padding: 0;
   }
@@ -1637,7 +1655,133 @@ footer {
     position: relative;
     height: 86px;
     min-height: 64px;
-    padding: 0 8px;
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  /* Smaller logo on mobile */
+  .sanayicin-logo-icon { width: 120px; }
+  /* Show compact search on mobile */
+  .public-mobile-search { 
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    margin-left: auto;
+    padding: 0;
+    width: auto;
+    flex: 0 0 auto;
+  }
+  .public-mobile-search-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: var(--black);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .sanayicin-hamburger { flex: 0 0 40px; margin-left: 8px; }
+  .sanayicin-hamburger.is-open { margin-top: 5px; }
+  /* Make hamburger visual size match 40x40 buttons */
+  .hamburger-bar { width: 20px; height: 2px; margin: 4px 0; }
+  .hamburger-bar.open:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .hamburger-bar.open:nth-child(3) { transform: translateY(-14px) rotate(-45deg); }
+  .public-mobile-search-toggle.active {
+    background: rgba(0,0,0,0.06);
+  }
+.musteri-header-btn {
+  background: transparent;
+  border: none;
+  color: var(--black);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.musteri-user-menu { position: relative; }
+.musteri-header-btn:hover { background: rgba(0,0,0,0.06); }
+.musteri-message-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.musteri-user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  padding: 0.5rem 0;
+  z-index: 1000;
+}
+.musteri-dropdown-header { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.musteri-dropdown-item { padding: 10px 12px; font-size: 14px; display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.musteri-dropdown-item:hover { background: var(--gray); }
+  .public-mobile-search-dropdown {
+    position: fixed;
+    top: 86px; /* navbar height */
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    padding: 8px;
+    display: none;
+    margin-top: 0;
+    z-index: 10000;
+  }
+  .public-mobile-search-dropdown.show { display: block; }
+  .public-mobile-search-form {
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    max-width: 520px; 
+    background: var(--white); 
+    border: 1px solid var(--border);
+    border-radius: 12px; 
+    padding: 8px 10px; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .public-mobile-search-input {
+    flex: 1; 
+    border: none; 
+    outline: none; 
+    font-size: 16px; 
+    color: var(--black);
+    background: transparent;
+  }
+  .public-mobile-search-input::placeholder { color: #666; }
+  .public-mobile-search-btn {
+    background: var(--black); 
+    color: var(--yellow); 
+    border: none; 
+    border-radius: 10px; 
+    padding: 8px 10px; 
+    font-weight: 700; 
+    cursor: pointer; 
   }
 }
 @keyframes fadeInMenu {
@@ -1698,24 +1842,26 @@ footer {
     width: 100%;
     padding-left: 16px;
   }
-  .sanayicin-menu-links {
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    margin-top: 20px;
-    padding-bottom: 1.5rem;
-  }
   .sanayicin-menu-links li {
     width: 100%;
-    justify-content: center;
+    justify-content: left;
+    padding-left: 60px;
   }
   .sanayicin-menu-links li a, .sanayicin-btn-vendor {
     width: 50%;
-    text-align: center;
+    text-align: left;
     font-size: 1.1rem;
     padding: 14px 0;
     margin: 0;
+  }
+  .sanayicin-menu-links .logout-btn{
+    width: 25%;
+    text-align: left;
+    font-size: 1.1rem;
+    padding: 12px 0;
+    margin: 0;
+    color: var(--red);
+    font-weight: 700;
   }
   .heroSection {
     padding: 32px 0 18px 0;
@@ -1890,7 +2036,6 @@ footer {
   width: 100%;
   max-width: 540px;
   margin: 0 auto 24px auto;
-  background: #fff;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   overflow: visible;
@@ -2675,7 +2820,7 @@ footer {
   font-weight: 800;
   color: #111111;
   margin: 0 0 20px 0;
-  line-height: 1.1;
+  line-height: 1.5;
   background: linear-gradient(135deg, #111111 0%, #333333 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

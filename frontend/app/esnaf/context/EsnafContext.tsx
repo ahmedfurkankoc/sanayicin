@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { getAuthToken, setAuthToken, setRefreshToken, setAuthEmail, clearAuthTokens } from '@/app/utils/api';
+import { getAuthToken, setAuthToken, setAuthEmail, clearAuthTokens } from '@/app/utils/api';
 
 interface EsnafContextType {
   user: any;
