@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, getAuthToken, setAuthToken, setRefreshToken, setAuthEmail, clearAuthTokens, clearAllAuthData } from '@/app/utils/api';
+import { api, getAuthToken, setAuthToken, setAuthEmail, clearAuthTokens, clearAllAuthData } from '@/app/utils/api';
 
 interface MusteriContextType {
   isAuthenticated: boolean;
@@ -126,12 +126,12 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
       const response = await api.login({ email, password });
       
       if (response.status === 200 && response.data.access) {
-        const { access, refresh, role: userRole } = response.data;
+        const { access, role: userRole } = response.data;
         
         // Role göre token ayarla
         const tokenRole = userRole === 'vendor' ? 'vendor' : 'client';
         setAuthToken(tokenRole, access);
-        setRefreshToken(tokenRole, refresh);
+        // Refresh token HttpOnly cookie olarak server tarafından set edildi
         setAuthEmail(tokenRole, email);
         
         setRole(userRole);

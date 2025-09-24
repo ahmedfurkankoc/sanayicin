@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { api, getAuthToken } from '@/app/utils/api';
 import { ChatWSClient } from '@/app/musteri/components/ChatWSClient';
 import Image from 'next/image';
+import { useGlobalWS } from '@/app/hooks/useGlobalWS';
 
 // Conversation interface'i
 interface Conversation {
@@ -83,6 +84,7 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const wsRef = useRef<ChatWSClient | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const globalWS = useGlobalWS();
 
   // Typing event'ini debounce ile gönder
   const sendTypingEvent = (isTyping: boolean) => {
@@ -263,6 +265,45 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
       })();
     }
   }, [isWidgetOpen, activeId, isAuthenticated, onUnreadCountUpdate]);
+
+  // Subscribe to global WS to update list/badges in real-time
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const onMessage = async (e: CustomEvent<any>) => {
+      const payload = e.detail?.data || {};
+      const convId = payload.conversation;
+      if (!convId) return;
+      setConversations((prev) => {
+        const updated = prev.map((c) => c.id === convId ? {
+          ...c,
+          last_message_text: payload.content ?? c.last_message_text,
+          unread_count_for_current_user: (isWidgetOpen && activeId === convId) ? 0 : ((c.unread_count_for_current_user || 0) + 1),
+        } : c);
+        // Badge update to parent
+        if (onUnreadCountUpdate) onUnreadCountUpdate(updated);
+        return updated;
+      });
+      // Eğer bu konuşma aktif ve widget açıksa okundu bildir
+      if (isWidgetOpen && activeId === convId) {
+        try { await api.chatMarkRead(convId); } catch {}
+      }
+    };
+    const onUpdate = (e: CustomEvent<any>) => {
+      const p = e.detail?.data || {};
+      const convId = p.conversation_id;
+      setConversations((prev) => prev.map((c) => c.id === convId ? {
+        ...c,
+        last_message_text: p.last_message_text ?? c.last_message_text,
+        unread_count_for_current_user: typeof p.unread_count === 'number' ? p.unread_count : c.unread_count_for_current_user,
+      } : c));
+    };
+    globalWS.on('message.new', onMessage as any);
+    globalWS.on('conversation.update', onUpdate as any);
+    return () => {
+      globalWS.off('message.new', onMessage as any);
+      globalWS.off('conversation.update', onUpdate as any);
+    };
+  }, [globalWS, isAuthenticated, isWidgetOpen, activeId, onUnreadCountUpdate]);
 
   // load messages when activeId changes - cache kullanarak blink'i önle
   useEffect(() => {

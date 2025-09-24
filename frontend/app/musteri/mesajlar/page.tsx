@@ -27,14 +27,11 @@ export default function MessagesListPage() {
   return (
     <div className="container">
       <h1>Tüm Mesajlarım</h1>
-      
-      <div className="musteri-card">
-        <ConversationList 
-          userRole={userRole} 
-          baseUrl="/musteri/mesajlar"
-          className="musteri-conversation-list"
-        />
-      </div>
+      <ConversationList 
+        userRole={userRole} 
+        baseUrl="/musteri/mesajlar"
+        className="musteri-conversation-list"
+      />
     </div>
   );
 }

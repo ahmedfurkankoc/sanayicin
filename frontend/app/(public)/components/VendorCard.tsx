@@ -89,7 +89,13 @@ const VendorCard = ({
       {renderAvatar()}
       <div className="vendorInfo">
         <h3 className="vendorName">{displayName}</h3>
-        <div className="vendorExp">{experience}</div>
+        <div className="vendorExp">
+          {(() => {
+            const text = (about && about.trim().length > 0) ? about.trim() : 'Hakkında bilgi yok';
+            const maxLen = 90;
+            return text.length > maxLen ? text.slice(0, maxLen) + '…' : text;
+          })()}
+        </div>
         <div className="vendorType">{displayType} · {displayLocation}</div>
         {renderRating()}
         <button className="vendorCardActionBtn">Esnaf Bul</button>
@@ -100,7 +106,7 @@ const VendorCard = ({
   // Eğer slug varsa, link olarak sar
   if (slug) {
     return (
-      <Link href={`/esnaf/${slug}`} className="vendor-card-link">
+      <Link href={`/musteri/esnaf/${slug}`} className="vendor-card-link">
         {cardContent}
       </Link>
     );

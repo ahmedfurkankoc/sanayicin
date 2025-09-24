@@ -2,6 +2,8 @@ import React from "react";
 import Head from "next/head";
 import "../styles/esnaf.css";
 import { EsnafProvider } from "./context/EsnafContext";
+import NotificationBell from "@/app/components/NotificationBell";
+import EsnafMobileNavbar from "@/app/esnaf/components/EsnafMobileNavbar";
 import { Toaster } from "@/app/components/ui/sonner";
 
 export default function EsnafLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +20,12 @@ export default function EsnafLayout({ children }: { children: React.ReactNode })
       </Head>
       <EsnafProvider>
         <div className="esnaf-panel-layout">
+          {/* Mobile-only top navbar */}
+          <div className="mobile-only" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1100 }}>
+            <EsnafMobileNavbar />
+          </div>
+          {/* Spacer for mobile navbar height */}
+          <div className="mobile-only" style={{ width: '100%', height: 86 }}></div>
           <main className="esnaf-panel-main-content">{children}</main>
         </div>
       </EsnafProvider>

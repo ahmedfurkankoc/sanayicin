@@ -6,7 +6,8 @@ import EsnafSidebar from "./EsnafSidebar";
 import { useEsnaf } from "../context/EsnafContext";
 import { LoadingSpinner } from "./LoadingSpinner";
 import ChatWidget from "@/app/components/ChatWidget";
-import { api, getAuthToken } from "@/app/utils/api";
+import { api } from "@/app/utils/api";
+import { useGlobalWS } from "@/app/hooks/useGlobalWS";
 
 interface EsnafPanelLayoutProps {
   children: React.ReactNode;
@@ -23,8 +24,7 @@ export default function EsnafPanelLayout({
   const [unreadCount, setUnreadCount] = useState(0);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const globalWS = useGlobalWS();
 
   // Mobil/Desktop kontrolü
   useEffect(() => {
@@ -38,88 +38,17 @@ export default function EsnafPanelLayout({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Global WebSocket bağlantısı kur
-  const connectGlobalWebSocket = useCallback(() => {
-    if (!isVerified || !user) return;
-
-    // Mevcut bağlantıyı kapat
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
-
-    // Auth token'ı kontrol et
-    const vendorToken = getAuthToken('vendor');
-    if (!vendorToken) {
-      console.warn('Vendor auth token bulunamadı - WebSocket bağlantısı kurulamıyor');
-      return;
-    }
-
-    try {
-      // WebSocket URL'ini oluştur
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 
-        (process.env.NEXT_PUBLIC_API_URL ? 
-          process.env.NEXT_PUBLIC_API_URL.replace('https://', 'wss://').replace('http://', 'ws://').replace('/api', '') : 
-          'wss://test.sanayicin.com'
-        );
-      
-      const ws = new WebSocket(`${wsUrl}/ws/chat/global/?token=${encodeURIComponent(vendorToken)}`);
-      
-      ws.onopen = () => {
-        console.log('Esnaf Global WebSocket bağlantısı kuruldu');
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          // Yeni mesaj geldiğinde unread count'u güncelle
-          if (data.event === 'message.new' || data.event === 'conversation.update') {
-            loadUnreadCount();
-          }
-        } catch (error) {
-          console.error('WebSocket mesaj parse hatası:', error);
-        }
-      };
-
-      ws.onclose = (event) => {
-        console.log('Esnaf Global WebSocket bağlantısı kapandı:', event.code, event.reason);
-        
-        // Otomatik yeniden bağlanma (exponential backoff)
-        if (event.code !== 1000 && event.code !== 1001) {
-          const delay = Math.min(1000 * Math.pow(2, Math.min(5, 5)), 30000);
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (isVerified) {
-              connectGlobalWebSocket();
-            }
-          }, delay);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('Esnaf WebSocket hatası:', error);
-      };
-
-      wsRef.current = ws;
-    } catch (error) {
-      console.error('Esnaf WebSocket bağlantı hatası:', error);
-    }
-  }, [isVerified, user]);
-
-  // WebSocket bağlantısını kur
+  // Global WS - unread güncelle (loadUnreadCount tanımlandıktan sonra abone ol)
   useEffect(() => {
-    if (isVerified && user) {
-      connectGlobalWebSocket();
-    }
-
+    if (!(isVerified && user)) return;
+    const onAny = () => { setTimeout(() => loadUnreadCount(), 0); };
+    globalWS.on('message.new', onAny as any);
+    globalWS.on('conversation.update', onAny as any);
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
+      globalWS.off('message.new', onAny as any);
+      globalWS.off('conversation.update', onAny as any);
     };
-  }, [isVerified, user, connectGlobalWebSocket]);
+  }, [isVerified, user, globalWS]);
 
   // loadUnreadCount fonksiyonunu useCallback ile sarmala
   const loadUnreadCount = useCallback(async () => {

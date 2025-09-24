@@ -7,7 +7,7 @@ import axios from "axios";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
 import EsnafFooter from "@/app/esnaf/components/EsnafFooter";
 import { useEsnaf } from "../context/EsnafContext";
-import { setAuthToken, setRefreshToken, setAuthEmail } from '@/app/utils/api';
+import { setAuthToken, setAuthEmail } from '@/app/utils/api';
 
 export default function EsnafGirisPage() {
   const [email, setEmail] = useState("");
@@ -37,24 +37,19 @@ export default function EsnafGirisPage() {
       const res = await axios.post(`${apiUrl}/auth/login/`, {
         email,
         password,
-      });
+      }, { withCredentials: true });
       
       if (res.status === 200 && res.data.access) {
-        const { access, refresh, role, is_verified } = res.data;
+        const { access, role, is_verified } = res.data;
         
         // Sadece vendor'lar esnaf paneline girebilir
         if (role === 'vendor' || role === 'admin') {
           // Vendor token'larını kaydet
           setAuthToken("vendor", access);
-          setRefreshToken("vendor", refresh);
+          // Refresh token HttpOnly cookie olarak server tarafından set edilir
           setAuthEmail("vendor", email);
           
-          // Client token'larını temizle (eğer varsa)
-          localStorage.removeItem('client_access_token');
-          localStorage.removeItem('client_refresh_token');
-          localStorage.removeItem('client_email');
-          
-          localStorage.removeItem("esnaf_password_set");
+          // Eski localStorage kullanımını kaldırdık (cookie tabanlı token yönetimi)
           
           // Doğrulanmamışsa email verification sayfasına yönlendir
           if (!is_verified) {
@@ -73,20 +68,11 @@ export default function EsnafGirisPage() {
           // Client hesabı varsa vendor'a upgrade et
           setError("Bu hesap müşteri hesabı. Esnaf olmak için lütfen yeni hesap açın veya mevcut hesabınızı yükseltin.");
           
-          // Client token'larını temizle (eğer varsa)
-          localStorage.removeItem('esnaf_access_token');
-          localStorage.removeItem('esnaf_refresh_token');
-          localStorage.removeItem('esnaf_email');
+          // Cookie tabanlı yönetimde localStorage temizliği gereksiz
         } else {
           setError("Bu hesap esnaf hesabı değil.");
           
-          // Tüm token'ları temizle
-          localStorage.removeItem('esnaf_access_token');
-          localStorage.removeItem('esnaf_refresh_token');
-          localStorage.removeItem('esnaf_email');
-          localStorage.removeItem('client_access_token');
-          localStorage.removeItem('client_refresh_token');
-          localStorage.removeItem('client_email');
+          // Cookie tabanlı yönetimde localStorage temizliği gereksiz
         }
       } else {
         setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
