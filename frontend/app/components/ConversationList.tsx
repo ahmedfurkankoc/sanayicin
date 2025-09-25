@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api, getAuthToken } from '@/app/utils/api';
 import { useGlobalWS } from '@/app/hooks/useGlobalWS';
+import { toast } from 'sonner';
 
 const getLastMessagePreview = (text?: string) => {
   if (!text) return '';
@@ -48,6 +49,12 @@ export default function ConversationList({ userRole, baseUrl, className = '' }: 
   const [loading, setLoading] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
   const globalWS = useGlobalWS();
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchCurrentX = useRef<number | null>(null);
+  const [swipedId, setSwipedId] = useState<number | null>(null);
+  const SWIPE_THRESHOLD = 60; // px
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -81,6 +88,14 @@ export default function ConversationList({ userRole, baseUrl, className = '' }: 
 
     loadConversations();
   }, [userRole]);
+
+  // Viewport watcher to toggle mobile/desktop behaviors
+  useEffect(() => {
+    const apply = () => setIsMobile(typeof window !== 'undefined' ? window.innerWidth <= 900 : false);
+    apply();
+    window.addEventListener('resize', apply);
+    return () => window.removeEventListener('resize', apply);
+  }, []);
 
   // Simple time-ago formatter
   const timeAgo = (iso?: string) => {
@@ -152,10 +167,82 @@ export default function ConversationList({ userRole, baseUrl, className = '' }: 
                 setItems(prev => prev.map(it => it.id === c.id ? { ...it, read_at: new Date().toISOString(), unread_count_for_current_user: 0 } : it));
               } catch (_) {}
             };
+            const offset = swipedId === c.id && touchCurrentX.current != null && touchStartX.current != null
+              ? Math.min(0, touchCurrentX.current - touchStartX.current)
+              : 0;
+            const isOpen = swipedId === c.id && offset <= -SWIPE_THRESHOLD;
+            const onTouchStart = (e: React.TouchEvent) => {
+              touchStartX.current = e.touches[0].clientX;
+              touchCurrentX.current = e.touches[0].clientX;
+              setSwipedId(c.id);
+            };
+            const onTouchMove = (e: React.TouchEvent) => {
+              if (touchStartX.current == null) return;
+              touchCurrentX.current = e.touches[0].clientX;
+            };
+            const onTouchEnd = () => {
+              if (touchStartX.current != null && touchCurrentX.current != null) {
+                const dx = touchCurrentX.current - touchStartX.current;
+                if (dx <= -SWIPE_THRESHOLD) {
+                  setSwipedId(c.id);
+                } else {
+                  setSwipedId(null);
+                }
+              }
+              touchStartX.current = null;
+              touchCurrentX.current = null;
+            };
+            const performDelete = async () => {
+              try {
+                setDeletingId(c.id);
+                await toast.promise(
+                  api.chatDeleteConversation(c.id),
+                  {
+                    loading: 'Siliniyor...',
+                    success: 'Sohbet silindi.',
+                    error: 'Sohbet silinemedi. Lütfen tekrar deneyin.',
+                  }
+                );
+                setItems(prev => prev.filter(it => it.id !== c.id));
+              } catch (err) {
+                console.error('Sohbet silinemedi', err);
+              } finally {
+                setSwipedId(null);
+                setDeletingId(null);
+              }
+            };
+
+            const confirmDelete = (e: React.MouseEvent) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const tid = toast('Sohbeti silmek istediğine emin misin?', {
+                description: 'Bu işlem geri alınamaz.',
+                action: {
+                  label: 'Evet, sil',
+                  onClick: async () => {
+                    toast.dismiss(tid);
+                    await performDelete();
+                  }
+                }
+              });
+            };
             return (
-            <li key={c.id} style={{ padding: '12px 0', borderBottom: '1px solid #eee' }}>
-              <Link href={`${baseUrl}/${c.id}`} onClick={handleOpen} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <li key={c.id} style={{ padding: 0, borderBottom: '1px solid #eee', position: 'relative', overflow: 'hidden' }}>
+              {/* Delete button revealed on swipe */}
+              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 96, background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, zIndex: 0 }}>
+                <button onClick={confirmDelete} disabled={deletingId === c.id} style={{ background: 'transparent', border: 'none', color: '#fff', fontWeight: 800, cursor: deletingId === c.id ? 'default' : 'pointer', opacity: deletingId === c.id ? 0.7 : 1 }}>
+                  {deletingId === c.id ? '...' : 'Sil'}
+                </button>
+              </div>
+              <Link 
+                href={`${baseUrl}/${c.id}`}
+                onClick={handleOpen}
+                style={{ textDecoration: 'none', color: 'inherit', display: 'block', position: 'relative', zIndex: 1, transform: `translateX(${Math.max(-96, offset)}px)`, transition: (touchStartX.current == null ? 'transform 0.2s ease' : 'none') }}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+              >
+                <div style={{ padding: '12px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff' }}>
                   <div style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#0f172a' }}>
                       {(c.other_user?.first_name || c.other_user?.display_name || c.other_user?.username || c.other_user?.email || 'U').charAt(0).toUpperCase()}
@@ -181,6 +268,26 @@ export default function ConversationList({ userRole, baseUrl, className = '' }: 
                         {unread}
                       </span>
                     ) : null}
+                    {/* Desktop-only delete button (mobile uses swipe) */}
+                    {!isMobile && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); confirmDelete(e as any); }}
+                        title="Sohbeti sil"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: 8,
+                          color: '#ef4444',
+                          fontWeight: 700,
+                          padding: '6px 10px',
+                          cursor: deletingId === c.id ? 'default' : 'pointer',
+                          opacity: deletingId === c.id ? 0.6 : 1
+                        }}
+                        disabled={deletingId === c.id}
+                      >
+                        {deletingId === c.id ? 'Siliniyor...' : 'Sil'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </Link>

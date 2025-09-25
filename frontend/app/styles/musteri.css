@@ -1920,6 +1920,42 @@
   background: var(--yellow);
 }
 
+/* Mobile full-screen chat (modal-like) while keeping top and bottom navs visible */
+@media (max-width: 900px) {
+  .musteri-chat-interface {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 56px; /* header height approx */
+    bottom: calc(64px + env(safe-area-inset-bottom)); /* bottom nav height */
+    z-index: 998; /* below .mobile-bottom-nav (9999) */
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  .musteri-chat-messages-container {
+    height: auto;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+  }
+
+  .musteri-typing-indicator { 
+    flex-shrink: 0; 
+  }
+
+  .musteri-chat-input-container { 
+    flex-shrink: 0; 
+    padding: 12px; 
+  }
+}
+
 .musteri-loading {
   text-align: center;
   padding: 40px;

@@ -136,7 +136,7 @@ export default function NotificationBell({ iconColor = 'var(--black)' }: Notific
           }}
         >
           <div style={{ padding: '12px 16px', borderBottom: '1px solid #e9ecef', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <strong>Bildirimler</strong>
+            <strong style={{ color: 'var(--black)' }}>Bildirimler</strong>
             {notifications.length > 0 && (
               <button
                 onClick={async () => {

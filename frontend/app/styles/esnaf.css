@@ -4338,6 +4338,42 @@
   background: #e6c200;
 }
 
+/* Mobile full-screen chat (modal-like) while keeping top and bottom navs visible */
+@media (max-width: 900px) {
+  .esnaf-chat-interface {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 86px; /* approx header height; adjust via inline style if needed */
+    bottom: calc(64px + 20px); /* leave space for bottom nav */
+    z-index: 998; /* under bottom nav (9999) */
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  .esnaf-chat-messages-container {
+    height: auto;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+  }
+
+  .esnaf-chat-input-container { 
+    flex-shrink: 0; 
+    padding: 12px; 
+  }
+
+  .esnaf-typing-indicator { 
+    flex-shrink: 0; 
+  }
+}
+
 /* Modern Profile Styles */
 .esnaf-modern-profile {
   min-height: 100vh;
