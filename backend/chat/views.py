@@ -166,6 +166,38 @@ class ConversationMessagesView(APIView):
 
         return Response(MessageSerializer(msg).data, status=201)
 
+    def delete(self, request, conversation_id: int):
+        user = request.user
+        # Chat permission kontrolü
+        if not user.can_chat():
+            return Response({'detail': 'Chat yapmak için doğrulanmış hesap gerekli.'}, status=403)
+
+        try:
+            conv = Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response({'detail': 'Conversation not found'}, status=404)
+
+        # Kullanıcı conversation'da var mı?
+        if not (conv.user1_id == user.id or conv.user2_id == user.id):
+            return Response({'detail': 'Forbidden'}, status=403)
+
+        other_user_id = conv.user2_id if conv.user1_id == user.id else conv.user1_id
+        conv.delete()
+
+        # İsteğe bağlı bildirim
+        try:
+            channel_layer = get_channel_layer()
+            if channel_layer is not None:
+                payload = {
+                    'conversation_id': conversation_id,
+                    'deleted': True,
+                }
+                async_to_sync(channel_layer.group_send)(f"user_{other_user_id}", { 'type': 'conversation.update', 'payload': payload })
+        except Exception:
+            pass
+
+        return Response(status=204)
+
 
 class ConversationReadView(APIView):
     permission_classes = [IsAuthenticated]
@@ -197,4 +229,7 @@ class ConversationReadView(APIView):
 
         return Response({'detail': 'Forbidden'}, status=403)
 
+
+
+ 
 
