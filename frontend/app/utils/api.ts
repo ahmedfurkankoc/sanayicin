@@ -439,6 +439,8 @@ export const api = {
     apiClient.post(`/chat/conversations/${conversationId}/messages`, { content }),
   chatMarkRead: (conversationId: number) =>
     apiClient.post(`/chat/conversations/${conversationId}/read`, {}),
+  chatDeleteConversation: (conversationId: number) =>
+    apiClient.delete(`/chat/conversations/${conversationId}/messages`),
 
   // Notifications API
   clearNotifications: (messageIds: number[] = []) =>

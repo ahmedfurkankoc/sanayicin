@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { api, getAuthToken } from '@/app/utils/api';
 import { ChatWSClient } from '@/app/musteri/components/ChatWSClient';
 import Image from 'next/image';
@@ -51,6 +52,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ conversationId, variant, onUnreadCountUpdate }: ChatInterfaceProps) {
+  const router = useRouter();
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -62,6 +64,13 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
   const wsRef = useRef<ChatWSClient | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [offerModal, setOfferModal] = useState<any | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToBottom = () => {
+    try {
+      bottomRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+    } catch (e) {}
+  };
 
   // Mevcut kullanıcının ID'sini al
   const getCurrentUserId = () => {
@@ -162,6 +171,17 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
 
     loadMessages();
   }, [conversationId, onUnreadCountUpdate]);
+
+  // İlk açılışta ve messages güncellendiğinde en alta kaydır
+  useEffect(() => {
+    if (!loading) {
+      scrollToBottom();
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages.length]);
 
   // Daha fazla mesaj yükle
   const loadMoreMessages = async () => {
@@ -297,13 +317,29 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
       {/* Header - Konuşma bilgileri */}
       {conversation && (
         <div className={`${variant}-chat-header`}>
-          <div className={`${variant}-chat-header-content`}>
-            <div>
-              <h2 className={`${variant}-chat-title`}>
-                {conversation.other_user?.first_name || 
-                 conversation.other_user?.email || 'Sohbet'}
-              </h2>
-            </div>
+          <div className={`${variant}-chat-header-content`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <h2 className={`${variant}-chat-title`}>
+              {conversation.other_user?.first_name || 
+               conversation.other_user?.email || 'Sohbet'}
+            </h2>
+            <button
+              onClick={() => {
+                const href = variant === 'esnaf' ? '/esnaf/panel/mesajlar' : '/musteri/mesajlar';
+                try { router.push(href); } catch (e) { try { window.location.href = href; } catch (_) {} }
+              }}
+              className={`${variant}-chat-back-button`}
+              aria-label="Geri Dön"
+              style={{
+                background: 'var(--black)',
+                color: 'var(--yellow)',
+                border: 'none',
+                padding: '8px 12px',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              ← Geri
+            </button>
           </div>
         </div>
       )}
@@ -381,6 +417,7 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
               </div>
             );
           })}
+          <div ref={bottomRef} />
         </div>
       </div>
 
