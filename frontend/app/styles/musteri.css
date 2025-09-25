@@ -1779,8 +1779,8 @@
 }
 
 .musteri-chat-header {
-  background: var(--primary-500);
-  color: white;
+  background: var(--yellow);
+  color: var(--black);
   padding: 16px;
   border-bottom: 1px solid var(--border);
 }
@@ -1906,8 +1906,8 @@
 }
 
 .musteri-chat-send-button {
-  background: var(--primary-500);
-  color: white;
+  background: var(--yellow);
+  color: var(--black);
   border: none;
   padding: 12px 24px;
   border-radius: 24px;
@@ -1926,8 +1926,8 @@
     position: fixed;
     left: 0;
     right: 0;
-    top: 56px; /* header height approx */
-    bottom: calc(64px + env(safe-area-inset-bottom)); /* bottom nav height */
+    top: 86px; /* header height approx */
+    bottom: calc(64px + 20px); /* bottom nav height */
     z-index: 998; /* below .mobile-bottom-nav (9999) */
     border-radius: 0;
     border-left: none;
