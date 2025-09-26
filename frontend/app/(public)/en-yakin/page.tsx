@@ -9,7 +9,6 @@ import SearchBar from "../components/SearchBar";
 const EnYakinPage = () => {
   return (
     <>
-      <Navbar />
       <div className="en-yakin-page">
         <Banner
           title="Size En Yakın Ustaları Bulun"
@@ -207,7 +206,6 @@ const EnYakinPage = () => {
           </div>
         </section>
       </div>
-      <Footer />
     </>
   );
 };

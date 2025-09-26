@@ -6,7 +6,6 @@ import Footer from "../../components/Footer";
 export default function HowItWorksPage() {
   return (
     <>
-      <Navbar />
       <Banner
         title="Nasıl Çalışır?"
         description="Sanayicin platformunun işleyişini aşağıda adım adım öğrenebilirsiniz."
@@ -16,7 +15,6 @@ export default function HowItWorksPage() {
       <main>
         <HowItWorks />
       </main>
-      <Footer />
     </>
   );
 }

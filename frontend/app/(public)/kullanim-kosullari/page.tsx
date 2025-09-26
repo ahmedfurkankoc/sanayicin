@@ -8,7 +8,6 @@ function KullanimKosullariPage() {
   const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <Navbar />
       <PolicyLayout title="Kullanım Koşulları" updatedAt={updatedAt}>
         <PolicySection heading="1. Platform Kullanımı">
           <p>Kullanıcılar, yürürlükteki mevzuata ve işbu koşullara uygun davranmayı kabul eder.</p>
@@ -23,7 +22,6 @@ function KullanimKosullariPage() {
           <p>Koşullara aykırılık halinde hizmetler askıya alınabilir ya da sonlandırılabilir.</p>
         </PolicySection>
       </PolicyLayout>
-      <Footer />
     </>
   );
 }

@@ -6,8 +6,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
-from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite
-from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer
+from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite, SupportTicket
+from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer, SupportTicketSerializer
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
 import logging
@@ -27,6 +27,61 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ("id", "name", "description", "service_area")
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_support_ticket(request):
+    """Giriş yapmış kullanıcıdan destek talebi oluşturur (kullanıcıya bağlı)."""
+    data = request.data.copy()
+    # role ve requester bilgilerini sunucu tarafında bağla
+    data['role'] = getattr(request.user, 'role', 'unknown')
+    if not data.get('requester_email'):
+        data['requester_email'] = request.user.email
+    if not data.get('requester_name'):
+        data['requester_name'] = getattr(request.user, 'full_name', '') or request.user.get_full_name() or request.user.email
+    serializer = SupportTicketSerializer(data=data)
+    if serializer.is_valid():
+        ticket = serializer.save(user=request.user)
+        try:
+            # E-posta bildirimi (opsiyonel, varsa)
+            EmailService.send_generic_email(
+                to_email=ticket.requester_email,
+                subject=f"Destek Talebiniz Alındı - {ticket.public_id}",
+                html_content=f"<p>Talebiniz alındı. Takip kodu: <b>{ticket.public_id}</b></p>"
+            )
+        except Exception:
+            pass
+        return Response(SupportTicketSerializer(ticket).data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_support_ticket_status(request, public_id: str):
+    """Takip kodu ile bilet durumunu döndürür."""
+    try:
+        ticket = SupportTicket.objects.get(public_id=public_id)
+    except SupportTicket.DoesNotExist:
+        return Response({ 'detail': 'Ticket bulunamadı' }, status=404)
+    data = {
+        'public_id': ticket.public_id,
+        'status': ticket.status,
+        'priority': ticket.priority,
+        'subject': ticket.subject,
+        'created_at': ticket.created_at,
+        'updated_at': ticket.updated_at,
+    }
+    return Response(data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_my_support_tickets(request):
+    """Giriş yapan kullanıcının kendi destek taleplerini döndürür."""
+    tickets = SupportTicket.objects.filter(user=request.user).order_by('-created_at')
+    serializer = SupportTicketSerializer(tickets, many=True)
+    return Response(serializer.data)
 
 class CarBrandSerializer(serializers.ModelSerializer):
     logo_url = serializers.SerializerMethodField()

@@ -7,7 +7,6 @@ import Icon from "@/app/components/ui/Icon";
 const UstaAriyorumPage = () => {
   return (
     <>
-    <Navbar />
     <div className="usta-ariyorum-page">
       {/* Hero Section */}
       <section className="hero-section">
@@ -176,7 +175,6 @@ const UstaAriyorumPage = () => {
         </div>
       </section>
     </div>
-    <Footer />
     </>
   );
 };

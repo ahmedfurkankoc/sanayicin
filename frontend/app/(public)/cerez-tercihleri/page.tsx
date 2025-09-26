@@ -8,13 +8,11 @@ function CerezTercihleriPage() {
   const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <Navbar />
       <PolicyLayout title="Çerez Tercihleri" updatedAt={updatedAt}>
         <PolicySection heading="1. Tercih Yönetimi">
           <p>Analitik ve pazarlama çerezleri için açık rızanızı burada yönetebilirsiniz.</p>
         </PolicySection>
       </PolicyLayout>
-      <Footer />
     </>
   );
 }

@@ -446,6 +446,22 @@ export const api = {
   clearNotifications: (messageIds: number[] = []) =>
     apiClient.post('/notifications/clear/', { message_ids: messageIds }),
   
+  // Support Center API
+  createSupportTicket: (data: FormData | {
+    role?: 'vendor' | 'client' | 'unknown';
+    requester_email: string;
+    requester_name?: string;
+    subject: string;
+    category?: string;
+    message: string;
+    priority?: 'low' | 'normal' | 'high' | 'urgent';
+    attachment?: File;
+  }) => apiClient.post('/support/tickets/', data, {
+    headers: (data instanceof FormData) ? { 'Content-Type': 'multipart/form-data' } : undefined
+  }),
+  getSupportTicketStatus: (publicId: string) => apiClient.get(`/support/tickets/${publicId}/`),
+  getMySupportTickets: () => apiClient.get('/support/my-tickets/'),
+  
   // Favorites API
   getFavorites: () => apiClient.get('/favorites/'),
   addFavorite: (vendorId: number) => apiClient.post('/favorites/add/', { vendor: vendorId }),

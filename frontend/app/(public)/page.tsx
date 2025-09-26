@@ -29,7 +29,6 @@ export default function Home() {
   const displayVendors = vendors.length > 0 ? vendors : mockVendors;
   return (
     <>
-      <Navbar />
 
       <main>
         {/* Mobile-first simplified homepage */}
@@ -162,10 +161,8 @@ export default function Home() {
         </div>
 
       </main>
-      <Footer />
       {/* Safe area spacer for bottom nav on mobile */}
       <div className="mobile-bottom-spacer mobile-only" />
-      <MobileBottomNav />
     </>
   );
 }

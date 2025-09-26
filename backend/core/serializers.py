@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Favorite
+from .models import CustomUser, Favorite, SupportTicket
 from vendors.models import VendorProfile
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -62,6 +62,18 @@ class FavoriteCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = ('vendor',)
+
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportTicket
+        fields = (
+            'id', 'public_id', 'user', 'role', 'requester_email', 'requester_name',
+            'subject', 'category', 'message', 'attachment', 'status', 'priority',
+            'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'public_id', 'status', 'created_at', 'updated_at', 'user')
+
 
 # JWT Token'a role bilgisi eklemek için custom serializer
 class CustomTokenObtainPairSerializer(serializers.Serializer):

@@ -162,7 +162,7 @@ const Navbar = () => {
         </button>
         <ul className={`sanayicin-menu-links${menuOpen ? " open" : ""}`}>
           <li><a href="/nasil-calisir">Nasıl Çalışır</a></li>
-          <li><a href="#yardim">Yardım</a></li>
+          <li><a href="/yardim">Yardım</a></li>
           {userType === null && (
             <>
           <li><a href="/musteri/giris">Giriş Yap</a></li>

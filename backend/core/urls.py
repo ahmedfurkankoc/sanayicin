@@ -27,7 +27,10 @@ from .views import (
     client_set_password,
     refresh_access_token,
     logout,
-    clear_notifications
+    clear_notifications,
+    create_support_ticket,
+    get_support_ticket_status,
+    list_my_support_tickets
 )
 
 urlpatterns = [
@@ -66,4 +69,9 @@ urlpatterns = [
     path('clients/register/', client_register, name='client-register'),
     path('clients/profile/', client_profile, name='client-profile'),
     path('clients/set-password/', client_set_password, name='client-set-password'),
+    
+    # Support Center
+    path('support/tickets/', create_support_ticket, name='support-ticket-create'),
+    path('support/tickets/<str:public_id>/', get_support_ticket_status, name='support-ticket-status'),
+    path('support/my-tickets/', list_my_support_tickets, name='support-ticket-my-list'),
 ] 

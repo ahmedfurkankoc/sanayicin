@@ -562,3 +562,54 @@ class Favorite(models.Model):
         return f"{self.user.email} -> {self.vendor.display_name}"
 
 
+# Destek Merkezi - Support Ticket
+class SupportTicket(models.Model):
+    ROLE_CHOICES = [
+        ('client', 'Müşteri'),
+        ('vendor', 'Esnaf'),
+        ('unknown', 'Bilinmiyor'),
+    ]
+    STATUS_CHOICES = [
+        ('open', 'Açık'),
+        ('pending', 'Beklemede'),
+        ('resolved', 'Çözüldü'),
+        ('closed', 'Kapalı'),
+    ]
+    PRIORITY_CHOICES = [
+        ('low', 'Düşük'),
+        ('normal', 'Normal'),
+        ('high', 'Yüksek'),
+        ('urgent', 'Acil'),
+    ]
+
+    public_id = models.CharField(max_length=12, unique=True, editable=False)
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='support_tickets')
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default='unknown')
+    requester_email = models.EmailField()
+    requester_name = models.CharField(max_length=120, blank=True)
+
+    subject = models.CharField(max_length=200)
+    category = models.CharField(max_length=100, blank=True)
+    message = models.TextField()
+    attachment = models.FileField(upload_to='support_attachments/', null=True, blank=True)
+
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='open')
+    priority = models.CharField(max_length=16, choices=PRIORITY_CHOICES, default='normal')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Destek Talebi'
+        verbose_name_plural = 'Destek Talepleri'
+
+    def __str__(self):
+        return f"{self.public_id} - {self.subject}"
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            # Kısa, kullanıcıya gösterilebilir takip kodu
+            self.public_id = uuid.uuid4().hex[:12]
+        super().save(*args, **kwargs)
+

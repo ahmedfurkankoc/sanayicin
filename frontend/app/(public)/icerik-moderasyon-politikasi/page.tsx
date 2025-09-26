@@ -8,7 +8,6 @@ function IcerikPolitikasiPage() {
   const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <Navbar />
       <PolicyLayout title="İçerik Politikası" updatedAt={updatedAt}>
         <PolicySection heading="1. Kabul Edilebilir Kullanım">
           <p>Hakaret, nefret söylemi, spam, yasa dışı içerik yasaktır.</p>
@@ -17,7 +16,6 @@ function IcerikPolitikasiPage() {
           <p>Şikayet edilen içerikler incelenir; ihlal halinde içerik kaldırılabilir ve hesap yaptırımı uygulanabilir.</p>
         </PolicySection>
       </PolicyLayout>
-      <Footer />
     </>
   );
 }

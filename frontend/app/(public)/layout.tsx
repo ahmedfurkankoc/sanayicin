@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "../styles/styles.css";
 import { Toaster } from "@/app/components/ui/sonner";
+import Navbar from "./components/Navbar";
+import Footer from "../components/Footer";
+import MobileBottomNav from "../components/MobileBottomNav";
 
 export const metadata: Metadata = {
   title: {
@@ -59,10 +62,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="public-layout">
-      {children}
+    <>
+      <Navbar />
+      <div className="public-layout">
+        {children}
+      </div>
+      <Footer />
+      <MobileBottomNav />
       <Toaster />
-    </div>
+    </>
   );
 }
  

@@ -9,7 +9,6 @@ import SuccessStories from "../components/SuccessStories";
 const NedenEsnafPage = () => {
   return (
     <>
-      <Navbar />
       <div className="neden-esnaf-page">
         <Banner
           title="Neden Sanayicin'de Esnaf Olmalısınız?"
@@ -135,7 +134,6 @@ const NedenEsnafPage = () => {
           </div>
         </section>
       </div>
-      <Footer />
     </>
   );
 };

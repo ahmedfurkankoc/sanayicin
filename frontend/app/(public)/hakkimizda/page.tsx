@@ -5,7 +5,6 @@ import Footer from "../../components/Footer";
 export default function AboutPage() {
   return (
     <>
-      <Navbar />
       <Banner
         title="Hakkımızda"
         description="Sanayicin olarak misyonumuz ve vizyonumuz hakkında bilgi edinin."
@@ -117,7 +116,6 @@ export default function AboutPage() {
       
       <main className="container">
       </main>
-      <Footer />
     </>
   );
 } 

@@ -9,7 +9,6 @@ import { iconMapping } from "../../utils/iconMapping";
 const HizmetVermekPage = () => {
   return (
     <>
-      <Navbar />
       <div className="hizmet-vermek-page">
         <Banner
           title="Hizmet Vermek İstiyorum"
@@ -187,7 +186,6 @@ const HizmetVermekPage = () => {
           </div>
         </section>
       </div>
-      <Footer />
     </>
   );
 };
