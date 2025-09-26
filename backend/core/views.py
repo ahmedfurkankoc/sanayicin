@@ -6,8 +6,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
-from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite, SupportTicket
-from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer, SupportTicketSerializer
+from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite, SupportTicket, SupportMessage
+from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer, SupportTicketSerializer, SupportMessageSerializer, SupportTicketDetailSerializer
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
 import logging
@@ -82,6 +82,51 @@ def list_my_support_tickets(request):
     tickets = SupportTicket.objects.filter(user=request.user).order_by('-created_at')
     serializer = SupportTicketSerializer(tickets, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_support_ticket_details(request, ticket_id: str):
+    """Destek talebi detaylarını ve mesajlarını döndürür."""
+    try:
+        ticket = SupportTicket.objects.get(id=ticket_id, user=request.user)
+    except SupportTicket.DoesNotExist:
+        return Response({'detail': 'Ticket bulunamadı'}, status=404)
+    
+    serializer = SupportTicketDetailSerializer(ticket)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def send_support_message(request, ticket_id: str):
+    """Destek talebine yeni mesaj gönderir."""
+    try:
+        ticket = SupportTicket.objects.get(id=ticket_id, user=request.user)
+    except SupportTicket.DoesNotExist:
+        return Response({'detail': 'Ticket bulunamadı'}, status=404)
+    
+    if ticket.status not in ['open', 'pending']:
+        return Response({'detail': 'Bu ticket artık yanıt kabul etmiyor'}, status=400)
+    
+    message_content = request.data.get('message', '').strip()
+    if not message_content:
+        return Response({'detail': 'Mesaj içeriği gerekli'}, status=400)
+    
+    # Mesaj oluştur
+    message = SupportMessage.objects.create(
+        ticket=ticket,
+        sender_user=request.user,
+        is_admin=False,
+        content=message_content
+    )
+    
+    # Ticket'ı güncelle
+    ticket.updated_at = timezone.now()
+    ticket.save(update_fields=['updated_at'])
+    
+    serializer = SupportMessageSerializer(message)
+    return Response(serializer.data, status=201)
 
 class CarBrandSerializer(serializers.ModelSerializer):
     logo_url = serializers.SerializerMethodField()

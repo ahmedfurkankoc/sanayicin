@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Banner from "../../components/Banner";
+import { iconMapping } from "../../../utils/iconMapping";
 
 export default function MusteriYardimPage() {
   const faqs = [
@@ -46,6 +47,8 @@ export default function MusteriYardimPage() {
           <div className="faq-accordion">
             {faqs.map((item, idx) => {
               const isOpen = openIndex === idx;
+              const PlusIcon = iconMapping['plus'];
+              const MinusIcon = iconMapping['minus'];
               return (
                 <div key={idx} className={`faq-item ${isOpen ? "active" : ""}`}>
                   <button
@@ -56,7 +59,9 @@ export default function MusteriYardimPage() {
                     aria-controls={`faq-answer-${idx}`}
                   >
                     <span>{item.q}</span>
-                    <span className="faq-icon">{isOpen ? "−" : "+"}</span>
+                    <span className="faq-icon">
+                      {isOpen ? <MinusIcon size={16} /> : <PlusIcon size={16} />}
+                    </span>
                   </button>
                   <div id={`faq-answer-${idx}`} className="faq-answer">
                     <p>{item.a}</p>

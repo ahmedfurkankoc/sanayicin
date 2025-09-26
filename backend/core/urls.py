@@ -30,7 +30,9 @@ from .views import (
     clear_notifications,
     create_support_ticket,
     get_support_ticket_status,
-    list_my_support_tickets
+    list_my_support_tickets,
+    get_support_ticket_details,
+    send_support_message
 )
 
 urlpatterns = [
@@ -74,4 +76,6 @@ urlpatterns = [
     path('support/tickets/', create_support_ticket, name='support-ticket-create'),
     path('support/tickets/<str:public_id>/', get_support_ticket_status, name='support-ticket-status'),
     path('support/my-tickets/', list_my_support_tickets, name='support-ticket-my-list'),
+    path('support/tickets/<str:ticket_id>/details/', get_support_ticket_details, name='support-ticket-details'),
+    path('support/tickets/<str:ticket_id>/reply/', send_support_message, name='support-ticket-reply'),
 ] 

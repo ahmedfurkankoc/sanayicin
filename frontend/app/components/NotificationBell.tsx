@@ -39,6 +39,10 @@ export default function NotificationBell({ iconColor = 'var(--black)' }: Notific
         return { title: 'Yeni teklif', message: payload?.vendor_name ? `${payload.vendor_name} bir teklif gönderdi.` : 'Size yeni bir teklif geldi.', link: '/musteri/mesajlar' };
       case 'service_request_created':
         return { title: 'Yeni talep oluşturuldu', message: payload?.title || 'Yeni bir hizmet talebi oluşturuldu.', link: '/musteri/taleplerim' };
+      case 'support_ticket_reply':
+        return { title: 'Destek talebinize yanıt', message: payload?.message || 'Destek talebinize yeni bir yanıt geldi.', link: '/yardim/destek?tab=tickets' };
+      case 'support_ticket_updated':
+        return { title: 'Destek talebi güncellendi', message: payload?.message || 'Destek talebiniz güncellendi.', link: '/yardim/destek?tab=tickets' };
       default:
         return { title: payload?.title || 'Bildirim', message: payload?.message || '', link: payload?.link };
     }

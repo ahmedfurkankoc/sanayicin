@@ -460,6 +460,8 @@ export const api = {
     headers: (data instanceof FormData) ? { 'Content-Type': 'multipart/form-data' } : undefined
   }),
   getSupportTicketStatus: (publicId: string) => apiClient.get(`/support/tickets/${publicId}/`),
+  getSupportTicketDetails: (ticketId: string) => apiClient.get(`/support/tickets/${ticketId}/details/`),
+  sendSupportMessage: (ticketId: string, message: string) => apiClient.post(`/support/tickets/${ticketId}/reply/`, { message }),
   getMySupportTickets: () => apiClient.get('/support/my-tickets/'),
   
   // Favorites API

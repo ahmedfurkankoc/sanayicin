@@ -15,7 +15,7 @@ export default function EsnafAuthHeader({ title, currentPage }: EsnafAuthHeaderP
         <img 
           src="/sanayicin-logo.png" 
           alt="Sanayicin" 
-          onClick={() => router.push('/')}
+          onClick={() => window.location.href = '/'}
           style={{ cursor: 'pointer' }}
         />
         <div className="esnaf-login-subtitle">{title}</div>
