@@ -8,7 +8,6 @@ function EsnafSozlesmesiPage() {
   const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <Navbar />
       <PolicyLayout title="Esnaf Sözleşmesi" updatedAt={updatedAt}>
         <PolicySection heading="1. Taraflar ve Kapsam">
           <p>Bu sözleşme, Sanayicin platformunda hizmet veren esnaf ile Sanayicin arasındadır.</p>
@@ -23,7 +22,6 @@ function EsnafSozlesmesiPage() {
           <p>Müşteri yorumları platform kuralları dahilinde yayınlanır; manipülasyon yasaktır.</p>
         </PolicySection>
       </PolicyLayout>
-      <Footer />
     </>
   );
 }

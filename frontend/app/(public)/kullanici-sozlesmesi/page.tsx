@@ -8,7 +8,6 @@ function KullaniciSozlesmesiPage() {
   const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <Navbar />
       <PolicyLayout title="Kullanıcı Sözleşmesi" updatedAt={updatedAt}>
         <PolicySection heading="1. Taraflar ve Konu">
           <p>Bu sözleşme, Sanayicin platformunu kullanan kullanıcı ile Sanayicin arasında akdedilmiştir.</p>
@@ -26,7 +25,6 @@ function KullaniciSozlesmesiPage() {
           <p>Sanayicin, sözleşme hükümlerini güncelleyebilir; güncellemeler yayınlandığı tarihte yürürlüğe girer.</p>
         </PolicySection>
       </PolicyLayout>
-      <Footer />
     </>
   );
 }
