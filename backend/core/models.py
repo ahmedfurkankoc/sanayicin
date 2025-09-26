@@ -613,3 +613,21 @@ class SupportTicket(models.Model):
             self.public_id = uuid.uuid4().hex[:12]
         super().save(*args, **kwargs)
 
+
+# Destek Mesajları - Support Messages
+class SupportMessage(models.Model):
+    ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name='messages')
+    sender_user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='support_messages')
+    is_admin = models.BooleanField(default=False, help_text='Admin tarafından gönderilen mesaj mı?')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Destek Mesajı'
+        verbose_name_plural = 'Destek Mesajları'
+
+    def __str__(self):
+        sender = 'Admin' if self.is_admin else (self.sender_user.email if self.sender_user else 'Anonim')
+        return f"{self.ticket.public_id} - {sender} - {self.created_at.strftime('%d.%m.%Y %H:%M')}"
+

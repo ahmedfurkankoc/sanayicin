@@ -688,16 +688,16 @@
 }
 
 .esnaf-login-logo img {
-  width: 280px;
+  width: 200px;
   margin-right: 12px;
 }
 
 
 .esnaf-login-subtitle {
   color: var(--black);
-  font-size: 14px;
-  font-weight: 400;
-  margin-left: 12px;
+  font-size: 18px;
+  font-weight: 600;
+  margin-left: 36px;
 }
 
 

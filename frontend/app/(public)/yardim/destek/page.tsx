@@ -4,8 +4,10 @@ import React, { useEffect, useMemo, useState } from "react";
 // Navbar/Footer layout'ta render ediliyor
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/app/utils/api";
+import { iconMapping } from "@/app/utils/iconMapping";
 
 function MyTickets() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,12 @@ function MyTickets() {
             const dateText = created.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
             const timeText = created.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', hour12: false });
             return (
-            <div key={t.id} className="support-item">
+            <div 
+              key={t.id} 
+              className="support-item" 
+              onClick={() => router.push(`/yardim/destek/${t.id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="support-item-left">
                 <div className="support-item-date">{dateText}</div>
                 <div className="support-item-time-minor">{timeText}</div>
@@ -62,11 +69,12 @@ function MyTickets() {
                 <div className="support-item-title">{t.subject || 'Konu belirtilmemiş'}</div>
                 <div className="support-item-meta-row">
                   <span className="support-item-code">Kod: {t.public_id}</span>
-                  <span className="support-item-priority">Öncelik: {t.priority}</span>
                 </div>
               </div>
               <div className="support-item-right">
-                <span className={`badge ${t.status === 'open' ? 'badge-open' : 'badge-closed'}`}>{t.status}</span>
+                <span className={`ticket-status ${t.status === 'open' ? 'status-open' : 'status-closed'}`}>
+                  {t.status === 'open' ? 'Açık' : 'Kapalı'}
+                </span>
               </div>
             </div>
           )})}
