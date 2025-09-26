@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Favorite, SupportTicket
+from .models import CustomUser, Favorite, SupportTicket, SupportMessage
 from vendors.models import VendorProfile
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -71,6 +71,26 @@ class SupportTicketSerializer(serializers.ModelSerializer):
             'id', 'public_id', 'user', 'role', 'requester_email', 'requester_name',
             'subject', 'category', 'message', 'attachment', 'status', 'priority',
             'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'public_id', 'status', 'created_at', 'updated_at', 'user')
+
+
+class SupportMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportMessage
+        fields = ('id', 'ticket', 'sender_user', 'is_admin', 'content', 'created_at')
+        read_only_fields = ('id', 'created_at', 'sender_user', 'is_admin')
+
+
+class SupportTicketDetailSerializer(serializers.ModelSerializer):
+    messages = SupportMessageSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = SupportTicket
+        fields = (
+            'id', 'public_id', 'user', 'role', 'requester_email', 'requester_name',
+            'subject', 'category', 'message', 'attachment', 'status', 'priority',
+            'created_at', 'updated_at', 'messages'
         )
         read_only_fields = ('id', 'public_id', 'status', 'created_at', 'updated_at', 'user')
 
