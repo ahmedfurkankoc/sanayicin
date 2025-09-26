@@ -24,6 +24,9 @@ export function middleware(request: NextRequest) {
     '/usta-ariyorum',
     '/musteri/arama-sonuclari' // Arama sonuçları sayfası public
   ]
+
+  // Yardım sayfaları: genel yardım/kategoriler public, ancak /yardim/destek korumalı
+  const helpPublicExact = ['/yardim', '/yardim/kullanici', '/yardim/esnaf']
   
   // Müşteri sayfaları - client token gerekir
   const musteriPaths = [
@@ -49,13 +52,27 @@ export function middleware(request: NextRequest) {
   ]
   
   // Public sayfa kontrolü
-  if (publicPaths.some(path => pathname === path || pathname.startsWith(path + '/'))) {
+  if (
+    publicPaths.some(path => pathname === path || pathname.startsWith(path + '/')) ||
+    helpPublicExact.includes(pathname)
+  ) {
     return NextResponse.next()
   }
   
   // Token kontrolü
   const clientToken = request.cookies.get('client_token')?.value
   const vendorToken = request.cookies.get('vendor_token')?.value
+
+  // Yardım destek sayfası koruması: müşteri veya esnaf girişli olmalı
+  if (pathname.startsWith('/yardim/destek')) {
+    if (!clientToken && !vendorToken) {
+      const redirectUrl = new URL('/musteri/giris', request.url)
+      // Tüm yolu ve varsa query'i geri dönmek için next paramı olarak ilet
+      redirectUrl.searchParams.set('next', pathname + (request.nextUrl.search || ''))
+      return NextResponse.redirect(redirectUrl)
+    }
+    return NextResponse.next()
+  }
   
   // Müşteri sayfaları kontrolü
   if (musteriPaths.some(path => pathname.startsWith(path))) {

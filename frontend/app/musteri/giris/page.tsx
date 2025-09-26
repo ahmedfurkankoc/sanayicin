@@ -21,7 +21,8 @@ function MusteriGirisContent() {
   useEffect(() => {
     if (isAuthenticated) {
       const next = searchParams?.get('next');
-      router.replace(next && next.startsWith('/musteri') ? next : "/musteri");
+      // Güvenlik: sadece site içi relatif yolları kabul et
+      router.replace(next && next.startsWith('/') ? next : "/musteri");
     }
   }, [isAuthenticated, router, searchParams]);
 
@@ -49,7 +50,8 @@ function MusteriGirisContent() {
         // Kullanıcı bilgisini yenile ve yönlendir
         await refreshUser();
         const next = searchParams?.get('next');
-        const target = next && next.startsWith('/musteri') ? next : '/musteri';
+        // Güvenlik: sadece site içi relatif yolları kabul et
+        const target = next && next.startsWith('/') ? next : '/musteri';
         // Tam sayfa geçiş yaparak middleware'in cookie'yi görmesini garanti edelim
         setTimeout(() => {
           if (typeof window !== 'undefined') {

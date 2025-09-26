@@ -8,7 +8,6 @@ function KvkkAydinlatmaPage() {
   const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <Navbar />
       <PolicyLayout title="KVKK Aydınlatma Metni" updatedAt={updatedAt}>
         <PolicySection heading="1. Veri Sorumlusu">
           <p>Sanayicin, 6698 sayılı Kanun kapsamında veri sorumlusudur.</p>
@@ -20,7 +19,6 @@ function KvkkAydinlatmaPage() {
           <p>Kategori bazında belirlenen süreler; erişim, düzeltme, silme talepleri için başvuru kanalları.</p>
         </PolicySection>
       </PolicyLayout>
-      <Footer />
     </>
   );
 }

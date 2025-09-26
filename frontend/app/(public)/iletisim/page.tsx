@@ -6,7 +6,6 @@ import Banner from "../components/Banner";
 export default function ContactPage() {
   return (
     <>
-      <Navbar />
       <Banner
         title="İletişim"
         description="Bize ulaşmak için aşağıdaki formu doldurabilirsiniz. Size en kısa sürede dönüş yapacağız."
@@ -42,7 +41,6 @@ export default function ContactPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </>
   );
 } 
