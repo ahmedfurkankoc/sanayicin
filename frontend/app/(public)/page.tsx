@@ -13,9 +13,11 @@ import HowItWorks from "./components/HowItWorks";
 import CityVendorsSection from "./components/CityVendorsSection";
 import ServicesSection from "./components/ServicesSection";
 import { useMobileVendors } from "../hooks/useMobileVendors";
+import { useServices } from "../hooks/useServices";
 
 export default function Home() {
   const { vendors, loading, error } = useMobileVendors();
+  const { services, loading: servicesLoading } = useServices();
   
   // Fallback mock data
   const mockVendors = [
@@ -46,11 +48,27 @@ export default function Home() {
             </div>
 
             <div className="mobile-quick-cats">
-              <button className="category-chip">Tamir</button>
-              <button className="category-chip">Elektrik</button>
-              <button className="category-chip">Kaporta</button>
-              <button className="category-chip">Boya</button>
-              <button className="category-chip">Lastik</button>
+              {servicesLoading ? (
+                // Loading state için placeholder'lar
+                Array.from({ length: 5 }).map((_, index) => (
+                  <div key={`loading-${index}`} className="category-chip loading">
+                    <div className="loading-shimmer"></div>
+                  </div>
+                ))
+              ) : (
+                services.slice(0, 8).map((service) => (
+                  <button 
+                    key={service.id} 
+                    className="category-chip"
+                    onClick={() => {
+                      // Hizmet arama sayfasına yönlendir (ID ile)
+                      window.location.href = `/musteri/arama-sonuclari?service=${service.id}`;
+                    }}
+                  >
+                    {service.name}
+                  </button>
+                ))
+              )}
             </div>
 
             <div className="mobile-trust-badges">
@@ -60,7 +78,7 @@ export default function Home() {
             </div>
 
             <div className="mobile-nearby">
-              <h3 className="sectionTitle">Sana En Yakın Esnaflar</h3>
+              <h3 className="sectionTitle">En Çok Yorum Alan Esnaflar</h3>
               <div className="h-scroll-cards">
                 {loading ? (
                   // Skeleton loading göster
