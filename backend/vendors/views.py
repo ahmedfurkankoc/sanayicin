@@ -125,7 +125,12 @@ class VendorSearchView(generics.ListAPIView):
         if service:
             try:
                 from core.models import ServiceArea
-                service_area = ServiceArea.objects.get(id=service)
+                # Önce ID olarak deneyelim
+                if service.isdigit():
+                    service_area = ServiceArea.objects.get(id=service)
+                else:
+                    # String ise name ile ara
+                    service_area = ServiceArea.objects.get(name__icontains=service)
                 # Vendor'ların service_areas field'ında bu hizmet alanı var mı kontrol et
                 queryset = queryset.filter(service_areas=service_area)
             except ServiceArea.DoesNotExist:

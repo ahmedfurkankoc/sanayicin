@@ -97,7 +97,7 @@ export default function HelpPage() {
                       { q: "Esnaf hesabı nasıl oluştururum?", a: "'Hizmet Vermek' sayfasından başvuru formunu doldurup gerekli belgeleri yükleyerek hesap oluşturabilirsin." },
                       { q: "Profilimi nasıl doğrularım?", a: "Kimlik belgesi, vergi levhası ve mesleki sertifikalarını yükleyerek profil doğrulamasını tamamlayabilirsin." },
                       { q: "Gelen talepleri nasıl yanıtlarım?", a: "Esnaf panelindeki 'Talepler' bölümünden gelen teklifleri görüntüleyip detaylı yanıt verebilirsin." },
-                      { q: "Fiyatlarımı nasıl belirlerim?", a: "Profil ayarlarından hizmet kategorilerine göre fiyat aralıklarını belirleyebilirsin." },
+                      { q: "Profilimi nasıl güncellerim?", a: "Esnaf panelindeki 'Profil Ayarları' bölümünden kişisel bilgilerini, hizmet alanlarını ve iletişim bilgilerini güncelleyebilirsin." },
                       { q: "Müşterilerle nasıl mesajlaşırım?", a: "Teklif yanıtladıktan sonra sohbet ekranı açılır. 'Mesajlarım' bölümünden tüm görüşmeleri takip edebilirsin." }
                     ].map((item, idx) => {
                       const isOpen = openIndex === (idx + 5); // Kullanıcı SSS'den sonraki indexler

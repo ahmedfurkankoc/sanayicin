@@ -36,33 +36,10 @@ export const useMobileVendors = (): UseMobileVendorsReturn => {
       setLoading(true);
       setError(null);
 
-      // Önce kullanıcının konumunu almaya çalış
-      let userCity = '';
-      
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              timeout: 5000,
-              enableHighAccuracy: false
-            });
-          });
-          
-          // Reverse geocoding için basit bir yaklaşım
-          // Gerçek uygulamada Google Maps API veya benzeri kullanılabilir
-          userCity = 'İstanbul'; // Varsayılan olarak İstanbul
-        } catch (geoError) {
-          console.log('Konum alınamadı, varsayılan şehir kullanılıyor');
-          userCity = 'İstanbul';
-        }
-      } else {
-        userCity = 'İstanbul';
-      }
-
-      // Önce kullanıcının şehrindeki esnafları ara
-      let searchParams: any = {
-        city: userCity,
-        page_size: 5
+      // En çok yorum alan esnafları getir (konum izni gerektirmez)
+      const searchParams: any = {
+        page_size: 5,
+        ordering: '-review_count' // En çok yorum alan esnafları önce getir
       };
 
       const response = await api.searchVendors(searchParams);
@@ -70,13 +47,13 @@ export const useMobileVendors = (): UseMobileVendorsReturn => {
       if (response.data.results && response.data.results.length > 0) {
         setVendors(response.data.results);
       } else {
-        // Şehirde esnaf yoksa, en yüksek rating'li esnafları getir
+        // Fallback: En yüksek rating'li esnafları getir
         const topRatedResponse = await api.searchVendors({
-          page_size: 5
+          page_size: 5,
+          ordering: '-rating'
         });
         
         if (topRatedResponse.data.results) {
-          // Backend'de zaten rating'e göre sıralanmış
           setVendors(topRatedResponse.data.results);
         }
       }

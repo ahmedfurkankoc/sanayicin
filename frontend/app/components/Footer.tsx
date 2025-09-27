@@ -17,7 +17,7 @@ const Footer = () => (
           <a href="/nasil-calisir">Nasıl Çalışır?</a>
           <a href="/hakkimizda">Hakkımızda</a>
           <a href="#blog">Blog</a>
-          <a href="/iletisim">İletişim</a>
+          <a href="/yardim">Yardım</a>
         </div>
         <div className="footer-link-group">
           <div className="footer-link-title">Hizmetlerimiz</div>

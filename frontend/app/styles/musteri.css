@@ -1307,6 +1307,9 @@
 .musteri-auth-container {
   max-width: 500px;
   margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .musteri-auth-card {
@@ -1314,6 +1317,10 @@
   border-radius: 12px;
   padding: 40px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .musteri-auth-title {
@@ -1337,12 +1344,16 @@
 
 .musteri-form-group {
   margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .musteri-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .musteri-form-label {
@@ -1359,6 +1370,7 @@
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .musteri-form-input:focus {
@@ -1599,14 +1611,15 @@
   .musteri-auth-container {
     max-width: 100%;
     margin: 0;
+    padding: 0 10px;
   }
   
   .musteri-auth-card {
     padding: 20px;
-    margin: 0 10px;
+    margin: 0;
     border-radius: 8px;
     box-sizing: border-box;
-    width: calc(100% - 20px);
+    width: 100%;
   }
   
   .musteri-form-input {
@@ -1618,7 +1631,7 @@
   
   .musteri-form-row {
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 16px;
   }
   
   .auth-modal {
