@@ -14,8 +14,6 @@ export default function MusteriYardimPage() {
     { q: "Usta ile nasıl mesajlaşırım?", a: "Teklif isteği sonrasında sohbet ekranı açılır. 'Mesajlarım' üzerinden görüşmeyi sürdürebilirsin." },
     { q: "Yorum ve puanlama nasıl yapılır?", a: "Hizmet tamamlandıktan sonra sipariş/talep detayından ustayı puanlayabilir ve yorum yazabilirsin." },
     { q: "İptal ve değişiklik kuralları nelerdir?", a: "Randevu saatinden makul süre önce iptal ve değişiklik yapılabilir. Ustanın politikaları talep detayında yer alır." },
-    { q: "Ödeme nasıl yapılır?", a: "Ödemeler anlaşmaya bağlıdır. Bazı ustalar platform dışı ödeme, bazıları ise güvenli ödeme bağlantısı sunabilir." },
-    { q: "Ödeme güvenliği sağlanıyor mu?", a: "Ödeme bağlantıları şifreli ve güvenlidir. Asla şifreni veya kart bilgilerini mesaj üzerinden paylaşma." },
     { q: "Hizmet garantisi var mı?", a: "Garanti, ustanın kendi garanti politikalarına göre değişir. Profilde ve teklif detayında belirtilir." },
     { q: "Anlaşmazlık durumunda ne yapmalıyım?", a: "Talep detayından 'Sorun Bildir' seçeneğiyle destek talebi oluştur; ekibimiz en kısa sürede yardımcı olur." },
     { q: "Usta profillerinde nelere dikkat etmeliyim?", a: "Puanlar, yorumlar, tamamlanan işler, fotoğraflar ve doğrulamalar güvenilir seçimi kolaylaştırır." },

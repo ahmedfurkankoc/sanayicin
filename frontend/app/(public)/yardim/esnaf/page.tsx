@@ -13,8 +13,6 @@ export default function EsnafYardimPage() {
     { q: "Fiyatlarımı nasıl belirlerim?", a: "Profil ayarlarından hizmet kategorilerine göre fiyat aralıklarını belirleyebilir, özel durumlar için özel fiyatlar sunabilirsin." },
     { q: "Müşterilerle nasıl mesajlaşırım?", a: "Teklif yanıtladıktan sonra sohbet ekranı açılır. 'Mesajlarım' bölümünden tüm görüşmeleri takip edebilirsin." },
     { q: "Yorumları nasıl yönetirim?", a: "Müşteri yorumlarını profil sayfanda görüntüleyebilir, gerekirse yanıt verebilirsin. Olumsuz yorumlar için destek ekibimizle iletişime geçebilirsin." },
-    { q: "Ödeme nasıl alırım?", a: "Ödemeler müşteriyle anlaşmaya bağlıdır. Nakit, havale veya platform üzerinden güvenli ödeme seçenekleri sunabilirsin." },
-    { q: "Komisyon oranları nedir?", a: "Platform komisyon oranları ve ödeme detayları esnaf sözleşmesinde belirtilmiştir. Detaylar için 'Esnaf Sözleşmesi' sayfasını inceleyebilirsin." },
     { q: "Profil fotoğraflarımı nasıl güncellerim?", a: "Profil ayarlarından fotoğraf galerisini düzenleyebilir, iş yapılan yerlerin ve tamamlanan projelerin fotoğraflarını ekleyebilirsin." },
     { q: "Hizmet alanlarımı nasıl belirlerim?", a: "Profil ayarlarından hizmet verdiğin ilçeleri seçebilir, maksimum mesafe sınırını belirleyebilirsin." },
     { q: "Acil durumlar için ne yapmalıyım?", a: "Acil durumlar için özel fiyatlandırma yapabilir, 7/24 hizmet verdiğini belirtebilirsin. Müşteriye acil durum ücretini önceden bildirmelisin." },

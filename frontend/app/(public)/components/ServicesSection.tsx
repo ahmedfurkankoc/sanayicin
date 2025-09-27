@@ -43,6 +43,14 @@ const serviceAreas = [
   {
     name: "Yedek Parça ve Aksesuar",
     image: "/images/sanayicin-services/yedek-parca-ve-aksesuar.jpg"
+  },
+  {
+    name: "Yol, Yardım, Çekici Hizmetleri",
+    image: "/images/sanayicin-services/araba-cekici.jpg"
+  },
+  {
+    name: "Kaplama ve Görsel Tasarım",
+    image: "/images/sanayicin-services/kaplama-ve-gorsel.jpg"
   }
 ];
 
