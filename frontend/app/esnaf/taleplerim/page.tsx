@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/app/utils/api';
 import { useEsnaf } from '../context/EsnafContext';
 import EsnafPanelLayout from '../components/EsnafPanelLayout';
@@ -25,6 +26,7 @@ interface Request {
 
 export default function TaleplerimPage() {
   const { user, loading } = useEsnaf();
+  const router = useRouter();
   const [requests, setRequests] = useState<Request[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [onlyPending, setOnlyPending] = useState(false);
@@ -41,6 +43,10 @@ export default function TaleplerimPage() {
   const [offerDays, setOfferDays] = useState<string>('');
   const [offerPhone, setOfferPhone] = useState<string>('');
   const [viewOfferId, setViewOfferId] = useState<number | null>(null);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [messageForRequest, setMessageForRequest] = useState<Request | null>(null);
+  const [messageText, setMessageText] = useState('');
+  const [messageSubmitting, setMessageSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -145,6 +151,47 @@ export default function TaleplerimPage() {
       setRequests(prev => prev.map(req => req.id === requestId ? res.data : req));
     } catch (_) {
       setRequests(prev => prev.map(req => req.id === requestId ? { ...req, status: newStatus } : req));
+    }
+  };
+
+  const handleSendMessage = (request: Request) => {
+    setMessageForRequest(request);
+    setMessageText('');
+    setMessageModalOpen(true);
+  };
+
+  const handleSendMessageSubmit = async () => {
+    if (!messageForRequest || !messageText.trim()) return;
+    
+    try {
+      setMessageSubmitting(true);
+      
+      // Önce conversation oluştur veya mevcut olanı bul
+      const res = await api.chatCreateConversation(messageForRequest.user.id);
+      const conversationId = res?.data?.id;
+      
+      if (conversationId) {
+        // Talep bilgilerini mention olarak ekle
+        const mentionText = `📋 Talep #${messageForRequest.id}: "${messageForRequest.title}"`;
+        const fullMessage = `${mentionText}\n\n${messageText.trim()}`;
+        
+        // Mesajı gönder
+        await api.chatSendMessageREST(conversationId, fullMessage);
+        
+        // Modal'ı kapat
+        setMessageModalOpen(false);
+        setMessageForRequest(null);
+        setMessageText('');
+        
+        // Mesajlar sayfasına yönlendir
+        router.push(`/esnaf/panel/mesajlar/${conversationId}`);
+      }
+    } catch (error) {
+      console.error('Mesaj gönderilemedi:', error);
+      // Hata durumunda sadece mesajlar sayfasına yönlendir
+      router.push('/esnaf/panel/mesajlar');
+    } finally {
+      setMessageSubmitting(false);
     }
   };
 
@@ -339,8 +386,16 @@ export default function TaleplerimPage() {
                       Teklif Ver
                     </button>
                   )}
-                  {/* Eğer teklif verilmişse sağ tarafı boş bırak */}
-                  {(request as any).last_offered_price != null || (request as any).last_offered_days != null ? <span /> : <span />}
+                  
+                  {/* Mesaj Gönder butonu */}
+                  <button
+                    onClick={() => handleSendMessage(request)}
+                    className="esnaf-btn esnaf-btn-outline"
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Icon name="message" size="sm" />
+                    Mesaj Gönder
+                  </button>
                 </div>
 
                 {/* Quick Actions (row-level) */}
@@ -455,6 +510,88 @@ export default function TaleplerimPage() {
             <div className="esnaf-modal-actions">
               <button onClick={() => setViewOfferId(null)} className="esnaf-btn esnaf-btn-outline">Kapat</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mesaj Gönder Modal */}
+      {messageModalOpen && messageForRequest && (
+        <div className="esnaf-modal-overlay esnaf-modal-centered">
+          <div className="esnaf-modal-popup" style={{ maxWidth: 600, width: '100%' }}>
+            <button onClick={() => setMessageModalOpen(false)} className="esnaf-modal-close">×</button>
+            <h3 className="esnaf-modal-title">Mesaj Gönder</h3>
+            
+            {/* Talep Bilgileri */}
+            <div style={{ 
+              background: '#f8f9fa', 
+              padding: '16px', 
+              borderRadius: '8px', 
+              marginBottom: '20px',
+              border: '1px solid #e9ecef'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <Icon name="file" size="sm" color="#666" />
+                <span style={{ fontWeight: '600', color: '#333' }}>
+                  Talep #{messageForRequest.id}: {messageForRequest.title}
+                </span>
+              </div>
+              <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                Müşteri: {messageForRequest.user?.name || messageForRequest.user?.email || 'Bilinmeyen'}
+              </div>
+              <div style={{ fontSize: '13px', color: '#888', lineHeight: '1.4' }}>
+                {messageForRequest.description.length > 100 
+                  ? `${messageForRequest.description.substring(0, 100)}...` 
+                  : messageForRequest.description
+                }
+              </div>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessageSubmit();
+            }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label className="esnaf-offer-label">Mesajınız</label>
+                <textarea
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder="Müşteriye göndermek istediğiniz mesajı yazın..."
+                  required
+                  maxLength={1000}
+                  className="esnaf-offer-textarea"
+                  style={{ minHeight: '120px' }}
+                />
+                <span className="esnaf-offer-counter">{messageText.length}/1000</span>
+              </div>
+
+              <div style={{ 
+                background: '#e3f2fd', 
+                padding: '12px', 
+                borderRadius: '6px', 
+                marginBottom: '20px',
+                fontSize: '13px',
+                color: '#1565c0'
+              }}>
+                <strong>💡 İpucu:</strong> Mesajınız otomatik olarak talep bilgileri ile birlikte gönderilecek.
+              </div>
+
+              <div className="esnaf-modal-actions">
+                <button 
+                  type="button" 
+                  onClick={() => setMessageModalOpen(false)} 
+                  className="esnaf-btn esnaf-btn-outline"
+                >
+                  İptal
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={messageSubmitting || !messageText.trim()} 
+                  className="esnaf-btn esnaf-btn-primary"
+                >
+                  {messageSubmitting ? 'Gönderiliyor...' : 'Mesaj Gönder'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

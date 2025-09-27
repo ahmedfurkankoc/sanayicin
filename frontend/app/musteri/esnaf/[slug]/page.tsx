@@ -20,7 +20,6 @@ interface Vendor {
     avatar?: string;
   };
   user_id?: number; // Backend'den gelmesi gereken field
-  business_type: string;
   company_title: string;
   display_name: string;
   business_phone: string; // phone yerine business_phone
@@ -257,7 +256,7 @@ function VendorDetailContent() {
               )}
             </div>
             <p className="m-vendor-subtitle">
-              {vendor.business_type} • {vendor.company_title}
+              {vendor.company_title}
             </p>
 
             {/* Aksiyonlar - Kendi profilinde gösterilmez */}

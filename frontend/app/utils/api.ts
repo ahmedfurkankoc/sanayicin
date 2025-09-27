@@ -488,6 +488,8 @@ export const api = {
   ) => apiClient.post(`/vendors/${vendorSlug}/service-requests/`, data),
   listVendorServiceRequests: (params?: { status?: 'pending' | 'responded' | 'completed' | 'cancelled' | 'closed'; last_days?: number; only_pending?: boolean; only_quotes?: boolean }) =>
     apiClient.get('/vendors/service-requests/', { params }),
+  getServiceRequestDetails: (id: number, role: 'vendor' | 'client' = 'vendor') =>
+    apiClient.get(role === 'vendor' ? '/vendors/service-requests/' : '/vendors/client/service-requests/', { params: { id } }),
   getVendorServiceRequestsUnreadCount: () =>
     apiClient.get('/vendors/service-requests/unread_count/'),
   vendorReplyServiceRequest: (id: number, data: { message: string; phone?: string; price?: number; days?: number }) =>
