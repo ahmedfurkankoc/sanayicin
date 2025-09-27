@@ -787,6 +787,20 @@ class VendorServiceRequestListView(APIView):
     permission_classes = [IsAuthenticated, IsVendor]
 
     def get(self, request):
+        # Tek bir talep detayı için ID parametresi kontrolü
+        request_id = request.query_params.get('id')
+        if request_id:
+            try:
+                service_request = ServiceRequest.objects.get(
+                    id=request_id, 
+                    vendor=request.user.vendor_profile
+                )
+                serializer = ServiceRequestSerializer(service_request)
+                return Response(serializer.data)
+            except ServiceRequest.DoesNotExist:
+                return Response({'detail': 'Talep bulunamadı'}, status=404)
+        
+        # Normal liste işlemi
         status_filter = request.query_params.get('status')  # pending/responded/completed/cancelled
         last_days = request.query_params.get('last_days')
         only_pending = request.query_params.get('only_pending')
@@ -914,6 +928,20 @@ class ClientServiceRequestListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Tek bir talep detayı için ID parametresi kontrolü
+        request_id = request.query_params.get('id')
+        if request_id:
+            try:
+                service_request = ServiceRequest.objects.get(
+                    id=request_id, 
+                    user=request.user
+                )
+                serializer = ServiceRequestSerializer(service_request)
+                return Response(serializer.data)
+            except ServiceRequest.DoesNotExist:
+                return Response({'detail': 'Talep bulunamadı'}, status=404)
+        
+        # Normal liste işlemi
         status_filter = request.query_params.get('status')
         last_days = request.query_params.get('last_days')
         queryset = ServiceRequest.objects.filter(user=request.user)

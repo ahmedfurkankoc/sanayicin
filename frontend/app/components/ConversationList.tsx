@@ -147,7 +147,36 @@ export default function ConversationList({ userRole, baseUrl, className = '' }: 
     };
   }, [globalWS, userRole]);
 
-  if (loading) return <div className={className}>Yükleniyor...</div>;
+  // Skeleton loading component
+  const ConversationSkeleton = () => (
+    <div className="skeleton-message" style={{ 
+      padding: '12px 0', 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: 12,
+      borderBottom: '1px solid #eee'
+    }}>
+      {/* Avatar skeleton */}
+      <div className="skeleton-avatar" style={{ width: 36, height: 36 }} />
+      
+      {/* Content skeleton */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="skeleton-line" style={{ width: '60%', marginBottom: 8 }} />
+        <div className="skeleton-line" style={{ width: '80%', height: 12 }} />
+      </div>
+      
+      {/* Time skeleton */}
+      <div className="skeleton-line" style={{ width: 40, height: 12 }} />
+    </div>
+  );
+
+  if (loading) return (
+    <div className={className}>
+      <ConversationSkeleton />
+      <ConversationSkeleton />
+      <ConversationSkeleton />
+    </div>
+  );
 
   return (
     <div className={className}>

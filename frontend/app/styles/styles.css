@@ -848,6 +848,53 @@ section[aria-label="Notifications alt+T"] {
   }
 }
 
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Skeleton loading styles */
+.skeleton-message {
+  opacity: 0.7;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+.skeleton-bubble {
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  max-width: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  height: 16px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.skeleton-line:last-child {
+  margin-bottom: 0;
+  width: 60%;
+}
+
 /* Mobile responsive skeleton */
 @media (max-width: 768px) {
   .h-scroll-cards .vendor-card-skeleton {
@@ -2845,10 +2892,32 @@ footer {
   position: relative;
   overflow: hidden;
 }
+
+.cityVendorsSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/icons/turkiye-map.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.15;
+  filter: blur(4px);
+  z-index: 1;
+}
+
+.cityVendorsSection .container {
+  position: relative;
+  z-index: 2;
+}
 .cityVendorsSection .sectionTitle {
   font-size: 2.2rem;
   font-weight: 700;
   margin-bottom: 16px;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8), 0 0 8px rgba(255, 255, 255, 0.6);
 }
 .cityVendorsSection .sectionDescription {
   font-size: 1.15rem;
@@ -2857,6 +2926,7 @@ footer {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9), 0 0 6px rgba(255, 255, 255, 0.7);
 }
 .citySelectBtn {
   background: #ffd600;
