@@ -969,7 +969,7 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                             if (typeof m.content === 'string' && m.content.includes('📋 Talep #')) {
                               const lines = m.content.split('\n');
                               const mentionLine = lines[0];
-                              const messageLines = lines.slice(1).filter(line => line.trim());
+                              const messageLines = lines.slice(1).filter((line: string) => line.trim());
                               
                               // Talep ID'sini ve başlığını çıkar
                               const match = mentionLine.match(/📋 Talep #(\d+): "([^"]+)"/);
