@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, Suspense } from "react";
 // Navbar/Footer layout'ta render ediliyor
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/app/utils/api";
@@ -84,7 +84,7 @@ function MyTickets() {
   );
 }
 
-export default function SupportHubPage() {
+function SupportHubContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTab = useMemo(() => {
@@ -214,4 +214,11 @@ export default function SupportHubPage() {
   );
 }
 
+export default function SupportHubPage() {
+  return (
+    <Suspense fallback={<div className="u-max-720"><p>Yükleniyor...</p></div>}>
+      <SupportHubContent />
+    </Suspense>
+  );
+}
 

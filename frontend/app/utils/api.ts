@@ -309,7 +309,7 @@ export const api = {
   getCarBrands: () => apiClient.get('/car-brands/'),
   
   // Vendor arama sonuçları
-  searchVendors: (params: { city?: string; district?: string; service?: string; category?: string; carBrand?: string; page?: string; page_size?: number; q?: string }) => 
+  searchVendors: (params: { city?: string; district?: string; service?: string; category?: string; carBrand?: string; page?: string; page_size?: number; q?: string; ordering?: string }) => 
     apiClient.get('/vendors/search/', { params }),
   
   // Vendor detay sayfası
