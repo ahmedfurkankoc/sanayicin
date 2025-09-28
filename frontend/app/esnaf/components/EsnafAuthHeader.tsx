@@ -2,11 +2,10 @@ import React from "react";
 import { useRouter } from "next/navigation";
 
 interface EsnafAuthHeaderProps {
-  title: string;
   currentPage: 'login' | 'register';
 }
 
-export default function EsnafAuthHeader({ title, currentPage }: EsnafAuthHeaderProps) {
+export default function EsnafAuthHeader({ currentPage }: EsnafAuthHeaderProps) {
   const router = useRouter();
 
   return (
@@ -18,7 +17,6 @@ export default function EsnafAuthHeader({ title, currentPage }: EsnafAuthHeaderP
           onClick={() => window.location.href = '/'}
           style={{ cursor: 'pointer' }}
         />
-        <div className="esnaf-login-subtitle">{title}</div>
       </div>
       
       {/* Giriş/Kayıt Butonları */}
