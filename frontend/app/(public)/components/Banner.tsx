@@ -6,6 +6,7 @@ interface BannerProps {
   backgroundColor?: string;
   textColor?: string;
   className?: string;
+  breadcrumb?: React.ReactNode;
 }
 
 const Banner = ({
@@ -14,6 +15,7 @@ const Banner = ({
   backgroundColor = "var(--yellow)", // Default arka plan rengi
   textColor = "var(--black)", // Default yazı rengi
   className = "",
+  breadcrumb,
 }: BannerProps) => {
   return (
     <section
@@ -27,6 +29,11 @@ const Banner = ({
         <div className="hero-content">
           <h1 className="hero-title">{title}</h1>
           <p className="hero-description">{description}</p>
+          {breadcrumb && (
+            <div className="hero-breadcrumb">
+              {breadcrumb}
+            </div>
+          )}
         </div>
       </div>
     </section>

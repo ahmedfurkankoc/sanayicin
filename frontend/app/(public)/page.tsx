@@ -179,8 +179,6 @@ export default function Home() {
         </div>
 
       </main>
-      {/* Safe area spacer for bottom nav on mobile */}
-      <div className="mobile-bottom-spacer mobile-only" />
     </>
   );
 }
