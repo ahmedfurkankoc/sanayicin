@@ -14,13 +14,16 @@ export default function EsnafFooter() {
           </div>
           <div className="esnaf-footer-link-group">
             <div className="esnaf-footer-link-group-title">Yardım</div>
+            <a href="/yardim" className="esnaf-footer-link">Destek</a>
             <a href="/hakkimizda" className="esnaf-footer-link">Hakkımızda</a>
             <a href="/iletisim" className="esnaf-footer-link">İletişim</a>
           </div>
           <div className="esnaf-footer-link-group">
-            <div className="esnaf-footer-link-group-title">Gizlilik ve Kullanım</div>
-            <a href="/kvkk" className="esnaf-footer-link">KVKK ve Gizlilik</a>
+            <div className="esnaf-footer-link-group-title">Sözleşmeler ve Kurallar</div>
+            <a href="/kullanici-sozlesmesi" className="esnaf-footer-link">Kullanıcı Sözleşmesi</a>
             <a href="/kullanim-kosullari" className="esnaf-footer-link">Kullanım Koşulları</a>
+            <a href="/kvkk-aydinlatma-metni" className="esnaf-footer-link">Kişisel Verilerin Korunması</a>
+            <a href="/cerez-aydinlatma-metni" className="esnaf-footer-link">Çerez Yönetimi</a>
           </div>
         </div>
         <div className="esnaf-footer-socials">

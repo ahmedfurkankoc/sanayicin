@@ -185,7 +185,7 @@ export default function EsnafKayitPage() {
   if (isAuthenticated) {
     return (
       <>
-      <EsnafAuthHeader title={'Esnaf Kayıt'} currentPage="register" />
+      <EsnafAuthHeader currentPage="register" />
       <main className="esnaf-register-main">
         <div className="esnaf-register-container">
           <div className="esnaf-register-loading">
@@ -550,10 +550,10 @@ export default function EsnafKayitPage() {
 
   return (
     <>
-    <EsnafAuthHeader title={'Esnaf Kayıt'} currentPage="register" />
+    <EsnafAuthHeader currentPage="register" />
     <main className="esnaf-register-main">
       <div className="esnaf-register-container">
-        <h1 className="esnaf-register-title">Hesabınızı Oluşturun</h1>
+        <h1 className="esnaf-register-title">Esnaf Hesabınızı Oluşturun</h1>
         {step === 1 && (
           <form onSubmit={handleNextStep1} className="esnaf-register-form">
             <label className="esnaf-register-label">İşletme Türü Seçiniz:</label>

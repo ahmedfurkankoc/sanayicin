@@ -88,7 +88,7 @@ export default function EsnafGirisPage() {
   if (isAuthenticated) {
     return (
       <>
-      <EsnafAuthHeader title={'Esnaf Giriş'} currentPage="login" />
+      <EsnafAuthHeader currentPage="login" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <div className="esnaf-login-loading">
@@ -103,12 +103,13 @@ export default function EsnafGirisPage() {
 
   return (
     <>
-    <EsnafAuthHeader title={'Esnaf Giriş'} currentPage="login" />
+    <EsnafAuthHeader currentPage="login" />
     <main className="esnaf-login-main">
       <div className="esnaf-login-container">
         {/* Header */}
 
-        <h1 className="esnaf-login-title">Hesabınıza Giriş Yapın</h1>
+        <h1 className="esnaf-login-title">Esnaf Girişi</h1>
+        <p className="esnaf-login-subtitle">Esnaf hesabınıza giriş yaparak hizmet vermeye başlayın</p>
         
         <form onSubmit={handleSubmit} className="esnaf-login-form">
           <div className="esnaf-input-group">
