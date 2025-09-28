@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Icon from "@/app/components/ui/Icon";
 import { iconMapping } from "@/app/utils/iconMapping";
+import SupportTicketCTA from "../components/SupportTicketCTA";
 // Navbar/Footer layout'ta render ediliyor
 import { useRouter } from "next/navigation";
 
@@ -166,27 +167,8 @@ export default function HelpPage() {
             </section>
 
 
-            {/* CTA */}
-            <div className="u-mt-28">
-                <div className="help-cta">
-                  <div className="help-cta-icon">
-                    <Icon name="alert" size={34} color="var(--black)"/>
-                  </div>
-                  <div className="help-cta-content">
-                    <h3>Yardım istediğin konuyu destek makalelerimiz arasında bulamadın mı?</h3>
-                    <p>O zaman destek talebi oluşturabilir ve taleplerini <b>Destek Taleplerim</b> bölümünden takip edebilirsin.</p>
-                  </div>
-                <button
-                  type="button"
-                  className="help-cta-btn"
-                  onClick={() => {
-                    router.push('/yardim/destek?tab=new');
-                  }}
-                >
-                  Destek Talebi Oluştur
-                </button>
-              </div>
-            </div>
+            {/* Support Ticket CTA */}
+            <SupportTicketCTA />
           </div>
         </section>
     </>
