@@ -265,7 +265,6 @@ section[aria-label="Notifications alt+T"] {
 .mbn-item.active { color: var(--yellow); }
 .mbn-icon { font-size: 18px; line-height: 18px; }
 .mbn-label { font-weight: 600; }
-.mobile-bottom-spacer { height: calc(64px + 10px); }
 
 @media (min-width: 901px) {
   .mobile-bottom-nav { display: none; }
@@ -370,10 +369,7 @@ section[aria-label="Notifications alt+T"] {
   grid-template-columns: 600px 1fr;
   gap: 80px;
   align-items: center;
-}
-
-.hero-card {
-  padding: 36px;
+  padding-top: 60px;
 }
 
 .hero-card-title {
@@ -394,9 +390,9 @@ section[aria-label="Notifications alt+T"] {
 .heroSection::after {
   content: '';
   position: absolute;
-  right: -100px;
-  bottom: -40px;
-  width: 860px;
+  right: 0;
+  bottom: 0;
+  width: 800px;
   height: 900px;
   background-image: url('/sanayicin-icon.png');
   background-repeat: no-repeat;
@@ -408,18 +404,7 @@ section[aria-label="Notifications alt+T"] {
   animation: rotateGear 40s linear infinite;
 }
 
-/* Mobile/tablet: keep gear to the right and reduce size; protect left text */
-@media (max-width: 900px) {
-  .heroSection { padding: 28px 0 18px 0; }
-  .heroSection::after {
-    right: -40px;
-    bottom: 0;
-    width: 420px;
-    height: 420px;
-    opacity: 0.15;
-    z-index: 0;
-  }
-}
+
 
 /* Çark döndürme animasyonu */
 @keyframes rotateGear {
@@ -1939,10 +1924,6 @@ footer {
     color: var(--red);
     font-weight: 700;
   }
-  .heroSection {
-    padding: 32px 0 18px 0;
-    text-align: center;
-  }
   .heroTitle {
     font-size: 2rem;
     margin-bottom: 18px;
@@ -2001,7 +1982,7 @@ footer {
     align-items: center;
   }
   footer {
-    padding: 18px 0 40px 0;
+    padding: 18px 0 100px 0;
   }
   .footer-link-groups {
     flex-direction: column;
@@ -2934,7 +2915,7 @@ footer {
   right: 0;
   bottom: 0;
   background-image: url('/icons/turkiye-map.svg');
-  background-size: contain;
+  background-size: 80%;
   background-repeat: no-repeat;
   background-position: center;
   opacity: 0.15;
@@ -3449,6 +3430,10 @@ footer {
   margin-left: auto;
   margin-right: auto;
   line-height: 1.6;
+}
+
+.hero-breadcrumb {
+  margin-top: 16px;
 }
 
 /* Hero Section Responsive */
@@ -4347,6 +4332,7 @@ footer {
 .u-mb-18 { margin-bottom: 18px; }
 .u-mb-16 { margin-bottom: 16px; }
 .u-mt-28 { margin-top: 28px; }
+.u-mt-50 { margin-top: 50px; }
 .u-max-640 { max-width: 640px; }
 .u-max-720 { max-width: 720px; }
 
@@ -4488,14 +4474,6 @@ footer {
 }
 .faq-item.active .faq-answer { max-height: 200px; }
 
-/* Bilgi Kartları Stilleri */
-.help-info-sections { margin: 40px 0; }
-.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-.info-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; text-align: center; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.info-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.info-icon { font-size: 2.5rem; margin-bottom: 16px; }
-.info-title { font-size: 1.1rem; font-weight: 700; color: var(--black); margin: 0 0 12px 0; }
-.info-desc { color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; margin: 0; }
 
 /* Help Title ve Button Hizalama */
 .help-title-section { display: flex; flex-direction: column; gap: 4px; }
@@ -4512,9 +4490,7 @@ footer {
 /* Responsive */
 @media (max-width: 768px) {
   .faq-grid { grid-template-columns: 1fr; gap: 20px; }
-  .info-grid { grid-template-columns: 1fr; gap: 16px; }
   .faq-category { padding: 20px; }
-  .info-card { padding: 20px; }
 }
 .help-cta .help-cta-btn { background: var(--yellow); color: var(--black); border: none; border-radius: 12px; padding: 12px 22px; font-weight: 800; text-decoration: none; cursor: pointer; position: absolute; right: 22px; top: 50%; transform: translateY(-50%); }
 @media (max-width: 768px) {
@@ -5608,6 +5584,113 @@ footer {
   
   .support-item-title {
     font-size: 0.9rem;
+  }
+}
+
+/* FAQ Categories Grid */
+.faq-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 40px;
+  margin-top: 32px;
+}
+
+.faq-category-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.faq-category-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.faq-category-header {
+  padding: 20px;
+  background: var(--gray);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.faq-category-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--black);
+}
+
+.faq-category-icon {
+  font-size: 1.5rem;
+}
+
+.faq-category-content {
+  padding: 0;
+}
+
+.faq-item-compact {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-item-compact:last-child {
+  border-bottom: none;
+}
+
+.faq-question-compact {
+  margin-bottom: 8px;
+  color: var(--black);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  transition: color 0.2s ease;
+}
+
+.faq-question-compact:hover {
+  color: var(--yellow);
+}
+
+.faq-compact-arrow {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.faq-answer-compact p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .faq-categories-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 24px;
+  }
+  
+  .faq-category-header {
+    padding: 16px;
+  }
+  
+  .faq-category-title {
+    font-size: 1rem;
+  }
+  
+  .faq-item-compact {
+    padding: 12px 16px;
   }
 }
 
