@@ -391,7 +391,7 @@ section[aria-label="Notifications alt+T"] {
   content: '';
   position: absolute;
   right: 0;
-  bottom: 0;
+  bottom: -60px;
   width: 800px;
   height: 900px;
   background-image: url('/sanayicin-icon.png');
