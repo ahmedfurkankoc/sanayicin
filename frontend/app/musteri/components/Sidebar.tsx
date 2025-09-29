@@ -93,7 +93,7 @@ function Sidebar() {
                 <span>Taleplerim</span>
               </span>
             </Link>
-            <Link href="/esnaf/yorumlarim" style={linkStyle}>
+            <Link href="/esnaf/yorumlar" style={linkStyle}>
               <span style={linkInnerStyle}>
                 <Icon name="star" size={18} />
                 <span>Yorumlarım</span>
@@ -109,25 +109,24 @@ function Sidebar() {
         </div>
       )}
 
-      <button
-        onClick={handleLogout}
-        style={{
-          marginTop: 16,
-          width: "100%",
-          padding: "12px 14px",
-          borderRadius: 10,
-          border: "1px solid #eee",
-          background: "#111",
-          color: "#ffd600",
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
-      >
-        <span style={linkInnerStyle}>
-          <Icon name="logout" size={18} />
-          <span>Çıkış Yap</span>
-        </span>
-      </button>
+      <nav style={{ ...navColStyle, marginTop: 12 }}>
+        <button
+          onClick={handleLogout}
+          style={{
+            ...linkStyle,
+            color: "var(--red)",
+            background: "transparent",
+            border: "1px solid transparent",
+            textAlign: "left",
+            cursor: "pointer",
+          }}
+        >
+          <span style={linkInnerStyle}>
+            <Icon name="logout" size={18} color="var(--red)" />
+            <span>Çıkış Yap</span>
+          </span>
+        </button>
+      </nav>
     </aside>
   );
 }

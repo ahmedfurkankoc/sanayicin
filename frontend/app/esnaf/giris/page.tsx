@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
-import EsnafFooter from "@/app/esnaf/components/EsnafFooter";
+import Footer from "@/app/components/Footer";
 import { useEsnaf } from "../context/EsnafContext";
 import { setAuthToken, setAuthEmail } from '@/app/utils/api';
 
@@ -96,7 +96,7 @@ export default function EsnafGirisPage() {
           </div>
         </div>
       </main>
-      <EsnafFooter />
+      <Footer />
       </>
     );
   }
@@ -161,11 +161,11 @@ export default function EsnafGirisPage() {
         {/* Footer */}
         <div className="esnaf-login-footer">
           <p>Hesabınız yok mu? <Link href="/esnaf/kayit">Hemen Kayıt Olun</Link></p>
-          <Link className="esnaf-modal-btn text-black" href="/">Ana Sayfaya Dön</Link>
+          <a className="esnaf-modal-btn text-black" href="/" onClick={(e) => { e.preventDefault(); if (typeof window !== 'undefined') { window.location.href = '/'; } }}>Ana Sayfaya Dön</a>
         </div>
       </div>
     </main>
-    <EsnafFooter />
+    <Footer />
     </>
   );
 } 

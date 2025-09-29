@@ -22,7 +22,8 @@ export function middleware(request: NextRequest) {
     '/hizmet-vermek',
     '/en-yakin',
     '/usta-ariyorum',
-    '/musteri/arama-sonuclari' // Arama sonuçları sayfası public
+    '/musteri/arama-sonuclari', // legacy
+    '/musteri/esnaflar' // Esnaflar listesi public
   ]
 
   // Yardım sayfaları: genel yardım/kategoriler public, ancak /yardim/destek korumalı

@@ -89,7 +89,7 @@ const ServicesSection = () => {
                 <div className="serviceExp"></div>
                 <div className="serviceType">{serviceArea.name} · </div>
                 <Link 
-                  href={{ pathname: "/musteri/arama-sonuclari", query: { q: serviceArea.name } }} 
+                  href={{ pathname: "/musteri/esnaflar", query: { q: serviceArea.name } }} 
                   className="serviceCardActionBtn"
                 >
                   Esnaf Bul

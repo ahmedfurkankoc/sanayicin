@@ -615,7 +615,7 @@ function AramaSonuclariContent() {
     if (sanitizedParams.carBrand) params.set('carBrand', sanitizedParams.carBrand);
     
     // Güvenlik: URL'i encode et
-    const safeUrl = `/musteri/arama-sonuclari?${params.toString()}`;
+    const safeUrl = `/musteri/esnaflar?${params.toString()}`;
     router.push(safeUrl);
     
     // Arama yapıldığında sayfa numarasını sıfırla
@@ -635,7 +635,7 @@ function AramaSonuclariContent() {
     if (selectedCarBrand) params.set('carBrand', selectedCarBrand);
     params.set('page', page.toString());
     
-    router.push(`/musteri/arama-sonuclari?${params.toString()}`);
+    router.push(`/musteri/esnaflar?${params.toString()}`);
   }, [selectedCity, selectedDistrict, selectedService, selectedCategory, selectedCarBrand, router]);
 
   const handleNextPage = useCallback(() => {
