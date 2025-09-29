@@ -6,7 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { api } from "@/app/utils/api";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
-import EsnafFooter from "../components/EsnafFooter";
+import Footer from "@/app/components/Footer";
 
 export default function SifremiUnuttumPage() {
   const [email, setEmail] = useState("");
@@ -37,7 +37,7 @@ export default function SifremiUnuttumPage() {
   if (success) {
     return (
       <>
-        <EsnafAuthHeader title={'Şifremi Unuttum'} currentPage="register" />
+        <EsnafAuthHeader currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -66,14 +66,14 @@ export default function SifremiUnuttumPage() {
             </div>
           </div>
         </main>
-        <EsnafFooter />
+        <Footer />
       </>
     );
   }
 
   return (
     <>
-      <EsnafAuthHeader title={'Şifremi Unuttum'} currentPage="register" />
+      <EsnafAuthHeader currentPage="register" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <h1 className="esnaf-login-title">Şifrenizi mi Unuttunuz?</h1>
@@ -111,11 +111,11 @@ export default function SifremiUnuttumPage() {
                 ← Giriş Sayfasına Dön
               </Link>
             </p>
-            <Link className="esnaf-modal-btn text-black" href="/">Ana Sayfaya Dön</Link>
+            <a className="esnaf-modal-btn text-black" href="/" onClick={(e) => { e.preventDefault(); if (typeof window !== 'undefined') { window.location.href = '/'; } }}>Ana Sayfaya Dön</a>
           </div>
         </div>
-      </main>
-      <EsnafFooter />
+    </main>
+    <Footer />
     </>
   );
 } 

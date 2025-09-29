@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, setAuthEmail } from "@/app/utils/api";
 import MusteriHeader from "../components/MusteriHeader";
+import { iconMapping } from "@/app/utils/iconMapping";
 
 export default function MusteriKayitPage() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function MusteriKayitPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Konum bilgileri kayıt aşamasında alınmıyor
 
@@ -191,19 +193,65 @@ export default function MusteriKayitPage() {
 
   return (
     <>
-      <main className="musteri-auth-main">
-        <div className="musteri-auth-container">
-          <div className="musteri-auth-card">
-            <h1 className="musteri-auth-title">Müşteri Kayıt</h1>
-            <p className="musteri-auth-subtitle">
-              Hızlıca hesap oluşturun ve hizmet almaya başlayın
-            </p>
+      <main className="musteri-auth-main musteri-register-split">
+        <div className="musteri-register-wrapper">
+          <aside className="musteri-register-left">
+            <div className="mrl-inner">
+              <div className="mrl-badges">
+                <div className="mrl-item">
+                  <div className="mrl-icon">{(() => { const Icon = iconMapping['wrench']; return <Icon size={22} />; })()}</div>
+                  <div className="mrl-text">
+                    <div className="mrl-title">Yüzlerce hizmet alanı</div>
+                    <div className="mrl-sub">Aradığın usta kategorilere göre listelensin</div>
+                  </div>
+                </div>
+                <div className="mrl-item">
+                  <div className="mrl-icon">{(() => { const Icon = iconMapping['message']; return <Icon size={22} />; })()}</div>
+                  <div className="mrl-text">
+                    <div className="mrl-title">Teklifleri karşılaştır</div>
+                    <div className="mrl-sub">En iyi fiyat ve zamanlamayı seç</div>
+                  </div>
+                </div>
+                <div className="mrl-item">
+                  <div className="mrl-icon">{(() => { const Icon = iconMapping['shield-check']; return <Icon size={22} />; })()}</div>
+                  <div className="mrl-text">
+                    <div className="mrl-title">Onaylı esnaf ağı</div>
+                    <div className="mrl-sub">Değerlendirme ve doğrulama süreçlerinden geçmiş</div>
+                  </div>
+                </div>
+                <div className="mrl-item">
+                  <div className="mrl-icon">{(() => { const Icon = iconMapping['calendar']; return <Icon size={22} />; })()}</div>
+                  <div className="mrl-text">
+                    <div className="mrl-title">Randevu ve teyit</div>
+                    <div className="mrl-sub">Uygun zamanını seç, anında onay al</div>
+                  </div>
+                </div>
+                <div className="mrl-item">
+                  <div className="mrl-icon">{(() => { const Icon = iconMapping['shield']; return <Icon size={22} />; })()}</div>
+                  <div className="mrl-text">
+                    <div className="mrl-title">Sanayicin güvencesi</div>
+                    <div className="mrl-sub">Şeffaf süreç ve güvenli iletişim</div>
+                  </div>
+                </div>
+              </div>
+              <div className="mrl-cta">
+                <h2>Aradığın usta bir tık uzağında</h2>
+                <p>Hesabını oluştur, yakınındaki esnaflardan hızlıca teklif al.</p>
+              </div>
+            </div>
+          </aside>
+
+          <div className="musteri-auth-container musteri-register-right">
+            <div className="musteri-auth-card">
+              <h1 className="musteri-auth-title">Müşteri Kayıt</h1>
+              <p className="musteri-auth-subtitle">
+                Hızlıca hesap oluşturun ve hizmet almaya başlayın
+              </p>
 
             {/* Step 1: Form */}
             {step === 1 && (
               <form onSubmit={handleSubmitRegistration} className="musteri-auth-form">
-                <div className="musteri-form-row">
-                  <div className="musteri-form-group">
+                <div className="musteri-form-group">
                     <label htmlFor="first_name" className="musteri-form-label">
                       Ad *
                     </label>
@@ -217,9 +265,9 @@ export default function MusteriKayitPage() {
                       placeholder="Adınız"
                       required
                     />
-                  </div>
+                </div>
 
-                  <div className="musteri-form-group">
+                <div className="musteri-form-group">
                     <label htmlFor="last_name" className="musteri-form-label">
                       Soyad *
                     </label>
@@ -233,7 +281,6 @@ export default function MusteriKayitPage() {
                       placeholder="Soyadınız"
                       required
                     />
-                  </div>
                 </div>
 
                 <div className="musteri-form-group">
@@ -278,25 +325,45 @@ export default function MusteriKayitPage() {
 
                 {/* Hakkımda alanı kaldırıldı */}
 
-                <div className="musteri-form-row">
-                  <div className="musteri-form-group">
+                <div className="musteri-form-group">
                     <label htmlFor="password" className="musteri-form-label">
                       Şifre *
                     </label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="musteri-form-input"
-                      placeholder="En az 6 karakter"
-                      required
-                      minLength={6}
-                    />
-                  </div>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        id="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        onFocus={() => setShowPassword(true)}
+                        className="musteri-form-input"
+                        placeholder="En az 6 karakter"
+                        required
+                        minLength={6}
+                        style={{ paddingRight: 44 }}
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                        onClick={() => setShowPassword(prev => !prev)}
+                        style={{
+                          position: 'absolute',
+                          right: 8,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          padding: 6,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {(() => { const Icon = iconMapping[showPassword ? 'eye-off' : 'eye']; return <Icon size={20} />; })()}
+                      </button>
+                    </div>
+                </div>
 
-                  <div className="musteri-form-group">
+                <div className="musteri-form-group">
                     <label htmlFor="password2" className="musteri-form-label">
                       Şifre Tekrar *
                     </label>
@@ -311,7 +378,6 @@ export default function MusteriKayitPage() {
                       required
                       minLength={6}
                     />
-                  </div>
                 </div>
 
                 {error && (
@@ -327,6 +393,20 @@ export default function MusteriKayitPage() {
                  >
                    {loading ? "Kayıt yapılıyor..." : "Hesap Oluştur"}
                  </button>
+
+                 <p className="musteri-auth-legal">
+                   "Hesap Oluştur"a tıklayarak
+                   {" "}
+                   <Link href="/kullanici-sozlesmesi" className="musteri-auth-legal-link">Kullanıcı Sözleşmesi</Link>
+                   {" "}ve{" "}
+                   <Link href="/kullanim-kosullari" className="musteri-auth-legal-link">Kullanım Koşulları</Link>
+                   {" "}hükümlerini kabul etmiş,
+                   {" "}
+                   <Link href="/kvkk-aydinlatma-metni" className="musteri-auth-legal-link">Kişisel Verilerin Korunması Aydınlatma Metni</Link>
+                   {" "}ile{" "}
+                   <Link href="/cerez-aydinlatma-metni" className="musteri-auth-legal-link">Çerez Yönetimi</Link>
+                   {" "}belgelerini okuduğunuzu onaylamış olursunuz.
+                 </p>
               </form>
             )}
 
@@ -452,13 +532,14 @@ export default function MusteriKayitPage() {
               </div>
             )}
 
-            <div className="musteri-auth-footer">
-              <p>
-                Zaten hesabınız var mı?{" "}
-                <Link href="/musteri/giris" className="musteri-auth-link-bold">
-                  Giriş yapın
-                </Link>
-              </p>
+              <div className="musteri-auth-footer">
+                <p>
+                  Zaten hesabınız var mı?{" "}
+                  <Link href="/musteri/giris" className="musteri-auth-link-bold">
+                    Giriş yapın
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>

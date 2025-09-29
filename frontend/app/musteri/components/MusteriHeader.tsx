@@ -191,7 +191,7 @@ export default function MusteriHeader() {
     e.preventDefault();
     if (searchQuery.trim()) {
       // Gelişmiş arama için query parametresi ekle
-      router.push(`/musteri/arama-sonuclari?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/musteri/esnaflar?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 

@@ -2,6 +2,7 @@ import React from "react";
 import SearchBar from "../components/SearchBar";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
+import VideoBanner from "../../components/VideoBanner";
 import Icon from "@/app/components/ui/Icon";
 
 const UstaAriyorumPage = () => {
@@ -165,13 +166,9 @@ const UstaAriyorumPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="cta-section">
+      <section className="cta-section" style={{background: 'var(--gray)'}}>
         <div className="container">
-          <div className="cta-content">
-            <h2>Hemen Usta Bulmaya Başlayın</h2>
-            <p>Binlerce güvenilir usta arasından size en uygun olanını seçin</p>
-            <button className="cta-button">Usta Ara</button>
-          </div>
+          <VideoBanner style={{ margin: 0, padding: 0 }} href="/musteri" />
         </div>
       </section>
     </div>

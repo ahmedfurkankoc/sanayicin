@@ -6,7 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { api } from "@/app/utils/api";
 import EsnafAuthHeader from "../../components/EsnafAuthHeader";
-import EsnafFooter from "../../components/EsnafFooter";
+import Footer from "@/app/components/Footer";
 
 export default function SifreYenilePage() {
   const [password, setPassword] = useState("");
@@ -65,7 +65,7 @@ export default function SifreYenilePage() {
   if (!tokenValid) {
     return (
       <>
-        <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
+        <EsnafAuthHeader currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -92,7 +92,7 @@ export default function SifreYenilePage() {
             </div>
           </div>
         </main>
-        <EsnafFooter />
+        <Footer />
       </>
     );
   }
@@ -100,7 +100,7 @@ export default function SifreYenilePage() {
   if (success) {
     return (
       <>
-        <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
+        <EsnafAuthHeader currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -126,14 +126,14 @@ export default function SifreYenilePage() {
             </div>
           </div>
         </main>
-        <EsnafFooter />
+        <Footer />
       </>
     );
   }
 
   return (
     <>
-      <EsnafAuthHeader title={'Şifre Yenileme'} currentPage="register" />
+      <EsnafAuthHeader currentPage="register" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <h1 className="esnaf-login-title">Yeni Şifrenizi Belirleyin</h1>
@@ -184,11 +184,11 @@ export default function SifreYenilePage() {
                 ← Giriş Sayfasına Dön
               </Link>
             </p>
-            <Link className="esnaf-modal-btn text-black" href="/">Ana Sayfaya Dön</Link>
+            <a className="esnaf-modal-btn text-black" href="/" onClick={(e) => { e.preventDefault(); if (typeof window !== 'undefined') { window.location.href = '/'; } }}>Ana Sayfaya Dön</a>
           </div>
         </div>
       </main>
-      <EsnafFooter />
+      <Footer />
     </>
   );
 }

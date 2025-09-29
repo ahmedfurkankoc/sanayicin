@@ -1,10 +1,16 @@
 'use client';
 
-import React, { useMemo, useCallback, useEffect } from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { iconMapping } from '@/app/utils/iconMapping';
 import Sidebar from './components/Sidebar';
+import Image from 'next/image';
+import VendorCard from '@/app/(public)/components/VendorCard';
+import VendorCardSkeleton from '@/app/components/VendorCardSkeleton';
+import { useMobileVendors } from '@/app/hooks/useMobileVendors';
+import { api } from '@/app/utils/api';
+import VideoBanner from '@/app/components/VideoBanner';
 
 interface ServiceArea {
   id: number;
@@ -81,6 +87,18 @@ const STATIC_SERVICE_AREAS: ServiceArea[] = [
     name: "Hafif Ticari ve Ticari Araç Hizmetleri",
     description: "Kamyonet, kamyon ve ticari araç özel hizmetleri",
     icon: "truck"
+  },
+  {
+    id: 11,
+    name: "Kaplama ve Görsel Tasarım",
+    description: "Reklam kaplama, renk değişim, cam filmi ve şerit uygulamaları",
+    icon: "palette"
+  },
+  {
+    id: 12,
+    name: "Yol Yardım ve Çekici Hizmetleri",
+    description: "Çekici, akü takviye, lastik değişimi, yakıt ikmali ve kurtarma",
+    icon: "truck"
   }
 ];
 
@@ -143,16 +161,75 @@ const STATIC_CATEGORIES: Category[] = [
   { id: 36, name: "Kamyonet Servisi", service_area: 10 },
   { id: 37, name: "Kamyon Bakımı", service_area: 10 },
   { id: 38, name: "Ticari Araç Modifikasyonu", service_area: 10 }
+  ,
+  // Kaplama ve Görsel Tasarım kategorileri
+  { id: 39, name: "Reklam & Logo Kaplama", service_area: 11 },
+  { id: 40, name: "Cam Filmi Uygulaması", service_area: 11 },
+  { id: 41, name: "Sticker & Şerit Uygulamaları", service_area: 11 },
+  { id: 42, name: "Renk Değişim Kaplama", service_area: 11 },
+  
+  // Yol Yardım ve Çekici Hizmetleri kategorileri
+  { id: 43, name: "Çekici Hizmeti (şehir içi ağırlıklı)", service_area: 12 },
+  { id: 44, name: "Akü Takviye", service_area: 12 },
+  { id: 45, name: "Lastik Değişimi / Tamiri", service_area: 12 },
+  { id: 46, name: "Yakıt İkmal", service_area: 12 },
+  { id: 47, name: "Kaza Sonrası Kurtarma", service_area: 12 }
 ];
 
 export default function HizmetlerPage() {
   const router = useRouter();
+  const { vendors, loading, error } = useMobileVendors();
+  const [userName, setUserName] = useState<string>('Misafir');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   // Auth guard artık middleware'de yapılıyor, burada gerek yok
 
   // Statik veri kullan
   const serviceAreas = STATIC_SERVICE_AREAS;
   const categories = STATIC_CATEGORIES;
+  
+  // Fallback mock data (public homepage ile uyumlu)
+  const mockVendors = [
+    { name: "Usta Otomotiv", experience: "10+ yıl deneyim", type: "Renair Servisi", city: "İstanbul", img: "/images/vendor-1.jpg" },
+    { name: "Yılmaz Elektrik", experience: "7 yıl deneyim", type: "Elektrik Servisi", city: "Ankara", img: "/images/vendor-2.jpg" },
+    { name: "Kaporta Ustası", experience: "12 yıl deneyim", type: "Kaporta", city: "İzmir", img: "/images/vendor-3.jpg" },
+    { name: "Boya Merkezi", experience: "9 yıl deneyim", type: "Boya", city: "Bursa", img: "/images/vendor-4.jpg" },
+  ];
+  // Bu ay en çok yorum alanlara göre sırala (varsa aylık sayaç alanları)
+  const displayVendors = vendors.length > 0 ? vendors : mockVendors;
+  const topVendors = (displayVendors as any[])
+    .slice()
+    .sort((a: any, b: any) => {
+      const getMonthly = (v: any) =>
+        ('monthly_review_count' in v && typeof v.monthly_review_count === 'number') ? v.monthly_review_count :
+        ('reviews_this_month' in v && typeof v.reviews_this_month === 'number') ? v.reviews_this_month :
+        ('review_count' in v && typeof v.review_count === 'number') ? v.review_count : 0;
+      return getMonthly(b) - getMonthly(a);
+    })
+    .slice(0, 6);
+
+  // Kullanıcı profilini API'den çek
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.getProfile('client');
+        const data = res?.data || {};
+        if (!mounted) return;
+        const first = data.first_name || data.firstName || '';
+        const last = data.last_name || data.lastName || '';
+        const display = data.display_name || data.displayName || `${first} ${last}`.trim();
+        const email = data.email || '';
+        const finalName = (display && display.trim().length > 0) ? display : (email || 'Kullanıcı');
+        setUserName(finalName);
+        const avatar = data.avatar || data.store_logo || data.photo || data.photoUrl || null;
+        if (avatar) setAvatarUrl(avatar);
+      } catch (e) {
+        // Sessizce geç: token yoksa ya da misafir ise
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   // Kategorileri hizmet alanına göre grupla (memoized)
   const categoriesByService = useMemo(() => {
@@ -173,7 +250,7 @@ export default function HizmetlerPage() {
 
   // Hizmet alanına tıklandığında (memoized)
   const handleServiceClick = useCallback((serviceId: number) => {
-    router.push(`/musteri/arama-sonuclari?service=${serviceId}`);
+    router.push(`/musteri/esnaflar?service=${serviceId}`);
   }, [router]);
 
   return (
@@ -181,19 +258,93 @@ export default function HizmetlerPage() {
       <Sidebar />
       <div className="musteri-page">
         <div className="container" >
-          {/* Hero Section */}
-          <div className="musteri-hero-section">
-            <h1>Hizmet Arayın, Esnaf Bulun</h1>
-            <p>İhtiyacınız olan hizmeti bulun ve güvenilir esnaflarla çalışın</p>
-            
-            {/* Arama Butonu */}
-            <Link href="/musteri/arama-sonuclari" className="musteri-hero-search-btn">
-              Tüm Esnafları Gör
-            </Link>
+        {/* Hero Section */}
+        <div className="musteri-hero-section">
+          <div className="mhero-grid">
+            <div className="mhero-left">
+              <h1>Hizmet Arayın, Esnaf Bulun</h1>
+              <p>İhtiyacınız olan hizmeti bulun ve güvenilir esnaflarla çalışın</p>
+              <div className="mhero-cta-row">
+                <Link href="/musteri/esnaflar" className="musteri-hero-search-btn">
+                  Tüm Esnafları Gör
+                </Link>
+              </div>
+              <div className="mhero-badges">
+                <div className="mhero-badge">
+                  {React.createElement(iconMapping['shield-check'], { size: 18 })}
+                  Onaylı Esnaflar
+                </div>
+                <div className="mhero-badge">
+                  {React.createElement(iconMapping['star'], { size: 18 })}
+                  Gerçek Yorumlar
+                </div>
+                <div className="mhero-badge">
+                  {React.createElement(iconMapping['message'], { size: 18 })}
+                  Hızlı Teklif
+                </div>
+                <div className="mhero-badge">
+                  {React.createElement(iconMapping['map-pin'], { size: 18 })}
+                  Size En Yakın
+                </div>
+              </div>
+            </div>
+            <div className="mhero-right">
+              <div className="mhero-userrow">
+                <div className="mhero-avatar">
+                  {avatarUrl ? (
+                    <Image src={avatarUrl} alt={userName} fill style={{ objectFit: 'cover' }} />
+                  ) : (
+                    <span>{userName.split(' ').slice(0,2).map(s=>s.charAt(0)).join('').toUpperCase() || 'S'}</span>
+                  )}
+                </div>
+                <div className="mhero-usertexts">
+                  <h3 className="mhero-username"><span className="mhero-greet">Merhaba</span> {userName}</h3>
+                  <p className="mhero-welcome">Sanayicin'e tekrar hoş geldin</p>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+          
+        {/* En Çok Yorum Alan Esnaflar */}
+        <section className="musteri-vendors-section" style={{ margin: '0', padding: '20px 0 0 0'  }}>
+          <h2>Bu Ay En Çok Yorum Alan Esnaflar</h2>
+          <div className="musteri-vendors-grid">
+            {loading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <VendorCardSkeleton key={`mv-skel-${index}`} />
+              ))
+            ) : error ? (
+              mockVendors.slice(0, 6).map((v) => (
+                <VendorCard key={v.name} {...v} />
+              ))
+            ) : (
+              topVendors.map((vendor: any, index: number) => {
+                const vendorData = {
+                  name: 'display_name' in vendor ? (vendor.display_name || vendor.company_title || 'Esnaf') : vendor.name,
+                  experience: `${Math.floor(Math.random() * 10) + 1}+ yıl deneyim`,
+                  type: 'service_areas' in vendor ? (vendor.service_areas?.[0]?.name || 'Hizmet') : vendor.type,
+                  city: 'city' in vendor ? vendor.city : (vendor as any).city,
+                  img: 'store_logo' in vendor ? (vendor.store_logo || (vendor as any).avatar || '/images/vendor-default.jpg') : (vendor as any).img,
+                  slug: 'slug' in vendor ? vendor.slug : undefined,
+                  rating: 'rating' in vendor ? (vendor.rating || 0) : 0,
+                  reviewCount: 'monthly_review_count' in vendor ? (vendor.monthly_review_count || 0) : ('reviews_this_month' in vendor ? (vendor.reviews_this_month || 0) : ('review_count' in vendor ? (vendor.review_count || 0) : 0)),
+                  about: 'about' in vendor ? vendor.about : undefined,
+                  serviceAreas: 'service_areas' in vendor ? vendor.service_areas : undefined,
+                  categories: 'categories' in vendor ? vendor.categories : undefined
+                } as any;
+                const key = 'id' in vendor ? (vendor as any).id : index;
+                return <VendorCard key={key} {...vendorData} />;
+              })
+            )}
+          </div>
+        </section>
+
+          {/* Video Banner */}
+          <VideoBanner style={{ padding: 0, margin: '40px 0' }} />
 
         {/* Hizmet Alanları */}
-        <section className="musteri-services-section">
+        <section className="musteri-services-section" style={{padding: '0', margin: '80px 0'}}>
           <h2>Hizmet Alanları</h2>
           <div className="musteri-services-grid">
             {serviceAreas.map((service) => {
@@ -234,7 +385,6 @@ export default function HizmetlerPage() {
             })}
           </div>
         </section>
-
 
         </div>
       </div>

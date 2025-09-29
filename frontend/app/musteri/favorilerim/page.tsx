@@ -132,7 +132,7 @@ export default function FavorilerimPage() {
             Beğendiğiniz esnafları favorilerinize ekleyin ve buradan kolayca erişin.
           </p>
           <button
-            onClick={() => router.push('/musteri/arama-sonuclari')}
+            onClick={() => router.push('/musteri/esnaflar')}
             className="musteri-empty-btn"
           >
             Esnaf Ara

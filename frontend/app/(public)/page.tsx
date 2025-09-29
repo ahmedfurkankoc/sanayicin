@@ -42,7 +42,7 @@ export default function Home() {
                 <SearchBar />
               </div>
               <div className="mobile-cta-row">
-                <a className="btn-primary" href="/musteri/arama-sonuclari">Hemen Usta Bul</a>
+                <a className="btn-primary" href="/musteri/esnaflar">Hemen Usta Bul</a>
                 <a className="btn-secondary" href="/esnaf/giris">Ben de Esnafım</a>
               </div>
             </div>
@@ -62,7 +62,7 @@ export default function Home() {
                     className="category-chip"
                     onClick={() => {
                       // Hizmet arama sayfasına yönlendir (ID ile)
-                      window.location.href = `/musteri/arama-sonuclari?service=${service.id}`;
+                      window.location.href = `/musteri/esnaflar?service=${service.id}`;
                     }}
                   >
                     {service.name}

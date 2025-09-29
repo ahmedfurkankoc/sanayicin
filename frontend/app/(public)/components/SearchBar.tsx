@@ -115,7 +115,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
     }
     
     // Refresh ile yönlendir
-    window.location.href = `/musteri/arama-sonuclari?${params.toString()}`;
+    window.location.href = `/musteri/esnaflar?${params.toString()}`;
   };
 
   return (

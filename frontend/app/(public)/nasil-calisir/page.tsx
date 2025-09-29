@@ -2,6 +2,7 @@ import Navbar from "../components/Navbar";
 import Banner from "../components/Banner";
 import HowItWorks from "../components/HowItWorks";
 import Footer from "../../components/Footer";
+import VideoBanner from "../../components/VideoBanner";
 
 export default function HowItWorksPage() {
   return (
@@ -12,9 +13,7 @@ export default function HowItWorksPage() {
         backgroundColor="var(--black)"
         textColor="var(--white)"
       />
-      <main>
-        <HowItWorks />
-      </main>
+      <HowItWorks />
     </>
   );
 }

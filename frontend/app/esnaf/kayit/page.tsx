@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { api, setAuthEmail } from "@/app/utils/api";
 
 // UI Components
-import EsnafFooter from "../components/EsnafFooter";
+import Footer from "@/app/components/Footer";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
 
 // Hooks
@@ -193,7 +194,7 @@ export default function EsnafKayitPage() {
           </div>
         </div>
       </main>
-      <EsnafFooter />
+      <Footer />
       </>
     );
   }
@@ -876,6 +877,21 @@ export default function EsnafKayitPage() {
                 Başvuruyu Tamamla
               </button>
             </div>
+            <p style={{ marginTop: 12, fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+              "Başvuruyu Tamamla"ya tıklayarak
+              {" "}
+              <Link href="/kullanici-sozlesmesi" style={{ color: '#111827', fontWeight: 600, textDecoration: 'underline' }}>Kullanıcı Sözleşmesi</Link>
+              {" "}
+              <Link href="/esnaf-sozlesmesi" style={{ color: '#111827', fontWeight: 600, textDecoration: 'underline' }}>Esnaf Sözleşmesi</Link>
+              {" "}ve{" "}
+              <Link href="/kullanim-kosullari" style={{ color: '#111827', fontWeight: 600, textDecoration: 'underline' }}>Kullanım Koşulları</Link>
+              {" "}hükümlerini kabul etmiş,
+              {" "}
+              <Link href="/kvkk-aydinlatma-metni" style={{ color: '#111827', fontWeight: 600, textDecoration: 'underline' }}>Kişisel Verilerin Korunması Aydınlatma Metni</Link>
+              {" "}ile{" "}
+              <Link href="/cerez-aydinlatma-metni" style={{ color: '#111827', fontWeight: 600, textDecoration: 'underline' }}>Çerez Yönetimi</Link>
+              {" "}belgelerini okuduğunuzu onaylamış olursunuz.
+            </p>
           </form>
         )}
         {step === 5 && (
@@ -996,7 +1012,7 @@ export default function EsnafKayitPage() {
         )}
       </div>
     </main>
-    <EsnafFooter />
+    <Footer />
     </>
   );
 } 

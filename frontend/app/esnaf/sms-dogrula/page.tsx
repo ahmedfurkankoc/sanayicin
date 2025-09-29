@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { api } from "@/app/utils/api";
 
 // UI Components
-import EsnafFooter from "../components/EsnafFooter";
+import Footer from "@/app/components/Footer";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
 
 function SMSDogrulaContent() {
@@ -96,7 +96,7 @@ function SMSDogrulaContent() {
   if (!email || !phone) {
       return (
     <>
-      <EsnafAuthHeader title="SMS Doğrulama" currentPage="register" />
+      <EsnafAuthHeader currentPage="register" />
       <main className="esnaf-register-main">
         <div className="esnaf-register-container">
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -122,14 +122,14 @@ function SMSDogrulaContent() {
           </div>
         </div>
       </main>
-      <EsnafFooter />
+      <Footer />
     </>
   );
 }
 
 return (
   <>
-    <EsnafAuthHeader title="SMS Doğrulama" currentPage="register" />
+    <EsnafAuthHeader currentPage="register" />
     <main className="esnaf-register-main">
       <div className="esnaf-register-container">
         <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -217,7 +217,7 @@ return (
         </div>
       </div>
     </main>
-    <EsnafFooter />
+    <Footer />
   </>
 );
 }
