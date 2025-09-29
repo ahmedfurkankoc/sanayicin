@@ -142,20 +142,7 @@ export default function EsnafOlPage() {
         }
       });
       
-      // Dosyaları ekle
-      const businessLicenseInput = document.getElementById('business_license') as HTMLInputElement;
-      const taxCertificateInput = document.getElementById('tax_certificate') as HTMLInputElement;
-      const identityDocumentInput = document.getElementById('identity_document') as HTMLInputElement;
-      
-      if (businessLicenseInput?.files?.[0]) {
-        formDataObj.append('business_license', businessLicenseInput.files[0]);
-      }
-      if (taxCertificateInput?.files?.[0]) {
-        formDataObj.append('tax_certificate', taxCertificateInput.files[0]);
-      }
-      if (identityDocumentInput?.files?.[0]) {
-        formDataObj.append('identity_document', identityDocumentInput.files[0]);
-      }
+      // Belgeler kaldırıldı: Dosya ekleme yok
       
       // API'ye gönder
       const response = await fetch('/api/vendor/upgrade/', {
@@ -574,82 +561,7 @@ export default function EsnafOlPage() {
                 </div>
               </div>
               
-              {/* Belgeler */}
-              <div className="musteri-form-section">
-                <h3 className="musteri-form-section-title">Gerekli Belgeler</h3>
-                <p className="musteri-form-section-desc">
-                  Lütfen aşağıdaki belgeleri PDF, JPG veya PNG formatında yükleyin.
-                </p>
-                
-                <div className="musteri-form-group">
-                  <label htmlFor="business_license" className="musteri-form-label">
-                    İşletme Belgesi *
-                    <span className="musteri-form-label-desc">
-                      (İşyeri açma ruhsatı veya faaliyet belgesi)
-                    </span>
-                  </label>
-                  <div className="musteri-file-upload">
-                    <input
-                      type="file"
-                      id="business_license"
-                      name="business_license"
-                      onChange={handleFileChange}
-                      className="musteri-form-input"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      required
-                    />
-                    <small className="musteri-file-info">
-                      Maksimum dosya boyutu: 5MB
-                    </small>
-                  </div>
-                </div>
-                
-                <div className="musteri-form-group">
-                  <label htmlFor="tax_certificate" className="musteri-form-label">
-                    Vergi Levhası *
-                    <span className="musteri-form-label-desc">
-                      (Güncel vergi levhanız)
-                    </span>
-                  </label>
-                  <div className="musteri-file-upload">
-                    <input
-                      type="file"
-                      id="tax_certificate"
-                      name="tax_certificate"
-                      onChange={handleFileChange}
-                      className="musteri-form-input"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      required
-                    />
-                    <small className="musteri-file-info">
-                      Maksimum dosya boyutu: 5MB
-                    </small>
-                  </div>
-                </div>
-                
-                <div className="musteri-form-group">
-                  <label htmlFor="identity_document" className="musteri-form-label">
-                    Kimlik Belgesi *
-                    <span className="musteri-form-label-desc">
-                      (Nüfus cüzdanı, ehliyet veya pasaport)
-                    </span>
-                  </label>
-                  <div className="musteri-file-upload">
-                    <input
-                      type="file"
-                      id="identity_document"
-                      name="identity_document"
-                      onChange={handleFileChange}
-                      className="musteri-form-input"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      required
-                    />
-                    <small className="musteri-file-info">
-                      Maksimum dosya boyutu: 5MB
-                    </small>
-                  </div>
-                </div>
-              </div>
+              {/* Belgeler bölümü kaldırıldı */}
               
               {error && (
                 <div className="musteri-error-message">
