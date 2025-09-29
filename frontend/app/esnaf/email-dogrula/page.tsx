@@ -6,7 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { api, setAuthToken, setAuthEmail } from "@/app/utils/api";
 import EsnafAuthHeader from "../components/EsnafAuthHeader";
-import EsnafFooter from "../components/EsnafFooter";
+import Footer from "@/app/components/Footer";
 import { useEsnaf } from "../context/EsnafContext";
 
 
@@ -103,7 +103,7 @@ function EmailDogrulaContent() {
   if (verifying) {
     return (
       <>
-        <EsnafAuthHeader title={'Email Doğrulama'} currentPage="register" />
+        <EsnafAuthHeader currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -115,7 +115,7 @@ function EmailDogrulaContent() {
             </div>
           </div>
         </main>
-        <EsnafFooter />
+        <Footer />
       </>
     );
   }
@@ -123,7 +123,7 @@ function EmailDogrulaContent() {
   if (success) {
     return (
       <>
-        <EsnafAuthHeader title={'Email Doğrulama'} currentPage="register" />
+        <EsnafAuthHeader currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -135,14 +135,14 @@ function EmailDogrulaContent() {
             </div>
           </div>
         </main>
-        <EsnafFooter />
+        <Footer />
       </>
     );
   }
 
   return (
     <>
-      <EsnafAuthHeader title={'Email Doğrulama'} currentPage="register" />
+      <EsnafAuthHeader currentPage="register" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -184,12 +184,12 @@ function EmailDogrulaContent() {
             </button>
             
             <div style={{ marginTop: '24px' }}>
-              <Link className="esnaf-modal-btn text-black" href="/">Ana Sayfaya Dön</Link>
+              <a className="esnaf-modal-btn text-black" href="/" onClick={(e) => { e.preventDefault(); if (typeof window !== 'undefined') { window.location.href = '/'; } }}>Ana Sayfaya Dön</a>
             </div>
           </div>
         </div>
       </main>
-      <EsnafFooter />
+      <Footer />
     </>
   );
 }
@@ -198,7 +198,7 @@ export default function EmailDogrulaPage() {
   return (
     <Suspense fallback={
       <>
-        <EsnafAuthHeader title={'Email Doğrulama'} currentPage="register" />
+        <EsnafAuthHeader currentPage="register" />
         <main className="esnaf-login-main">
           <div className="esnaf-login-container">
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -210,7 +210,7 @@ export default function EmailDogrulaPage() {
             </div>
           </div>
         </main>
-        <EsnafFooter />
+        <Footer />
       </>
     }>
       <EmailDogrulaContent />

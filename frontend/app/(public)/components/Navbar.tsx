@@ -110,7 +110,7 @@ const Navbar = () => {
     e.preventDefault();
     const q = searchQuery.trim();
     if (!q) return;
-    router.push(`/musteri/arama-sonuclari?q=${encodeURIComponent(q)}`);
+    router.push(`/musteri/esnaflar?q=${encodeURIComponent(q)}`);
     setMenuOpen(false);
   };
 

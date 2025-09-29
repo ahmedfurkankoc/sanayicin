@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import Icon from "@/app/components/ui/Icon";
 import Image from "next/image";
@@ -7,13 +8,15 @@ const Footer = () => (
     <div className="footer-inner">
       <div className="footer-link-groups">
         <div className="footer-link-group">
-          <Image 
-            src="/sanayicin-logo.png"
-            alt="Sanayicin Logo"
-            width={200}
-            height={40}
-            className="footer-logo"
-          />
+          <a href="/" onClick={(e) => { e.preventDefault(); if (typeof window !== 'undefined') { window.location.href = '/'; } }}>
+            <Image 
+              src="/sanayicin-logo.png"
+              alt="Sanayicin Logo"
+              width={200}
+              height={40}
+              className="footer-logo"
+            />
+          </a>
           <a href="/nasil-calisir">Nasıl Çalışır?</a>
           <a href="/hakkimizda">Hakkımızda</a>
           <a href="#blog">Blog</a>
@@ -35,6 +38,11 @@ const Footer = () => (
           <a href="/kullanim-kosullari">Kullanım Koşulları</a>
           <a href="/kvkk-aydinlatma-metni">Kişisel Verilerin Korunması</a>
           <a href="/cerez-aydinlatma-metni">Çerez Yönetimi</a>
+        </div>
+        <div className="footer-link-group">
+          <div className="footer-link-title">Kayıt</div>
+          <a href="/musteri/kayit">Hesap Oluşturun</a>
+          <a href="/esnaf/kayit">Esnaf Kaydı</a>
         </div>
       </div>
       
