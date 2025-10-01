@@ -5694,3 +5694,77 @@ footer {
   }
 }
 
+/* ========== AuthHeader (Auth Navbar) ========== */
+.auth-header {
+  display: flex;
+  background: var(--yellow);
+  height: 80px;
+  text-align: center;
+  justify-content: space-between;
+  align-items: center;
+  align-self: center;
+  padding: 0 60px 0 60px;
+}
+
+.auth-header.auth-header--dark {
+  background: var(--dark);
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-logo img {
+  width: 200px;
+  margin-right: 12px;
+}
+
+.auth-buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.auth-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.auth-btn-register {
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.auth-btn-register:hover {
+  background: #e6c200;
+  transform: translateY(-1px);
+}
+
+.auth-btn-login {
+  background: var(--yellow);
+  color: var(--black);
+  border: 2px solid var(--yellow);
+}
+
+.auth-btn-login:hover {
+  background: var(--yellow);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 480px) {
+  .auth-header {
+    padding: 0 24px 0 24px;
+  }
+  .auth-logo img {
+    width: 140px;
+  }
+}
+

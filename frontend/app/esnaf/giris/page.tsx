@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
-import EsnafAuthHeader from "../components/EsnafAuthHeader";
+import EsnafAuthHeader from "../../components/AuthHeader";
 import Footer from "@/app/components/Footer";
 import { useEsnaf } from "../context/EsnafContext";
 import { setAuthToken, setAuthEmail } from '@/app/utils/api';

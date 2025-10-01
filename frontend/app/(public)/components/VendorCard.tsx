@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { resolveMediaUrl } from "@/app/utils/api";
 
 type VendorCardProps = {
   name: string;
@@ -38,12 +39,13 @@ const VendorCard = ({
   // Avatar gösterimi - resim yoksa şirket adının ilk harfi
   const renderAvatar = () => {
     const firstLetter = displayName.charAt(0).toUpperCase();
+    const src = resolveMediaUrl(img);
     return (
       <div className="vendorAvatar">
-        {img && img !== '/images/vendor-default.jpg' ? (
+        {src && src !== '/images/vendor-default.jpg' ? (
           <>
             <img
-              src={img}
+              src={src}
               alt={displayName}
               className="vendorAvatarImg"
               loading="lazy"
