@@ -32,7 +32,9 @@ from .views import (
     get_support_ticket_status,
     list_my_support_tickets,
     get_support_ticket_details,
-    send_support_message
+    send_support_message,
+    VehicleListCreateView,
+    VehicleDetailView
 )
 
 urlpatterns = [
@@ -78,4 +80,8 @@ urlpatterns = [
     path('support/my-tickets/', list_my_support_tickets, name='support-ticket-my-list'),
     path('support/tickets/<str:ticket_id>/details/', get_support_ticket_details, name='support-ticket-details'),
     path('support/tickets/<str:ticket_id>/reply/', send_support_message, name='support-ticket-reply'),
+
+    # Vehicles
+    path('vehicles/', VehicleListCreateView.as_view(), name='vehicle-list-create'),
+    path('vehicles/<int:pk>/', VehicleDetailView.as_view(), name='vehicle-detail'),
 ] 

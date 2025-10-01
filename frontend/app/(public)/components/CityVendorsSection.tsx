@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { Car, Wrench, MapPin, Star } from "lucide-react";
 
 export default function CityVendorsSection() {
@@ -31,7 +32,7 @@ export default function CityVendorsSection() {
           </div>
         </div>
         
-        <button className="citySelectBtn">Şehrini Seç</button>
+        <Link href="/usta-ariyorum" className="citySelectBtn">Şehrini Seç</Link>
       </div>
     </section>
   );

@@ -908,8 +908,8 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                             border: '1px solid transparent'
                           }
                         : { 
-                            background: 'var(--chat-client-primary)',
-                            color: 'var(--chat-client-text)',
+                            background: 'var(--yellow)',
+                            color: 'var(--black)',
                             border: '1px solid transparent'
                           })
                     : { 
