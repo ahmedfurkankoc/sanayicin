@@ -5,10 +5,9 @@ import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
 
 function IcerikPolitikasiPage() {
-  const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <PolicyLayout title="İçerik Politikası" updatedAt={updatedAt}>
+      <PolicyLayout title="İçerik Politikası">
         <PolicySection heading="1. Kabul Edilebilir Kullanım">
           <p>Hakaret, nefret söylemi, spam, yasa dışı içerik yasaktır.</p>
         </PolicySection>

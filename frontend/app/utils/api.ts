@@ -523,4 +523,40 @@ export const api = {
     apiClient.get('/vendors/client/service-requests/', { params }),
   clientReplyServiceRequest: (id: number, data: { message: string }) =>
     apiClient.post(`/vendors/client/service-requests/${id}/reply/`, data),
+
+  // Vehicles (client)
+  listVehicles: () => apiClient.get('/vehicles/'),
+  createVehicle: (data: {
+    brand: string;
+    model: string;
+    year?: number | string;
+    plate?: string;
+    engine_type?: 'benzin' | 'dizel' | 'hibrit' | 'elektrik' | '';
+    kilometre?: number | string;
+    periodic_due_km?: number | string;
+    periodic_due_date?: string;
+    last_maintenance_notes?: string;
+    inspection_expiry?: string;
+    exhaust_emission_date?: string;
+    tire_change_date?: string;
+    traffic_insurance_expiry?: string;
+    casco_expiry?: string;
+  }) => apiClient.post('/vehicles/', data),
+  updateVehicle: (id: number, data: Partial<{
+    brand: string;
+    model: string;
+    year: number | string;
+    plate: string;
+    engine_type: 'benzin' | 'dizel' | 'hibrit' | 'elektrik' | '';
+    kilometre: number | string;
+    periodic_due_km: number | string;
+    periodic_due_date: string;
+    last_maintenance_notes: string;
+    inspection_expiry: string;
+    exhaust_emission_date: string;
+    tire_change_date: string;
+    traffic_insurance_expiry: string;
+    casco_expiry: string;
+  }>) => apiClient.patch(`/vehicles/${id}/`, data),
+  deleteVehicle: (id: number) => apiClient.delete(`/vehicles/${id}/`),
 }; 

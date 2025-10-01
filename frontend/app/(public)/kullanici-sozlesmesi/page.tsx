@@ -5,10 +5,9 @@ import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
 
 function KullaniciSozlesmesiPage() {
-  const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <PolicyLayout title="Kullanıcı Sözleşmesi" updatedAt={updatedAt}>
+      <PolicyLayout title="Kullanıcı Sözleşmesi">
         <PolicySection heading="1. Taraflar ve Konu">
           <p>Bu sözleşme, Sanayicin platformunu kullanan kullanıcı ile Sanayicin arasında akdedilmiştir.</p>
         </PolicySection>

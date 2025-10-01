@@ -5,10 +5,9 @@ import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
 
 function KvkkAydinlatmaPage() {
-  const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <PolicyLayout title="KVKK Aydınlatma Metni" updatedAt={updatedAt}>
+      <PolicyLayout title="KVKK Aydınlatma Metni">
         <PolicySection heading="1. Veri Sorumlusu">
           <p>Sanayicin, 6698 sayılı Kanun kapsamında veri sorumlusudur.</p>
         </PolicySection>

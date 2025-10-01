@@ -6,8 +6,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
-from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite, SupportTicket, SupportMessage
-from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer, SupportTicketSerializer, SupportMessageSerializer, SupportTicketDetailSerializer
+from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite, SupportTicket, SupportMessage, Vehicle
+from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer, SupportTicketSerializer, SupportMessageSerializer, SupportTicketDetailSerializer, VehicleSerializer
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
 import logging
@@ -1196,6 +1196,26 @@ def check_favorite(request, vendor_id):
         return Response({'detail': 'Favori durumu kontrol edilemedi'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# ===== VEHICLE API VIEWS =====
+
+class VehicleListCreateView(generics.ListCreateAPIView):
+    serializer_class = VehicleSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Vehicle.objects.filter(user=self.request.user).order_by('-updated_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class VehicleDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = VehicleSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Vehicle.objects.filter(user=self.request.user)
+
 # ===== CLIENT MANAGEMENT VIEWS (ClientProfile yerine CustomUser kullanıyor) =====
 
 @api_view(['POST'])
@@ -1306,11 +1326,34 @@ def client_profile(request):
                 user.about = request.data['about']
             if 'avatar' in request.FILES:
                 user.avatar = request.FILES['avatar']
+
+            # E-posta güncelleme (unique + structured error responses)
+            if 'email' in request.data:
+                new_email = (request.data.get('email') or '').strip()
+                if not new_email:
+                    return Response({
+                        'code': 'email_required',
+                        'message': 'E-posta adresi gerekli'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+                # Aynı mı?
+                if new_email.lower() != (user.email or '').lower():
+                    from .models import CustomUser
+                    exists = CustomUser.objects.filter(email__iexact=new_email).exclude(id=user.id).exists()
+                    if exists:
+                        return Response({
+                            'code': 'email_exists',
+                            'message': 'Bu e-posta adresi başka bir hesapta kayıtlı.'
+                        }, status=status.HTTP_409_CONFLICT)
+                    # E-posta değiştir: doğrulama tekrar gereksinimi işaretle
+                    user.email = new_email
+                    if hasattr(user, 'is_verified'):
+                        user.is_verified = False
             
             user.save()
             
             return Response({
-                'detail': 'Profil başarıyla güncellendi',
+                'message': 'Profil başarıyla güncellendi',
                 'profile': {
                     'id': user.id,
                     'email': user.email,
@@ -1319,13 +1362,14 @@ def client_profile(request):
                     'phone_number': user.phone_number,
                     'about': user.about,
                     'avatar': user.avatar.url if user.avatar else None,
+                    'is_verified': getattr(user, 'is_verified', False),
                 }
             })
             
         except Exception as e:
             logger.error(f"Client profile update error: {e}")
             return Response({
-                'detail': 'Profil güncellenirken hata oluştu'
+                'error': 'Profil güncellenirken hata oluştu'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

@@ -5,10 +5,9 @@ import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
 
 function EsnafSozlesmesiPage() {
-  const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <PolicyLayout title="Esnaf Sözleşmesi" updatedAt={updatedAt}>
+      <PolicyLayout title="Esnaf Sözleşmesi">
         <PolicySection heading="1. Taraflar ve Kapsam">
           <p>Bu sözleşme, Sanayicin platformunda hizmet veren esnaf ile Sanayicin arasındadır.</p>
         </PolicySection>

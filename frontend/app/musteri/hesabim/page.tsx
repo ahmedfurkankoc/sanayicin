@@ -63,6 +63,7 @@ export default function MusteriHesabimPage() {
         // Form verilerini doldur
         setFirstName(user.first_name || '');
         setLastName(user.last_name || '');
+        // Email düzenlenemez; state tutulmuyor
         setPhone(user.phone_number || '');
         setAbout(user.about || '');
         
@@ -135,7 +136,9 @@ export default function MusteriHesabimPage() {
     }
   };
 
-  const cancelEdit = (field: 'name' | 'phone' | 'about') => {
+  // Email değiştirilemez: handler kaldırıldı
+
+  const cancelEdit = (field: 'name' | 'phone' | 'about' | 'email') => {
     switch (field) {
       case 'name':
         setFirstName(userData?.first_name || '');
@@ -149,6 +152,10 @@ export default function MusteriHesabimPage() {
       case 'about':
         setAbout(userData?.about || '');
         setEditingAbout(false);
+        break;
+      case 'email':
+        setEmail(userData?.email || '');
+        setEditingEmail(false);
         break;
     }
   };
@@ -231,64 +238,21 @@ export default function MusteriHesabimPage() {
             <h3>Kişisel Bilgiler</h3>
           </div>
 
-          {/* Ad Soyad */}
+          {/* Ad Soyad (Değiştirilemez) */}
           <div className="musteri-field-group">
             <label className="musteri-field-label">Ad Soyad</label>
-            {editingName ? (
-              <div className="musteri-edit-mode">
-                <div className="musteri-name-inputs">
-                  <input
-                    type="text"
-                    placeholder="Ad"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="musteri-input"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Soyad"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="musteri-input"
-                  />
-                </div>
-                <div className="musteri-edit-actions">
-                  <button 
-                    onClick={handleSaveName}
-                    disabled={savingName}
-                    className="musteri-btn musteri-btn-primary musteri-btn-sm"
-                  >
-                    {savingName ? 'Kaydediliyor...' : 'Kaydet'}
-                  </button>
-                  <button 
-                    onClick={() => cancelEdit('name')}
-                    disabled={savingName}
-                    className="musteri-btn musteri-btn-outline musteri-btn-sm"
-                  >
-                    İptal
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="musteri-field-display">
-                <span className="musteri-field-value">
-                  {userData.first_name || userData.last_name 
-                    ? `${userData.first_name || ''} ${userData.last_name || ''}`.trim()
-                    : 'Belirtilmemiş'
-                  }
-                </span>
-                <button 
-                  onClick={() => setEditingName(true)}
-                  className="musteri-edit-btn"
-                >
-                  {React.createElement(iconMapping.edit, { size: 16 })}
-                  Düzenle
-                </button>
-              </div>
-            )}
+            <div className="musteri-field-display">
+              <span className="musteri-field-value">
+                {userData.first_name || userData.last_name 
+                  ? `${userData.first_name || ''} ${userData.last_name || ''}`.trim()
+                  : 'Belirtilmemiş'
+                }
+              </span>
+              <span className="musteri-field-note">Ad soyad değiştirilemez</span>
+            </div>
           </div>
 
-          {/* Email */}
+          {/* Email (Değiştirilemez) */}
           <div className="musteri-field-group">
             <label className="musteri-field-label">E-posta</label>
             <div className="musteri-field-display">
@@ -423,7 +387,7 @@ export default function MusteriHesabimPage() {
                   <div className="musteri-field-display">
                     <span className="musteri-field-note">
                       Güvenlik nedeniyle e-posta adresi değiştirilemez. 
-                      Yeni e-posta ile hesap oluşturmanız gerekir.
+                      Bir sorun olduğunu düşünüyorsanız <a href="/yardim/destek?tab=new">Destek Talebi</a> sayfamızdan bizimle iletişime geçebilirsiniz.
                     </span>
                   </div>
                 </div>

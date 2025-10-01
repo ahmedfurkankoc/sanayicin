@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Favorite, SupportTicket, SupportMessage
+from .models import CustomUser, Favorite, SupportTicket, SupportMessage, Vehicle
 from vendors.models import VendorProfile
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -94,6 +94,35 @@ class SupportTicketDetailSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'public_id', 'status', 'created_at', 'updated_at', 'user')
 
+
+class VehicleSerializer(serializers.ModelSerializer):
+    plate = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    engine_type_display = serializers.CharField(source='get_engine_type_display', read_only=True)
+    periodic_due_date = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
+    inspection_expiry = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
+    exhaust_emission_date = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
+    tire_change_date = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
+    traffic_insurance_expiry = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
+    casco_expiry = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
+
+    class Meta:
+        model = Vehicle
+        fields = (
+            'id', 'brand', 'model', 'year', 'plate', 'engine_type', 'kilometre',
+            'periodic_due_km', 'periodic_due_date', 'last_maintenance_notes',
+            'inspection_expiry', 'exhaust_emission_date',
+            'tire_change_date', 'traffic_insurance_expiry', 'casco_expiry',
+            'engine_type_display',
+            'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def to_representation(self, instance):
+        # Plate is sensitive: do not expose raw or masked by default.
+        rep = super().to_representation(instance)
+        if 'plate' in rep:
+            rep.pop('plate', None)
+        return rep
 
 # JWT Token'a role bilgisi eklemek için custom serializer
 class CustomTokenObtainPairSerializer(serializers.Serializer):

@@ -10,7 +10,7 @@ function PolicySidebar() {
           <li><Link href="/kullanici-sozlesmesi" className="policy-sidebar-link">Kullanıcı Sözleşmesi</Link></li>
           <li><Link href="/kullanim-kosullari" className="policy-sidebar-link">Kullanım Koşulları</Link></li>
           <li><Link href="/esnaf-sozlesmesi" className="policy-sidebar-link">Esnaf Sözleşmesi</Link></li>
-          <li><Link href="/icerik-moderasyon-politikasi" className="policy-sidebar-link">İçerik Politikası</Link></li>
+          <li><Link href="/icerik-politikasi" className="policy-sidebar-link">İçerik Politikası</Link></li>
         </ul>
       </div>
 

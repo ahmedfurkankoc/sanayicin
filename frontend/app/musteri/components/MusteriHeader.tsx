@@ -437,6 +437,10 @@ export default function MusteriHeader() {
                       {React.createElement(iconMapping.user, { size: 16 })}
                       Hesabım
                     </Link>
+                    <Link href="/musteri/aracim" className="musteri-dropdown-item">
+                      {React.createElement(iconMapping['car'] || iconMapping['clipboard'], { size: 16 })}
+                      Aracım
+                    </Link>
                     <Link href="/musteri/mesajlar" className="musteri-dropdown-item">
                       {React.createElement(iconMapping.message, { size: 16 })}
                       Mesajlarım

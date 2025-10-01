@@ -49,6 +49,12 @@ function Sidebar() {
             <span>Hesabım</span>
           </span>
         </Link>
+        <Link href="/musteri/aracim" style={linkStyle}>
+              <span style={linkInnerStyle}>
+                <Icon name="car" size={18} />
+                <span>Aracım</span>
+              </span>
+            </Link>
         <Link href="/musteri/mesajlar" style={linkStyle}>
           <span style={linkInnerStyle}>
             <Icon name="message" size={18} />
