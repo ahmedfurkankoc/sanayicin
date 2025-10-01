@@ -35,8 +35,6 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
     display_name = serializers.CharField()
     about = serializers.CharField(allow_blank=True, required=False)
     avatar = serializers.ImageField(required=False, allow_null=True)
-    # Yeni: mağaza logosu
-    store_logo = serializers.ImageField(required=False, allow_null=True)
     business_phone = serializers.CharField(required=True)  # İşyeri telefon numarası
     city = serializers.CharField()
     district = serializers.CharField()
@@ -52,7 +50,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         model = VendorProfile
         fields = (
             'email', 'password', 'password2', 'business_type', 'service_area', 'categories',
-            'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'avatar', 'store_logo',
+            'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'avatar',
             'business_phone', 'city', 'district', 'subdistrict', 'address',
             'first_name', 'last_name', 'manager_birthdate', 'manager_tc', 'phone_number'
         )
@@ -167,8 +165,6 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         
         # Avatar'ı çıkar (varsa)
         avatar = validated_data.pop('avatar', None)
-        # Store logo'yu çıkar (varsa)
-        store_logo = validated_data.pop('store_logo', None)
         
         # Phone number'ı çıkar (CustomUser'a kaydedilecek)
         phone_number = validated_data.pop('phone_number', None)
@@ -198,12 +194,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         profile.categories.set(categories)
         profile.service_areas.set([service_area])  # service_area'yı service_areas olarak set et
         
-        # Mağaza logosu varsa kaydet
-        if store_logo:
-            try:
-                profile.save_store_logo(store_logo)
-            except Exception:
-                pass
+        # Not: Mağaza logosu kaldırıldı. Avatar CustomUser.avatar olarak kaydedilir.
         
         return profile
 
@@ -238,8 +229,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'car_brands', 'car_brands_ids', 'company_title', 'tax_office', 'tax_no',
             'display_name', 'about', 'business_phone', 'city', 'district', 'subdistrict', 'address',
             'social_media', 'working_hours', 'unavailable_dates', 'manager_birthdate', 'manager_tc',
-            # Yeni alan (read-only url)
-            'store_logo', 'rating', 'review_count'
+            'rating', 'review_count'
         )
         read_only_fields = ('id', 'slug')
 
@@ -259,7 +249,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         }
     
     def get_vendor_profile(self, obj):
-        return {
+        data = {
             'id': obj.id,
             'slug': obj.slug,
             'business_type': obj.business_type,
@@ -275,8 +265,8 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'address': obj.address,
             'manager_birthdate': obj.manager_birthdate,
             'manager_tc': obj.manager_tc,
-            'store_logo': obj.store_logo.url if obj.store_logo else None
         }
+        return data
     
     def get_rating(self, obj):
         """Vendor'ın ortalama puanını hesapla"""
@@ -318,7 +308,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         service_areas = validated_data.pop('service_areas', None)
         categories = validated_data.pop('categories', None)
         car_brands = validated_data.pop('car_brands', None)
-        store_logo = validated_data.pop('store_logo', None)
+        # store_logo kaldırıldı
         
         # Ana alanları güncelle
         for attr, value in validated_data.items():
@@ -335,11 +325,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         if car_brands is not None:
             instance.car_brands.set(car_brands)
         
-        if store_logo is not None:
-            try:
-                instance.save_store_logo(store_logo)
-            except Exception:
-                pass
+        # Mağaza logosu kaldırıldı, işlem yok
         
         return instance 
 

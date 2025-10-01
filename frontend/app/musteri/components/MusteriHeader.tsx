@@ -381,77 +381,74 @@ export default function MusteriHeader() {
             </div>
           </div>
 
-          <NotificationBell iconColor="var(--white)" />
-          <button 
-            className={`musteri-header-btn musteri-message-btn ${showChatWidget ? 'active' : ''}`} 
-            onClick={toggleChatWidget}
-          >
-            {React.createElement(iconMapping.message, { size: 20 })}
-            {/* Okunmamış mesaj badge'i */}
-            {unreadCount > 0 && (
-              <span className="musteri-message-badge">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </button>
-          <div className="musteri-user-menu">
-            <button className="musteri-header-btn musteri-user-btn" onClick={toggleDropdown}>
-              {React.createElement(iconMapping.user, { size: 20 })}
-              {isAuthenticated && !loading && user && (
-                <span className="musteri-user-name">
-                  {getUserDisplayName()}
-                </span>
-              )}
-              {isAuthenticated && !loading && user && (
-                <span className="musteri-chevron">
-                  {showDropdown 
-                    ? React.createElement(iconMapping['chevron-up'], { size: 16 })
-                    : React.createElement(iconMapping['chevron-down'], { size: 16 })
-                  }
-                </span>
-              )}
-            </button>
-            
-            {showDropdown && (
-              <div className={`musteri-user-dropdown ${showDropdown ? 'show' : ''}`}>
-                {!isAuthenticated ? (
-                  // Giriş yapılmamış
-                  <>
-                    <Link href="/musteri/giris?next=/musteri" className="musteri-dropdown-item">
-                      Giriş Yap
-                    </Link>
-                    <div className="musteri-dropdown-divider"></div>
-                    <Link href="/musteri/kayit" className="musteri-dropdown-item">
-                      Kayıt Ol
-                    </Link>
-                  </>
-                ) : (
-                  // Giriş yapılmış
-                  <>
+          {!isAuthenticated ? (
+            // Giriş yapılmamış: AuthHeader butonları
+            <div className="auth-buttons" style={{ gap: 8 }}>
+              <button
+                className="auth-btn auth-btn-login"
+                onClick={() => router.push('/musteri/giris')}
+              >
+                Giriş Yap
+              </button>
+              <button
+                className="auth-btn auth-btn-register"
+                onClick={() => router.push('/musteri/kayit')}
+              >
+                Kayıt Ol
+              </button>
+            </div>
+          ) : (
+            <>
+              <NotificationBell iconColor="var(--white)" />
+              <button 
+                className={`musteri-header-btn musteri-message-btn ${showChatWidget ? 'active' : ''}`} 
+                onClick={toggleChatWidget}
+              >
+                {React.createElement(iconMapping.message, { size: 20 })}
+                {unreadCount > 0 && (
+                  <span className="musteri-message-badge">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              <div className="musteri-user-menu">
+                <button className="musteri-header-btn musteri-user-btn" onClick={toggleDropdown}>
+                  {React.createElement(iconMapping.user, { size: 20 })}
+                  {isAuthenticated && !loading && user && (
+                    <span className="musteri-user-name">
+                      {getUserDisplayName()}
+                    </span>
+                  )}
+                  {isAuthenticated && !loading && user && (
+                    <span className="musteri-chevron">
+                      {showDropdown 
+                        ? React.createElement(iconMapping['chevron-up'], { size: 16 })
+                        : React.createElement(iconMapping['chevron-down'], { size: 16 })
+                      }
+                    </span>
+                  )}
+                </button>
+                {showDropdown && (
+                  <div className={`musteri-user-dropdown ${showDropdown ? 'show' : ''}`}>
                     <div className="musteri-dropdown-header">
                       <strong>{getUserDisplayName()}</strong>
                     </div>
-                    
                     <Link href="/musteri/hesabim" className="musteri-dropdown-item">
                       {React.createElement(iconMapping.user, { size: 16 })}
                       Hesabım
                     </Link>
-                    
                     <Link href="/musteri/mesajlar" className="musteri-dropdown-item">
                       {React.createElement(iconMapping.message, { size: 16 })}
                       Mesajlarım
                     </Link>
-                    
                     <Link href="/musteri/favorilerim" className="musteri-dropdown-item">
                       {React.createElement(iconMapping.heart, { size: 16 })}
                       Favorilerim
                     </Link>
-                    
                     <Link href="/musteri/taleplerim" className="musteri-dropdown-item">
                       {React.createElement(iconMapping.clipboard, { size: 16 })}
                       Taleplerim
                     </Link>
-                    
                     {currentRole === 'client' && (
                       <>
                         <div className="musteri-dropdown-divider"></div>
@@ -467,7 +464,6 @@ export default function MusteriHeader() {
                         </Link>
                       </>
                     )}
-                    
                     {currentRole === 'vendor' && (
                       <>
                         <div className="musteri-dropdown-divider"></div>
@@ -486,17 +482,16 @@ export default function MusteriHeader() {
                         </div>
                       </>
                     )}
-                    
                     <div className="musteri-dropdown-divider"></div>
                     <button onClick={handleLogout} className="musteri-dropdown-item musteri-dropdown-logout">
                       {React.createElement(iconMapping.logout, { size: 16 })}
                       Çıkış Yap
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
       

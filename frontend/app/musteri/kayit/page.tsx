@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, setAuthEmail } from "@/app/utils/api";
-import MusteriHeader from "../components/MusteriHeader";
 import { iconMapping } from "@/app/utils/iconMapping";
 
 export default function MusteriKayitPage() {
@@ -234,9 +233,13 @@ export default function MusteriKayitPage() {
                   </div>
                 </div>
               </div>
-              <div className="mrl-cta">
-                <h2>Aradığın usta bir tık uzağında</h2>
-                <p>Hesabını oluştur, yakınındaki esnaflardan hızlıca teklif al.</p>
+              <div className="mrc-card">
+                <h2 className="mrc-title">Aradığın usta bir tık uzağında</h2>
+                <p className="mrc-sub">Sanayicin ağına ücretsiz katıl, bölgendeki güvenilir işletmelere aynı anda ulaş ve ihtiyacın olan hizmet için saniyeler içinde birden fazla teklif al. Karşılaştır, bütçene ve zamanına en uygun olanı seçerek anında harekete geç.</p>
+                <Link href="#register-form" className="mrc-btn" scroll={false}>
+                  Hemen Başla
+                  <span className="mrc-arrow">→</span>
+                </Link>
               </div>
             </div>
           </aside>
@@ -250,7 +253,7 @@ export default function MusteriKayitPage() {
 
             {/* Step 1: Form */}
             {step === 1 && (
-              <form onSubmit={handleSubmitRegistration} className="musteri-auth-form">
+              <form onSubmit={handleSubmitRegistration} className="musteri-auth-form" id="register-form">
                 <div className="musteri-form-group">
                     <label htmlFor="first_name" className="musteri-form-label">
                       Ad *

@@ -455,7 +455,7 @@ export default function EsnafProfilDuzenlePage() {
                         height="12" 
                         viewBox="0 0 12 12"
                       >
-                        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                        <path d="M3 4.5L6 7.5L9 4.5"  roke="currentColor" strokeWidth="1.5" fill="none"/>
                       </svg>
                     </div>
                     

@@ -99,7 +99,7 @@ export default function Home() {
                       experience: `${Math.floor(Math.random() * 10) + 1}+ yıl deneyim`, // Geçici olarak random
                       type: 'service_areas' in vendor ? (vendor.service_areas?.[0]?.name || 'Hizmet') : vendor.type,
                       city: 'city' in vendor ? vendor.city : (vendor as any).city,
-                      img: 'store_logo' in vendor ? (vendor.store_logo || (vendor as any).avatar || '/images/vendor-default.jpg') : (vendor as any).img,
+                      img: 'avatar' in vendor ? ((vendor as any).avatar || '/images/vendor-default.jpg') : (vendor as any).img,
                       slug: 'slug' in vendor ? vendor.slug : undefined,
                       rating: 'rating' in vendor ? (vendor.rating || 0) : 0, // Rating yoksa 0 göster
                       reviewCount: 'review_count' in vendor ? (vendor.review_count || 0) : 0,

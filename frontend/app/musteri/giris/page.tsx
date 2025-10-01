@@ -6,7 +6,6 @@ import Link from "next/link";
 import axios from "axios";
 import { api, setAuthToken, setAuthEmail } from "@/app/utils/api";
 import { useMusteri } from "../context/MusteriContext";
-import MusteriHeader from "../components/MusteriHeader";
 
 function MusteriGirisContent() {
   const [email, setEmail] = useState("");

@@ -10,7 +10,6 @@ interface Vendor {
   city: string;
   district: string;
   about: string;
-  store_logo: string | null;
   avatar: string | null;
   rating: number;
   review_count: number;

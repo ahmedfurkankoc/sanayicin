@@ -2,6 +2,26 @@ import axios from 'axios';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
+// Media base URL (strip trailing /api for static/media files)
+export const mediaBaseUrl = (() => {
+  try {
+    return apiUrl.replace(/\/?api\/?$/, '');
+  } catch {
+    return apiUrl;
+  }
+})();
+
+// Normalize media URLs coming from backend (relative or absolute)
+export const resolveMediaUrl = (path?: string | null): string => {
+  if (!path || path.trim().length === 0) {
+    return '/images/vendor-default.jpg';
+  }
+  const p = path.trim();
+  if (/^https?:\/\//i.test(p)) return p;
+  if (p.startsWith('/')) return `${mediaBaseUrl}${p}`;
+  return `${mediaBaseUrl}/${p}`;
+};
+
 // Role'e göre token key'leri
 const getTokenKey = (role: 'vendor' | 'client' = 'vendor') => {
   return role === 'vendor' ? 'esnaf_access_token' : 'client_access_token';
