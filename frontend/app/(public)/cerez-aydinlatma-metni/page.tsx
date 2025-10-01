@@ -5,10 +5,9 @@ import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
 
 function CerezAydinlatmaPage() {
-  const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <PolicyLayout title="Çerez Aydınlatma Metni" updatedAt={updatedAt}>
+      <PolicyLayout title="Çerez Aydınlatma Metni">
         <PolicySection heading="1. Çerez Türleri">
           <p>Zorunlu, performans, işlevsel ve reklam/hedefleme çerezleri.</p>
         </PolicySection>

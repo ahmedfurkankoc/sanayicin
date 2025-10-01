@@ -1,6 +1,7 @@
 from celery import shared_task
 from typing import Dict, Any
 import logging
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -414,3 +415,83 @@ def send_message_notification_email(recipient_email: str, sender_name: str, mess
     except Exception as e:
         logger.error(f"Message notification email task failed: {str(e)}")
         return False 
+
+
+# ===== Vehicle reminder emails (email-only for now; SMS later) =====
+@shared_task
+def send_vehicle_maintenance_reminder(user_email: str, vehicle_label: str, due_km: int | None, due_date: str | None) -> bool:
+    try:
+        from core.utils.email_service import EmailService
+        subject = "Bakım Hatırlatması - Sanayicin"
+        details = []
+        if due_km:
+            details.append(f"Planlanan KM: {due_km}")
+        if due_date:
+            details.append(f"Tarih: {due_date}")
+        details_text = " | ".join(details) or ""
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #333; margin-bottom: 20px;">Bakım Hatırlatması</h2>
+                <p><strong>Araç:</strong> {vehicle_label}</p>
+                <p>{details_text}</p>
+                <p style="color:#666;">Dilerseniz size en yakın ustalardan randevu alabilirsiniz.</p>
+            </div>
+        </div>
+        """
+        return EmailService.send_email(
+            to_emails=[user_email], subject=subject, html_content=html_content, category="vehicle_maintenance_reminder"
+        )
+    except Exception as e:
+        logger.error(f"Vehicle maintenance reminder email failed: {str(e)}")
+        return False
+
+
+@shared_task
+def send_vehicle_inspection_reminder(user_email: str, vehicle_label: str, inspection_expiry: str) -> bool:
+    try:
+        from core.utils.email_service import EmailService
+        subject = "Muayene Hatırlatması - Sanayicin"
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #333; margin-bottom: 20px;">Muayene Hatırlatması</h2>
+                <p><strong>Araç:</strong> {vehicle_label}</p>
+                <p><strong>Muayene Geçerlilik:</strong> {inspection_expiry}</p>
+            </div>
+        </div>
+        """
+        return EmailService.send_email(
+            to_emails=[user_email], subject=subject, html_content=html_content, category="vehicle_inspection_reminder"
+        )
+    except Exception as e:
+        logger.error(f"Vehicle inspection reminder email failed: {str(e)}")
+        return False
+
+
+@shared_task
+def send_vehicle_insurance_reminder(user_email: str, vehicle_label: str, traffic_expiry: str | None, casco_expiry: str | None) -> bool:
+    try:
+        from core.utils.email_service import EmailService
+        subject = "Sigorta Hatırlatması - Sanayicin"
+        parts = []
+        if traffic_expiry:
+            parts.append(f"Trafik Sigortası Bitiş: {traffic_expiry}")
+        if casco_expiry:
+            parts.append(f"Kasko Bitiş: {casco_expiry}")
+        info = " | ".join(parts) or ""
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #333; margin-bottom: 20px;">Sigorta Hatırlatması</h2>
+                <p><strong>Araç:</strong> {vehicle_label}</p>
+                <p>{info}</p>
+            </div>
+        </div>
+        """
+        return EmailService.send_email(
+            to_emails=[user_email], subject=subject, html_content=html_content, category="vehicle_insurance_reminder"
+        )
+    except Exception as e:
+        logger.error(f"Vehicle insurance reminder email failed: {str(e)}")
+        return False

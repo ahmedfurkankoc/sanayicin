@@ -11,6 +11,7 @@ from PIL import Image
 from io import BytesIO
 from django.core.files import File
 from .utils import avatar_upload_path
+from .utils.crypto import encrypt_text, decrypt_text
 
 # Create your models here.
 
@@ -35,10 +36,8 @@ class CustomUser(AbstractUser):
         default='email'
     )
     
-    # Merkezi telefon numarası (hem müşteri hem esnaf için)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     
-    # Merkezi profil bilgileri (hem müşteri hem esnaf için)
     first_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
     avatar = models.ImageField(upload_to=avatar_upload_path, null=True, blank=True)
@@ -50,9 +49,6 @@ class CustomUser(AbstractUser):
     sms_verification_code = models.CharField(max_length=6, null=True, blank=True)
     sms_code_expires_at = models.DateTimeField(null=True, blank=True)
     
-    # Legacy field - artık kullanılmıyor, sadece migration için tutuluyor
-    # email_verified = models.BooleanField(default=False)  # Kaldırıldı
-
     REQUIRED_FIELDS = ["email"]
 
     def save(self, *args, **kwargs):
@@ -561,6 +557,61 @@ class Favorite(models.Model):
     def __str__(self):
         return f"{self.user.email} -> {self.vendor.display_name}"
 
+
+# Müşterinin araçları
+class Vehicle(models.Model):
+    ENGINE_CHOICES = [
+        ('benzin', 'Benzin'),
+        ('dizel', 'Dizel'),
+        ('hibrit', 'Hibrit'),
+        ('elektrik', 'Elektrik'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='vehicles')
+    brand = models.CharField(max_length=100)
+    model = models.CharField(max_length=100)
+    year = models.PositiveIntegerField(null=True, blank=True)
+    # Plaka gizliliği: şifreli saklanır
+    plate_encrypted = models.TextField(blank=True)
+    engine_type = models.CharField(max_length=16, choices=ENGINE_CHOICES, blank=True)
+    kilometre = models.PositiveIntegerField(null=True, blank=True)
+
+    # Bakım takip
+    periodic_due_km = models.PositiveIntegerField(null=True, blank=True)
+    periodic_due_date = models.DateField(null=True, blank=True)
+    last_maintenance_notes = models.TextField(blank=True)
+
+    # Muayene takip
+    inspection_expiry = models.DateField(null=True, blank=True)
+    exhaust_emission_date = models.DateField(null=True, blank=True)
+
+    # Lastik & Sigorta
+    tire_change_date = models.DateField(null=True, blank=True)
+    traffic_insurance_expiry = models.DateField(null=True, blank=True)
+    casco_expiry = models.DateField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['user', 'brand']),
+            models.Index(fields=['user', 'inspection_expiry']),
+            models.Index(fields=['user', 'traffic_insurance_expiry']),
+            models.Index(fields=['user', 'casco_expiry']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.brand} {self.model}"
+
+    @property
+    def plate(self) -> str:
+        return decrypt_text(self.plate_encrypted or '') or ''
+
+    @plate.setter
+    def plate(self, value: str) -> None:
+        self.plate_encrypted = encrypt_text((value or '').strip()) if value else ''
 
 # Destek Merkezi - Support Ticket
 class SupportTicket(models.Model):

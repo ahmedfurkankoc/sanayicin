@@ -5,10 +5,9 @@ import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
 
 function CerezTercihleriPage() {
-  const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <PolicyLayout title="Çerez Tercihleri" updatedAt={updatedAt}>
+      <PolicyLayout title="Çerez Tercihleri">
         <PolicySection heading="1. Tercih Yönetimi">
           <p>Analitik ve pazarlama çerezleri için açık rızanızı burada yönetebilirsiniz.</p>
         </PolicySection>

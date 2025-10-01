@@ -5,10 +5,9 @@ import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
 
 function KullanimKosullariPage() {
-  const updatedAt = new Date().toLocaleDateString('tr-TR');
   return (
     <>
-      <PolicyLayout title="Kullanım Koşulları" updatedAt={updatedAt}>
+      <PolicyLayout title="Kullanım Koşulları">
         <PolicySection heading="1. Platform Kullanımı">
           <p>Kullanıcılar, yürürlükteki mevzuata ve işbu koşullara uygun davranmayı kabul eder.</p>
         </PolicySection>
