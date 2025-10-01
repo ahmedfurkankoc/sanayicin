@@ -222,7 +222,7 @@ export default function HizmetlerPage() {
         const email = data.email || '';
         const finalName = (display && display.trim().length > 0) ? display : (email || 'Kullanıcı');
         setUserName(finalName);
-        const avatar = data.avatar || data.store_logo || data.photo || data.photoUrl || null;
+        const avatar = data.avatar || data.photo || data.photoUrl || null;
         if (avatar) setAvatarUrl(avatar);
       } catch (e) {
         // Sessizce geç: token yoksa ya da misafir ise
@@ -325,7 +325,7 @@ export default function HizmetlerPage() {
                   experience: `${Math.floor(Math.random() * 10) + 1}+ yıl deneyim`,
                   type: 'service_areas' in vendor ? (vendor.service_areas?.[0]?.name || 'Hizmet') : vendor.type,
                   city: 'city' in vendor ? vendor.city : (vendor as any).city,
-                  img: 'store_logo' in vendor ? (vendor.store_logo || (vendor as any).avatar || '/images/vendor-default.jpg') : (vendor as any).img,
+                  img: 'avatar' in vendor ? ((vendor as any).avatar || '/images/vendor-default.jpg') : (vendor as any).img,
                   slug: 'slug' in vendor ? vendor.slug : undefined,
                   rating: 'rating' in vendor ? (vendor.rating || 0) : 0,
                   reviewCount: 'monthly_review_count' in vendor ? (vendor.monthly_review_count || 0) : ('reviews_this_month' in vendor ? (vendor.reviews_this_month || 0) : ('review_count' in vendor ? (vendor.review_count || 0) : 0)),

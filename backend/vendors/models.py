@@ -4,10 +4,6 @@ from core.models import CustomUser
 from core.models import ServiceArea, Category, CarBrand
 from core.utils import avatar_upload_path
 import uuid
-import os
-from PIL import Image
-from io import BytesIO
-from django.core.files import File
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.contrib.auth import get_user_model
@@ -31,8 +27,7 @@ class VendorProfile(models.Model):
 	display_name = models.CharField(max_length=100)
 	about = models.TextField(blank=True)
 	# Mağaza logosu (kullanıcı avatarından bağımsız)
-	store_logo = models.ImageField(upload_to=avatar_upload_path, null=True, blank=True)
-	# avatar artık CustomUser'dan alınıyor
+	# Kaldırıldı: store_logo. Avatar artık CustomUser'dan alınır.
 	business_phone = models.CharField(max_length=20)  # İşyeri telefon numarası
 	address = models.CharField(max_length=255)
 	city = models.CharField(max_length=64)
@@ -69,41 +64,7 @@ class VendorProfile(models.Model):
 		"""CustomUser'dan manager_name al"""
 		return self.user.full_name
 
-	def save_store_logo(self, image_file) -> bool:
-		"""Store logosunu 200x200 olarak kaydet"""
-		try:
-			# Eski logo'yu sil
-			if self.store_logo:
-				if os.path.exists(self.store_logo.path):
-					os.remove(self.store_logo.path)
-			# Resmi aç ve işle
-			img = Image.open(image_file)
-			# RGBA'yı RGB'ye çevir (JPEG için)
-			if img.mode in ('RGBA', 'LA', 'P'):
-				img = img.convert('RGB')
-			# 200x200 boyutunda resize et (aspect ratio korunarak)
-			img.thumbnail((200, 200), Image.Resampling.LANCZOS)
-			# 200x200 beyaz zemin oluştur ve resmi ortala
-			new_img = Image.new('RGB', (200, 200), (255, 255, 255))
-			x = (200 - img.width) // 2
-			y = (200 - img.height) // 2
-			new_img.paste(img, (x, y))
-			# BytesIO'ya kaydet
-			buffer = BytesIO()
-			new_img.save(buffer, format='JPEG', quality=85, optimize=True)
-			buffer.seek(0)
-			# Dosya adı
-			file_uuid = str(uuid.uuid4())
-			filename = f'{file_uuid}_200x200.jpg'
-			# Django File
-			django_file = File(buffer, name=filename)
-			# Field'a yaz
-			self.store_logo.save(filename, django_file, save=False)
-			self.save()
-			return True
-		except Exception as e:
-			print(f"Store logo kaydetme hatası: {e}")
-			return False
+	# Kaldırıldı: save_store_logo. Avatar yönetimi CustomUser.avatar üzerinden yapılır.
 
 	def save(self, *args, **kwargs):
 		if not self.slug:

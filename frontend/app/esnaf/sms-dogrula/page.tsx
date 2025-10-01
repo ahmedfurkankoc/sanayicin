@@ -7,7 +7,7 @@ import { api } from "@/app/utils/api";
 
 // UI Components
 import Footer from "@/app/components/Footer";
-import EsnafAuthHeader from "../components/EsnafAuthHeader";
+import EsnafAuthHeader from "../../components/AuthHeader";
 
 function SMSDogrulaContent() {
   const router = useRouter();

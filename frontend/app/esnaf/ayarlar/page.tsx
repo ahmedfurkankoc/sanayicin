@@ -28,13 +28,7 @@ export default function EsnafAyarlarPage() {
                 </p>
               </div>
               <div className="esnaf-ayarlar-avatar">
-                {user?.store_logo ? (
-                  <img 
-                    src={user.store_logo} 
-                    alt="Logo" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-                  />
-                ) : user?.user?.avatar ? (
+                {user?.user?.avatar ? (
                   <img 
                     src={user.user.avatar} 
                     alt="Profil" 

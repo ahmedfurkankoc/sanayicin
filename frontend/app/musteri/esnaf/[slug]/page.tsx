@@ -28,8 +28,7 @@ interface Vendor {
   subdistrict: string;
   address: string;
   about?: string;
-  // Yeni: mağaza logosu
-  store_logo?: string | null;
+  // Logo artık avatar üzerinden gösterilir
   profile_photo?: string;
   avatar?: string;
   service_areas?: any[];
@@ -217,7 +216,7 @@ function VendorDetailContent() {
     );
   }
 
-  const logoUrl = vendor.store_logo || vendor.user?.avatar || null;
+  const logoUrl = vendor.user?.avatar || vendor.avatar || null;
 
   return (
     <div className="m-vendor-page">

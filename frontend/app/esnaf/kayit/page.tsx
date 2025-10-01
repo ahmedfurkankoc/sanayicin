@@ -8,7 +8,7 @@ import { api, setAuthEmail } from "@/app/utils/api";
 
 // UI Components
 import Footer from "@/app/components/Footer";
-import EsnafAuthHeader from "../components/EsnafAuthHeader";
+import EsnafAuthHeader from "../../components/AuthHeader";
 
 // Hooks
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
