@@ -138,7 +138,7 @@ export default function MusteriHesabimPage() {
 
   // Email değiştirilemez: handler kaldırıldı
 
-  const cancelEdit = (field: 'name' | 'phone' | 'about' | 'email') => {
+  const cancelEdit = (field: 'name' | 'phone' | 'about') => {
     switch (field) {
       case 'name':
         setFirstName(userData?.first_name || '');
@@ -153,10 +153,7 @@ export default function MusteriHesabimPage() {
         setAbout(userData?.about || '');
         setEditingAbout(false);
         break;
-      case 'email':
-        setEmail(userData?.email || '');
-        setEditingEmail(false);
-        break;
+      
     }
   };
 
