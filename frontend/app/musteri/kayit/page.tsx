@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, setAuthEmail } from "@/app/utils/api";
 import { iconMapping } from "@/app/utils/iconMapping";
+import MusteriHeader from "../components/MusteriHeader";
 
 export default function MusteriKayitPage() {
   const router = useRouter();
