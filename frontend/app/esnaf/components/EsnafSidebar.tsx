@@ -48,12 +48,12 @@ export default function EsnafSidebar({
   };
 
   const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    } else {
-      clearAuthTokens("vendor");
-      router.replace("/esnaf/giris");
-    }
+    // Direkt logout işlemini yap
+    clearAuthTokens("vendor");
+    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
+    setTimeout(() => {
+      window.location.reload();
+    }, 200);
   };
 
   // Kullanıcı adının ilk harfini al
@@ -157,10 +157,10 @@ export default function EsnafSidebar({
              <span className="esnaf-nav-text">Profilim</span>
              {activePage === "profil" && <span className="esnaf-nav-dot"></span>}
             </Link>
-            <Link href="/esnaf/giris" className="esnaf-nav-item esnaf-logout-item" onClick={handleLogout}>
+            <div className="esnaf-nav-item esnaf-logout-item" onClick={handleLogout}>
              <Icon name="logout" className="esnaf-nav-icon" color="white" />
              <span className="esnaf-nav-text">Çıkış Yap</span>
-            </Link>
+            </div>
          </nav>
         
         {/* Ana Sayfaya Dön Butonu */}
