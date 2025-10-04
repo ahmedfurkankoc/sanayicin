@@ -1239,6 +1239,7 @@
 
 .auth-modal-content {
   text-align: center;
+  margin-top: 24px;
 }
 
 .auth-modal-content h3 {
