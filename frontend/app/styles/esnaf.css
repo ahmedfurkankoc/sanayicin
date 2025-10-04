@@ -408,6 +408,7 @@
   top: 0;
   width: 300px;
   border-radius: 0 20px 20px 0;
+  overflow: hidden; /* Sidebar'dan taşmayı engelle */
 }
 
 .esnaf-sidebar-logo {
@@ -509,18 +510,40 @@
 
 /* Log Out Button */
 .esnaf-logout-item {
-  padding: 14px;
-}
-
-
-.esnaf-logout-item:hover {
-  background-color: #e63946;
-
-}
-
-.esnaf-logout-item:hover .esnaf-nav-icon,
-.esnaf-logout-item:hover .esnaf-nav-text {
+  /* Diğer nav item'larla aynı stil */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
   color: var(--white);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+/* Log Out Button - Daha güçlü selector */
+.esnaf-sidebar .esnaf-logout-item:hover {
+  background-color: #e63946 !important;
+  color: var(--white) !important;
+  /* Sidebar'dan taşmaması için transform ve margin tamamen kaldırıldı */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  /* Transform ve margin'i override et */
+  transform: none !important;
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.esnaf-sidebar .esnaf-logout-item:hover .esnaf-nav-icon,
+.esnaf-sidebar .esnaf-logout-item:hover .esnaf-nav-text {
+  color: var(--white) !important;
 }
 
 .esnaf-nav-dot {

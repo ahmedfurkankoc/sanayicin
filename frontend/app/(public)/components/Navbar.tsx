@@ -91,8 +91,7 @@ const Navbar = () => {
       clearAuthTokens('client');
     }
     setUserType(null);
-    router.push('/');
-    // Sayfayı yenile (güvenli çıkış için)
+    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
     setTimeout(() => window.location.reload(), 200);
   };
 
