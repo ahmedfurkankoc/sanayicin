@@ -5750,6 +5750,16 @@ footer {
   transform: translateY(-1px);
 }
 
+.auth-btn-register-alt {
+  background: var(--yellow);
+  color: var(--black);
+}
+
+.auth-btn-register-alt:hover {
+  background: #e6c200;
+  transform: translateY(-1px);
+}
+
 .auth-btn-login {
   background: var(--yellow);
   color: var(--black);
