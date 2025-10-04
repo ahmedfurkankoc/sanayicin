@@ -2,7 +2,7 @@ import os
 from celery import Celery
 
 # Django settings modülünü ayarla
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'main.settings')
 
 app = Celery('sanayicin')
 
