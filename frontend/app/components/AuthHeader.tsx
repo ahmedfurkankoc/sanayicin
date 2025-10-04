@@ -30,7 +30,7 @@ export default function AuthHeader({ currentPage, segment = 'esnaf', theme }: Au
         {currentPage === 'login' ? (
           <button 
             onClick={() => router.push(`${basePath}/kayit`)}
-            className="auth-btn auth-btn-register"
+            className="auth-btn auth-btn-register-alt"
           >
             Kayıt Ol
           </button>

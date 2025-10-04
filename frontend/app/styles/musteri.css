@@ -563,8 +563,15 @@
   /* Öncelik: gizleme kuralını geçersiz kıl */
   .musteri-header-btn.musteri-mobile-search-btn { display: flex; }
   .musteri-header-btn.musteri-notification-btn { display: flex; }
+  .musteri-header-btn.musteri-user-btn { display: flex; }
   /* Mobilde ChatWidget kapalı */
   .musteri-chat-widget-container { display: none !important; }
+  
+  /* Mobilde sadece Giriş Yap butonu görünsün */
+  .auth-btn-register { display: none !important; }
+  
+  /* Mobilde username gizle */
+  .musteri-user-name { display: none !important; }
   
   .musteri-header-center {
     max-width: 100%;
@@ -585,7 +592,13 @@
   }
   
   .musteri-user-dropdown {
-    right: -50px;
+    right: 50%;
+    left: auto;
+    transform: translateX(50%);
+    width: 90vw;
+    max-width: 300px;
+    overflow: visible;
+    z-index: 1001;
   }
   
   .musteri-container {
@@ -1400,7 +1413,7 @@
 
 @media (max-width: 900px) {
   .musteri-register-wrapper { grid-template-columns: 1fr; gap: 0; }
-  .musteri-register-left { border-radius: 0; padding: 24px; min-height: auto; }
+  .musteri-register-left { display: none !important; }
   .musteri-register-right { align-items: stretch; padding: 20px 10px; }
 }
 
