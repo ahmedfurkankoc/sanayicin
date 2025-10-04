@@ -15,8 +15,9 @@ function Sidebar() {
 
   const handleLogout = useCallback(() => {
     clearAllAuthData();
-    router.replace("/musteri/giris");
-  }, [router]);
+    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
+    setTimeout(() => window.location.reload(), 200);
+  }, []);
 
   return (
     <aside

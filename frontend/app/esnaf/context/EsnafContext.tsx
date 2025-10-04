@@ -47,7 +47,9 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
     setEmail('');
     setIsAdmin(false);
     setEmailVerified(false);
-    router.push('/');
+    
+    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
+    setTimeout(() => window.location.reload(), 200);
   };
 
   const checkAuthStatus = (): boolean => {

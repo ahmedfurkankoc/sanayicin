@@ -159,7 +159,9 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     setUser(null);
     setRole(null);
     setUserPermissions(null);
-    router.push('/'); // Ana sayfaya yönlendir
+    
+    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
+    setTimeout(() => window.location.reload(), 200);
   };
 
   // Component mount olduktan sonra authentication kontrolü

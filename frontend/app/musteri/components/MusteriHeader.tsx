@@ -196,15 +196,13 @@ export default function MusteriHeader() {
   };
 
   const handleLogout = () => {
-    logout();
+    logout(); // Context'ten gelen logout fonksiyonu zaten refresh yapıyor
     setShowDropdown(false);
     
     // WebSocket bağlantısını kapat
     if (wsRef.current) {
       wsRef.current.close();
     }
-    
-    router.push('/musteri');
   };
 
   const toggleDropdown = () => {
