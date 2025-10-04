@@ -13,6 +13,11 @@ class CORSBlockingMiddleware:
         
         # API endpointlerini kontrol et
         if request.path.startswith('/api/'):
+            # Admin paneli için özel kontrol
+            if request.path.startswith('/api/admin/'):
+                response = self.get_response(request)
+                return response
+            
             # Origin kontrolü
             if origin:
                 # CORS_ALLOWED_ORIGINS'den kontrol et
