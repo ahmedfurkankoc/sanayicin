@@ -20,6 +20,8 @@ class CustomUser(AbstractUser):
         ('client', 'Müşteri'),
         ('vendor', 'Esnaf'),
         ('admin', 'Admin'),
+        ('editor', 'Editör'),
+        ('support', 'Teknik Destek'),
     ]
     role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="client")
     email = models.EmailField(unique=True)

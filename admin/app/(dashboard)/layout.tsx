@@ -1,0 +1,239 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useAuth } from '../contexts/AuthContext'
+import { usePermissions } from '../contexts/AuthContext'
+import ProtectedRoute from '../components/ProtectedRoute'
+import { 
+  Home, 
+  Users, 
+  Shield, 
+  MessageSquare, 
+  FileText, 
+  BarChart3, 
+  Settings, 
+  LogOut,
+  Menu,
+  X,
+  Bell,
+  Search
+} from 'lucide-react'
+import { useState } from 'react'
+
+const navigation = [
+  { name: 'Dashboard', href: '/', icon: Home, permission: 'dashboard' },
+  { name: 'Kullanıcılar', href: '/users', icon: Users, permission: 'users' },
+  { name: 'Esnaflar', href: '/vendors', icon: Shield, permission: 'vendors' },
+  { name: 'Destek', href: '/support', icon: MessageSquare, permission: 'support' },
+  { name: 'Blog', href: '/blog', icon: FileText, permission: 'blog' },
+  { name: 'İçerik', href: '/content', icon: FileText, permission: 'content' },
+  { name: 'İstatistikler', href: '/analytics', icon: BarChart3, permission: 'analytics' },
+  { name: 'Ayarlar', href: '/settings', icon: Settings, permission: 'settings' },
+]
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const pathname = usePathname()
+  const { user, logout } = useAuth()
+  const { canAccess } = usePermissions()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const filteredNavigation = navigation.filter(item => 
+    canAccess(item.permission)
+  )
+
+  return (
+    <ProtectedRoute requiredPermission="dashboard">
+      <div className="min-h-screen bg-gray-50">
+        {/* Mobile sidebar */}
+        <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+          <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-gradient-to-b from-blue-600 to-blue-800">
+            <div className="flex h-16 items-center justify-between px-4">
+              <h1 className="text-white font-bold text-lg">Sanayicin Admin</h1>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="text-blue-200 hover:text-white"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <nav className="flex-1 px-4 py-4 space-y-2">
+              {filteredNavigation.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isActive
+                        ? 'bg-white text-blue-600 shadow-lg'
+                        : 'text-blue-100 hover:bg-blue-500 hover:text-white'
+                    }`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </nav>
+            <div className="border-t border-blue-500 p-4">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">
+                      {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-white">
+                    {user?.first_name || user?.email}
+                  </p>
+                  <p className="text-xs text-blue-200">
+                    {user?.role === 'admin' ? 'Admin' : 
+                     user?.role === 'editor' ? 'Editör' : 
+                     user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={logout}
+                className="mt-3 w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-blue-100 hover:bg-blue-500 hover:text-white transition-colors"
+              >
+                <LogOut className="mr-3 h-4 w-4" />
+                Çıkış Yap
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop sidebar */}
+        <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+          <div className="flex flex-col flex-grow bg-gradient-to-b from-blue-600 to-blue-800 pt-5 pb-4 overflow-y-auto">
+            <div className="flex items-center flex-shrink-0 px-4">
+              <h1 className="text-white font-bold text-xl">Sanayicin Admin</h1>
+            </div>
+            <nav className="mt-8 flex-1 px-3 space-y-2">
+              {filteredNavigation.map((item) => {
+                const isActive = pathname === item.href
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-white text-blue-600 shadow-lg'
+                        : 'text-blue-100 hover:bg-blue-500 hover:text-white'
+                    }`}
+                  >
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </Link>
+                )
+              })}
+            </nav>
+            <div className="flex-shrink-0 border-t border-blue-500 p-4">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-sm font-medium text-white">
+                      {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-white">
+                    {user?.first_name || user?.email}
+                  </p>
+                  <p className="text-xs text-blue-200">
+                    {user?.role === 'admin' ? 'Admin' : 
+                     user?.role === 'editor' ? 'Editör' : 
+                     user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={logout}
+                className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-blue-100 hover:bg-blue-500 hover:text-white transition-colors"
+              >
+                <LogOut className="mr-3 h-4 w-4" />
+                Çıkış Yap
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="lg:pl-64 flex flex-col flex-1">
+          {/* Top navbar */}
+          <header className="bg-white shadow-sm border-b border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4">
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden text-gray-500 hover:text-gray-600"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+
+              {/* Search bar */}
+              <div className="flex-1 max-w-lg mx-4">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Ara..."
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Right side */}
+              <div className="flex items-center space-x-4">
+                {/* Notifications */}
+                <button className="p-2 text-gray-400 hover:text-gray-500 relative">
+                  <Bell className="h-6 w-6" />
+                  <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+                </button>
+
+                {/* User info */}
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-xs font-medium text-white">
+                      {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="hidden md:block">
+                    <p className="text-sm font-medium text-gray-900">
+                      {user?.first_name || user?.email}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {user?.role === 'admin' ? 'Admin' : 
+                       user?.role === 'editor' ? 'Editör' : 
+                       user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Page content */}
+          <main className="flex-1 p-6">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    </ProtectedRoute>
+  )
+}
