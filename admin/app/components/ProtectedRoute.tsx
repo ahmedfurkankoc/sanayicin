@@ -25,7 +25,7 @@ export default function ProtectedRoute({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-[color:var(--yellow)]" />
           <p className="text-gray-600">Yükleniyor...</p>
         </div>
       </div>
@@ -46,7 +46,7 @@ export default function ProtectedRoute({
           </p>
           <button
             onClick={() => window.location.href = '/login'}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-[color:var(--yellow)] text-[color:var(--black)] rounded-md hover:brightness-95 transition-colors"
           >
             Giriş Yap
           </button>

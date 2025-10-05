@@ -38,8 +38,8 @@ interface AuthContextType {
 // Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// API Base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/admin'
+// API Base URL - use same-origin path (proxied by Next.js rewrites)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/admin'
 
 // Axios instance
 const api = axios.create({
@@ -53,33 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissions, setPermissions] = useState<UserPermissions | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  // No bearer token; rely on HttpOnly cookie only
 
-  // Token management
-  const getToken = () => {
-    if (typeof window !== 'undefined') {
-      // Cookie'den token'ı oku
-      const cookies = document.cookie.split(';')
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('admin_token='))
-      return tokenCookie ? tokenCookie.split('=')[1] : null
-    }
-    return null
-  }
-
-  const setToken = (token: string) => {
-    if (typeof window !== 'undefined') {
-      // Cookie'ye kaydet (24 saat)
-      document.cookie = `admin_token=${token}; path=/; max-age=86400; secure; samesite=strict`
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    }
-  }
-
-  const removeToken = () => {
-    if (typeof window !== 'undefined') {
-      // Cookie'yi sil
-      document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      delete api.defaults.headers.common['Authorization']
-    }
-  }
+  // Cookie tabanlı (HttpOnly) oturum: JS tarafında token yönetimi yok
+  const getToken = () => null
+  const setToken = (_: string) => {}
+  const removeToken = () => {}
 
   // Permission check
   const canAccess = (permission: string, action: 'read' | 'write' | 'delete' = 'read'): boolean => {
@@ -104,8 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
       })
 
-      if (response.data.token) {
-        setToken(response.data.token)
+      // Backend sets HttpOnly cookie; body returns user
+      if (response.data?.user) {
         setUser(response.data.user)
         setPermissions(response.data.user.permissions)
         setIsAuthenticated(true)
@@ -128,7 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      removeToken()
       setUser(null)
       setPermissions(null)
       setIsAuthenticated(false)
@@ -143,11 +121,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Refresh user data
   const refreshUser = async () => {
     try {
-      const token = getToken()
-      if (!token) return
-
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      
       const response = await api.get('/auth/user/')
       
       if (response.data) {
@@ -157,20 +130,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Refresh user error:', error)
-      logout()
+      // 401 gibi durumlarda sadece local state'i sıfırla; logout POST çağrısı yapma
+      setUser(null)
+      setPermissions(null)
+      setIsAuthenticated(false)
     }
   }
 
   // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = getToken()
-      
-      if (token) {
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-        await refreshUser()
-      }
-      
+      await refreshUser()
       setIsLoading(false)
     }
 

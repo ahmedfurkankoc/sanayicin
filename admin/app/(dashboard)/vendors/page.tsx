@@ -58,7 +58,7 @@ export default function VendorsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Esnaflar</h1>
           <p className="text-gray-600">Tüm esnafları yönetin ve onaylayın</p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+        <button className="bg-[color:var(--yellow)] text-[color:var(--black)] px-4 py-2 rounded-lg hover:brightness-95 transition-colors flex items-center">
           <UserPlus className="h-4 w-4 mr-2" />
           Yeni Esnaf
         </button>
@@ -95,7 +95,7 @@ export default function VendorsPage() {
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
-            <UserPlus className="h-8 w-8 text-blue-600" />
+            <UserPlus className="h-8 w-8 text-[color:var(--yellow)]" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Toplam</p>
               <p className="text-2xl font-semibold text-gray-900">4</p>
@@ -115,7 +115,7 @@ export default function VendorsPage() {
                 placeholder="Esnaf ara..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent"
               />
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function VendorsPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent"
             >
               <option value="all">Tüm Durumlar</option>
               <option value="approved">Onaylanmış</option>
@@ -201,7 +201,7 @@ export default function VendorsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <button className="text-[color:var(--black)] hover:text-black">
                         <Eye className="h-4 w-4" />
                       </button>
                       <button className="text-gray-600 hover:text-gray-900">
@@ -229,7 +229,7 @@ export default function VendorsPage() {
             <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
               Önceki
             </button>
-            <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <button className="px-3 py-1 bg-[color:var(--yellow)] text-[color:var(--black)] rounded text-sm">
               1
             </button>
             <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">

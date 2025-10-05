@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
+import logoEsnaf from '../../public/sanayicin-esnaf-logo.png'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../contexts/AuthContext'
 import { usePermissions } from '../contexts/AuthContext'
@@ -51,13 +53,16 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-gray-50">
         {/* Mobile sidebar */}
         <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-          <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-gradient-to-b from-blue-600 to-blue-800">
-            <div className="flex h-16 items-center justify-between px-4">
-              <h1 className="text-white font-bold text-lg">Sanayicin Admin</h1>
+          <div className="fixed inset-0 left-0 top-0 flex w-full h-full flex-col bg-gradient-to-b from-[var(--black)] via-[#222222] to-[var(--black)]">
+            <div className="relative flex h-16 items-center px-4 mt-5">
+              <div className="flex-1 flex justify-center">
+                <Link href="/">
+                  <Image src={logoEsnaf} alt="Sanayicin Esnaf Logo" priority className="h-20 w-auto" />
+                </Link>
+              </div>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="text-blue-200 hover:text-white"
+                className="absolute right-4 text-[color:rgba(255,255,255,0.8)] hover:text-white"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -71,8 +76,8 @@ export default function DashboardLayout({
                     href={item.href}
                     className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive
-                        ? 'bg-white text-blue-600 shadow-lg'
-                        : 'text-blue-100 hover:bg-blue-500 hover:text-white'
+                        ? 'bg-white text-[color:var(--black)] shadow-lg'
+                        : 'text-[color:rgba(255,255,255,0.8)] hover:bg-[color:var(--yellow)] hover:text-[color:var(--black)]'
                     }`}
                     onClick={() => setSidebarOpen(false)}
                   >
@@ -82,10 +87,10 @@ export default function DashboardLayout({
                 )
               })}
             </nav>
-            <div className="border-t border-blue-500 p-4">
+            <div className="border-t border-[color:rgba(255,255,255,0.2)] p-4">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-full bg-[color:var(--yellow)] flex items-center justify-center">
                     <span className="text-sm font-medium text-white">
                       {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase()}
                     </span>
@@ -95,7 +100,7 @@ export default function DashboardLayout({
                   <p className="text-sm font-medium text-white">
                     {user?.first_name || user?.email}
                   </p>
-                  <p className="text-xs text-blue-200">
+                  <p className="text-xs text-[color:rgba(255,255,255,0.8)]">
                     {user?.role === 'admin' ? 'Admin' : 
                      user?.role === 'editor' ? 'Editör' : 
                      user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
@@ -104,7 +109,7 @@ export default function DashboardLayout({
               </div>
               <button
                 onClick={logout}
-                className="mt-3 w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-blue-100 hover:bg-blue-500 hover:text-white transition-colors"
+                className="mt-3 w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-[color:rgba(255,255,255,0.9)] hover:bg-[color:var(--yellow)] hover:text-[color:var(--black)] transition-colors"
               >
                 <LogOut className="mr-3 h-4 w-4" />
                 Çıkış Yap
@@ -115,9 +120,11 @@ export default function DashboardLayout({
 
         {/* Desktop sidebar */}
         <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-          <div className="flex flex-col flex-grow bg-gradient-to-b from-blue-600 to-blue-800 pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4">
-              <h1 className="text-white font-bold text-xl">Sanayicin Admin</h1>
+          <div className="flex flex-col flex-grow bg-gradient-to-b from-[var(--black)] via-[#222222] to-[var(--black)] pt-5 pb-4 overflow-y-auto">
+            <div className="flex items-center justify-center flex-shrink-0 px-4">
+              <Link href="/">
+                <Image src={logoEsnaf} alt="Sanayicin Esnaf Logo" priority className="h-16 w-auto" />
+              </Link>
             </div>
             <nav className="mt-8 flex-1 px-3 space-y-2">
               {filteredNavigation.map((item) => {
@@ -128,8 +135,8 @@ export default function DashboardLayout({
                     href={item.href}
                     className={`group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive
-                        ? 'bg-white text-blue-600 shadow-lg'
-                        : 'text-blue-100 hover:bg-blue-500 hover:text-white'
+                        ? 'bg-white text-[color:var(--black)] shadow-lg'
+                        : 'text-[color:rgba(255,255,255,0.8)] hover:bg-[color:var(--yellow)] hover:text-[color:var(--black)]'
                     }`}
                   >
                     <item.icon className="mr-3 h-5 w-5" />
@@ -138,10 +145,10 @@ export default function DashboardLayout({
                 )
               })}
             </nav>
-            <div className="flex-shrink-0 border-t border-blue-500 p-4">
+            <div className="flex-shrink-0 border-t border-[color:rgba(255,255,255,0.2)] p-4">
               <div className="flex items-center mb-4">
                 <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                  <div className="h-10 w-10 rounded-full bg-[color:var(--yellow)] flex items-center justify-center">
                     <span className="text-sm font-medium text-white">
                       {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase()}
                     </span>
@@ -151,7 +158,7 @@ export default function DashboardLayout({
                   <p className="text-sm font-medium text-white">
                     {user?.first_name || user?.email}
                   </p>
-                  <p className="text-xs text-blue-200">
+                  <p className="text-xs text-[color:rgba(255,255,255,0.8)]">
                     {user?.role === 'admin' ? 'Admin' : 
                      user?.role === 'editor' ? 'Editör' : 
                      user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
@@ -160,7 +167,7 @@ export default function DashboardLayout({
               </div>
               <button
                 onClick={logout}
-                className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-blue-100 hover:bg-blue-500 hover:text-white transition-colors"
+                className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-[color:rgba(255,255,255,0.9)] hover:bg-[color:var(--yellow)] hover:text-[color:var(--black)] transition-colors"
               >
                 <LogOut className="mr-3 h-4 w-4" />
                 Çıkış Yap
@@ -191,7 +198,7 @@ export default function DashboardLayout({
                   <input
                     type="text"
                     placeholder="Ara..."
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[color:var(--yellow)] focus:border-[color:var(--yellow)]"
                   />
                 </div>
               </div>
@@ -206,7 +213,7 @@ export default function DashboardLayout({
 
                 {/* User info */}
                 <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-full bg-[color:var(--yellow)] flex items-center justify-center">
                     <span className="text-xs font-medium text-white">
                       {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase()}
                     </span>
