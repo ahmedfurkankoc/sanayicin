@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.core.validators import FileExtensionValidator
@@ -6,6 +7,55 @@ from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTick
 import uuid
 
 User = get_user_model()
+
+# Admin Panel dedicated user model (separate from CustomUser)
+class AdminUser(models.Model):
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('editor', 'Editör'),
+        ('support', 'Teknik Destek'),
+    ]
+
+    email = models.EmailField(unique=True, db_index=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, db_index=True)
+    is_superuser = models.BooleanField(default=False, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    password = models.CharField(max_length=128)
+    date_joined = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Admin Kullanıcı'
+        verbose_name_plural = 'Admin Kullanıcılar'
+        indexes = [
+            models.Index(fields=['email']),
+            models.Index(fields=['role']),
+            models.Index(fields=['is_superuser']),
+            models.Index(fields=['is_active']),
+        ]
+
+    def __str__(self):
+        return f"{self.email} ({self.role})"
+
+    # Password helpers
+    def set_password(self, raw_password: str) -> None:
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password: str) -> bool:
+        return check_password(raw_password, self.password)
+
+    def get_full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}".strip()
+
+    # DRF/Django auth compatibility flags
+    @property
+    def is_authenticated(self) -> bool:
+        return True
+
+    @property
+    def is_anonymous(self) -> bool:
+        return False
 
 # Admin Panel Permission Sistemi
 class AdminPermission(models.Model):
@@ -138,6 +188,10 @@ class BlogPost(models.Model):
         verbose_name = "Blog Yazısı"
         verbose_name_plural = "Blog Yazıları"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         return self.title
@@ -175,6 +229,11 @@ class SystemLog(models.Model):
         verbose_name = "Sistem Logu"
         verbose_name_plural = "Sistem Logları"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['module']),
+            models.Index(fields=['level']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         return f"{self.level} - {self.message[:50]}"
@@ -221,6 +280,11 @@ class AdminNotification(models.Model):
         verbose_name = "Admin Bildirimi"
         verbose_name_plural = "Admin Bildirimleri"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['is_read']),
+            models.Index(fields=['notification_type']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.notification_type}"

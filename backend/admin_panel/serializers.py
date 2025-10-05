@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
-from .models import BlogCategory, BlogPost, SystemLog, AnalyticsData, AdminNotification, AdminSettings, AdminPermission
+from .models import BlogCategory, BlogPost, SystemLog, AnalyticsData, AdminNotification, AdminSettings, AdminPermission, AdminUser
 from vendors.models import VendorProfile
 
 User = get_user_model()
@@ -12,9 +12,9 @@ class AdminLoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    """Admin kullanıcı serializer'ı"""
+    """Admin kullanıcı serializer'ı (AdminUser)"""
     class Meta:
-        model = CustomUser
+        model = AdminUser
         fields = ['id', 'email', 'first_name', 'last_name', 'role', 'is_superuser', 'date_joined']
         read_only_fields = ['id', 'date_joined']
 
@@ -142,9 +142,9 @@ class AdminLoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    """Admin kullanıcı serializer'ı"""
+    """Admin kullanıcı serializer'ı (AdminUser)"""
     class Meta:
-        model = CustomUser
+        model = AdminUser
         fields = ['id', 'email', 'first_name', 'last_name', 'role', 'is_superuser', 'date_joined']
         read_only_fields = ['id', 'date_joined']
 
@@ -272,9 +272,9 @@ class AdminLoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 class AdminUserSerializer(serializers.ModelSerializer):
-    """Admin kullanıcı serializer'ı"""
+    """Admin kullanıcı serializer'ı (AdminUser)"""
     class Meta:
-        model = CustomUser
+        model = AdminUser
         fields = ['id', 'email', 'first_name', 'last_name', 'role', 'is_superuser', 'date_joined']
         read_only_fields = ['id', 'date_joined']
 

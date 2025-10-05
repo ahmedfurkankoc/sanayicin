@@ -2,6 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Admin paneli için güvenlik ayarları
+  async rewrites() {
+    const backendOrigin = process.env.BACKEND_ORIGIN || 'http://localhost:8000'
+    return [
+      {
+        source: '/api/admin/:path*',
+        destination: `${backendOrigin}/api/admin/:path*`,
+      },
+    ]
+  },
   async headers() {
     return [
       {

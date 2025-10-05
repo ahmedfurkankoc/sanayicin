@@ -248,7 +248,6 @@ section[aria-label="Notifications alt+T"] {
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
   z-index: 9999;
-  -webkit-backface-visibility: hidden;
   transform: translateZ(0);
   contain: layout paint;
 }
@@ -4514,9 +4513,6 @@ footer {
 .u-mt-10 { margin-top: 10px; }
 .u-mt-8 { margin-top: 8px; }
 .u-inline-block { display: inline-block; }
-/* deprecated old support layout removed */
-.support-layout-grid {}
-.support-sidebar {}
 .support-tickets-grid { display: grid; gap: 12px; }
 /* Modern tickets grid */
 .support-tickets-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }

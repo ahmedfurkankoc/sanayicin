@@ -19,11 +19,8 @@ class CustomUser(AbstractUser):
     ROLE_CHOICES = [
         ('client', 'Müşteri'),
         ('vendor', 'Esnaf'),
-        ('admin', 'Admin'),
-        ('editor', 'Editör'),
-        ('support', 'Teknik Destek'),
     ]
-    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="client")
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default="client", db_index=True)
     email = models.EmailField(unique=True)
     
     # Permission fields
@@ -53,22 +50,20 @@ class CustomUser(AbstractUser):
     
     REQUIRED_FIELDS = ["email"]
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['role']),
+            models.Index(fields=['date_joined']),
+            models.Index(fields=['role', 'date_joined']),
+        ]
+
     def save(self, *args, **kwargs):
-        # Superuser oluşturulduğunda role'ü admin yap
-        if self.is_superuser and not self.pk:
-            self.role = "admin"
-            self.can_provide_services = True
-            self.can_request_services = True
-        
         # Role'e göre permission'ları otomatik set et
         if self.role == 'vendor':
             self.can_provide_services = True
             self.can_request_services = True
         elif self.role == 'client':
             self.can_provide_services = False
-            self.can_request_services = True
-        elif self.role == 'admin':
-            self.can_provide_services = True
             self.can_request_services = True
         
         super().save(*args, **kwargs)
@@ -82,14 +77,7 @@ class CustomUser(AbstractUser):
     
     def get_chat_permissions(self):
         """Chat izinleri"""
-        if self.role == 'admin':
-            return {
-                'can_receive_messages': True,
-                'can_send_as_vendor': True,
-                'can_send_as_client': True,
-                'can_access_all_chats': True,
-            }
-        elif self.role == 'vendor':
+        if self.role == 'vendor':
             return {
                 'can_receive_messages': True,  # Müşterilerden mesaj alabilir
                 'can_send_as_vendor': True,    # Esnaf olarak mesaj gönderebilir
@@ -184,14 +172,7 @@ class CustomUser(AbstractUser):
     @property
     def permissions(self):
         """Role-based permissions"""
-        if self.role == 'admin':
-            return {
-                'can_provide_services': True,
-                'can_request_services': True,
-                'can_manage_users': True,
-                'can_access_admin': True
-            }
-        elif self.role == 'vendor':
+        if self.role == 'vendor':
             return {
                 'can_provide_services': True,
                 'can_request_services': True,  # Esnaflar da müşteri olarak davranabilir
@@ -384,6 +365,11 @@ class ServiceArea(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+        ]
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
@@ -392,17 +378,26 @@ class Category(models.Model):
     def __str__(self):
         return f"{self.name} ({self.service_area.name})"
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['service_area']),
+        ]
+
 class CarBrand(models.Model):
     """Araba markaları için model"""
     name = models.CharField(max_length=100, unique=True)
     logo = models.ImageField(upload_to="car_brand_logos/", blank=True, null=True)
     description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['is_active']),
+        ]
 
     def __str__(self):
         return self.name
@@ -471,6 +466,10 @@ class VendorUpgradeRequest(models.Model):
         verbose_name = "Esnaf Yükseltme Talebi"
         verbose_name_plural = "Esnaf Yükseltme Talepleri"
         ordering = ['-requested_at']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['requested_at']),
+        ]
     
     def __str__(self):
         return f"{self.user.email} - {self.get_status_display()}"
@@ -646,7 +645,7 @@ class SupportTicket(models.Model):
     message = models.TextField()
     attachment = models.FileField(upload_to='support_attachments/', null=True, blank=True)
 
-    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='open')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='open', db_index=True)
     priority = models.CharField(max_length=16, choices=PRIORITY_CHOICES, default='normal')
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -656,6 +655,11 @@ class SupportTicket(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Destek Talebi'
         verbose_name_plural = 'Destek Talepleri'
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['status', 'created_at']),
+        ]
 
     def __str__(self):
         return f"{self.public_id} - {self.subject}"
@@ -679,6 +683,10 @@ class SupportMessage(models.Model):
         ordering = ['created_at']
         verbose_name = 'Destek Mesajı'
         verbose_name_plural = 'Destek Mesajları'
+        indexes = [
+            models.Index(fields=['ticket']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         sender = 'Admin' if self.is_admin else (self.sender_user.email if self.sender_user else 'Anonim')

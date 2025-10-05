@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { 
   Search, 
   Filter, 
@@ -13,23 +13,53 @@ import {
   Phone
 } from 'lucide-react'
 
-const users = [
-  { id: 1, name: 'Ahmet Yılmaz', email: 'ahmet@example.com', phone: '+90 555 123 4567', status: 'active', joinDate: '2024-01-15' },
-  { id: 2, name: 'Ayşe Demir', email: 'ayse@example.com', phone: '+90 555 234 5678', status: 'inactive', joinDate: '2024-01-10' },
-  { id: 3, name: 'Mehmet Kaya', email: 'mehmet@example.com', phone: '+90 555 345 6789', status: 'active', joinDate: '2024-01-20' },
-  { id: 4, name: 'Fatma Öz', email: 'fatma@example.com', phone: '+90 555 456 7890', status: 'pending', joinDate: '2024-01-25' },
-]
+import { fetchClients, ClientListItem } from '../../api/clients'
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<ClientListItem[]>([])
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [totalCount, setTotalCount] = useState(0)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = filterStatus === 'all' || user.status === filterStatus
-    return matchesSearch && matchesFilter
-  })
+  // Debounce searchTerm to avoid spamming server
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 400)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    fetchClients({ search: debouncedSearch || undefined, page, page_size: pageSize })
+      .then((res) => {
+        if (cancelled) return
+        setData(res.results || [])
+        setTotalCount(res.count || 0)
+        setError(null)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setError('Kullanıcılar yüklenemedi')
+      })
+      .finally(() => {
+        if (cancelled) return
+        setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [debouncedSearch, page, pageSize])
+
+  const filteredUsers = useMemo(() => {
+    // Server-side search applied; only apply lightweight status filter on current page
+    return (data || []).filter(user => {
+      const status = user.is_verified ? 'active' : 'inactive'
+      return filterStatus === 'all' || status === filterStatus
+    })
+  }, [data, filterStatus])
 
   const getStatusBadge = (status: string) => {
     const styles = {
@@ -48,7 +78,7 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-gray-900">Kullanıcılar</h1>
           <p className="text-gray-600">Tüm kullanıcıları yönetin</p>
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+        <button className="bg-[color:var(--yellow)] text-[color:var(--black)] px-4 py-2 rounded-lg hover:brightness-95 transition-colors flex items-center">
           <UserPlus className="h-4 w-4 mr-2" />
           Yeni Kullanıcı
         </button>
@@ -65,7 +95,7 @@ export default function UsersPage() {
                 placeholder="Kullanıcı ara..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent"
               />
             </div>
           </div>
@@ -73,7 +103,7 @@ export default function UsersPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent"
             >
               <option value="all">Tüm Durumlar</option>
               <option value="active">Aktif</option>
@@ -118,31 +148,35 @@ export default function UsersPage() {
                     <div className="flex items-center">
                       <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                         <span className="text-sm font-medium text-gray-700">
-                          {user.name.split(' ').map(n => n[0]).join('')}
+                          {`${user.first_name || ''} ${user.last_name || ''}`.trim().split(' ').map(n => n[0]).join('')}
                         </span>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                        <div className="text-sm font-medium text-gray-900">{`${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email}</div>
                         <div className="text-sm text-gray-500">ID: {user.id}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{user.email}</div>
-                    <div className="text-sm text-gray-500">{user.phone}</div>
+                    <div className="text-sm text-gray-500">{user.phone_number || '-'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(user.status)}`}>
-                      {user.status === 'active' ? 'Aktif' : 
-                       user.status === 'inactive' ? 'Pasif' : 'Beklemede'}
-                    </span>
+                    {(() => {
+                      const status = user.is_verified ? 'active' : 'inactive'
+                      return (
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(status)}`}>
+                          {status === 'active' ? 'Aktif' : 'Pasif'}
+                        </span>
+                      )
+                    })()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(user.joinDate).toLocaleDateString('tr-TR')}
+                    {user.date_joined ? new Date(user.date_joined).toLocaleDateString('tr-TR') : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <button className="text-[color:var(--black)] hover:text-[color:#000000]">
                         <Eye className="h-4 w-4" />
                       </button>
                       <button className="text-gray-600 hover:text-gray-900">
@@ -164,21 +198,12 @@ export default function UsersPage() {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Toplam {filteredUsers.length} kullanıcı gösteriliyor
+            Toplam {totalCount} kullanıcı
           </div>
           <div className="flex space-x-2">
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
-              Önceki
-            </button>
-            <button className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
-              1
-            </button>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
-              2
-            </button>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
-              Sonraki
-            </button>
+            <button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50">Önceki</button>
+            <span className="px-2 py-1 text-sm text-gray-700">Sayfa {page} / {Math.max(1, Math.ceil(totalCount / pageSize))}</span>
+            <button disabled={page >= Math.ceil(totalCount / pageSize)} onClick={() => setPage(p => p + 1)} className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50">Sonraki</button>
           </div>
         </div>
       </div>

@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Brand variables */
+  --yellow: #ffd600;
+  --black: #111111;
 }
 
 @theme inline {
