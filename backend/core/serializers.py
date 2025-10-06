@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Favorite, SupportTicket, SupportMessage, Vehicle
+from .models import CustomUser, Favorite, SupportTicket, SupportMessage, Vehicle, CarBrand
 from vendors.models import VendorProfile
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -104,18 +104,21 @@ class VehicleSerializer(serializers.ModelSerializer):
     tire_change_date = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
     traffic_insurance_expiry = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
     casco_expiry = serializers.DateField(format='%d-%m-%Y', input_formats=['%d-%m-%Y', '%Y-%m-%d'], required=False, allow_null=True)
+    # New FK field for brand selection
+    brand_fk = serializers.PrimaryKeyRelatedField(queryset=CarBrand.objects.all(), required=False, allow_null=True)
+    brand_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Vehicle
         fields = (
-            'id', 'brand', 'model', 'year', 'plate', 'engine_type', 'kilometre',
+            'id', 'brand', 'brand_fk', 'brand_name', 'model', 'year', 'plate', 'engine_type', 'kilometre',
             'periodic_due_km', 'periodic_due_date', 'last_maintenance_notes',
             'inspection_expiry', 'exhaust_emission_date',
             'tire_change_date', 'traffic_insurance_expiry', 'casco_expiry',
             'engine_type_display',
             'created_at', 'updated_at'
         )
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'brand')
 
     def to_representation(self, instance):
         # Plate is sensitive: do not expose raw or masked by default.
@@ -123,6 +126,11 @@ class VehicleSerializer(serializers.ModelSerializer):
         if 'plate' in rep:
             rep.pop('plate', None)
         return rep
+
+    def get_brand_name(self, obj):
+        if getattr(obj, 'brand_fk', None):
+            return obj.brand_fk.name
+        return obj.brand or None
 
 # JWT Token'a role bilgisi eklemek için custom serializer
 class CustomTokenObtainPairSerializer(serializers.Serializer):

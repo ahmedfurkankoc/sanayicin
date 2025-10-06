@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { api, setAuthEmail } from "@/app/utils/api";
 
 // UI Components
-import Footer from "@/app/components/Footer";
 import EsnafAuthHeader from "../../components/AuthHeader";
 
 // Hooks
@@ -194,7 +193,7 @@ export default function EsnafKayitPage() {
           </div>
         </div>
       </main>
-      <Footer />
+      {/* Footer intentionally hidden on auth page */}
       </>
     );
   }
@@ -1012,7 +1011,7 @@ export default function EsnafKayitPage() {
         )}
       </div>
     </main>
-    <Footer />
+    {/* Footer intentionally hidden on auth page */}
     </>
   );
 } 

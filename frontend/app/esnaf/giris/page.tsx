@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
-import EsnafAuthHeader from "../../components/AuthHeader";
-import Footer from "@/app/components/Footer";
+import AuthHeader from "../../components/AuthHeader";
 import { useEsnaf } from "../context/EsnafContext";
 import { setAuthToken, setAuthEmail } from '@/app/utils/api';
 
@@ -88,7 +87,7 @@ export default function EsnafGirisPage() {
   if (isAuthenticated) {
     return (
       <>
-      <EsnafAuthHeader currentPage="login" />
+      <AuthHeader currentPage="login" />
       <main className="esnaf-login-main">
         <div className="esnaf-login-container">
           <div className="esnaf-login-loading">
@@ -96,14 +95,14 @@ export default function EsnafGirisPage() {
           </div>
         </div>
       </main>
-      <Footer />
+      {/* Footer intentionally hidden on auth page */}
       </>
     );
   }
 
   return (
     <>
-    <EsnafAuthHeader currentPage="login" />
+    <AuthHeader currentPage="login" />
     <main className="esnaf-login-main">
       <div className="esnaf-login-container">
         {/* Header */}
@@ -165,7 +164,7 @@ export default function EsnafGirisPage() {
         </div>
       </div>
     </main>
-    <Footer />
+    {/* Footer intentionally hidden on auth page */}
     </>
   );
 } 

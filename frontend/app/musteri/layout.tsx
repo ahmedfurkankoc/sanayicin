@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 import MobileBottomNav from "../components/MobileBottomNav";
 import { Toaster } from "@/app/components/ui/sonner";
 import AuthHeader from "@/app/components/AuthHeader";
-import { usePathname } from "next/navigation";
+import { useSelectedLayoutSegments } from "next/navigation";
 import "../styles/musteri.css";
 
 export default function MusteriLayout({
@@ -16,23 +16,29 @@ export default function MusteriLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const showAuthHeader = pathname?.startsWith('/musteri/giris') || pathname?.startsWith('/musteri/kayit');
+  const segments = useSelectedLayoutSegments();
+  const firstSegment = segments?.[0] || '';
+  const showAuthHeader = firstSegment === 'giris' || firstSegment === 'kayit';
+  const isKayit = firstSegment === 'kayit';
   return (
     <>
       <MusteriProvider>
         <FavoritesProvider>
           <div className="musteri-layout">
             {showAuthHeader ? (
-              <AuthHeader currentPage={pathname?.includes('/kayit') ? 'register' : 'login'} segment="musteri" theme="dark" />
+              <AuthHeader currentPage={isKayit ? 'register' : 'login'} segment="musteri" theme="dark" />
             ) : (
               <MusteriHeader />
             )}
             <main className="musteri-main">
               {children}
             </main>
-            <MobileBottomNav />
-            <Footer />
+            <div style={{ display: showAuthHeader ? 'none' as const : undefined }}>
+              <MobileBottomNav />
+            </div>
+            <div style={{ display: showAuthHeader ? 'none' as const : undefined }}>
+              <Footer />
+            </div>
           </div>
         </FavoritesProvider>
       </MusteriProvider>
