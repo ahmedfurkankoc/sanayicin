@@ -19,6 +19,7 @@ import {
   type CarBrand,
 } from '../../api/admin'
 import { usePermissions } from '../../contexts/AuthContext'
+import Pagination from '../../components/Pagination'
 
 export default function ContentManagementPage() {
   const { canRead, canWrite, canDelete } = usePermissions()
@@ -302,22 +303,16 @@ export default function ContentManagementPage() {
           </table>
         </div>
         {/* Pagination */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-600">Toplam {saTotal} kayıt</div>
-          <div className="flex items-center gap-2">
-            <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm"
-              value={saPageSize}
-              onChange={(e) => { setSaPageSize(Number(e.target.value)); setSaPage(1) }}
-            >
-              {[10, 20, 50].map((n) => (
-                <option key={n} value={n}>{n}/sayfa</option>
-              ))}
-            </select>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled={saPage <= 1} onClick={() => setSaPage((p) => Math.max(1, p - 1))}>Önceki</button>
-            <span className="text-sm text-gray-700">Sayfa {saPage} / {Math.max(1, Math.ceil(saTotal / saPageSize))}</span>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled={saPage >= Math.ceil(saTotal / saPageSize)} onClick={() => setSaPage((p) => p + 1)}>Sonraki</button>
-          </div>
+        <div className="mt-4">
+          <Pagination
+            currentPage={saPage}
+            totalPages={Math.max(1, Math.ceil(saTotal / saPageSize))}
+            totalCount={saTotal}
+            pageSize={saPageSize}
+            onPageChange={setSaPage}
+            onPageSizeChange={(size) => { setSaPageSize(size); setSaPage(1) }}
+            itemName="hizmet alanı"
+          />
         </div>
       </section>
       )}
@@ -510,22 +505,16 @@ export default function ContentManagementPage() {
           </table>
         </div>
         {/* Pagination */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-600">Toplam {catTotal} kayıt</div>
-          <div className="flex items-center gap-2">
-            <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm"
-              value={catPageSize}
-              onChange={(e) => { setCatPageSize(Number(e.target.value)); setCatPage(1) }}
-            >
-              {[10, 20, 50].map((n) => (
-                <option key={n} value={n}>{n}/sayfa</option>
-              ))}
-            </select>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled={catPage <= 1} onClick={() => setCatPage((p) => Math.max(1, p - 1))}>Önceki</button>
-            <span className="text-sm text-gray-700">Sayfa {catPage} / {Math.max(1, Math.ceil(catTotal / catPageSize))}</span>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled={catPage >= Math.ceil(catTotal / catPageSize)} onClick={() => setCatPage((p) => p + 1)}>Sonraki</button>
-          </div>
+        <div className="mt-4">
+          <Pagination
+            currentPage={catPage}
+            totalPages={Math.max(1, Math.ceil(catTotal / catPageSize))}
+            totalCount={catTotal}
+            pageSize={catPageSize}
+            onPageChange={setCatPage}
+            onPageSizeChange={(size) => { setCatPageSize(size); setCatPage(1) }}
+            itemName="kategori"
+          />
         </div>
       </section>
       )}
@@ -741,22 +730,16 @@ export default function ContentManagementPage() {
           </table>
         </div>
         {/* Pagination */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="text-sm text-gray-600">Toplam {brandTotal} kayıt</div>
-          <div className="flex items-center gap-2">
-            <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm"
-              value={brandPageSize}
-              onChange={(e) => { setBrandPageSize(Number(e.target.value)); setBrandPage(1) }}
-            >
-              {[10, 20, 50].map((n) => (
-                <option key={n} value={n}>{n}/sayfa</option>
-              ))}
-            </select>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled={brandPage <= 1} onClick={() => setBrandPage((p) => Math.max(1, p - 1))}>Önceki</button>
-            <span className="text-sm text-gray-700">Sayfa {brandPage} / {Math.max(1, Math.ceil(brandTotal / brandPageSize))}</span>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled={brandPage >= Math.ceil(brandTotal / brandPageSize)} onClick={() => setBrandPage((p) => p + 1)}>Sonraki</button>
-          </div>
+        <div className="mt-4">
+          <Pagination
+            currentPage={brandPage}
+            totalPages={Math.max(1, Math.ceil(brandTotal / brandPageSize))}
+            totalCount={brandTotal}
+            pageSize={brandPageSize}
+            onPageChange={setBrandPage}
+            onPageSizeChange={(size) => { setBrandPageSize(size); setBrandPage(1) }}
+            itemName="marka"
+          />
         </div>
       </section>
       )}

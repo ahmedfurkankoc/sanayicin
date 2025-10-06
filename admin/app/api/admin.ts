@@ -9,6 +9,10 @@ export interface DashboardStats {
   active_service_areas: number
   active_categories: number
   active_car_brands: number
+  users_change_pct: number
+  vendors_change_pct: number
+  support_change_pct: number
+  blog_change_pct: number
 }
 
 export async function fetchDashboardStats() {
@@ -216,6 +220,28 @@ export async function sendSupportMessage(ticketId: number, content: string) {
 
 export async function updateSupportTicket(id: number, payload: Partial<Pick<SupportTicket, 'status' | 'subject' | 'message'>>) {
   const resp = await apiClient.patch<SupportTicket>(`/support-tickets/${id}/`, payload)
+  return resp.data
+}
+
+// ========== Analytics ==========
+export interface VisitorStats {
+  total_visitors_today: number
+  unique_visitors_today: number
+  page_views_today: number
+  avg_session_duration: number
+  device_distribution: {
+    desktop: number
+    mobile: number
+    tablet: number
+  }
+  country_distribution: Record<string, number>
+  hourly_visitors: Array<{ hour: number; visitors: number }>
+  top_pages: Array<{ path: string; views: number }>
+  real_time_visitors: number
+}
+
+export async function fetchVisitorStats() {
+  const resp = await apiClient.get<VisitorStats>('/analytics/visitors/')
   return resp.data
 }
 

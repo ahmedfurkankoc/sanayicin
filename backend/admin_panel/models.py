@@ -181,6 +181,18 @@ class BlogPost(models.Model):
     is_featured = models.BooleanField(default=False, verbose_name="Öne Çıkan")
     view_count = models.PositiveIntegerField(default=0, verbose_name="Görüntülenme Sayısı")
     published_at = models.DateTimeField(null=True, blank=True, verbose_name="Yayın Tarihi")
+    
+    # SEO Fields
+    meta_title = models.CharField(max_length=60, blank=True, verbose_name="Meta Başlık")
+    meta_description = models.TextField(max_length=160, blank=True, verbose_name="Meta Açıklama")
+    meta_keywords = models.CharField(max_length=255, blank=True, verbose_name="Meta Anahtar Kelimeler")
+    canonical_url = models.URLField(blank=True, verbose_name="Canonical URL")
+    
+    # Social Media
+    og_title = models.CharField(max_length=100, blank=True, verbose_name="OG Başlık")
+    og_description = models.TextField(max_length=200, blank=True, verbose_name="OG Açıklama")
+    og_image = models.ImageField(upload_to='blog/og/', blank=True, null=True, verbose_name="OG Görsel")
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturulma Tarihi")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Güncellenme Tarihi")
 
@@ -237,23 +249,6 @@ class SystemLog(models.Model):
 
     def __str__(self):
         return f"{self.level} - {self.message[:50]}"
-
-class AnalyticsData(models.Model):
-    """Analitik veriler"""
-    date = models.DateField(verbose_name="Tarih")
-    metric_name = models.CharField(max_length=100, verbose_name="Metrik Adı")
-    metric_value = models.FloatField(verbose_name="Metrik Değeri")
-    metadata = models.JSONField(default=dict, blank=True, verbose_name="Metadata")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturulma Tarihi")
-
-    class Meta:
-        verbose_name = "Analitik Veri"
-        verbose_name_plural = "Analitik Veriler"
-        ordering = ['-date']
-        unique_together = ['date', 'metric_name']
-
-    def __str__(self):
-        return f"{self.date} - {self.metric_name}: {self.metric_value}"
 
 class AdminNotification(models.Model):
     """Admin bildirimleri"""
