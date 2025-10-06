@@ -2,9 +2,9 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     AdminLoginView, AdminLogoutView, AdminUserInfoView, DashboardStatsView, AdminAuthLogsView,
-    UserViewSet, VendorProfileViewSet, BlogCategoryViewSet, BlogPostViewSet,
+    UserViewSet, VendorProfileViewSet, BlogCategoryViewSet, BlogPostViewSet, ImageUploadView,
     ServiceAreaViewSet, CategoryViewSet, CarBrandViewSet, SupportTicketViewSet,
-    SupportMessageViewSet, SystemLogViewSet, AnalyticsDataViewSet,
+    SupportMessageViewSet, SystemLogViewSet,
     AdminNotificationViewSet, AdminSettingsViewSet
 )
 
@@ -19,7 +19,6 @@ router.register(r'car-brands', CarBrandViewSet)
 router.register(r'support-tickets', SupportTicketViewSet)
 router.register(r'support-messages', SupportMessageViewSet)
 router.register(r'system-logs', SystemLogViewSet)
-router.register(r'analytics-data', AnalyticsDataViewSet)
 router.register(r'notifications', AdminNotificationViewSet)
 router.register(r'settings', AdminSettingsViewSet)
 
@@ -32,6 +31,9 @@ urlpatterns = [
     
     # Dashboard
     path('dashboard-stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
+    
+    # Image upload
+    path('upload-image/', ImageUploadView.as_view(), name='upload-image'),
     
     # API endpoints
     path('', include(router.urls)),
