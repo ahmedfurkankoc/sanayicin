@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status, permissions
+from django.db import models
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
@@ -549,6 +550,13 @@ class ServiceAreaViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+    def get_queryset(self):
+        qs = super().get_queryset().order_by('name')
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(models.Q(name__icontains=search) | models.Q(description__icontains=search))
+        return qs
+
 class CategoryViewSet(viewsets.ModelViewSet):
     """Kategori yönetimi"""
     queryset = Category.objects.all()
@@ -572,6 +580,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+    def get_queryset(self):
+        qs = super().get_queryset().select_related('service_area').order_by('name')
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(models.Q(name__icontains=search) | models.Q(description__icontains=search) | models.Q(service_area__name__icontains=search))
+        service_area = self.request.query_params.get('service_area')
+        if service_area and service_area.isdigit():
+            qs = qs.filter(service_area_id=int(service_area))
+        return qs
+
 class CarBrandViewSet(viewsets.ModelViewSet):
     """Araba markası yönetimi"""
     queryset = CarBrand.objects.all()
@@ -594,6 +612,19 @@ class CarBrandViewSet(viewsets.ModelViewSet):
     @admin_permission_required('content', 'delete')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = super().get_queryset().order_by('name')
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(models.Q(name__icontains=search) | models.Q(description__icontains=search))
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            if is_active.lower() in ('true', '1'):
+                qs = qs.filter(is_active=True)
+            elif is_active.lower() in ('false', '0'):
+                qs = qs.filter(is_active=False)
+        return qs
 
 class SystemLogViewSet(viewsets.ReadOnlyModelViewSet):
     """Sistem log görüntüleme"""

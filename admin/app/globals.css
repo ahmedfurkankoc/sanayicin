@@ -27,3 +27,54 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Form controls - improve readability across the admin */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  color: var(--black);
+  background-color: #ffffff;
+  border-color: #d1d5db; /* gray-300 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280; /* gray-500 */
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 1px var(--yellow);
+}
+
+/* Buttons with default border styles: ensure readable text */
+button {
+  color: var(--black);
+}
+
+button:disabled {
+  opacity: 0.6;
+}
+
+/* Select option text color (some browsers) */
+select option {
+  color: var(--black);
+}
+
+/* Danger button (delete) */
+.btn-danger {
+  background-color: #fee2e2; /* red-100 */
+  color: #b91c1c; /* red-700 */
+  border: 1px solid #fecaca; /* red-200 */
+}
+
+.btn-danger:hover {
+  background-color: #fecaca; /* red-200 */
+}
