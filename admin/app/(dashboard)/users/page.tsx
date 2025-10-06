@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 
 import { fetchClients, ClientListItem } from '../../api/clients'
+import Pagination from '../../components/Pagination'
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -195,18 +196,15 @@ export default function UsersPage() {
       </div>
 
       {/* Pagination */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Toplam {totalCount} kullanıcı
-          </div>
-          <div className="flex space-x-2">
-            <button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50">Önceki</button>
-            <span className="px-2 py-1 text-sm text-gray-700">Sayfa {page} / {Math.max(1, Math.ceil(totalCount / pageSize))}</span>
-            <button disabled={page >= Math.ceil(totalCount / pageSize)} onClick={() => setPage(p => p + 1)} className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50">Sonraki</button>
-          </div>
-        </div>
-      </div>
+      <Pagination
+        currentPage={page}
+        totalPages={Math.max(1, Math.ceil(totalCount / pageSize))}
+        totalCount={totalCount}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+        itemName="kullanıcı"
+      />
     </div>
   )
 }

@@ -3,6 +3,7 @@ from django.db import models
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.views import APIView
+from django.core.paginator import Paginator
 from .authentication import AdminTokenAuthentication
 from django.contrib.auth import authenticate
 from django.utils.text import slugify
@@ -17,10 +18,10 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 
 logger = logging.getLogger('admin_panel.views')
-from .models import BlogCategory, BlogPost, SystemLog, AnalyticsData, AdminNotification, AdminSettings, AdminPermission, AdminUser
+from .models import BlogCategory, BlogPost, SystemLog, AdminNotification, AdminSettings, AdminPermission, AdminUser
 from .serializers import (
     BlogCategorySerializer, BlogPostSerializer, SystemLogSerializer,
-    AnalyticsDataSerializer, AdminNotificationSerializer, AdminSettingsSerializer,
+    AdminNotificationSerializer, AdminSettingsSerializer,
     UserSerializer, VendorProfileSerializer, ServiceAreaSerializer, CategorySerializer,
     CarBrandSerializer, SupportTicketSerializer, SupportMessageSerializer,
     AdminLoginSerializer, AdminUserSerializer
@@ -300,12 +301,16 @@ class DashboardStatsView(APIView):
 
         tickets_curr = SupportTicket.objects.filter(created_at__gte=curr_start).count()
         tickets_prev = SupportTicket.objects.filter(created_at__gte=prev_start, created_at__lt=curr_start).count()
+        
+        # Pending support tickets (for dashboard display)
+        pending_support_tickets = SupportTicket.objects.filter(status='open').count()
 
         stats = {
             'total_users': total_users,
             'total_vendors': total_vendors,
             'total_admins': total_admins,
             'support_tickets': tickets_curr,
+            'pending_support_tickets': pending_support_tickets,
             'published_blog_posts': published_blog_posts,
             'active_service_areas': active_service_areas,
             'active_categories': active_categories,
@@ -418,10 +423,53 @@ class VendorProfileViewSet(viewsets.ModelViewSet):
     serializer_class = VendorProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    pagination_class = None  # We'll handle pagination manually
     
     @admin_permission_required('vendors', 'read')
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        queryset = self.get_queryset()
+        
+        # Search functionality
+        search = request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                models.Q(display_name__icontains=search) |
+                models.Q(company_title__icontains=search) |
+                models.Q(user__email__icontains=search) |
+                models.Q(user__first_name__icontains=search) |
+                models.Q(user__last_name__icontains=search)
+            )
+        
+        # Filter by verification status
+        is_verified = request.query_params.get('is_verified', None)
+        if is_verified is not None:
+            queryset = queryset.filter(user__is_verified=is_verified.lower() == 'true')
+        
+        # Order by creation date (newest first)
+        queryset = queryset.order_by('-created_at')
+        
+        # Manual pagination
+        page_size = int(request.query_params.get('page_size', 20))
+        page = int(request.query_params.get('page', 1))
+        
+        paginator = Paginator(queryset, page_size)
+        total_count = paginator.count
+        
+        try:
+            page_obj = paginator.page(page)
+        except:
+            page_obj = paginator.page(1)
+            page = 1
+        
+        serializer = self.get_serializer(page_obj.object_list, many=True)
+        
+        return Response({
+            'results': serializer.data,
+            'count': total_count,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': paginator.num_pages
+        })
     
     @admin_permission_required('vendors', 'write')
     def create(self, request, *args, **kwargs):
@@ -429,6 +477,14 @@ class VendorProfileViewSet(viewsets.ModelViewSet):
     
     @admin_permission_required('vendors', 'write')
     def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # User verification güncelleme
+        if 'user' in request.data and 'is_verified' in request.data['user']:
+            user = instance.user
+            user.is_verified = request.data['user']['is_verified']
+            user.save()
+        
         return super().update(request, *args, **kwargs)
     
     @admin_permission_required('vendors', 'delete')
@@ -464,6 +520,97 @@ class BlogPostViewSet(viewsets.ModelViewSet):
     serializer_class = BlogPostSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    pagination_class = None  # Manual pagination
+    
+    @admin_permission_required('blog', 'read')
+    def list(self, request, *args, **kwargs):
+        # Manual pagination and filtering
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 10))
+        search = request.query_params.get('search', '')
+        status = request.query_params.get('status', '')
+        category = request.query_params.get('category', '')
+        
+        queryset = self.get_queryset()
+        
+        # Apply filters
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(content__icontains=search) |
+                Q(author__first_name__icontains=search) |
+                Q(author__last_name__icontains=search)
+            )
+        
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        if category:
+            queryset = queryset.filter(category_id=category)
+        
+        # Order by created_at desc
+        queryset = queryset.order_by('-created_at')
+        
+        # Manual pagination
+        paginator = Paginator(queryset, page_size)
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+        
+        serializer = self.get_serializer(page_obj.object_list, many=True)
+        
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': paginator.num_pages,
+        })
+    
+    @admin_permission_required('blog', 'write')
+    def create(self, request, *args, **kwargs):
+        # Set author to current user
+        data = request.data.copy()
+        data['author'] = request.user.id
+        
+        # Set published_at if status is published
+        if data.get('status') == 'published' and not data.get('published_at'):
+            data['published_at'] = timezone.now().isoformat()
+        
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    @admin_permission_required('blog', 'write')
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        data = request.data.copy()
+        
+        # Set published_at if status is published and not already set
+        if data.get('status') == 'published' and not instance.published_at:
+            data['published_at'] = timezone.now().isoformat()
+        
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
+    
+    @admin_permission_required('blog', 'delete')
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+class BlogCategoryViewSet(viewsets.ModelViewSet):
+    """Blog kategori yönetimi"""
+    queryset = BlogCategory.objects.all()
+    serializer_class = BlogCategorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [AdminTokenAuthentication]
     
     @admin_permission_required('blog', 'read')
     def list(self, request, *args, **kwargs):
@@ -477,9 +624,45 @@ class BlogPostViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
     
-    @admin_permission_required('blog', 'delete')
+    @admin_permission_required('blog', 'write')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+class ImageUploadView(APIView):
+    """Görsel yükleme"""
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [AdminTokenAuthentication]
+    
+    @admin_permission_required('blog', 'write')
+    def post(self, request):
+        if 'image' not in request.FILES:
+            return Response({'error': 'Görsel dosyası bulunamadı'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        image_file = request.FILES['image']
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if image_file.content_type not in allowed_types:
+            return Response({'error': 'Geçersiz dosya türü'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate file size (max 5MB)
+        if image_file.size > 5 * 1024 * 1024:
+            return Response({'error': 'Dosya boyutu 5MB\'dan büyük olamaz'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Generate unique filename
+        import uuid
+        file_extension = image_file.name.split('.')[-1]
+        unique_filename = f"{uuid.uuid4()}.{file_extension}"
+        
+        # Save file
+        from django.core.files.storage import default_storage
+        file_path = f"blog/images/{unique_filename}"
+        saved_path = default_storage.save(file_path, image_file)
+        
+        # Return URL
+        file_url = default_storage.url(saved_path)
+        
+        return Response({'url': file_url}, status=status.HTTP_201_CREATED)
 
 class SupportTicketViewSet(viewsets.ModelViewSet):
     """Destek talebi yönetimi"""
@@ -655,17 +838,6 @@ class SystemLogViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = [AdminTokenAuthentication]
     
     @admin_permission_required('logs', 'read')
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
-class AnalyticsDataViewSet(viewsets.ReadOnlyModelViewSet):
-    """Analitik veri görüntüleme"""
-    queryset = AnalyticsData.objects.all()
-    serializer_class = AnalyticsDataSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [AdminTokenAuthentication]
-    
-    @admin_permission_required('analytics', 'read')
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 

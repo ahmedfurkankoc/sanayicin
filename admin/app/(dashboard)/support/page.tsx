@@ -10,6 +10,7 @@ import {
   type SupportMessage,
 } from '../../api/admin'
 import { usePermissions } from '../../contexts/AuthContext'
+import Pagination from '../../components/Pagination'
 
 export default function SupportPage() {
   const { canRead, canWrite } = usePermissions()
@@ -52,7 +53,7 @@ export default function SupportPage() {
         setTicketTotal(res.count)
         // Keep active ticket in list or reset
         if (activeTicket) {
-          const found = res.items.find((t) => t.id === activeTicket.id)
+          const found = res.items.find((t: SupportTicket) => t.id === activeTicket.id)
           if (!found) setActiveTicket(null)
         }
       } catch (e: any) {
@@ -143,22 +144,16 @@ export default function SupportPage() {
           )}
         </div>
         {/* Pagination */}
-        <div className="mt-3 flex items-center justify-between">
-          <div className="text-sm text-gray-600">Toplam {ticketTotal} kayıt</div>
-          <div className="flex items-center gap-2">
-            <select
-              className="border border-gray-300 rounded px-2 py-1 text-sm"
-              value={ticketPageSize}
-              onChange={(e) => { setTicketPageSize(Number(e.target.value)); setTicketPage(1) }}
-            >
-              {[10, 20, 50].map((n) => (
-                <option key={n} value={n}>{n}/sayfa</option>
-              ))}
-            </select>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled={ticketPage <= 1} onClick={() => setTicketPage((p) => Math.max(1, p - 1))}>Önceki</button>
-            <span className="text-sm text-gray-700">Sayfa {ticketPage} / {Math.max(1, Math.ceil(ticketTotal / ticketPageSize))}</span>
-            <button className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50" disabled={ticketPage >= Math.ceil(ticketTotal / ticketPageSize)} onClick={() => setTicketPage((p) => p + 1)}>Sonraki</button>
-          </div>
+        <div className="mt-3">
+          <Pagination
+            currentPage={ticketPage}
+            totalPages={Math.max(1, Math.ceil(ticketTotal / ticketPageSize))}
+            totalCount={ticketTotal}
+            pageSize={ticketPageSize}
+            onPageChange={setTicketPage}
+            onPageSizeChange={(size) => { setTicketPageSize(size); setTicketPage(1) }}
+            itemName="talep"
+          />
         </div>
       </div>
 
