@@ -148,10 +148,12 @@ class ServiceAreaListView(generics.ListAPIView):
     queryset = ServiceArea.objects.all()
     serializer_class = ServiceAreaSerializer
     permission_classes = []
+    pagination_class = None
 
 class CategoryListView(generics.ListAPIView):
     serializer_class = CategorySerializer
     permission_classes = []
+    pagination_class = None
 
     def get_queryset(self):
         qs = Category.objects.all()
@@ -164,6 +166,7 @@ class CarBrandListView(generics.ListAPIView):
     queryset = CarBrand.objects.filter(is_active=True)
     serializer_class = CarBrandSerializer
     permission_classes = []
+    pagination_class = None
     
     def get_serializer_context(self):
         context = super().get_serializer_context()

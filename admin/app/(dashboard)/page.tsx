@@ -67,11 +67,11 @@ export default function Dashboard() {
     if (!canReadLogs) return
     let cancelled = false
     setLogsLoading(true)
-    fetchAdminAuthLogs(logsLimit)
+    fetchAdminAuthLogs(logsLimit, logsPage)
       .then((res) => {
         if (cancelled) return
         setAuthLogs(res.results || [])
-        setLogsTotal((res as any).count ?? res.results?.length ?? 0)
+        setLogsTotal(res.count ?? res.results?.length ?? 0)
         setLogsError(null)
       })
       .catch((err) => {
