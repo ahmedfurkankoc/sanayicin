@@ -504,6 +504,20 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+    def get_queryset(self):
+        qs = super().get_queryset().order_by('-created_at')
+        search = self.request.query_params.get('search')
+        status_q = self.request.query_params.get('status')
+        if search:
+            qs = qs.filter(
+                models.Q(subject__icontains=search) |
+                models.Q(message__icontains=search) |
+                models.Q(user__email__icontains=search)
+            )
+        if status_q:
+            qs = qs.filter(status=status_q)
+        return qs
+
 class SupportMessageViewSet(viewsets.ModelViewSet):
     """Destek mesaj yönetimi"""
     queryset = SupportMessage.objects.all()
@@ -526,6 +540,13 @@ class SupportMessageViewSet(viewsets.ModelViewSet):
     @admin_permission_required('support', 'delete')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related('ticket', 'user').order_by('created_at')
+        ticket_id = self.request.query_params.get('ticket')
+        if ticket_id and ticket_id.isdigit():
+            qs = qs.filter(ticket_id=int(ticket_id))
+        return qs
 
 class ServiceAreaViewSet(viewsets.ModelViewSet):
     """Hizmet alanı yönetimi"""
