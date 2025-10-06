@@ -27,8 +27,11 @@ export const useServices = () => {
       setError(null);
       
       const response = await api.getServiceAreas();
-      const serviceData = response.data || response;
-      setServices(serviceData);
+      const payload = response.data ?? response;
+      const list = Array.isArray(payload)
+        ? payload
+        : (Array.isArray(payload.results) ? payload.results : (Array.isArray(payload.items) ? payload.items : []));
+      setServices(list);
     } catch (err) {
       console.error('Hizmet alanları yüklenemedi:', err);
       setError('Hizmet alanları yüklenirken bir hata oluştu');
@@ -45,8 +48,11 @@ export const useServices = () => {
       setError(null);
       
       const response = await api.getCategories();
-      const categoryData = response.data || response;
-      setCategories(categoryData);
+      const payload = response.data ?? response;
+      const list = Array.isArray(payload)
+        ? payload
+        : (Array.isArray(payload.results) ? payload.results : (Array.isArray(payload.items) ? payload.items : []));
+      setCategories(list);
     } catch (err) {
       console.error('Kategoriler yüklenemedi:', err);
       setError('Kategoriler yüklenirken bir hata oluştu');

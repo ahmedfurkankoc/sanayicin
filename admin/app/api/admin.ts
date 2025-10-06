@@ -26,8 +26,11 @@ export interface AdminAuthLogItem {
   created_at: string
 }
 
-export async function fetchAdminAuthLogs(limit = 20) {
-  const resp = await apiClient.get<{ results: AdminAuthLogItem[] }>(`/logs/auth/`, { params: { limit } })
+export async function fetchAdminAuthLogs(limit = 20, page = 1) {
+  const resp = await apiClient.get<{ results: AdminAuthLogItem[]; count: number; page: number; limit: number }>(
+    `/logs/auth/`,
+    { params: { limit, page } }
+  )
   return resp.data
 }
 
@@ -37,4 +40,131 @@ export async function fetchAdminAuthLogs(limit = 20) {
 // Vendors - centralized here (optional usage)
 // Vendor APIs are not exposed in admin app per separation of concerns
 
+
+// ========== Content Management (Service Areas, Categories, Car Brands) ==========
+
+// Service Areas
+export interface ServiceArea {
+  id: number
+  name: string
+  description?: string
+}
+
+type ListResult<T> = { items: T[]; count: number }
+
+export async function listServiceAreas(params?: { page?: number; page_size?: number; search?: string }) {
+  const resp = await apiClient.get<ServiceArea[] | { results: ServiceArea[]; count: number }>(
+    '/service-areas/',
+    { params }
+  )
+  const data = resp.data as any
+  if (Array.isArray(data)) return { items: data, count: data.length } as ListResult<ServiceArea>
+  return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) } as ListResult<ServiceArea>
+}
+
+export async function createServiceArea(payload: Omit<ServiceArea, 'id'>) {
+  const resp = await apiClient.post<ServiceArea>('/service-areas/', payload)
+  return resp.data
+}
+
+export async function updateServiceArea(id: number, payload: Partial<Omit<ServiceArea, 'id'>>) {
+  const resp = await apiClient.patch<ServiceArea>(`/service-areas/${id}/`, payload)
+  return resp.data
+}
+
+export async function deleteServiceArea(id: number) {
+  await apiClient.delete(`/service-areas/${id}/`)
+}
+
+// Categories
+export interface Category {
+  id: number
+  name: string
+  description?: string
+  service_area: number
+}
+
+export async function listCategories(params?: { page?: number; page_size?: number; search?: string; service_area?: number }) {
+  const resp = await apiClient.get<Category[] | { results: Category[]; count: number }>(
+    '/categories/',
+    { params }
+  )
+  const data = resp.data as any
+  if (Array.isArray(data)) return { items: data, count: data.length } as ListResult<Category>
+  return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) } as ListResult<Category>
+}
+
+export async function createCategory(payload: Omit<Category, 'id'>) {
+  const resp = await apiClient.post<Category>('/categories/', payload)
+  return resp.data
+}
+
+export async function updateCategory(id: number, payload: Partial<Omit<Category, 'id'>>) {
+  const resp = await apiClient.patch<Category>(`/categories/${id}/`, payload)
+  return resp.data
+}
+
+export async function deleteCategory(id: number) {
+  await apiClient.delete(`/categories/${id}/`)
+}
+
+// Car Brands
+export interface CarBrand {
+  id: number
+  name: string
+  description?: string
+  is_active: boolean
+  logo?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export async function listCarBrands(params?: { page?: number; page_size?: number; search?: string; is_active?: boolean }) {
+  const resp = await apiClient.get<CarBrand[] | { results: CarBrand[]; count: number }>(
+    '/car-brands/',
+    { params }
+  )
+  const data = resp.data as any
+  if (Array.isArray(data)) return { items: data, count: data.length } as ListResult<CarBrand>
+  return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) } as ListResult<CarBrand>
+}
+
+export async function createCarBrand(payload: { name: string; description?: string; is_active?: boolean; logo_file?: File | null }) {
+  // Use multipart when a file is provided; otherwise JSON
+  if (payload.logo_file) {
+    const form = new FormData()
+    form.append('name', payload.name)
+    if (payload.description) form.append('description', payload.description)
+    if (typeof payload.is_active === 'boolean') form.append('is_active', String(payload.is_active))
+    form.append('logo', payload.logo_file)
+    const resp = await apiClient.post<CarBrand>('/car-brands/', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return resp.data
+  }
+  const { logo_file, ...data } = payload
+  const resp = await apiClient.post<CarBrand>('/car-brands/', data)
+  return resp.data
+}
+
+export async function updateCarBrand(id: number, payload: { name?: string; description?: string; is_active?: boolean; logo_file?: File | null }) {
+  if (payload.logo_file) {
+    const form = new FormData()
+    if (payload.name) form.append('name', payload.name)
+    if (payload.description) form.append('description', payload.description)
+    if (typeof payload.is_active === 'boolean') form.append('is_active', String(payload.is_active))
+    form.append('logo', payload.logo_file)
+    const resp = await apiClient.patch<CarBrand>(`/car-brands/${id}/`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return resp.data
+  }
+  const { logo_file, ...data } = payload
+  const resp = await apiClient.patch<CarBrand>(`/car-brands/${id}/`, data)
+  return resp.data
+}
+
+export async function deleteCarBrand(id: number) {
+  await apiClient.delete(`/car-brands/${id}/`)
+}
 
