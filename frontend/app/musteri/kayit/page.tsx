@@ -236,7 +236,7 @@ export default function MusteriKayitPage() {
               </div>
               <div className="mrc-card">
                 <h2 className="mrc-title">Aradığın usta bir tık uzağında</h2>
-                <p className="mrc-sub">Sanayicin ağına ücretsiz katıl, bölgendeki güvenilir işletmelere aynı anda ulaş ve ihtiyacın olan hizmet için saniyeler içinde birden fazla teklif al. Karşılaştır, bütçene ve zamanına en uygun olanı seçerek anında harekete geç.</p>
+                <p className="mrc-sub">Sanayicin ağına ücretsiz katıl, bölgendeki güvenilir işletmelere aynı anda ulaş ve ihtiyacın olan hizmeti anında bul.</p>
                 <Link href="#register-form" className="mrc-btn" scroll={false}>
                   Hemen Başla
                   <span className="mrc-arrow">→</span>
@@ -247,7 +247,7 @@ export default function MusteriKayitPage() {
 
           <div className="musteri-auth-container musteri-register-right">
             <div className="musteri-auth-card">
-              <h1 className="musteri-auth-title">Müşteri Kayıt</h1>
+              <h1 className="musteri-auth-title">Ücretsiz Sanayicin hesabınızı hemen oluşturun</h1>
               <p className="musteri-auth-subtitle">
                 Hızlıca hesap oluşturun ve hizmet almaya başlayın
               </p>

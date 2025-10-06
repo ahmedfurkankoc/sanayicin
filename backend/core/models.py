@@ -569,7 +569,10 @@ class Vehicle(models.Model):
     ]
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='vehicles')
-    brand = models.CharField(max_length=100)
+    # Legacy string brand (kept for backward compatibility during migration)
+    brand = models.CharField(max_length=100, blank=True)
+    # New FK source of truth
+    brand_fk = models.ForeignKey(CarBrand, on_delete=models.SET_NULL, null=True, blank=True, related_name='vehicles', db_index=True)
     model = models.CharField(max_length=100)
     year = models.PositiveIntegerField(null=True, blank=True)
     # Plaka gizliliği: şifreli saklanır
@@ -604,7 +607,12 @@ class Vehicle(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.user.email} - {self.brand} {self.model}"
+        display_brand = ''
+        if getattr(self, 'brand_fk', None):
+            display_brand = self.brand_fk.name
+        elif getattr(self, 'brand', None):
+            display_brand = self.brand
+        return f"{self.user.email} - {display_brand} {self.model}"
 
     @property
     def plate(self) -> str:

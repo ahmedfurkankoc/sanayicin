@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { api } from '@/app/utils/api';
+import { api, resolveMediaUrl } from '@/app/utils/api';
 
 export default function AracimPage() {
   // Tarih format yardımcıları
@@ -15,32 +15,46 @@ export default function AracimPage() {
     for (let y = currentYear + 5; y >= currentYear - 50; y--) years.push(String(y));
 
     const iso = (value || '').trim();
-    const [iy, im, idd] = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.split('-') : ['', '', ''];
+    const [iyInit, imInit, iddInit] = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.split('-') : ['', '', ''];
 
-    const emit = (yy: string, mm: string, dd: string) => {
+    const [yy, setYy] = useState<string>(iyInit);
+    const [mm, setMm] = useState<string>(imInit);
+    const [dd, setDd] = useState<string>(iddInit);
+
+    // Sync internal when external value changes (e.g., edit existing)
+    useEffect(() => {
+      const isoVal = (value || '').trim();
+      const [iy2, im2, id2] = /^\d{4}-\d{2}-\d{2}$/.test(isoVal) ? isoVal.split('-') : ['', '', ''];
+      if (iy2 !== yy) setYy(iy2);
+      if (im2 !== mm) setMm(im2);
+      if (id2 !== dd) setDd(id2);
+    }, [value]);
+
+    useEffect(() => {
       if (yy && mm && dd) {
-        onChange({ target: { name, value: `${yy}-${mm}-${dd}`, type: 'text' } });
-      } else {
-        onChange({ target: { name, value: '', type: 'text' } });
+        const composed = `${yy}-${mm}-${dd}`;
+        if (composed !== (value || '').trim()) {
+          onChange({ target: { name, value: composed, type: 'text' } });
+        }
       }
-    };
+    }, [yy, mm, dd]);
 
     return (
       <div className="aracim-datefield" id={id}>
-        <select value={idd} onChange={(e) => emit(iy, im, e.target.value)} className="select" aria-label="Gün">
+        <select value={dd} onChange={(e) => setDd(e.target.value)} className="select" aria-label="Gün">
           <option value="">Gün</option>
           {Array.from({ length: 31 }).map((_, i) => {
             const d = String(i + 1).padStart(2, '0');
             return <option key={d} value={d}>{d}</option>;
           })}
         </select>
-        <select value={im} onChange={(e) => emit(iy, e.target.value, idd)} className="select" aria-label="Ay">
+        <select value={mm} onChange={(e) => setMm(e.target.value)} className="select" aria-label="Ay">
           <option value="">Ay</option>
           {months.map((m, idx) => (
             <option key={m} value={m}>{monthLabels[idx]}</option>
           ))}
         </select>
-        <select value={iy} onChange={(e) => emit(e.target.value, im, idd)} className="select" aria-label="Yıl">
+        <select value={yy} onChange={(e) => setYy(e.target.value)} className="select" aria-label="Yıl">
           <option value="">Yıl</option>
           {years.map((y) => (
             <option key={y} value={y}>{y}</option>
@@ -68,8 +82,12 @@ export default function AracimPage() {
   const [mode, setMode] = useState<'list' | 'create' | 'edit'>('list');
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [carBrands, setCarBrands] = useState<any[]>([]);
+  const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
+  const brandRef = useRef<HTMLDivElement | null>(null);
   const [form, setForm] = useState({
     brand: '',
+    brandId: '',
     model: '',
     year: '',
     plate: '',
@@ -102,7 +120,7 @@ export default function AracimPage() {
 
   const resetForm = () => {
     setForm({
-      brand: '', model: '', year: '', plate: '', engine_type: '', kilometre: '',
+      brand: '', brandId: '', model: '', year: '', plate: '', engine_type: '', kilometre: '',
       periodic_due_km: '', periodic_due_date: '', last_maintenance_notes: '',
       inspection_expiry: '', exhaust_emission_date: '',
       insp_rem_sms: false, insp_rem_email: false, insp_rem_push: false,
@@ -113,20 +131,22 @@ export default function AracimPage() {
     e.preventDefault();
     try {
       const payload: any = {
-        brand: form.brand,
+        // Send brand as FK id
+        brand: form.brandId ? Number(form.brandId) : undefined,
         model: form.model,
         year: form.year ? Number(form.year) : undefined,
         plate: form.plate || undefined,
         engine_type: form.engine_type || undefined,
         kilometre: form.kilometre ? Number(form.kilometre) : undefined,
         periodic_due_km: form.periodic_due_km ? Number(form.periodic_due_km) : undefined,
-        periodic_due_date: isoToDmy(form.periodic_due_date), // dd-mm-YYYY gönder
+        // Backend DateField ISO (YYYY-MM-DD) bekler
+        periodic_due_date: form.periodic_due_date || undefined,
         last_maintenance_notes: form.last_maintenance_notes || undefined,
-        inspection_expiry: isoToDmy(form.inspection_expiry),
-        exhaust_emission_date: isoToDmy(form.exhaust_emission_date),
-        tire_change_date: isoToDmy(form.tire_change_date),
-        traffic_insurance_expiry: isoToDmy(form.traffic_insurance_expiry),
-        casco_expiry: isoToDmy(form.casco_expiry),
+        inspection_expiry: form.inspection_expiry || undefined,
+        exhaust_emission_date: form.exhaust_emission_date || undefined,
+        tire_change_date: form.tire_change_date || undefined,
+        traffic_insurance_expiry: form.traffic_insurance_expiry || undefined,
+        casco_expiry: form.casco_expiry || undefined,
       };
       if (mode === 'create') {
         await api.createVehicle(payload);
@@ -159,15 +179,44 @@ export default function AracimPage() {
     }
   };
 
-  // İlk yükleme
-  useEffect(() => { loadVehicles(); }, []);
+  // İlk yükleme: araçlar ve car brands
+  useEffect(() => { 
+    loadVehicles(); 
+    api.getCarBrands()
+      .then(res => setCarBrands(res.data || []))
+      .catch(() => setCarBrands([]));
+  }, []);
+
+  // Dış tıklama ile marka dropdown kapat
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (brandDropdownOpen && brandRef.current && !target.closest('.custom-select')) {
+        setBrandDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [brandDropdownOpen]);
 
   const selectedVehicle = vehicles.find((v:any) => v.id === selectedId) || null;
+
+  const normalize = (s: string): string => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  const findBrand = (name?: string) => {
+    if (!name) return null;
+    const n = normalize(name);
+    return carBrands.find((b:any) => normalize(b.name) === n) || null;
+  };
+  const findBrandById = (id?: any) => {
+    if (id === undefined || id === null || id === '') return null;
+    return carBrands.find((b:any) => String(b.id) === String(id)) || null;
+  };
 
   const onEditCard = (v:any) => {
     setSelectedId(v.id);
     setForm({
       brand: v.brand || '',
+      brandId: v.brand_fk ? String(v.brand_fk) : (v.brand_fk_id ? String(v.brand_fk_id) : ''),
       model: v.model || '',
       year: v.year ? String(v.year) : '',
       plate: '', // API plate dönmez
@@ -231,9 +280,17 @@ export default function AracimPage() {
             <div className="aracim-list">
               {vehicles.map((v:any) => (
                 <div key={v.id} className={`aracim-card ${selectedId===v.id ? 'aracim-card--active' : ''}`}>
-                  <div className="aracim-card-header">
-                    <div style={{ cursor: 'pointer' }} onClick={() => setSelectedId(v.id)}>
-                      <div className="aracim-card-title">{v.brand || '-'} {v.model || ''} {v.year ? `(${v.year})` : ''}</div>
+                <div className="aracim-card-header">
+                  <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => setSelectedId(v.id)}>
+                    {(() => {
+                      const b = findBrand(v.brand);
+                      const url = b ? (b.logo_url || b.logo || b.logo_path) : '';
+                      const resolved = url ? resolveMediaUrl(url) : '';
+                      return resolved ? (
+                        <img src={resolved} alt={b?.name || v.brand} style={{ width: 36, height: 36, objectFit: 'contain' }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                      ) : null;
+                    })()}
+                    <div className="aracim-card-title">{(findBrandById(v.brand)?.name) || v.brand || '-'} {v.model || ''} {v.year ? `(${v.year})` : ''}</div>
                       <div className="aracim-card-meta">Motor: {v.engine_type_display || v.engine_type || '-'} · Km: {v.kilometre ?? '-'}</div>
                     </div>
                     <div className="aracim-card-actions">
@@ -253,7 +310,8 @@ export default function AracimPage() {
                 <div className="aracim-detail-card">
                   <h3 className="aracim-detail-title">Araç Bilgileri</h3>
                   <div className="aracim-detail-table">
-                    <div><strong>Marka</strong></div><div>{selectedVehicle.brand || '-'}</div>
+                    <div><strong>Marka</strong></div>
+                    <div>{selectedVehicle.brand || '-'}</div>
                     <div><strong>Model</strong></div><div>{selectedVehicle.model || '-'}</div>
                     <div><strong>Yıl</strong></div><div>{selectedVehicle.year || '-'}</div>
                     <div><strong>Motor Tipi</strong></div><div>{selectedVehicle.engine_type_display || selectedVehicle.engine_type || '-'}</div>
@@ -296,7 +354,51 @@ export default function AracimPage() {
 
                     <div className="formGroup">
                       <label htmlFor="brand">Marka</label>
-                      <input id="brand" name="brand" type="text" placeholder="Örn: Toyota" value={form.brand} onChange={onChange} />
+                      <div ref={brandRef} className="custom-select" style={{ position: 'relative' }}>
+                        <div 
+                          className="custom-select-trigger"
+                          onClick={() => setBrandDropdownOpen(v => !v)}
+                        >
+                          <span>
+                            {form.brandId
+                              ? (carBrands.find((b:any) => String(b.id) === String(form.brandId))?.name || form.brand || 'Marka seçiniz')
+                              : (form.brand || 'Marka seçiniz')}
+                          </span>
+                        </div>
+                        {brandDropdownOpen && (
+                          <div className="custom-select-options" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000 }}>
+                            <div 
+                              className="custom-select-option"
+                              onClick={() => { setForm(prev => ({ ...prev, brand: '', brandId: '' })); setBrandDropdownOpen(false); }}
+                            >
+                              <span>Marka seçiniz</span>
+                            </div>
+                            {carBrands.map((brand:any) => (
+                              <div 
+                                key={brand.id}
+                                className="custom-select-option"
+                                onClick={() => { setForm(prev => ({ ...prev, brand: brand.name, brandId: String(brand.id) })); setBrandDropdownOpen(false); }}
+                                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                              >
+                                {(() => {
+                                  const url = brand.logo_url || brand.logo || brand.logo_path;
+                                  const resolved = url ? resolveMediaUrl(url) : '';
+                                  return resolved ? (
+                                    <img 
+                                      src={resolved}
+                                      alt={brand.name}
+                                      className="brand-logo-option"
+                                      style={{ width: 20, height: 20, objectFit: 'contain' }}
+                                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                  ) : null;
+                                })()}
+                                <span>{brand.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="formGroup">
