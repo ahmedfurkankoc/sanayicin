@@ -168,3 +168,54 @@ export async function deleteCarBrand(id: number) {
   await apiClient.delete(`/car-brands/${id}/`)
 }
 
+// ========== Support (Tickets & Messages) ==========
+export interface SupportTicket {
+  id: number
+  subject: string
+  message: string
+  status: 'open' | 'pending' | 'resolved' | 'closed'
+  user: number | null
+  user_email?: string
+  user_name?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SupportMessage {
+  id: number
+  ticket: number
+  content: string
+  user: number | null
+  user_email?: string
+  user_name?: string
+  created_at: string
+}
+
+export async function listSupportTickets(params?: { page?: number; page_size?: number; search?: string; status?: string }) {
+  const resp = await apiClient.get<SupportTicket[] | { results: SupportTicket[]; count: number }>(`/support-tickets/`, { params })
+  const data = resp.data as any
+  if (Array.isArray(data)) return { items: data, count: data.length }
+  return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) }
+}
+
+export async function getSupportTicket(id: number) {
+  const resp = await apiClient.get<SupportTicket>(`/support-tickets/${id}/`)
+  return resp.data
+}
+
+export async function listSupportMessages(ticketId: number) {
+  const resp = await apiClient.get<SupportMessage[] | { results: SupportMessage[] }>(`/support-messages/`, { params: { ticket: ticketId, page_size: 500 } })
+  const data = resp.data as any
+  return Array.isArray(data) ? data : (data.results ?? [])
+}
+
+export async function sendSupportMessage(ticketId: number, content: string) {
+  const resp = await apiClient.post<SupportMessage>(`/support-messages/`, { ticket: ticketId, content })
+  return resp.data
+}
+
+export async function updateSupportTicket(id: number, payload: Partial<Pick<SupportTicket, 'status' | 'subject' | 'message'>>) {
+  const resp = await apiClient.patch<SupportTicket>(`/support-tickets/${id}/`, payload)
+  return resp.data
+}
+
