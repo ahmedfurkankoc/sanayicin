@@ -31,7 +31,7 @@ const navigation = [
   { name: 'Destek', href: '/support', icon: MessageSquare, permission: 'support' },
   { name: 'İçerik', href: '/content', icon: FileText, permission: 'content' },
   { name: 'İstatistikler', href: '/analytics', icon: BarChart3, permission: 'analytics' },
-  { name: 'Ayarlar', href: '/settings', icon: Settings, permission: 'settings' },
+  { name: 'Tanımlamalar', href: '/definitions', icon: Settings, permission: 'settings' },
 ]
 
 export default function DashboardLayout({
