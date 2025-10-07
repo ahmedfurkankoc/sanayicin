@@ -7,7 +7,8 @@ from django.core.cache import cache
 from django.utils import timezone
 from datetime import timedelta
 from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite, SupportTicket, SupportMessage, Vehicle
-from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer, SupportTicketSerializer, SupportMessageSerializer, SupportTicketDetailSerializer, VehicleSerializer
+from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer, SupportTicketSerializer, SupportMessageSerializer, SupportTicketDetailSerializer, VehicleSerializer, PublicBlogPostListSerializer, PublicBlogPostDetailSerializer
+from admin_panel.models import BlogPost
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
 import logging
@@ -172,6 +173,48 @@ class CarBrandListView(generics.ListAPIView):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+# ===== Public Blog Views =====
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_blog_list(request):
+    qs = BlogPost.objects.filter(status='published').order_by('-published_at', '-created_at')
+    try:
+        page = int(request.GET.get('page', '1'))
+    except Exception:
+        page = 1
+    try:
+        page_size = int(request.GET.get('page_size', '9'))
+    except Exception:
+        page_size = 9
+    page = max(1, page)
+    page_size = max(1, min(page_size, 50))
+    from django.core.paginator import Paginator, EmptyPage
+    paginator = Paginator(qs, page_size)
+    try:
+        page_obj = paginator.page(page)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+        page = paginator.num_pages
+    serializer = PublicBlogPostListSerializer(page_obj.object_list, many=True, context={'request': request})
+    return Response({
+        'results': serializer.data,
+        'count': paginator.count,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': paginator.num_pages,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_blog_detail(request, slug: str):
+    try:
+        post = BlogPost.objects.get(slug=slug, status='published')
+    except BlogPost.DoesNotExist:
+        return Response({'detail': 'Blog bulunamadı'}, status=404)
+    serializer = PublicBlogPostDetailSerializer(post, context={'request': request})
+    return Response(serializer.data)
 
 # Rate limiting için cache key'leri
 def get_rate_limit_key(email: str, action: str) -> str:

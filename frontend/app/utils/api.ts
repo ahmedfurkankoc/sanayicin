@@ -310,6 +310,10 @@ apiClient.interceptors.response.use(
 
 // Ortak API fonksiyonları
 export const api = {
+  // Blog - public
+  listBlogPosts: (params?: { page?: number; page_size?: number; search?: string; category?: string; ordering?: string }) =>
+    apiClient.get('/blog/posts/', { params }),
+  getBlogPost: (slug: string) => apiClient.get(`/blog/posts/${slug}/`),
   // Profil işlemleri - Role'e göre farklı endpoint'ler
   getProfile: (role: 'vendor' | 'client' = 'vendor') => 
     apiClient.get(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/'),

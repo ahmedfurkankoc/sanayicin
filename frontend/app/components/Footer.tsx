@@ -19,7 +19,7 @@ const Footer = () => (
           </a>
           <a href="/nasil-calisir">Nasıl Çalışır?</a>
           <a href="/hakkimizda">Hakkımızda</a>
-          <a href="#blog">Blog</a>
+          <a href="/blog">Blog</a>
           <a href="/yardim">Yardım</a>
         </div>
         <div className="footer-link-group">

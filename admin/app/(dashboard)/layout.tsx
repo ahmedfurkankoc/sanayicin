@@ -121,9 +121,9 @@ export default function DashboardLayout({
         {/* Desktop sidebar */}
         <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
           <div className="flex flex-col flex-grow bg-gradient-to-b from-[var(--black)] via-[#222222] to-[var(--black)] pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center justify-center flex-shrink-0 px-4">
+            <div className="flex items-center justify-start flex-shrink-0 px-4">
               <Link href="/">
-                <Image src={logoEsnaf} alt="Sanayicin Esnaf Logo" priority className="h-16 w-auto" />
+                <Image src={logoEsnaf} alt="Sanayicin Esnaf Logo" priority className="h-14 w-auto" />
               </Link>
             </div>
             <nav className="mt-8 flex-1 px-3 space-y-2">

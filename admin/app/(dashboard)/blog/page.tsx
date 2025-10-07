@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Eye, Calendar, User, Tag } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import Pagination from '../../components/Pagination'
+import { listBlogPosts, deleteBlogPost, listBlogCategories, createBlogCategory, updateBlogCategory, deleteBlogCategory } from '../../api/admin'
 
 interface BlogPost {
   id: number
@@ -33,40 +34,79 @@ export default function BlogManagement() {
   const [pageSize, setPageSize] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; slug: string }>>([])
+  const [catName, setCatName] = useState('')
+  const [catSlug, setCatSlug] = useState('')
+  const [catLoading, setCatLoading] = useState(false)
+  const [showCatModal, setShowCatModal] = useState(false)
+  const [editingCatId, setEditingCatId] = useState<number | null>(null)
+  const [editingCatName, setEditingCatName] = useState<string>('')
 
   useEffect(() => {
     fetchBlogPosts()
+    fetchCategories()
   }, [currentPage, pageSize, searchTerm, statusFilter])
 
   const fetchBlogPosts = async () => {
     setLoading(true)
     setError(null)
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        page_size: pageSize.toString(),
+      const data = await listBlogPosts({
+        page: currentPage,
+        page_size: pageSize,
         search: searchTerm,
-        status: statusFilter !== 'all' ? statusFilter : '',
+        status: statusFilter !== 'all' ? statusFilter : undefined,
       })
-
-      const response = await fetch(`http://localhost:8000/api/admin/blog-posts/?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error('Blog yazıları yüklenemedi')
-      }
-
-      const data = await response.json()
       setBlogPosts(data.results || [])
       setTotalCount(data.count || 0)
-      setTotalPages(Math.ceil((data.count || 0) / pageSize))
+      setTotalPages(data.total_pages || Math.ceil((data.count || 0) / pageSize))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const data = await listBlogCategories()
+      setCategories(data)
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const handleCreateCategory = async () => {
+    if (!catName.trim()) return
+    setCatLoading(true)
+    try {
+      const created = await createBlogCategory({ name: catName, slug: catSlug || undefined })
+      setCategories(prev => [...prev, created])
+      setCatName('')
+      setCatSlug('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kategori eklenemedi')
+    } finally {
+      setCatLoading(false)
+    }
+  }
+
+  const handleRenameCategory = async (id: number, name: string) => {
+    try {
+      const updated = await updateBlogCategory(id, { name })
+      setCategories(prev => prev.map(c => (c.id === id ? updated : c)))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kategori güncellenemedi')
+    }
+  }
+
+  const handleDeleteCategory = async (id: number) => {
+    if (!confirm('Bu kategoriyi silmek istediğinizden emin misiniz?')) return
+    try {
+      await deleteBlogCategory(id)
+      setCategories(prev => prev.filter(c => c.id !== id))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Kategori silinemedi')
     }
   }
 
@@ -76,17 +116,7 @@ export default function BlogManagement() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/blog-posts/${id}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error('Blog yazısı silinemedi')
-      }
-
+      await deleteBlogPost(id)
       fetchBlogPosts()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Silme işlemi başarısız')
@@ -124,8 +154,8 @@ export default function BlogManagement() {
           <p className="text-gray-600">Blog yazılarını yönetin ve SEO ayarlarını düzenleyin</p>
         </div>
         <a
-          href="/admin/blog/new"
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          href="/blog/new"
+          className="inline-flex items-center px-4 py-2 bg-[color:var(--yellow)] text-[color:var(--black)] rounded-lg hover:brightness-95 transition-colors"
         >
           <Plus className="h-4 w-4 mr-2" />
           Yeni Blog Yazısı
@@ -161,7 +191,7 @@ export default function BlogManagement() {
           <div className="flex items-end">
             <button
               onClick={fetchBlogPosts}
-              className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors"
             >
               Filtrele
             </button>
@@ -169,8 +199,10 @@ export default function BlogManagement() {
         </div>
       </div>
 
-      {/* Blog Posts Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Content & Categories Side-by-side */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Blog Posts Table */}
+        <div className="lg:col-span-2 bg-white rounded-lg shadow overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -302,7 +334,119 @@ export default function BlogManagement() {
             </div>
           </>
         )}
+        </div>
+
+        {/* Right: Categories Panel */}
+        <aside className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Kategoriler</h3>
+            <button
+              onClick={() => setShowCatModal(true)}
+              className="px-3 py-2 text-sm bg-[color:var(--yellow)] text-[color:var(--black)] rounded-lg hover:brightness-95"
+            >
+              Yeni Ekle
+            </button>
+          </div>
+          <ul className="divide-y divide-gray-200 text-gray-900">
+            {categories.map((cat) => (
+              <li key={cat.id} className="py-3 flex items-center">
+                {editingCatId === cat.id ? (
+                  <input
+                    className="px-2 py-1 border border-gray-300 rounded mr-3 text-sm text-gray-900 bg-white placeholder-gray-400"
+                    value={editingCatName}
+                    onChange={(e) => setEditingCatName(e.target.value)}
+                  />
+                ) : (
+                  <span className="mr-3 text-sm">{cat.name}</span>
+                )}
+                <span className="text-xs text-gray-500 ml-auto mr-3">/{cat.slug}</span>
+                {editingCatId === cat.id ? (
+                  <>
+                    <button
+                      onClick={async () => { await handleRenameCategory(cat.id, editingCatName.trim() || cat.name); setEditingCatId(null); setEditingCatName('') }}
+                      className="px-3 py-1 rounded bg-[color:var(--yellow)] text-[color:var(--black)] text-sm hover:brightness-95"
+                    >Kaydet</button>
+                    <button
+                      onClick={() => { setEditingCatId(null); setEditingCatName('') }}
+                      className="ml-2 px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-sm"
+                    >İptal</button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => { setEditingCatId(cat.id); setEditingCatName(cat.name) }}
+                    className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-sm"
+                  >Düzenle</button>
+                )}
+                <button
+                  onClick={() => handleDeleteCategory(cat.id)}
+                  className="ml-3 px-3 py-1 rounded btn-danger text-sm"
+                >
+                  Sil
+                </button>
+              </li>
+            ))}
+          </ul>
+        </aside>
       </div>
+
+      {/* Category Create Modal */}
+      {showCatModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCatModal(false)} />
+          <div className="relative z-10 w-full max-w-lg bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-gray-900">Yeni Kategori</h4>
+              <button
+                type="button"
+                onClick={() => setShowCatModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-md"
+                aria-label="Kapat"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Adı</label>
+                <input
+                  type="text"
+                  value={catName}
+                  onChange={(e) => setCatName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Örn: Oto Bakım ve Servis"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Slug (opsiyonel)</label>
+                <input
+                  type="text"
+                  value={catSlug}
+                  onChange={(e) => setCatSlug(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="oto-bakim-ve-servis"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCatModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                İptal
+              </button>
+              <button
+                type="button"
+                disabled={catLoading || !catName.trim()}
+                onClick={async () => { await handleCreateCategory(); setShowCatModal(false) }}
+                className="px-4 py-2 bg-[color:var(--yellow)] text-[color:var(--black)] rounded-lg hover:brightness-95 disabled:opacity-50"
+              >
+                {catLoading ? 'Ekleniyor...' : 'Ekle'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -223,25 +223,131 @@ export async function updateSupportTicket(id: number, payload: Partial<Pick<Supp
   return resp.data
 }
 
-// ========== Analytics ==========
-export interface VisitorStats {
-  total_visitors_today: number
-  unique_visitors_today: number
-  page_views_today: number
-  avg_session_duration: number
-  device_distribution: {
-    desktop: number
-    mobile: number
-    tablet: number
+
+// ========== Blog (Categories, Posts, Upload, SEO helpers) ==========
+export interface BlogCategory {
+  id: number
+  name: string
+  slug: string
+  description?: string
+  created_at: string
+}
+
+export interface BlogPost {
+  id: number
+  title: string
+  slug: string
+  content: string
+  excerpt: string
+  status: 'draft' | 'published' | 'archived'
+  category?: number
+  category_name?: string
+  author: number
+  author_name: string
+  is_featured: boolean
+  view_count: number
+  published_at?: string
+  created_at: string
+  updated_at: string
+  meta_title?: string
+  meta_description?: string
+  meta_keywords?: string
+  canonical_url?: string
+  og_title?: string
+  og_description?: string
+  og_image?: string
+  featured_image?: string
+}
+
+export interface BlogPostListResponse {
+  results: BlogPost[]
+  count: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export async function listBlogCategories(): Promise<BlogCategory[]> {
+  const response = await apiClient.get<BlogCategory[] | { results: BlogCategory[]; count?: number }>(
+    '/blog-categories/'
+  )
+  const data = response.data as any
+  return Array.isArray(data) ? data : (data?.results ?? [])
+}
+
+export async function createBlogCategory(data: Partial<BlogCategory>): Promise<BlogCategory> {
+  const response = await apiClient.post<BlogCategory>('/blog-categories/', data)
+  return response.data
+}
+
+export async function updateBlogCategory(id: number, data: Partial<BlogCategory>): Promise<BlogCategory> {
+  const response = await apiClient.put<BlogCategory>(`/blog-categories/${id}/`, data)
+  return response.data
+}
+
+export async function deleteBlogCategory(id: number): Promise<void> {
+  await apiClient.delete(`/blog-categories/${id}/`)
+}
+
+export async function listBlogPosts(params?: {
+  page?: number
+  page_size?: number
+  search?: string
+  status?: string
+  category?: number
+}): Promise<BlogPostListResponse> {
+  const searchParams = new URLSearchParams()
+  if (params?.page) searchParams.append('page', params.page.toString())
+  if (params?.page_size) searchParams.append('page_size', params.page_size.toString())
+  if (params?.search) searchParams.append('search', params.search)
+  if (params?.status) searchParams.append('status', params.status)
+  if (params?.category) searchParams.append('category', params.category.toString())
+  const url = `/blog-posts/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
+  const response = await apiClient.get<BlogPostListResponse>(url)
+  return response.data
+}
+
+export async function getBlogPost(id: number): Promise<BlogPost> {
+  const response = await apiClient.get<BlogPost>(`/blog-posts/${id}/`)
+  return response.data
+}
+
+export async function createBlogPost(data: Partial<BlogPost>): Promise<BlogPost> {
+  const response = await apiClient.post<BlogPost>('/blog-posts/', data)
+  return response.data
+}
+
+export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promise<BlogPost> {
+  const response = await apiClient.put<BlogPost>(`/blog-posts/${id}/`, data)
+  return response.data
+}
+
+export async function deleteBlogPost(id: number): Promise<void> {
+  await apiClient.delete(`/blog-posts/${id}/`)
+}
+
+export async function uploadImage(file: File): Promise<{ url: string }> {
+  const formData = new FormData()
+  formData.append('image', file)
+  const response = await apiClient.post<{ url: string }>('/upload-image/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
+export function generateSlug(title: string): string {
+  if (!title) return ''
+  const turkishMap: Record<string, string> = {
+    'Ç': 'C', 'ç': 'c', 'Ğ': 'G', 'ğ': 'g', 'İ': 'I', 'I': 'I', 'ı': 'i',
+    'Ö': 'O', 'ö': 'o', 'Ş': 'S', 'ş': 's', 'Ü': 'U', 'ü': 'u'
   }
-  country_distribution: Record<string, number>
-  hourly_visitors: Array<{ hour: number; visitors: number }>
-  top_pages: Array<{ path: string; views: number }>
-  real_time_visitors: number
+  const mapped = title.split('').map((ch) => turkishMap[ch] ?? ch).join('')
+  return mapped
+    .normalize('NFD')
+    .replace(/\p{Diacritic}+/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
 }
-
-export async function fetchVisitorStats() {
-  const resp = await apiClient.get<VisitorStats>('/analytics/visitors/')
-  return resp.data
-}
-

@@ -1,4 +1,5 @@
 from django.urls import path
+from .views import public_blog_list, public_blog_detail
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     ServiceAreaListView, 
@@ -58,6 +59,9 @@ urlpatterns = [
     path('services/', ServiceAreaListView.as_view(), name='servicearea-list'),
     path('categories/', CategoryListView.as_view(), name='category-list'),
     path('car-brands/', CarBrandListView.as_view(), name='carbrand-list'),
+    # Public blog endpoints
+    path('blog/posts/', public_blog_list, name='public-blog-list'),
+    path('blog/posts/<slug:slug>/', public_blog_detail, name='public-blog-detail'),
     
     # Vendor upgrade endpoints
     path('vendor/upgrade/', request_vendor_upgrade, name='request_vendor_upgrade'),
