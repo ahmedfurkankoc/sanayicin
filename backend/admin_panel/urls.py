@@ -5,11 +5,12 @@ from .views import (
     UserViewSet, VendorProfileViewSet, BlogCategoryViewSet, BlogPostViewSet, ImageUploadView,
     ServiceAreaViewSet, CategoryViewSet, CarBrandViewSet, SupportTicketViewSet,
     SupportMessageViewSet, SystemLogViewSet,
-    AdminNotificationViewSet, AdminSettingsViewSet
+    AdminNotificationViewSet, AdminSettingsViewSet, AdminUserViewSet
 )
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
+router.register(r'admin-users', AdminUserViewSet)
 router.register(r'vendors', VendorProfileViewSet)
 router.register(r'blog-categories', BlogCategoryViewSet)
 router.register(r'blog-posts', BlogPostViewSet)
