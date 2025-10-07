@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import CustomUser, Favorite, SupportTicket, SupportMessage, Vehicle, CarBrand
+from admin_panel.models import BlogPost
 from vendors.models import VendorProfile
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -131,6 +132,42 @@ class VehicleSerializer(serializers.ModelSerializer):
         if getattr(obj, 'brand_fk', None):
             return obj.brand_fk.name
         return obj.brand or None
+
+# ===== Public Blog Serializers =====
+class PublicBlogPostListSerializer(serializers.ModelSerializer):
+    cover_image = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlogPost
+        fields = (
+            'id', 'title', 'slug', 'excerpt', 'cover_image', 'category_name', 'published_at'
+        )
+
+    def get_cover_image(self, obj):
+        try:
+            if obj.featured_image:
+                request = self.context.get('request')
+                url = obj.featured_image.url
+                return request.build_absolute_uri(url) if request else url
+        except Exception:
+            pass
+        return None
+
+    def get_category_name(self, obj):
+        try:
+            return obj.category.name if obj.category else None
+        except Exception:
+            return None
+
+
+class PublicBlogPostDetailSerializer(PublicBlogPostListSerializer):
+    content = serializers.CharField()
+
+    class Meta(PublicBlogPostListSerializer.Meta):
+        fields = PublicBlogPostListSerializer.Meta.fields + (
+            'content',
+        )
 
 # JWT Token'a role bilgisi eklemek için custom serializer
 class CustomTokenObtainPairSerializer(serializers.Serializer):
