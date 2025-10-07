@@ -40,6 +40,29 @@ export async function fetchAdminAuthLogs(limit = 20, page = 1) {
 
 // Users (CustomUser) - centralized here
 // Client (CustomUser) APIs should live in clients.ts
+export interface AdminUserItem {
+  id: number
+  email: string
+  first_name: string
+  last_name: string
+  role: string
+  is_verified: boolean
+  is_active: boolean
+  date_joined: string
+  last_login?: string | null
+}
+
+export async function listAdminUsers(params?: { page?: number; page_size?: number; search?: string }) {
+  const resp = await apiClient.get<AdminUserItem[] | { results: AdminUserItem[]; count: number }>(`/admin-users/`, { params })
+  const data = resp.data as any
+  if (Array.isArray(data)) return { items: data, count: data.length }
+  return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) }
+}
+
+export async function updateAdminUserRole(userId: number, role: string) {
+  const resp = await apiClient.patch<AdminUserItem>(`/admin-users/${userId}/`, { role })
+  return resp.data
+}
 
 // Vendors - centralized here (optional usage)
 // Vendor APIs are not exposed in admin app per separation of concerns

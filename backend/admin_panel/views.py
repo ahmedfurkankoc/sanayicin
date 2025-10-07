@@ -886,3 +886,32 @@ class AdminSettingsViewSet(viewsets.ModelViewSet):
     @admin_permission_required('settings', 'delete')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+
+# ========== AdminUser Management ==========
+class AdminUserViewSet(viewsets.ModelViewSet):
+    """AdminUser list/update for role assignments in Definitions page"""
+    queryset = AdminUser.objects.all().order_by('-date_joined')
+    serializer_class = AdminUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [AdminTokenAuthentication]
+
+    @admin_permission_required('users', 'read')
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @admin_permission_required('users', 'write')
+    def update(self, request, *args, **kwargs):
+        # Permit updating limited fields (e.g., role, is_active, names)
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        allowed = {'role', 'is_active', 'first_name', 'last_name'}
+        data = {k: v for k, v in request.data.items() if k in allowed}
+        serializer = self.get_serializer(instance, data=data, partial=partial or True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+    @admin_permission_required('users', 'delete')
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
