@@ -38,6 +38,36 @@ export async function fetchAdminAuthLogs(limit = 20, page = 1) {
   return resp.data
 }
 
+// ========== System Logs ==========
+export interface SystemLogItem {
+  id: number
+  level: 'debug' | 'info' | 'warning' | 'error' | 'critical'
+  message: string
+  module: string
+  user?: number | null
+  user_email?: string | null
+  ip_address?: string | null
+  user_agent?: string | null
+  created_at: string
+}
+
+export interface ListSystemLogsParams {
+  page?: number
+  page_size?: number
+  search?: string
+  level?: SystemLogItem['level']
+  module?: string
+  ordering?: string
+}
+
+export async function listSystemLogs(params?: ListSystemLogsParams) {
+  const resp = await apiClient.get<{ count: number; next: string | null; previous: string | null; results: SystemLogItem[] }>(
+    `/system-logs/`,
+    { params }
+  )
+  return resp.data
+}
+
 // Users (CustomUser) - centralized here
 // Client (CustomUser) APIs should live in clients.ts
 export interface AdminUserItem {
@@ -61,6 +91,20 @@ export async function listAdminUsers(params?: { page?: number; page_size?: numbe
 
 export async function updateAdminUserRole(userId: number, role: string) {
   const resp = await apiClient.patch<AdminUserItem>(`/admin-users/${userId}/`, { role })
+  return resp.data
+}
+
+export async function updateAdminUser(userId: number, payload: Partial<Pick<AdminUserItem, 'first_name' | 'last_name' | 'is_active' | 'role'>>) {
+  const resp = await apiClient.patch<AdminUserItem>(`/admin-users/${userId}/`, payload)
+  return resp.data
+}
+
+export async function changeAdminPassword(current_password: string, new_password: string) {
+  // Backend endpoint to be implemented server-side
+  const resp = await apiClient.post<{ detail: string }>(`/auth/change-password/`, {
+    current_password,
+    new_password,
+  })
   return resp.data
 }
 
