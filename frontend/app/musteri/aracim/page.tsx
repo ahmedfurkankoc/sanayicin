@@ -131,8 +131,8 @@ export default function AracimPage() {
     e.preventDefault();
     try {
       const payload: any = {
-        // Send brand as FK id
-        brand: form.brandId ? Number(form.brandId) : undefined,
+        // Send brand as FK id (backend expects brand_fk)
+        brand_fk: form.brandId ? Number(form.brandId) : undefined,
         model: form.model,
         year: form.year ? Number(form.year) : undefined,
         plate: form.plate || undefined,
@@ -164,7 +164,10 @@ export default function AracimPage() {
   const loadVehicles = async () => {
     try {
       const res = await api.listVehicles();
-      const items = res?.data || res;
+      const data = res?.data ?? res;
+      const items = Array.isArray(data)
+        ? data
+        : (Array.isArray(data?.results) ? data.results : []);
       if (Array.isArray(items)) {
         setVehicles(items);
         if (items.length > 0) {
@@ -215,7 +218,7 @@ export default function AracimPage() {
   const onEditCard = (v:any) => {
     setSelectedId(v.id);
     setForm({
-      brand: v.brand || '',
+      brand: v.brand_name || v.brand || '',
       brandId: v.brand_fk ? String(v.brand_fk) : (v.brand_fk_id ? String(v.brand_fk_id) : ''),
       model: v.model || '',
       year: v.year ? String(v.year) : '',
@@ -283,14 +286,14 @@ export default function AracimPage() {
                 <div className="aracim-card-header">
                   <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }} onClick={() => setSelectedId(v.id)}>
                     {(() => {
-                      const b = findBrand(v.brand);
+                          const b = findBrand(v.brand_name || v.brand);
                       const url = b ? (b.logo_url || b.logo || b.logo_path) : '';
                       const resolved = url ? resolveMediaUrl(url) : '';
                       return resolved ? (
                         <img src={resolved} alt={b?.name || v.brand} style={{ width: 36, height: 36, objectFit: 'contain' }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                       ) : null;
                     })()}
-                    <div className="aracim-card-title">{(findBrandById(v.brand)?.name) || v.brand || '-'} {v.model || ''} {v.year ? `(${v.year})` : ''}</div>
+                        <div className="aracim-card-title">{v.brand_name || (findBrandById(v.brand_fk)?.name) || v.brand || '-'} {v.model || ''} {v.year ? `(${v.year})` : ''}</div>
                       <div className="aracim-card-meta">Motor: {v.engine_type_display || v.engine_type || '-'} · Km: {v.kilometre ?? '-'}</div>
                     </div>
                     <div className="aracim-card-actions">
