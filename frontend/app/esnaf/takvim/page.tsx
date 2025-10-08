@@ -36,7 +36,9 @@ export default function EsnafTakvimPage() {
         setLoading(true);
         setError("");
         const response = await api.getVendorAppointments();
-        setEvents(response.data || []);
+        const payload = response?.data ?? response;
+        const list: CalendarEvent[] = Array.isArray(payload) ? payload : (Array.isArray(payload?.results) ? payload.results : []);
+        setEvents(list);
       } catch (err: any) {
         console.error("Randevular yüklenirken hata:", err);
         setError("Randevular yüklenirken bir hata oluştu.");
