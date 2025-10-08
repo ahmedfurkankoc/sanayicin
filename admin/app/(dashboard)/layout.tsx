@@ -19,9 +19,10 @@ import {
   Menu,
   X,
   Bell,
-  Search
+  Search,
+  ClipboardList
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home, permission: 'dashboard' },
@@ -31,6 +32,7 @@ const navigation = [
   { name: 'Destek', href: '/support', icon: MessageSquare, permission: 'support' },
   { name: 'İçerik', href: '/content', icon: FileText, permission: 'content' },
   { name: 'İstatistikler', href: '/analytics', icon: BarChart3, permission: 'analytics' },
+  { name: 'Kayıtlar', href: '/logs', icon: ClipboardList, permission: 'logs' },
   { name: 'Tanımlamalar', href: '/definitions', icon: Settings, permission: 'settings' },
 ]
 
@@ -43,10 +45,29 @@ export default function DashboardLayout({
   const { user, logout } = useAuth()
   const { canAccess } = usePermissions()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
 
   const filteredNavigation = navigation.filter(item => 
     canAccess(item.permission)
   )
+
+  // Close user menu on outside click / ESC
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setUserMenuOpen(false) }
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      // Close if click outside any button or menu container
+      if (!target.closest('[aria-haspopup="menu"]') && !target.closest('[role="menu"]')) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onClick)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onClick)
+    }
+  }, [])
 
   return (
     <ProtectedRoute requiredPermission="dashboard">
@@ -189,22 +210,11 @@ export default function DashboardLayout({
                 <Menu className="h-6 w-6" />
               </button>
 
-              {/* Search bar */}
-              <div className="flex-1 max-w-lg mx-4">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Ara..."
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[color:var(--yellow)] focus:border-[color:var(--yellow)]"
-                  />
-                </div>
-              </div>
+              {/* System status chips (API & WS) */}
+              <StatusChips />
 
               {/* Right side */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 relative">
                 {/* Notifications */}
                 <button className="p-2 text-gray-400 hover:text-gray-500 relative">
                   <Bell className="h-6 w-6" />
@@ -212,22 +222,54 @@ export default function DashboardLayout({
                 </button>
 
                 {/* User info */}
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-[color:var(--yellow)] flex items-center justify-center">
-                    <span className="text-xs font-medium text-white">
-                      {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="hidden md:block">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user?.first_name || user?.email}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {user?.role === 'admin' ? 'Admin' : 
-                       user?.role === 'editor' ? 'Editör' : 
-                       user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
-                    </p>
-                  </div>
+                <div className="flex items-center">
+                  <button
+                    onClick={() => setUserMenuOpen((v) => !v)}
+                    className="flex items-center space-x-3 focus:outline-none"
+                    aria-haspopup="menu"
+                    aria-expanded={userMenuOpen}
+                  >
+                    <div className="h-8 w-8 rounded-full bg-[color:var(--yellow)] flex items-center justify-center">
+                      <span className="text-xs font-medium text-white">
+                        {user?.first_name?.[0] || user?.email?.[0]?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="hidden md:block text-left">
+                      <p className="text-sm font-medium text-gray-900">
+                        {user?.first_name || user?.email}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {user?.role === 'admin' ? 'Admin' : 
+                         user?.role === 'editor' ? 'Editör' : 
+                         user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
+                      </p>
+                    </div>
+                  </button>
+
+                  {userMenuOpen && (
+                    <div
+                      className="absolute right-0 top-12 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
+                      role="menu"
+                    >
+                      <div className="py-1">
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          role="menuitem"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          Profil
+                        </Link>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); logout() }}
+                          className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          role="menuitem"
+                        >
+                          Çıkış Yap
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -242,5 +284,58 @@ export default function DashboardLayout({
         </div>
       </div>
     </ProtectedRoute>
+  )
+}
+
+function StatusChips() {
+  const [apiOk, setApiOk] = useState<boolean | null>(null)
+  const [wsOk, setWsOk] = useState<boolean | null>(null)
+
+  const checkApi = useCallback(async () => {
+    try {
+      const resp = await fetch((process.env.NEXT_PUBLIC_API_URL || '/api/admin') + '/auth/user/', { credentials: 'include' })
+      setApiOk(resp.ok)
+    } catch {
+      setApiOk(false)
+    }
+  }, [])
+
+  const checkWs = useCallback(() => {
+    try {
+      const wsUrl = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_WS_URL || '')) || ''
+      if (!wsUrl) { setWsOk(false); return }
+      const ws = new WebSocket(wsUrl)
+      let settled = false
+      ws.onopen = () => { settled = true; setWsOk(true); ws.close() }
+      ws.onerror = () => { if (!settled) setWsOk(false) }
+      // Safety close after 3s
+      setTimeout(() => { try { ws.close() } catch {} }, 3000)
+    } catch {
+      setWsOk(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    checkApi()
+    checkWs()
+    const t = setInterval(() => { checkApi(); checkWs() }, 60_000)
+    return () => clearInterval(t)
+  }, [checkApi, checkWs])
+
+  const chip = (label: string, state: boolean | null, title: string) => (
+    <span title={title} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+      state ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'
+    }`}>
+      <span className={`mr-2 h-2 w-2 rounded-full ${state ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+      {label}
+      <span className="ml-1">{state ? ':aktif' : ':pasif'}</span>
+    </span>
+  )
+
+  return (
+    <div className="hidden lg:flex items-center gap-2 mx-4">
+      {chip('API', apiOk, 'API durumu')}
+      {chip('WS', wsOk, 'WebSocket durumu (NEXT_PUBLIC_WS_URL gerekli)')}
+    </div>
   )
 }
