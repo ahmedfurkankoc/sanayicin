@@ -57,7 +57,11 @@ export default function EsnafRandevularimPage() {
         
         // Randevuları çek
         const appointmentsResponse = await api.getVendorAppointments();
-        setAppointments(appointmentsResponse.data);
+        {
+          const payload = appointmentsResponse?.data ?? appointmentsResponse;
+          const list: Appointment[] = Array.isArray(payload) ? payload : (Array.isArray(payload?.results) ? payload.results : []);
+          setAppointments(list);
+        }
       } catch (error) {
         console.error('Veri çekme hatası:', error);
         toast.error('Veriler yüklenirken hata oluştu');
@@ -114,7 +118,11 @@ export default function EsnafRandevularimPage() {
       
       // Randevuları yeniden çek
       const response = await api.getVendorAppointments();
-      setAppointments(response.data);
+      {
+        const payload = response?.data ?? response;
+        const list: Appointment[] = Array.isArray(payload) ? payload : (Array.isArray(payload?.results) ? payload.results : []);
+        setAppointments(list);
+      }
       
       const actionTexts = {
         'confirm': 'onaylandı',

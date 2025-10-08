@@ -35,6 +35,11 @@ export default function TaleplerimPage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(15);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [offerModalOpen, setOfferModalOpen] = useState(false);
   const [offerForId, setOfferForId] = useState<number | null>(null);
   const [offerSubmitting, setOfferSubmitting] = useState(false);
@@ -57,10 +62,21 @@ export default function TaleplerimPage() {
         if (onlyPending) params.only_pending = true;
         if (onlyQuotes) params.only_quotes = true;
         if (lastDays) params.last_days = lastDays;
+        // Pagination params
+        params.page = String(currentPage);
+        params.page_size = String(pageSize);
         const res = await api.listVendorServiceRequests(params);
-        setRequests(res.data || []);
+        const payload = res?.data ?? res;
+        const list: Request[] = Array.isArray(payload) ? payload : (Array.isArray(payload?.results) ? payload.results : []);
+        setRequests(list);
+        // Derive totals
+        const count = typeof payload?.count === 'number' ? payload.count : (Array.isArray(list) ? list.length : 0);
+        setTotalCount(count);
+        setTotalPages(Math.max(1, Math.ceil(count / pageSize)));
       } catch (e) {
         setRequests([]);
+        setTotalCount(0);
+        setTotalPages(1);
       } finally {
         setIsLoading(false);
       }
@@ -68,7 +84,7 @@ export default function TaleplerimPage() {
     fetchRequests();
     const id = setInterval(fetchRequests, 15000);
     return () => clearInterval(id);
-  }, [filterStatus, onlyPending, onlyQuotes, lastDays]);
+  }, [filterStatus, onlyPending, onlyQuotes, lastDays, currentPage, pageSize]);
 
   // Responsive breakpoint
   useEffect(() => {
@@ -419,6 +435,61 @@ export default function TaleplerimPage() {
             ))}
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 16 }}>
+          <div style={{ color: '#666', fontSize: 14 }}>
+            Toplam {totalCount} kayıt • Sayfa {currentPage} / {totalPages}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              className="esnaf-btn esnaf-btn-outline"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+            >
+              Önceki
+            </button>
+            {/* Page numbers (max 5) */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum: number;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  className={`esnaf-btn esnaf-btn-outline ${currentPage === pageNum ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(pageNum)}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              className="esnaf-btn esnaf-btn-outline"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+            >
+              Sonraki
+            </button>
+            <select
+              value={pageSize}
+              onChange={(e) => { setCurrentPage(1); setPageSize(Number(e.target.value)); }}
+              className="esnaf-appointments-status-filter"
+            >
+              <option value={10}>10/sayfa</option>
+              <option value={15}>15/sayfa</option>
+              <option value={20}>20/sayfa</option>
+              <option value={30}>30/sayfa</option>
+            </select>
+          </div>
+        </div>
       
 
       {/* Teklif Ver Modal */}

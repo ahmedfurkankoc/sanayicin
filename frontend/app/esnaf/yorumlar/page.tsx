@@ -37,12 +37,14 @@ export default function EsnafYorumlarPage() {
     const fetchReviews = async () => {
       try {
         const response = await api.getVendorReviews(user?.slug);
-        setReviews(response.data);
+        const payload = response?.data ?? response;
+        const list: Review[] = Array.isArray(payload) ? payload : (Array.isArray(payload?.results) ? payload.results : []);
+        setReviews(list);
         
         // Ortalama puanı ve toplam değerlendirme sayısını hesapla
-        const total = response.data.length;
+        const total = list.length;
         const average = total > 0 
-          ? response.data.reduce((acc: number, curr: Review) => acc + curr.rating, 0) / total 
+          ? list.reduce((acc: number, curr: Review) => acc + curr.rating, 0) / total 
           : 0;
         
         setTotalReviews(total);
