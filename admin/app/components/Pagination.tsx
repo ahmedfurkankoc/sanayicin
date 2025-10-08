@@ -57,60 +57,50 @@ export default function Pagination({
             >
               Önceki
             </button>
-            
-            {/* First page */}
-            <button
-              className={`px-3 py-1 rounded text-sm ${
-                1 === currentPage
-                  ? 'bg-[color:var(--yellow)] text-[color:var(--black)]'
-                  : 'border border-gray-300 hover:bg-gray-50'
-              }`}
-              onClick={() => onPageChange(1)}
-            >
-              1
-            </button>
-            
-            {/* Show ellipsis if current page is far from start */}
-            {currentPage > 4 && (
+            {/* Always show page 1 and 2 if exist */}
+            {[1, 2].filter((p) => p <= totalPages).map((p) => (
+              <button
+                key={p}
+                className={`px-3 py-1 rounded text-sm ${
+                  p === currentPage
+                    ? 'bg-[color:var(--yellow)] text-[color:var(--black)]'
+                    : 'border border-gray-300 hover:bg-gray-50'
+                }`}
+                onClick={() => onPageChange(p)}
+              >
+                {p}
+              </button>
+            ))}
+
+            {/* Ellipsis after 2 when jumping to later pages */}
+            {totalPages > 3 && currentPage > 4 && (
               <span className="px-2 text-gray-500">...</span>
             )}
-            
-            {/* Show pages around current page */}
-            {Array.from({ length: Math.min(3, totalPages - 2) }, (_, i) => {
-              let pageNum: number
-              if (currentPage <= 3) {
-                pageNum = i + 2 // 2, 3, 4
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 3 + i // last 3 pages
-              } else {
-                pageNum = currentPage - 1 + i // current-1, current, current+1
-              }
-              
-              // Don't show page 1 or last page here
-              if (pageNum <= 1 || pageNum >= totalPages) return null
-              
-              return (
+
+            {/* Window around current page (exclude 1,2 and last) */}
+            {Array.from({ length: 3 }, (_, i) => currentPage - 1 + i)
+              .filter((p) => p > 2 && p < totalPages)
+              .map((p) => (
                 <button
-                  key={pageNum}
+                  key={p}
                   className={`px-3 py-1 rounded text-sm ${
-                    pageNum === currentPage
+                    p === currentPage
                       ? 'bg-[color:var(--yellow)] text-[color:var(--black)]'
                       : 'border border-gray-300 hover:bg-gray-50'
                   }`}
-                  onClick={() => onPageChange(pageNum)}
+                  onClick={() => onPageChange(p)}
                 >
-                  {pageNum}
+                  {p}
                 </button>
-              )
-            })}
-            
-            {/* Show ellipsis if current page is far from end */}
-            {currentPage < totalPages - 3 && (
+              ))}
+
+            {/* Ellipsis before last when far from end */}
+            {totalPages > 3 && currentPage < totalPages - 3 && (
               <span className="px-2 text-gray-500">...</span>
             )}
-            
-            {/* Last page (if more than 1 page) */}
-            {totalPages > 1 && (
+
+            {/* Always show last page if > 2 */}
+            {totalPages > 2 && (
               <button
                 className={`px-3 py-1 rounded text-sm ${
                   totalPages === currentPage
