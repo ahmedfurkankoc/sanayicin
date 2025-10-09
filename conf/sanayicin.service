@@ -1,0 +1,15 @@
+[Unit]
+Description=Sanayicin Orchestrator (controls sanayicin.target)
+Requires=sanayicin.target
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecReload=/usr/bin/systemctl reload sanayicin.target
+ExecStop=/usr/bin/systemctl stop sanayicin.target
+
+[Install]
+WantedBy=multi-user.target
+Alias=sanayicin.service

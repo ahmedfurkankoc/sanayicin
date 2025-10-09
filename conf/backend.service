@@ -1,0 +1,15 @@
+[Unit]
+Description=Gunicorn instance to serve Django Backend
+After=network.target
+
+[Service]
+User=sanayicin
+Group=www-data
+WorkingDirectory=/var/www/sanayicin/backend
+Environment="PATH=/var/www/sanayicin/backend/venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=main.settings_production"
+UMask=0007
+ExecStart=/var/www/sanayicin/backend/venv/bin/gunicorn --workers 3 --bind unix:/var/www/sanayicin/backend/backend.sock main.wsgi:application
+
+[Install]
+WantedBy=multi-user.target

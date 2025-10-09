@@ -21,7 +21,7 @@ Bu doküman canlıda kurulu stack’i, kullanılan servis/paketleri ve yapılan 
 ## 🔧 Backend Yapılandırması (özet)
 - `backend/backend/settings.py`
   - `INSTALLED_APPS += ['chat']`
-  - `ASGI_APPLICATION = 'backend.asgi.application'`
+  - `ASGI_APPLICATION = 'main.asgi.application'`
   - `CHANNEL_LAYERS` Redis’e ayarlı: `redis://127.0.0.1:6379`
   - CORS: `CORS_ALLOW_HEADERS` içine `x-guest-token` eklendi (guest chat için)
 - `backend/backend/asgi.py`
@@ -43,7 +43,7 @@ After=network.target
 User=www-data
 Group=www-data
 WorkingDirectory=/var/www/sanayicin/backend
-ExecStart=/var/www/sanayicin/backend/venv/bin/daphne -b 127.0.0.1 -p 8001 backend.asgi:application
+ExecStart=/var/www/sanayicin/backend/venv/bin/daphne -b 127.0.0.1 -p 8001 main.asgi:application
 Restart=always
 
 [Install]

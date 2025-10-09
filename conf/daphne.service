@@ -1,0 +1,12 @@
+[Unit]
+Description=Daphne ASGI
+After=network.target
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/sanayicin/backend
+Environment="DJANGO_SETTINGS_MODULE=main.settings_production"
+ExecStart=/var/www/sanayicin/backend/venv/bin/daphne -b 127.0.0.1 -p 8001 main.asgi:application
+Restart=always
+[Install]
+WantedBy=multi-user.target

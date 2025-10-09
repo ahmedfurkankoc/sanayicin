@@ -1,0 +1,22 @@
+[Unit]
+Description=Sanayicin Suite (backend, daphne, celery worker, celery beat, nginx)
+
+# Group related services
+Wants=backend.service daphne.service celery.service celery-beat.service nginx.service
+
+[Install]
+WantedBy=multi-user.target
+# Create alias so `systemctl <action> sanayicin` can target this unit name
+Alias=sanayicin.target
+[Unit]
+Description=Sanayicin Suite (backend, daphne, celery worker, celery beat, nginx)
+
+# Start/Restart these units together
+Wants=backend.service
+Wants=daphne.service
+Wants=celery.service
+Wants=celery-beat.service
+Wants=nginx.service
+
+[Install]
+WantedBy=multi-user.target
