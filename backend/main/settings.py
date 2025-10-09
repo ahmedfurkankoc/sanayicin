@@ -33,6 +33,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'test.sanayicin.com',
+    'admin.sanayicin.com',
     'sanayicin.com',
     'www.sanayicin.com',
     'esnaf.sanayicin.com',
@@ -123,6 +124,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3001",  # Frontend için
     "https://test.sanayicin.com",
     "http://test.sanayicin.com",
+    "https://admin.sanayicin.com",
+    "http://admin.sanayicin.com",
     "https://sanayicin.com",
     "https://www.sanayicin.com",
     "https://esnaf.sanayicin.com",
@@ -184,11 +187,11 @@ if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
     import dj_database_url
     DATABASES['default'] = dj_database_url.parse(DATABASE_URL)
 
-# Cache Configuration - Development (Local Memory)
+# Cache Configuration - Development (Redis for testing)
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
     }
 }
 

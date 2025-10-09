@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Save, Eye, ArrowLeft, X } from 'lucide-react'
-import { useAuth } from '../../../contexts/AuthContext'
+// import { useAuth } from '../../../contexts/AuthContext' // Kullanılmıyor
 import { useRouter } from 'next/navigation'
 import 'quill/dist/quill.snow.css'
 import { listBlogCategories, getBlogPost as apiGetBlogPost, createBlogPost, updateBlogPost, uploadImage as apiUploadImage, generateSlug as apiGenerateSlug } from '../../../api/admin'
@@ -33,7 +33,6 @@ interface BlogPost {
 }
 
 export default function BlogEditor({ params }: { params: { id?: string } }) {
-  const { user } = useAuth()
   const router = useRouter()
   const isEdit = !!params.id
   const [loading, setLoading] = useState(false)
@@ -59,16 +58,16 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     og_description: '',
   })
 
-  const [previewMode, setPreviewMode] = useState(false)
+  // const [previewMode] = useState(false) // Kullanılmıyor
   const editorContainerRef = useRef<HTMLDivElement | null>(null)
   const editorRef = useRef<HTMLDivElement | null>(null)
-  const quillInstanceRef = useRef<any>(null)
+  const quillInstanceRef = useRef<unknown>(null)
   const editorInitializedRef = useRef<boolean>(false)
   const [showSeoGuide, setShowSeoGuide] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
-  const [showCategoryManager, setShowCategoryManager] = useState(false)
-  const [creatingCategories, setCreatingCategories] = useState(false)
-  const [selectedCategorySlugs, setSelectedCategorySlugs] = useState<Record<string, boolean>>({})
+  // const [showCategoryManager] = useState(false) // Kullanılmıyor
+  // const [creatingCategories] = useState(false) // Kullanılmıyor
+  // const [selectedCategorySlugs, setSelectedCategorySlugs] = useState<Record<string, boolean>>({}) // Kullanılmıyor
 
   const [autoFill, setAutoFill] = useState({
     slug: true,
@@ -132,13 +131,6 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     }
   }
 
-  useEffect(() => {
-    fetchCategories()
-    if (isEdit) {
-      fetchBlogPost()
-    }
-  }, [isEdit, params.id])
-
   const fetchCategories = async () => {
     try {
       const items = await listBlogCategories()
@@ -177,14 +169,21 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     }
   }
 
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim()
-  }
+  useEffect(() => {
+    fetchCategories()
+    if (isEdit) {
+      fetchBlogPost()
+    }
+  }, [isEdit, params.id])
+
+  // const generateSlug = (title: string) => {
+  //   return title
+  //     .toLowerCase()
+  //     .replace(/[^a-z0-9\s-]/g, '')
+  //     .replace(/\s+/g, '-')
+  //     .replace(/-+/g, '-')
+  //     .trim()
+  // } // Kullanılmıyor
 
   const handleTitleChange = (title: string) => {
     setFormData(prev => {
@@ -212,52 +211,52 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     }))
   }
 
-  const suggestedCategories: Array<{ name: string; slug: string }> = [
-    { name: 'Oto Bakım ve Servis', slug: apiGenerateSlug('Oto Bakım ve Servis') },
-    { name: 'Periyodik Bakım', slug: apiGenerateSlug('Periyodik Bakım') },
-    { name: 'Yağ Değişimi', slug: apiGenerateSlug('Yağ Değişimi') },
-    { name: 'Fren ve Balata', slug: apiGenerateSlug('Fren ve Balata') },
-    { name: 'Lastik ve Jant', slug: apiGenerateSlug('Lastik ve Jant') },
-    { name: 'Rot Balans', slug: apiGenerateSlug('Rot Balans') },
-    { name: 'Elektrik ve Elektronik', slug: apiGenerateSlug('Elektrik ve Elektronik') },
-    { name: 'Diagnostik Arıza Tespiti', slug: apiGenerateSlug('Diagnostik Arıza Tespiti') },
-    { name: 'Kaporta ve Boya', slug: apiGenerateSlug('Kaporta ve Boya') },
-    { name: 'Klima Bakımı', slug: apiGenerateSlug('Klima Bakımı') },
-    { name: 'Motor Mekanik', slug: apiGenerateSlug('Motor Mekanik') },
-    { name: 'Şanzıman ve Debriyaj', slug: apiGenerateSlug('Şanzıman ve Debriyaj') },
-    { name: 'Akü ve Şarj', slug: apiGenerateSlug('Akü ve Şarj') },
-    { name: 'Egzoz Sistemleri', slug: apiGenerateSlug('Egzoz Sistemleri') },
-    { name: 'Detaylı Temizlik ve Detailing', slug: apiGenerateSlug('Detaylı Temizlik ve Detailing') },
-    { name: 'Yol Yardım', slug: apiGenerateSlug('Yol Yardım') },
-    { name: 'Yedek Parça', slug: apiGenerateSlug('Yedek Parça') },
-    { name: 'Muayene Hazırlık', slug: apiGenerateSlug('Muayene Hazırlık') },
-    { name: 'Chip Tuning ve Yazılım', slug: apiGenerateSlug('Chip Tuning ve Yazılım') },
-    { name: 'Aksesuar ve Modifiye', slug: apiGenerateSlug('Aksesuar ve Modifiye') },
-  ]
+  // const suggestedCategories: Array<{ name: string; slug: string }> = [
+  //   { name: 'Oto Bakım ve Servis', slug: apiGenerateSlug('Oto Bakım ve Servis') },
+  //   { name: 'Periyodik Bakım', slug: apiGenerateSlug('Periyodik Bakım') },
+  //   { name: 'Yağ Değişimi', slug: apiGenerateSlug('Yağ Değişimi') },
+  //   { name: 'Fren ve Balata', slug: apiGenerateSlug('Fren ve Balata') },
+  //   { name: 'Lastik ve Jant', slug: apiGenerateSlug('Lastik ve Jant') },
+  //   { name: 'Rot Balans', slug: apiGenerateSlug('Rot Balans') },
+  //   { name: 'Elektrik ve Elektronik', slug: apiGenerateSlug('Elektrik ve Elektronik') },
+  //   { name: 'Diagnostik Arıza Tespiti', slug: apiGenerateSlug('Diagnostik Arıza Tespiti') },
+  //   { name: 'Kaporta ve Boya', slug: apiGenerateSlug('Kaporta ve Boya') },
+  //   { name: 'Klima Bakımı', slug: apiGenerateSlug('Klima Bakımı') },
+  //   { name: 'Motor Mekanik', slug: apiGenerateSlug('Motor Mekanik') },
+  //   { name: 'Şanzıman ve Debriyaj', slug: apiGenerateSlug('Şanzıman ve Debriyaj') },
+  //   { name: 'Akü ve Şarj', slug: apiGenerateSlug('Akü ve Şarj') },
+  //   { name: 'Egzoz Sistemleri', slug: apiGenerateSlug('Egzoz Sistemleri') },
+  //   { name: 'Detaylı Temizlik ve Detailing', slug: apiGenerateSlug('Detaylı Temizlik ve Detailing') },
+  //   { name: 'Yol Yardım', slug: apiGenerateSlug('Yol Yardım') },
+  //   { name: 'Yedek Parça', slug: apiGenerateSlug('Yedek Parça') },
+  //   { name: 'Muayene Hazırlık', slug: apiGenerateSlug('Muayene Hazırlık') },
+  //   { name: 'Chip Tuning ve Yazılım', slug: apiGenerateSlug('Chip Tuning ve Yazılım') },
+  //   { name: 'Aksesuar ve Modifiye', slug: apiGenerateSlug('Aksesuar ve Modifiye') },
+  // ] // Kullanılmıyor
 
-  const createSelectedCategories = async () => {
-    const toCreate = suggestedCategories.filter(c => selectedCategorySlugs[c.slug])
-    if (toCreate.length === 0) return
-    setCreatingCategories(true)
-    setError(null)
-    try {
-      for (const c of toCreate) {
-        await fetch('/api/admin/blog-categories/', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: c.name, slug: c.slug })
-        })
-      }
-      await fetchCategories()
-      setShowCategoryManager(false)
-      setSelectedCategorySlugs({})
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Kategoriler oluşturulamadı')
-    } finally {
-      setCreatingCategories(false)
-    }
-  }
+  // const createSelectedCategories = async () => {
+  //   const toCreate = suggestedCategories.filter(c => selectedCategorySlugs[c.slug])
+  //   if (toCreate.length === 0) return
+  //   setCreatingCategories(true)
+  //   setError(null)
+  //   try {
+  //     for (const c of toCreate) {
+  //       await fetch('/api/admin/blog-categories/', {
+  //         method: 'POST',
+  //         credentials: 'include',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({ name: c.name, slug: c.slug })
+  //       })
+  //     }
+  //     await fetchCategories()
+  //     setShowCategoryManager(false)
+  //     setSelectedCategorySlugs({})
+  //   } catch (e) {
+  //     setError(e instanceof Error ? e.message : 'Kategoriler oluşturulamadı')
+  //   } finally {
+  //     setCreatingCategories(false)
+  //   }
+  // } // Kullanılmıyor
 
   const handleSave = async (status: 'draft' | 'published') => {
     setSaving(true)
@@ -298,7 +297,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
       if (!editorRef.current || editorInitializedRef.current) return
       try {
         const QuillModule = await import('quill')
-        const Quill: any = (QuillModule as any).default || QuillModule
+        const Quill = (QuillModule as { default?: unknown }).default || QuillModule
 
         const toolbarOptions = [
           [{ header: [1, 2, 3, 4, 5, 6, false] }],
@@ -321,13 +320,14 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
           editorRef.current.innerHTML = ''
         } catch {}
 
-        const quill = new Quill(editorRef.current, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const quill: any = new (Quill as any)(editorRef.current, {
           theme: 'snow',
           modules: {
             toolbar: {
               container: toolbarOptions,
               handlers: {
-                image: function (this: any) {
+                image: function (this: unknown) {
                   setShowImageModal(true)
                 },
               },
@@ -357,7 +357,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         try {
           const observer = new MutationObserver(() => {
             const imgs = quill.root.querySelectorAll('img')
-            imgs.forEach((img: any) => {
+            imgs.forEach((img: HTMLImageElement) => {
               const src = img.getAttribute('src') || ''
               if (src.startsWith('/media') || src.includes('/api/admin/media')) {
                 const abs = resolveMediaUrl(src)
@@ -376,20 +376,24 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
 
         quillInstanceRef.current = quill
         editorInitializedRef.current = true
-      } catch (e) {
+      } catch {
         // ignore init errors in SSR
       }
     })()
     return () => {
       isMounted = false
       // Cleanup DOM to avoid duplicate toolbars on Strict Mode remounts
+      const editorContainer = editorContainerRef.current
+      const editor = editorRef.current
       try {
-        if (editorContainerRef.current) {
-          const toolbars = editorContainerRef.current.querySelectorAll('.ql-toolbar')
+        if (editorContainer) {
+          const toolbars = editorContainer.querySelectorAll('.ql-toolbar')
           toolbars.forEach(tb => tb.parentElement?.removeChild(tb))
         }
-        if (editorRef.current) editorRef.current.innerHTML = ''
-      } catch {}
+        if (editor) editor.innerHTML = ''
+      } catch {
+        // ignore cleanup errors
+      }
       quillInstanceRef.current = null
       editorInitializedRef.current = false
     }
@@ -591,7 +595,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                   <div>
                     <p className="font-medium mb-2">Başlık ve Slug</p>
                     <ul className="list-disc pl-5 space-y-1">
-                      <li>H1 otomatik: Temel Bilgiler bölümündeki "Başlık" alanı sayfa H1’i olarak kullanılır. İçerikte yeniden H1 kullanmayın.</li>
+                      <li>H1 otomatik: Temel Bilgiler bölümündeki &quot;Başlık&quot; alanı sayfa H1&apos;i olarak kullanılır. İçerikte yeniden H1 kullanmayın.</li>
                       <li>Başlık (H1) net, faydayı anlatan ve ≤ 60 karakter olsun; hedef anahtar kelimeyi doğal şekilde içersin.</li>
                       <li>Slug kısa, açıklayıcı ve yalnızca küçük harf/“-” içersin (örn. <code>oto-bakim-ipuclari</code>).</li>
                     </ul>
@@ -723,7 +727,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                       if (!imageFile) return
                       const url = await handleImageUpload(imageFile)
                       if (!url || !quillInstanceRef.current) { setShowImageModal(false); resetImageModal(); return }
-                      const quill: any = quillInstanceRef.current
+                      const quill = quillInstanceRef.current as { getSelection: (focus?: boolean) => { index: number } | null; clipboard: { dangerouslyPasteHTML: (index: number, html: string, source?: string) => void }; setSelection: (index: number) => void }
                       const range = quill.getSelection(true)
                       const safeAlt = (imageAlt || '').replace(/\"/g, '&quot;')
                       const relativeSrc = url.replace('/api/admin/media', '/media').replace(/^https?:\/\/[^\s"']+\/media/i, '/media')
@@ -868,7 +872,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                 </label>
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'draft' | 'published' | 'archived' }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="draft">Taslak</option>

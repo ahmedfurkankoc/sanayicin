@@ -20,6 +20,7 @@ export default function ProtectedRoute({
   const { isAuthenticated, isLoading } = useAuth()
   const { canAccess } = usePermissions()
 
+
   // Loading state
   if (isLoading) {
     return (

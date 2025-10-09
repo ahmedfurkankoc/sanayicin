@@ -90,6 +90,7 @@ class AdminLoginView(APIView):
         
         # Token oluştur
         token = self._generate_admin_token(admin_user)
+        logger.info(f'Generated admin token for user {admin_user.email}: {token[:10]}...')
         
         # Kullanıcı bilgilerini hazırla
         user_data = {
@@ -121,7 +122,8 @@ class AdminLoginView(APIView):
         is_debug = getattr(settings, 'DEBUG', False)
         secure_cookie = False if is_debug else True
         samesite_policy = 'Lax' if is_debug else 'None'
-        cookie_domain = getattr(settings, 'SESSION_COOKIE_DOMAIN', None) or None
+        # Cookie domain'ini None yap (subdomain sorunu için)
+        cookie_domain = None
         cookie_path = '/'
         max_age_seconds = 60 * 60 * 24  # 24 saat
 
@@ -163,14 +165,17 @@ class AdminLoginView(APIView):
         token_hash = hashlib.sha256(token_data.encode()).hexdigest()
         
         # Cache'e token bilgilerini kaydet
-        cache.set(f"admin_token_{token_hash}", {
+        cache_key = f"admin_token_{token_hash}"
+        token_data = {
             'user_id': user.id,
             'email': user.email,
             'role': user.role,
             'is_superuser': user.is_superuser,
             'expires_at': datetime.utcnow() + timedelta(hours=24),
             'type': 'admin'
-        }, timeout=3600 * 24)  # 24 saat
+        }
+        cache.set(cache_key, token_data, timeout=3600 * 24 * 30)  # 30 gün
+        logger.info(f'Generated admin token for user {user.email}: {token_hash[:10]}...')
         
         return token_hash
 
@@ -205,7 +210,7 @@ class AdminLogoutView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class AdminUserInfoView(APIView):
     """Admin kullanıcı bilgileri"""
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
     
     def get(self, request):

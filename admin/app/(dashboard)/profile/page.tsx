@@ -6,7 +6,7 @@ import { updateAdminUser, changeAdminPassword } from '../../api/admin'
 import ProtectedRoute from '../../components/ProtectedRoute'
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const [firstName, setFirstName] = useState(user?.first_name || '')
   const [lastName, setLastName] = useState(user?.last_name || '')
   const [saving, setSaving] = useState(false)
@@ -76,7 +76,9 @@ export default function ProfilePage() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Rol</p>
-                <p className="text-base font-medium text-gray-900">{user?.role || '-'}</p>
+                <p className="text-base font-medium text-gray-900">
+                  {user?.is_superuser ? 'Süper Kullanıcı' : user?.is_staff ? 'Personel' : 'Kullanıcı'}
+                </p>
               </div>
             </div>
             <div className="mt-4 flex items-center gap-3">
@@ -90,8 +92,8 @@ export default function ProfilePage() {
                     await updateAdminUser(user.id, { first_name: firstName, last_name: lastName })
                     setSaveMsg('Profil güncellendi')
                     setEditMode(false)
-                  } catch (e: any) {
-                    setSaveMsg(e?.response?.data?.error || 'Güncelleme başarısız')
+                  } catch (e: unknown) {
+                    setSaveMsg((e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Güncelleme başarısız')
                   } finally {
                     setSaving(false)
                   }
@@ -136,8 +138,8 @@ export default function ProfilePage() {
                     await changeAdminPassword(currPwd, newPwd)
                     setPwdMsg('Şifre güncellendi')
                     setCurrPwd(''); setNewPwd('')
-                  } catch (e: any) {
-                    setPwdMsg(e?.response?.data?.error || 'Şifre güncelleme başarısız')
+                  } catch (e: unknown) {
+                    setPwdMsg((e as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Şifre güncelleme başarısız')
                   } finally {
                     setPwdSaving(false)
                   }

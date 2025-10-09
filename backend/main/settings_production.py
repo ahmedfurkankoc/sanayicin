@@ -30,6 +30,7 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 # Security Settings - Production
 ALLOWED_HOSTS = [
     'test.sanayicin.com',
+    'admin.sanayicin.com',
     'sanayicin.com',
     'www.sanayicin.com',
     'esnaf.sanayicin.com',
@@ -92,6 +93,8 @@ CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False').lower
 CORS_ALLOWED_ORIGINS = [
     "https://test.sanayicin.com",
     "http://test.sanayicin.com",
+    "https://admin.sanayicin.com",
+    "http://admin.sanayicin.com",
     "https://sanayicin.com",
     "https://www.sanayicin.com",
     "https://esnaf.sanayicin.com",

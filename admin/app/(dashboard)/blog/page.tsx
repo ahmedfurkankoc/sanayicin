@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Edit, Trash2, Eye, Calendar, User, Tag } from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
+import { useState, useEffect, useCallback } from 'react'
+import { Plus, Edit, Trash2, Eye } from 'lucide-react'
+// import { useAuth } from '../../contexts/AuthContext' // Kullanılmıyor
 import Pagination from '../../components/Pagination'
 import { listBlogPosts, deleteBlogPost, listBlogCategories, createBlogCategory, updateBlogCategory, deleteBlogCategory } from '../../api/admin'
 
@@ -24,7 +24,7 @@ interface BlogPost {
 }
 
 export default function BlogManagement() {
-  const { user } = useAuth()
+  // const { user } = useAuth() // Kullanılmıyor
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,12 +42,7 @@ export default function BlogManagement() {
   const [editingCatId, setEditingCatId] = useState<number | null>(null)
   const [editingCatName, setEditingCatName] = useState<string>('')
 
-  useEffect(() => {
-    fetchBlogPosts()
-    fetchCategories()
-  }, [currentPage, pageSize, searchTerm, statusFilter])
-
-  const fetchBlogPosts = async () => {
+  const fetchBlogPosts = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -65,13 +60,18 @@ export default function BlogManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, pageSize, searchTerm, statusFilter])
+
+  useEffect(() => {
+    fetchBlogPosts()
+    fetchCategories()
+  }, [fetchBlogPosts])
 
   const fetchCategories = async () => {
     try {
       const data = await listBlogCategories()
       setCategories(data)
-    } catch (e) {
+    } catch {
       // ignore
     }
   }

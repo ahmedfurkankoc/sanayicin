@@ -19,7 +19,6 @@ import {
   Menu,
   X,
   Bell,
-  Search,
   ClipboardList
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
@@ -122,9 +121,8 @@ export default function DashboardLayout({
                     {user?.first_name || user?.email}
                   </p>
                   <p className="text-xs text-[color:rgba(255,255,255,0.8)]">
-                    {user?.role === 'admin' ? 'Admin' : 
-                     user?.role === 'editor' ? 'Editör' : 
-                     user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
+                    {user?.is_superuser ? 'Super Admin' : 
+                     user?.is_staff ? 'Admin' : 'Kullanıcı'}
                   </p>
                 </div>
               </div>
@@ -180,9 +178,8 @@ export default function DashboardLayout({
                     {user?.first_name || user?.email}
                   </p>
                   <p className="text-xs text-[color:rgba(255,255,255,0.8)]">
-                    {user?.role === 'admin' ? 'Admin' : 
-                     user?.role === 'editor' ? 'Editör' : 
-                     user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
+                    {user?.is_superuser ? 'Super Admin' : 
+                     user?.is_staff ? 'Admin' : 'Kullanıcı'}
                   </p>
                 </div>
               </div>
@@ -239,9 +236,8 @@ export default function DashboardLayout({
                         {user?.first_name || user?.email}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {user?.role === 'admin' ? 'Admin' : 
-                         user?.role === 'editor' ? 'Editör' : 
-                         user?.role === 'support' ? 'Destek' : 'Kullanıcı'}
+                        {user?.is_superuser ? 'Super Admin' : 
+                         user?.is_staff ? 'Admin' : 'Kullanıcı'}
                       </p>
                     </div>
                   </button>

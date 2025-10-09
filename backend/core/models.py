@@ -51,6 +51,7 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = ["email"]
 
     class Meta:
+        ordering = ['-date_joined']  # En yeni kullanıcılar önce
         indexes = [
             models.Index(fields=['role']),
             models.Index(fields=['date_joined']),

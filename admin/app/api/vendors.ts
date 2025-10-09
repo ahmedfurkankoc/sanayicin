@@ -26,9 +26,9 @@ export interface VendorProfile {
   city: string
   district: string
   subdistrict: string
-  social_media: Record<string, any>
-  working_hours: Record<string, any>
-  unavailable_dates: any[]
+  social_media: Record<string, string>
+  working_hours: Record<string, string>
+  unavailable_dates: string[]
   manager_birthdate: string
   manager_tc: string
   created_at: string
