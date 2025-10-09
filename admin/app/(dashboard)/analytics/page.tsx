@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
                 { k: 'vendors', label: 'Esnaflar' },
                 { k: 'total', label: 'Toplam' },
               ].map((m) => (
-                <button key={m.k} onClick={() => setMetric(m.k as any)} className={`px-2 py-1 rounded text-xs ${metric === m.k ? 'bg-white shadow' : ''}`}>{m.label}</button>
+                <button key={m.k} onClick={() => setMetric(m.k as 'users' | 'vendors' | 'total')} className={`px-2 py-1 rounded text-xs ${metric === m.k ? 'bg-white shadow' : ''}`}>{m.label}</button>
               ))}
             </div>
             <BarChart3 className="h-5 w-5 text-gray-500" />
@@ -218,7 +218,7 @@ export default function AnalyticsPage() {
                   <tr key={r.k}>
                     <td className="px-4 py-2 text-gray-900">{r.k}</td>
                     <td className="px-4 py-2 text-gray-700">{r.n}</td>
-                    <td className="px-4 py-2 text-gray-700">{(r as any)['1h']}</td>
+                    <td className="px-4 py-2 text-gray-700">{r['1h']}</td>
                   </tr>
                 ))}
               </tbody>
@@ -230,7 +230,7 @@ export default function AnalyticsPage() {
   )
 }
 
-function KpiCard({ icon: Icon, label, value, change }: { icon: any; label: string; value: string | number; change: number | null }) {
+function KpiCard({ icon: Icon, label, value, change }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | number; change: number | null }) {
   const changeText = change === null ? null : `${change}%`
   const changeClass = change === null ? 'text-gray-500' : change >= 0 ? 'text-green-600' : 'text-red-600'
   return (

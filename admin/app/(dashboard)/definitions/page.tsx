@@ -8,7 +8,7 @@ import { listAdminUsers, updateAdminUserRole } from '../../api/admin'
 
 type DefTab = 'roles' | 'assign' | 'new_admin'
 
-const tabs: { key: DefTab; label: string; icon: any }[] = [
+const tabs: { key: DefTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: 'roles', label: 'Roller Tanımları', icon: Shield },
   { key: 'assign', label: 'Rol Atamaları', icon: Users },
   { key: 'new_admin', label: 'Yeni Admin Oluştur', icon: PlusCircle },
@@ -58,13 +58,13 @@ export default function DefinitionsPage() {
   const [message, setMessage] = useState<string | null>(null)
 
   const fullPerms = (): Record<ModuleKey, PermissionTriple> => {
-    const p: Record<ModuleKey, PermissionTriple> = {} as any
+    const p: Record<ModuleKey, PermissionTriple> = {} as Record<ModuleKey, PermissionTriple>
     modules.forEach((m) => (p[m.key] = { read: true, write: true, delete: true }))
     return p
   }
 
   const emptyPerms = (): Record<ModuleKey, PermissionTriple> => {
-    const p: Record<ModuleKey, PermissionTriple> = {} as any
+    const p: Record<ModuleKey, PermissionTriple> = {} as Record<ModuleKey, PermissionTriple>
     modules.forEach((m) => (p[m.key] = { read: false, write: false, delete: false }))
     return p
   }
@@ -106,7 +106,7 @@ export default function DefinitionsPage() {
     const length = 12
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()_+' // avoid ambiguous
     let pwd = ''
-    const cryptoObj = typeof window !== 'undefined' && (window.crypto || (window as any).msCrypto)
+    const cryptoObj = typeof window !== 'undefined' && (window.crypto || (window as { msCrypto?: unknown }).msCrypto)
     if (cryptoObj && cryptoObj.getRandomValues) {
       const arr = new Uint32Array(length)
       cryptoObj.getRandomValues(arr)
@@ -179,7 +179,7 @@ export default function DefinitionsPage() {
             role: u.role as RoleKey,
           }))
         )
-      } catch (e) {
+      } catch {
         setMessage('Kullanıcılar alınamadı.')
       }
     }
@@ -265,7 +265,7 @@ export default function DefinitionsPage() {
               {/* Role details */}
               {roles
                 .filter((r) => r.key === selectedRoleKey)
-                .map((role, idx) => (
+                .map((role) => (
                   <div key={role.key} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                       <div>
@@ -512,7 +512,7 @@ export default function DefinitionsPage() {
                                   await updateAdminUserRole(u.id, String(newRole))
                                   setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, role: newRole } : x)))
                                   setMessage('Rol güncellendi.')
-                                } catch (err) {
+                                } catch {
                                   setMessage('Rol güncelleme başarısız.')
                                 } finally {
                                   setAssigningIds((prev) => prev.filter((id) => id !== u.id))
@@ -566,7 +566,7 @@ export default function DefinitionsPage() {
                         )
                         setSelectedUserIds([])
                         setMessage('Toplu rol atandı.')
-                      } catch (e) {
+                      } catch {
                         setMessage('Toplu rol atama başarısız.')
                       }
                     }}

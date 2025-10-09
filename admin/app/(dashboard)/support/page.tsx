@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   listSupportTickets,
   listSupportMessages,
@@ -56,9 +56,9 @@ export default function SupportPage() {
           const found = res.items.find((t: SupportTicket) => t.id === activeTicket.id)
           if (!found) setActiveTicket(null)
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (cancelled) return
-        setError(e?.response?.data?.detail || 'Destek talepleri yüklenemedi')
+        setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Destek talepleri yüklenemedi')
       } finally {
         if (cancelled) return
         setLoading(false)
@@ -76,9 +76,9 @@ export default function SupportPage() {
         const res = await listSupportMessages(activeTicket.id)
         if (cancelled) return
         setMessages(res)
-      } catch (e) {
-        // ignore
-      }
+    } catch {
+      // ignore
+    }
     }
     loadMessages()
     return () => { cancelled = true }
@@ -181,7 +181,7 @@ export default function SupportPage() {
                       const updated = await updateSupportTicket(activeTicket.id, { status: next })
                       setActiveTicket(updated)
                       setTickets((prev) => prev.map(t => t.id === updated.id ? updated : t))
-                    } catch (_) {
+                    } catch {
                       // ignore
                     } finally {
                       setUpdatingTicket(false)
@@ -203,7 +203,7 @@ export default function SupportPage() {
                       const updated = await updateSupportTicket(activeTicket.id, { status: 'closed' })
                       setActiveTicket(updated)
                       setTickets((prev) => prev.map(t => t.id === updated.id ? updated : t))
-                    } catch (_) {
+                    } catch {
                       // ignore
                     } finally {
                       setUpdatingTicket(false)
@@ -250,7 +250,7 @@ export default function SupportPage() {
                     const created = await sendSupportMessage(activeTicket.id, newMessage.trim())
                     setMessages((prev) => [...prev, created])
                     setNewMessage('')
-                  } catch (_) {
+                  } catch {
                     // ignore
                   } finally {
                     setSending(false)

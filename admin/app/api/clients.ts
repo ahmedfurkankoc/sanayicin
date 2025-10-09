@@ -13,7 +13,7 @@ export interface ClientListItem {
 }
 
 export async function fetchClients(params?: { search?: string; page?: number; page_size?: number }) {
-  const resp = await apiClient.get<any>('/users/', { params })
+  const resp = await apiClient.get<{ results: ClientListItem[]; count: number }>('/users/', { params })
   const data = resp.data
   if (Array.isArray(data)) {
     return { count: data.length, next: null, previous: null, results: data as ClientListItem[] }

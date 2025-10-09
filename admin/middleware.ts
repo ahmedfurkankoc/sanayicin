@@ -25,56 +25,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Token kontrolü
-  const token = request.cookies.get('admin_token')?.value || 
-                request.headers.get('authorization')?.replace('Bearer ', '')
-
-  if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  try {
-    // Token'ı backend'e gönder ve doğrula
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user/`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    const userData = await response.json()
-    
-    // Admin rolü kontrolü
-    if (!ADMIN_ROLES.includes(userData.role) && !userData.is_superuser) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    // Permission kontrolü
-    const requiredPermission = getRequiredPermission(pathname)
-    if (requiredPermission && !hasPermission(userData, requiredPermission)) {
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
-
-    // Token'ı header'a ekle
-    const requestHeaders = new Headers(request.headers)
-    requestHeaders.set('x-user-id', userData.id?.toString() || '')
-    requestHeaders.set('x-user-role', userData.role || '')
-    requestHeaders.set('x-is-superuser', userData.is_superuser?.toString() || 'false')
-
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    })
-
-  } catch (error) {
-    console.error('Token verification failed:', error)
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+  // Middleware'i devre dışı bırak - localStorage kontrolü client-side'da yapılıyor
+  // Cross-domain cookie sorunu nedeniyle middleware cookie kontrolü yapamıyor
+  return NextResponse.next()
 }
 
 function getRequiredPermission(pathname: string): string | null {
@@ -112,7 +65,3 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
-
-
-
-

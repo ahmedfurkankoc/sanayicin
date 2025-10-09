@@ -1,10 +1,13 @@
 from typing import Optional, Tuple
 from datetime import datetime
+import logging
 
 from django.core.cache import cache
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from .models import AdminUser
+
+logger = logging.getLogger('admin_panel.authentication')
 
 
 class AdminTokenAuthentication(BaseAuthentication):
@@ -21,20 +24,25 @@ class AdminTokenAuthentication(BaseAuthentication):
                 token = auth_header.replace('Bearer ', '')
 
         if not token:
+            logger.debug('No admin token found in request')
             return None
 
         cache_key = f"admin_token_{token}"
         token_data = cache.get(cache_key)
         if not token_data:
+            logger.warning(f'Admin token not found in cache: {token[:10]}...')
             raise AuthenticationFailed('Invalid admin token')
 
         if datetime.utcnow() > token_data.get('expires_at'):
+            logger.warning(f'Admin token expired: {token[:10]}...')
             cache.delete(cache_key)
             raise AuthenticationFailed('Admin token expired')
 
         try:
             user = AdminUser.objects.get(id=token_data['user_id'])
+            logger.debug(f'Admin user authenticated: {user.email}')
         except AdminUser.DoesNotExist:
+            logger.error(f'AdminUser not found for token: {token_data["user_id"]}')
             raise AuthenticationFailed('User not found')
 
         return (user, None)

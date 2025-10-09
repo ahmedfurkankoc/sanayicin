@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '../contexts/AuthContext'
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react'
 
@@ -13,7 +12,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   
   const { login } = useAuth()
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,11 +22,12 @@ export default function LoginPage() {
       const success = await login(email, password)
       
       if (success) {
-        router.push('/')
+        // Hard redirect kullan (cookie cross-domain sorunu için)
+        window.location.href = '/'
       } else {
         setError('Geçersiz kimlik bilgileri veya admin erişim yetkisi yok')
       }
-    } catch (error) {
+    } catch {
       setError('Giriş yapılırken bir hata oluştu')
     } finally {
       setIsLoading(false)

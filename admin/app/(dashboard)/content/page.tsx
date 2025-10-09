@@ -86,9 +86,9 @@ export default function ContentManagementPage() {
         setCatTotal(cats.count)
         setCarBrands(brands.items)
         setBrandTotal(brands.count)
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (cancelled) return
-        setError(e?.response?.data?.detail || 'İçerik verileri yüklenemedi')
+        setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'İçerik verileri yüklenemedi')
       } finally {
         if (cancelled) return
         setLoading(false)
@@ -125,11 +125,11 @@ export default function ContentManagementPage() {
             <button
               key={t.key}
               className={`whitespace-nowrap py-3 px-1 border-b-2 text-sm font-medium ${
-                activeTab === (t.key as any)
+                activeTab === (t.key as 'services' | 'categories' | 'brands')
                   ? 'border-[color:var(--yellow)] text-gray-900'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
-              onClick={() => setActiveTab(t.key as any)}
+              onClick={() => setActiveTab(t.key as 'services' | 'categories' | 'brands')}
             >
               {t.label}
             </button>
@@ -200,8 +200,8 @@ export default function ContentManagementPage() {
                       setSaTotal((t) => t + 1)
                       setNewServiceArea({ name: '' })
                       setSaModalOpen(false)
-                    } catch (e: any) {
-                      setError(e?.response?.data?.detail || 'Hizmet alanı eklenemedi')
+                    } catch (e: unknown) {
+                      setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Hizmet alanı eklenemedi')
                     } finally {
                       setLoading(false)
                     }
@@ -258,8 +258,8 @@ export default function ContentManagementPage() {
                               const updated = await updateServiceArea(sa.id, { name: editingServiceArea.name, description: editingServiceArea.description })
                               setServiceAreas((prev) => prev.map((x) => (x.id === sa.id ? updated : x)))
                               setEditingServiceArea(null)
-                            } catch (e: any) {
-                              setError(e?.response?.data?.detail || 'Hizmet alanı güncellenemedi')
+                            } catch (e: unknown) {
+                              setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Hizmet alanı güncellenemedi')
                             } finally {
                               setLoading(false)
                             }
@@ -281,8 +281,8 @@ export default function ContentManagementPage() {
                                 setLoading(true)
                                 await deleteServiceArea(sa.id)
                                 setServiceAreas((prev) => prev.filter((x) => x.id !== sa.id))
-                              } catch (e: any) {
-                                setError(e?.response?.data?.detail || 'Hizmet alanı silinemedi')
+                              } catch (e: unknown) {
+                                setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Hizmet alanı silinemedi')
                               } finally {
                                 setLoading(false)
                               }
@@ -390,8 +390,8 @@ export default function ContentManagementPage() {
                       setCatTotal((t) => t + 1)
                       setNewCategory({ name: '', service_area: '' })
                       setCatModalOpen(false)
-                    } catch (e: any) {
-                      setError(e?.response?.data?.detail || 'Kategori eklenemedi')
+                    } catch (e: unknown) {
+                      setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Kategori eklenemedi')
                     } finally {
                       setLoading(false)
                     }
@@ -460,8 +460,8 @@ export default function ContentManagementPage() {
                               })
                               setCategories((prev) => prev.map((x) => (x.id === cat.id ? updated : x)))
                               setEditingCategory(null)
-                            } catch (e: any) {
-                              setError(e?.response?.data?.detail || 'Kategori güncellenemedi')
+                            } catch (e: unknown) {
+                              setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Kategori güncellenemedi')
                             } finally {
                               setLoading(false)
                             }
@@ -483,8 +483,8 @@ export default function ContentManagementPage() {
                                 setLoading(true)
                                 await deleteCategory(cat.id)
                                 setCategories((prev) => prev.filter((x) => x.id !== cat.id))
-                              } catch (e: any) {
-                                setError(e?.response?.data?.detail || 'Kategori silinemedi')
+                              } catch (e: unknown) {
+                                setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Kategori silinemedi')
                               } finally {
                                 setLoading(false)
                               }
@@ -610,8 +610,8 @@ export default function ContentManagementPage() {
                       setBrandTotal((t) => t + 1)
                       setNewBrand({ name: '', is_active: true, logo_file: null })
                       setBrandModalOpen(false)
-                    } catch (e: any) {
-                      setError(e?.response?.data?.detail || 'Araba markası eklenemedi')
+                    } catch (e: unknown) {
+                      setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Araba markası eklenemedi')
                     } finally {
                       setLoading(false)
                     }
@@ -655,7 +655,7 @@ export default function ContentManagementPage() {
                   <td className="px-4 py-2 text-sm">
                     {editingBrand?.id === brand.id ? (
                       <label className="flex items-center gap-2">
-                        <input type="checkbox" className="h-4 w-4" checked={Boolean((editingBrand as any).is_active)} onChange={(e) => setEditingBrand((p) => p ? { ...p, is_active: e.target.checked } as any : p)} />
+                        <input type="checkbox" className="h-4 w-4" checked={Boolean((editingBrand as { is_active?: boolean }).is_active)} onChange={(e) => setEditingBrand((p) => p ? { ...p, is_active: e.target.checked } as CarBrand : p)} />
                         <span className="text-gray-700 text-sm">Aktif</span>
                       </label>
                     ) : (
@@ -681,12 +681,12 @@ export default function ContentManagementPage() {
                               const updated = await updateCarBrand(brand.id, {
                                 name: editingBrand.name,
                                 description: editingBrand.description,
-                                is_active: (editingBrand as any).is_active,
+                                is_active: (editingBrand as { is_active?: boolean }).is_active,
                               })
                               setCarBrands((prev) => prev.map((x) => (x.id === brand.id ? updated : x)))
                               setEditingBrand(null)
-                            } catch (e: any) {
-                              setError(e?.response?.data?.detail || 'Marka güncellenemedi')
+                            } catch (e: unknown) {
+                              setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Marka güncellenemedi')
                             } finally {
                               setLoading(false)
                             }
@@ -708,8 +708,8 @@ export default function ContentManagementPage() {
                                 setLoading(true)
                                 await deleteCarBrand(brand.id)
                                 setCarBrands((prev) => prev.filter((x) => x.id !== brand.id))
-                              } catch (e: any) {
-                                setError(e?.response?.data?.detail || 'Marka silinemedi')
+                              } catch (e: unknown) {
+                                setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Marka silinemedi')
                               } finally {
                                 setLoading(false)
                               }

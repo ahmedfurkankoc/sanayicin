@@ -65,7 +65,7 @@ export default function LogsPage() {
           level: (r.level || 'info').toUpperCase() as LogLevel,
           message: r.message,
           source: r.module || 'system',
-          user: (r as any).user_email || null,
+          user: (r as { user_email?: string }).user_email || null,
           ip_address: r.ip_address || null,
           created_at: r.created_at,
         }))

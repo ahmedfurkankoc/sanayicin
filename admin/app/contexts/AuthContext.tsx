@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import axios from 'axios'
+import { loginAdmin } from '../api/admin'
 
 // Types
 interface User {
@@ -9,9 +10,9 @@ interface User {
   email: string
   first_name: string
   last_name: string
-  role: 'admin' | 'editor' | 'support'
+  is_staff: boolean
   is_superuser: boolean
-  date_joined: string
+  permissions?: Record<string, { read: boolean; write: boolean; delete: boolean }>
 }
 
 interface Permission {
@@ -56,9 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // No bearer token; rely on HttpOnly cookie only
 
   // Cookie tabanlı (HttpOnly) oturum: JS tarafında token yönetimi yok
-  const getToken = () => null
-  const setToken = (_: string) => {}
-  const removeToken = () => {}
+  // const getToken = () => null // Kullanılmıyor
+  // const setToken = (_: string) => {} // Kullanılmıyor
+  // const removeToken = () => {} // Kullanılmıyor
 
   // Permission check
   const canAccess = (permission: string, action: 'read' | 'write' | 'delete' = 'read'): boolean => {
@@ -78,16 +79,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true)
       
-      const response = await api.post('/auth/login/', {
-        email,
-        password,
-      })
+      const response = await loginAdmin(email, password)
 
       // Backend sets HttpOnly cookie; body returns user
-      if (response.data?.user) {
-        setUser(response.data.user)
-        setPermissions(response.data.user.permissions)
+      if (response?.user) {
+        setUser(response.user)
+        setPermissions(response.user.permissions || null)
         setIsAuthenticated(true)
+        // Login flag'ini localStorage'a kaydet (cross-domain cookie sorunu için)
+        localStorage.setItem('admin_logged_in', 'true')
+        // User bilgilerini de localStorage'a kaydet
+        localStorage.setItem('admin_user', JSON.stringify(response.user))
+        // Token'ı localStorage'a kaydet (API çağrıları için)
+        if (response.token) {
+          localStorage.setItem('admin_token', response.token)
+        }
+        // refreshUser çağırma - zaten user bilgileri var
         return true
       }
       
@@ -110,6 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       setPermissions(null)
       setIsAuthenticated(false)
+      // localStorage'ı temizle
+      localStorage.removeItem('admin_logged_in')
+      localStorage.removeItem('admin_user')
+      localStorage.removeItem('admin_token')
       
       // Redirect to login
       if (typeof window !== 'undefined') {
@@ -125,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (response.data) {
         setUser(response.data)
-        setPermissions(response.data.permissions)
+        setPermissions(response.data.permissions || null)
         setIsAuthenticated(true)
       }
     } catch (error) {
@@ -140,7 +151,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
-      await refreshUser()
+      
+      // Cookie okuma fonksiyonu (frontend'deki gibi)
+      const getCookieValue = (name: string): string | null => {
+        if (typeof document === 'undefined') return null;
+        const value = document.cookie
+          .split('; ')
+          .find(row => row.startsWith(`${name}=`))
+          ?.split('=')[1];
+        return value || null;
+      };
+      
+      // Admin token cookie'sini kontrol et
+      const adminToken = getCookieValue('admin_token')
+      
+      // localStorage login flag'ini kontrol et (cross-domain cookie sorunu için)
+      const isLoggedIn = localStorage.getItem('admin_logged_in') === 'true'
+      
+      if (adminToken || isLoggedIn) {
+        setIsAuthenticated(true)
+        
+        // User bilgilerini localStorage'dan al
+        const savedUser = localStorage.getItem('admin_user')
+        if (savedUser) {
+          try {
+            const userData = JSON.parse(savedUser)
+            setUser(userData)
+            setPermissions(userData.permissions || null)
+          } catch (e) {
+            console.error('❌ Failed to parse saved user data:', e)
+          }
+        }
+      } else {
+        setIsAuthenticated(false)
+      }
       setIsLoading(false)
     }
 

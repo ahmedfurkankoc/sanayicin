@@ -154,5 +154,3 @@ curl -I  https://test.sanayicin.com/admin/
 curl -I  https://test.sanayicin.com/api/
 curl -s  https://test.sanayicin.com/robots.txt
 ```
-
-
