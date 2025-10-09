@@ -4,13 +4,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { 
   Search, 
   Filter, 
-  MoreVertical, 
   Edit, 
   Trash2, 
   Eye,
-  UserPlus,
-  Mail,
-  Phone
+  UserPlus
 } from 'lucide-react'
 
 import { fetchClients, ClientListItem } from '../../api/clients'
@@ -19,8 +16,6 @@ import Pagination from '../../components/Pagination'
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ClientListItem[]>([])
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -35,21 +30,15 @@ export default function UsersPage() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
     fetchClients({ search: debouncedSearch || undefined, page, page_size: pageSize })
       .then((res) => {
         if (cancelled) return
         setData(res.results || [])
         setTotalCount(res.count || 0)
-        setError(null)
       })
       .catch(() => {
         if (cancelled) return
-        setError('Kullanıcılar yüklenemedi')
-      })
-      .finally(() => {
-        if (cancelled) return
-        setLoading(false)
+        // Error handling can be added here if needed
       })
     return () => { cancelled = true }
   }, [debouncedSearch, page, pageSize])

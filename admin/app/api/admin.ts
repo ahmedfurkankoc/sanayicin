@@ -1,5 +1,15 @@
 import { apiClient } from './api'
 
+export interface AdminUser {
+  id: number
+  email: string
+  first_name: string
+  last_name: string
+  is_staff: boolean
+  is_superuser: boolean
+  permissions?: Record<string, { read: boolean; write: boolean; delete: boolean }>
+}
+
 export interface DashboardStats {
   total_users: number
   total_vendors: number
@@ -13,6 +23,14 @@ export interface DashboardStats {
   vendors_change_pct: number
   support_change_pct: number
   blog_change_pct: number
+}
+
+export async function loginAdmin(email: string, password: string) {
+  const resp = await apiClient.post<{ user: AdminUser; token: string; message: string }>('/auth/login/', {
+    email,
+    password,
+  })
+  return resp.data
 }
 
 export async function fetchDashboardStats() {
@@ -84,7 +102,7 @@ export interface AdminUserItem {
 
 export async function listAdminUsers(params?: { page?: number; page_size?: number; search?: string }) {
   const resp = await apiClient.get<AdminUserItem[] | { results: AdminUserItem[]; count: number }>(`/admin-users/`, { params })
-  const data = resp.data as any
+  const data = resp.data as AdminUserItem[] | { results: AdminUserItem[]; count: number }
   if (Array.isArray(data)) return { items: data, count: data.length }
   return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) }
 }
@@ -128,7 +146,7 @@ export async function listServiceAreas(params?: { page?: number; page_size?: num
     '/service-areas/',
     { params }
   )
-  const data = resp.data as any
+  const data = resp.data as { results: ServiceArea[]; count: number; total_pages: number }
   if (Array.isArray(data)) return { items: data, count: data.length } as ListResult<ServiceArea>
   return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) } as ListResult<ServiceArea>
 }
@@ -160,7 +178,7 @@ export async function listCategories(params?: { page?: number; page_size?: numbe
     '/categories/',
     { params }
   )
-  const data = resp.data as any
+  const data = resp.data as { results: Category[]; count: number; total_pages: number }
   if (Array.isArray(data)) return { items: data, count: data.length } as ListResult<Category>
   return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) } as ListResult<Category>
 }
@@ -195,7 +213,7 @@ export async function listCarBrands(params?: { page?: number; page_size?: number
     '/car-brands/',
     { params }
   )
-  const data = resp.data as any
+  const data = resp.data as { results: CarBrand[]; count: number; total_pages: number }
   if (Array.isArray(data)) return { items: data, count: data.length } as ListResult<CarBrand>
   return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) } as ListResult<CarBrand>
 }
@@ -213,6 +231,7 @@ export async function createCarBrand(payload: { name: string; description?: stri
     })
     return resp.data
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { logo_file, ...data } = payload
   const resp = await apiClient.post<CarBrand>('/car-brands/', data)
   return resp.data
@@ -230,6 +249,7 @@ export async function updateCarBrand(id: number, payload: { name?: string; descr
     })
     return resp.data
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { logo_file, ...data } = payload
   const resp = await apiClient.patch<CarBrand>(`/car-brands/${id}/`, data)
   return resp.data
@@ -264,7 +284,7 @@ export interface SupportMessage {
 
 export async function listSupportTickets(params?: { page?: number; page_size?: number; search?: string; status?: string }) {
   const resp = await apiClient.get<SupportTicket[] | { results: SupportTicket[]; count: number }>(`/support-tickets/`, { params })
-  const data = resp.data as any
+  const data = resp.data as { results: SupportTicket[]; count: number; total_pages: number }
   if (Array.isArray(data)) return { items: data, count: data.length }
   return { items: data.results ?? [], count: data.count ?? (data.results?.length ?? 0) }
 }
@@ -276,7 +296,7 @@ export async function getSupportTicket(id: number) {
 
 export async function listSupportMessages(ticketId: number) {
   const resp = await apiClient.get<SupportMessage[] | { results: SupportMessage[] }>(`/support-messages/`, { params: { ticket: ticketId, page_size: 500 } })
-  const data = resp.data as any
+  const data = resp.data as { results: SupportMessage[]; count: number; total_pages: number }
   return Array.isArray(data) ? data : (data.results ?? [])
 }
 
@@ -338,7 +358,7 @@ export async function listBlogCategories(): Promise<BlogCategory[]> {
   const response = await apiClient.get<BlogCategory[] | { results: BlogCategory[]; count?: number }>(
     '/blog-categories/'
   )
-  const data = response.data as any
+  const data = response.data as { results: BlogCategory[]; count: number }
   return Array.isArray(data) ? data : (data?.results ?? [])
 }
 

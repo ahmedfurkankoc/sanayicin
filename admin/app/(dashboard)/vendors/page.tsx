@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { 
   Search, 
   Filter, 
-  MoreVertical, 
   Edit, 
   Trash2, 
   Eye,
@@ -60,9 +59,9 @@ export default function VendorsPage() {
         if (cancelled) return
         setVendors(res.items)
         setTotalCount(res.count)
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (cancelled) return
-        setError(e?.response?.data?.detail || 'Esnaflar yüklenemedi')
+        setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Esnaflar yüklenemedi')
       } finally {
         if (cancelled) return
         setLoading(false)

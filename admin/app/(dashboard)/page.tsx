@@ -6,9 +6,6 @@ import {
   MessageSquare, 
   FileText, 
   TrendingUp,
-  Clock,
-  CheckCircle,
-  AlertCircle,
   Settings
 } from 'lucide-react'
 import { fetchDashboardStats, fetchAdminAuthLogs, type AdminAuthLogItem } from '../api/admin'
@@ -17,7 +14,7 @@ import { useEffect, useState } from 'react'
 import { usePermissions } from '../contexts/AuthContext'
 import Pagination from '../components/Pagination'
 
-type StatItem = { name: string; value: string | number; icon: any; change?: string; changeType?: 'positive' | 'negative' }
+type StatItem = { name: string; value: string | number; icon: React.ComponentType<{ className?: string }>; change?: string; changeType?: 'positive' | 'negative' }
 
 const recentActivities = [
   { id: 1, type: 'user', message: 'Yeni kullanıcı kaydoldu', time: '2 dakika önce', icon: Users },
@@ -38,7 +35,7 @@ export default function Dashboard() {
   const [logsPage, setLogsPage] = useState(1)
   const logsLimit = 10
   const [logsTotal, setLogsTotal] = useState(0)
-  const [authLogsLoading, setAuthLogsLoading] = useState(false)
+  // const [authLogsLoading, setAuthLogsLoading] = useState(false) // Kullanılmıyor
 
   useEffect(() => {
     let cancelled = false
@@ -401,7 +398,7 @@ export default function Dashboard() {
                   totalCount={logsTotal}
                   pageSize={logsLimit}
                   onPageChange={setLogsPage}
-                  onPageSizeChange={(size) => { /* logsLimit is fixed */ }}
+                  onPageSizeChange={() => { /* logsLimit is fixed */ }}
                   itemName="log"
                 />
               </div>
