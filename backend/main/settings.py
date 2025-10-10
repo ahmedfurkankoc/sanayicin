@@ -187,22 +187,19 @@ if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
     import dj_database_url
     DATABASES['default'] = dj_database_url.parse(DATABASE_URL)
 
-# Cache Configuration - Development (Redis for testing)
+# Cache Configuration - Development (LocMem for local)
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-dev-locmem',
     }
 }
 
-# Channels config (Redis her zaman)
+# Channels config - Development (InMemory for local)
 ASGI_APPLICATION = 'main.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')],
-        },
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
 
