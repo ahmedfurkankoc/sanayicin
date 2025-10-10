@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111111;
   /* Brand variables */
   --yellow: #ffd600;
   --black: #111111;
@@ -24,25 +24,12 @@
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--black);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Form controls - improve readability across the admin */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="search"],
-select,
-textarea {
+button {
   color: var(--black);
-  background-color: #ffffff;
-  border: 1px solid var(--yellow);
-  padding: 0.5rem 2.5rem; /* comfortable vertical/horizontal padding */
-  min-height: 2.5rem; /* consistent control height */
-  border-radius: 0.375rem; /* match rounded-md */
-  transition: box-shadow 120ms ease, border-color 120ms ease;
 }
 
 input::placeholder,
@@ -59,9 +46,6 @@ textarea:focus {
 }
 
 /* Buttons with default border styles: ensure readable text */
-button {
-  color: var(--black);
-}
 
 button:disabled {
   opacity: 0.6;
