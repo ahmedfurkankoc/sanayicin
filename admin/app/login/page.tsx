@@ -77,7 +77,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[color:var(--yellow)] focus:border-[color:var(--yellow)] sm:text-sm"
+                  className="appearance-none block w-full pl-12 pr-12 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[color:var(--yellow)] focus:border-[color:var(--yellow)] sm:text-sm"
                   placeholder="admin@sanayicin.com"
                 />
               </div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[color:var(--yellow)] focus:border-[color:var(--yellow)] sm:text-sm"
+                  className="appearance-none block w-full pl-12 pr-12 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-[color:var(--yellow)] focus:border-[color:var(--yellow)] sm:text-sm"
                   placeholder="••••••••"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center">

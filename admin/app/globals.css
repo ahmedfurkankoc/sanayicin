@@ -39,7 +39,7 @@ textarea {
   color: var(--black);
   background-color: #ffffff;
   border: 1px solid var(--yellow);
-  padding: 0.5rem 0.75rem; /* comfortable vertical/horizontal padding */
+  padding: 0.5rem 2.5rem; /* comfortable vertical/horizontal padding */
   min-height: 2.5rem; /* consistent control height */
   border-radius: 0.375rem; /* match rounded-md */
   transition: box-shadow 120ms ease, border-color 120ms ease;

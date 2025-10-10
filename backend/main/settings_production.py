@@ -69,11 +69,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'core',
     'vendors',
-    'rest_framework',
-    'rest_framework_simplejwt',
+    'chat',
+    'admin_panel',
 ]
 
 MIDDLEWARE = [
@@ -141,24 +143,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'main.wsgi.application'
 
-# Database - Production (PostgreSQL)
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL)
+# Database - Production (SQLite)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'sanayicin_db'),
-            'USER': os.environ.get('DB_USER', 'sanayicin_user'),
-            'PASSWORD': os.environ.get('DB_PASSWORD'),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
-        }
-    }
+}
 
 # Cache Configuration - Production (Redis)
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
@@ -167,6 +158,17 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': REDIS_URL,
     }
+}
+
+# Channels config - Production (Redis)
+ASGI_APPLICATION = 'main.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')],
+        },
+    },
 }
 
 # Email Verification Settings

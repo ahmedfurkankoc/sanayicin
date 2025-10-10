@@ -7,9 +7,13 @@ User=sanayicin
 Group=www-data
 WorkingDirectory=/var/www/sanayicin/backend
 Environment="PATH=/var/www/sanayicin/backend/venv/bin"
-Environment="DJANGO_SETTINGS_MODULE=main.settings"
+Environment="DJANGO_SETTINGS_MODULE=main.settings_production"
+EnvironmentFile=/var/www/sanayicin/backend/.env.production
+Environment="PYTHONUNBUFFERED=1"
 UMask=0007
 ExecStart=/var/www/sanayicin/backend/venv/bin/gunicorn --workers 3 --worker-class uvicorn.workers.UvicornWorker --bind unix:/var/www/sanayicin/backend/backend.sock main.asgi:application
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
