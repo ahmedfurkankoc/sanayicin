@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
-from .models import BlogCategory, BlogPost, SystemLog, AdminNotification, AdminSettings, AdminPermission, AdminUser
+from .models import *
 from vendors.models import VendorProfile
 
 User = get_user_model()
