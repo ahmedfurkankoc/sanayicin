@@ -118,6 +118,9 @@ export default function UsersPage() {
                   Kullanıcı
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ad Soyad
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   İletişim
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -146,6 +149,9 @@ export default function UsersPage() {
                         <div className="text-sm text-gray-500">ID: {user.id}</div>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{user.email}</div>
