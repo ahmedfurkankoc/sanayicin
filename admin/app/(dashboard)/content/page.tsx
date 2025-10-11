@@ -270,7 +270,7 @@ export default function ContentManagementPage() {
                     ) : (
                       <>
                         {canWriteContent && (
-                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50" onClick={() => setEditingServiceArea(sa)}>Düzenle</button>
+                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)]" onClick={() => setEditingServiceArea(sa)}>Düzenle</button>
                         )}
                         {canDeleteContent && (
                           <button
@@ -472,7 +472,7 @@ export default function ContentManagementPage() {
                     ) : (
                       <>
                         {canWriteContent && (
-                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50" onClick={() => setEditingCategory(cat)}>Düzenle</button>
+                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)]" onClick={() => setEditingCategory(cat)}>Düzenle</button>
                         )}
                         {canDeleteContent && (
                           <button
@@ -697,7 +697,7 @@ export default function ContentManagementPage() {
                     ) : (
                       <>
                         {canWriteContent && (
-                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50" onClick={() => setEditingBrand(brand)}>Düzenle</button>
+                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)]" onClick={() => setEditingBrand(brand)}>Düzenle</button>
                         )}
                         {canDeleteContent && (
                           <button

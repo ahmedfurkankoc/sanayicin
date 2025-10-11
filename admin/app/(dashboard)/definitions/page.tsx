@@ -27,6 +27,7 @@ type ModuleKey =
   | 'support'
   | 'content'
   | 'analytics'
+  | 'logs'
   | 'settings'
   | 'definitions'
 
@@ -38,6 +39,7 @@ const modules: Array<{ key: ModuleKey; label: string }> = [
   { key: 'support', label: 'Destek' },
   { key: 'content', label: 'İçerik' },
   { key: 'analytics', label: 'İstatistikler' },
+  { key: 'logs', label: 'Kayıtlar' },
   { key: 'settings', label: 'Ayarlar' },
   { key: 'definitions', label: 'Tanımlamalar' },
 ]
@@ -69,7 +71,7 @@ export default function DefinitionsPage() {
     return p
   }
 
-  const [roles, setRoles] = useState<RoleDef[]>([
+  const [roles, setRoles] = useState<RoleDef[]>(() => [
     { key: 'admin', name: 'Admin', description: 'Tüm yetkilere sahip.', permissions: fullPerms() },
     {
       key: 'editor',
@@ -233,7 +235,7 @@ export default function DefinitionsPage() {
                   <select
                     value={selectedRoleKey}
                     onChange={(e) => setSelectedRoleKey(e.target.value as RoleKey)}
-                    className="mt-1 w-full rounded-md border-gray-300"
+                    className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                   >
                     {roles.map((r) => (
                       <option key={r.key} value={r.key}>
@@ -279,7 +281,7 @@ export default function DefinitionsPage() {
                             )
                             setRoles(next)
                           }}
-                          className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                          className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                           disabled={role.key === 'admin'}
                         />
                       </div>
@@ -294,7 +296,7 @@ export default function DefinitionsPage() {
                             )
                             setRoles(next)
                           }}
-                          className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                          className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                         />
                       </div>
                   </div>
@@ -366,7 +368,7 @@ export default function DefinitionsPage() {
                           type="text"
                           value={createName}
                           onChange={(e) => setCreateName(e.target.value)}
-                          className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                          className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                           placeholder="Örn: Canlı Destek"
                         />
                       </div>
@@ -376,7 +378,7 @@ export default function DefinitionsPage() {
                           type="text"
                           value={createDescription}
                           onChange={(e) => setCreateDescription(e.target.value)}
-                          className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                          className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                           placeholder="Rol açıklaması"
                         />
                       </div>
@@ -429,7 +431,7 @@ export default function DefinitionsPage() {
                     type="search"
                     value={assignSearch}
                     onChange={(e) => setAssignSearch(e.target.value)}
-                    className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                    className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                     placeholder="E-posta ile ara"
                   />
                 </div>
@@ -438,7 +440,7 @@ export default function DefinitionsPage() {
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value as RoleKey)}
-                    className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                    className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] focus:ring-2 focus:ring-[color:var(--yellow)]"
                   >
                     {roles.map((r) => (
                       <option key={r.key} value={r.key}>
@@ -519,7 +521,7 @@ export default function DefinitionsPage() {
                                 }
                               }}
                               disabled={assigningIds.includes(u.id) || !canAccess('settings')}
-                              className="w-40 rounded-md border-[color:var(--yellow)]"
+                            className="w-40 rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                             >
                               {roles.map((r) => (
                                 <option key={r.key} value={r.key}>
@@ -588,7 +590,7 @@ export default function DefinitionsPage() {
                   type="email"
                   value={newAdmin.email}
                   onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-                  className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                  className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                   placeholder="admin@sanayicin.com"
                 />
               </div>
@@ -598,7 +600,7 @@ export default function DefinitionsPage() {
                   type="text"
                   value={newAdmin.firstName}
                   onChange={(e) => setNewAdmin({ ...newAdmin, firstName: e.target.value })}
-                  className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                  className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                 />
               </div>
               <div>
@@ -607,7 +609,7 @@ export default function DefinitionsPage() {
                   type="text"
                   value={newAdmin.lastName}
                   onChange={(e) => setNewAdmin({ ...newAdmin, lastName: e.target.value })}
-                  className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                  className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                 />
               </div>
               <div>
@@ -617,7 +619,7 @@ export default function DefinitionsPage() {
                     type={showNewAdminPassword ? 'text' : 'password'}
                     value={newAdmin.password}
                     onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-                    className="w-full rounded-md border-[color:var(--yellow)]"
+                    className="w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                     placeholder="En az 8 karakter"
                   />
                   <button
@@ -641,7 +643,7 @@ export default function DefinitionsPage() {
                 <select
                   value={newAdmin.role}
                   onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value as RoleKey })}
-                  className="mt-1 w-full rounded-md border-[color:var(--yellow)]"
+                  className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                 >
                   {roles.map((r) => (
                     <option key={r.key} value={r.key}>

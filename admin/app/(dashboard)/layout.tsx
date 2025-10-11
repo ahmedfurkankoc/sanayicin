@@ -75,16 +75,16 @@ export default function DashboardLayout({
         <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
           <div className="fixed inset-0 left-0 top-0 flex w-full h-full flex-col bg-gradient-to-b from-[var(--black)] via-[#222222] to-[var(--black)]">
             <div className="relative flex h-16 items-center px-4 mt-5">
-              <div className="flex-1 flex justify-center">
+              <div className="flex-1 flex justify-start">
                 <Link href="/">
-                  <Image src={logoEsnaf} alt="Sanayicin Esnaf Logo" priority className="h-20 w-auto" />
+                  <Image src={logoEsnaf} alt="Sanayicin Esnaf Logo" priority className="h-14 w-auto" />
                 </Link>
               </div>
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="absolute right-4 text-[color:rgba(255,255,255,0.8)] hover:text-white"
               >
-                <X className="h-6 w-6" />
+                <X className="h-6 w-6 text-white" />
               </button>
             </div>
             <nav className="flex-1 px-4 py-4 space-y-2">

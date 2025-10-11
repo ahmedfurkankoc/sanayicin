@@ -23,8 +23,8 @@ export default function Pagination({
   const endItem = Math.min(currentPage * pageSize, totalCount)
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between">
+    <div className="w-full">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-gray-700">
           {totalCount > 0 ? (
             <>
@@ -34,7 +34,7 @@ export default function Pagination({
             `Toplam 0 ${itemName}`
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Sayfa boyutu:</span>
             <select
@@ -49,9 +49,9 @@ export default function Pagination({
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap overflow-x-auto max-w-full">
             <button
-              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed min-w-[2.25rem]"
               disabled={currentPage <= 1}
               onClick={() => onPageChange(currentPage - 1)}
             >
@@ -61,7 +61,7 @@ export default function Pagination({
             {[1, 2].filter((p) => p <= totalPages).map((p) => (
               <button
                 key={p}
-                className={`px-3 py-1 rounded text-sm ${
+                className={`px-3 py-1 rounded text-sm min-w-[2.25rem] ${
                   p === currentPage
                     ? 'bg-[color:var(--yellow)] text-[color:var(--black)]'
                     : 'border border-gray-300 hover:bg-gray-50'
@@ -83,7 +83,7 @@ export default function Pagination({
               .map((p) => (
                 <button
                   key={p}
-                  className={`px-3 py-1 rounded text-sm ${
+                  className={`px-3 py-1 rounded text-sm min-w-[2.25rem] ${
                     p === currentPage
                       ? 'bg-[color:var(--yellow)] text-[color:var(--black)]'
                       : 'border border-gray-300 hover:bg-gray-50'
@@ -102,7 +102,7 @@ export default function Pagination({
             {/* Always show last page if > 2 */}
             {totalPages > 2 && (
               <button
-                className={`px-3 py-1 rounded text-sm ${
+                className={`px-3 py-1 rounded text-sm min-w-[2.25rem] ${
                   totalPages === currentPage
                     ? 'bg-[color:var(--yellow)] text-[color:var(--black)]'
                     : 'border border-gray-300 hover:bg-gray-50'
@@ -114,7 +114,7 @@ export default function Pagination({
             )}
             
             <button
-              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed min-w-[2.25rem]"
               disabled={currentPage >= totalPages}
               onClick={() => onPageChange(currentPage + 1)}
             >
@@ -124,7 +124,7 @@ export default function Pagination({
             {/* Go to last page button */}
             {currentPage < totalPages && (
               <button
-                className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50"
+                className="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50 min-w-[2.25rem]"
                 onClick={() => onPageChange(totalPages)}
                 title="Son sayfaya git"
               >
