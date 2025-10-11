@@ -1,12 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (
-    AdminLoginView, AdminLogoutView, AdminUserInfoView, DashboardStatsView, AdminAuthLogsView,
-    UserViewSet, VendorProfileViewSet, BlogCategoryViewSet, BlogPostViewSet, ImageUploadView,
-    ServiceAreaViewSet, CategoryViewSet, CarBrandViewSet, SupportTicketViewSet,
-    SupportMessageViewSet, SystemLogViewSet,
-    AdminNotificationViewSet, AdminSettingsViewSet, AdminUserViewSet
-)
+from .views import *
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
