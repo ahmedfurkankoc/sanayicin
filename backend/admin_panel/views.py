@@ -18,14 +18,8 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 
 logger = logging.getLogger('admin_panel.views')
-from .models import BlogCategory, BlogPost, SystemLog, AdminNotification, AdminSettings, AdminPermission, AdminUser
-from .serializers import (
-    BlogCategorySerializer, BlogPostSerializer, SystemLogSerializer,
-    AdminNotificationSerializer, AdminSettingsSerializer,
-    UserSerializer, VendorProfileSerializer, ServiceAreaSerializer, CategorySerializer,
-    CarBrandSerializer, SupportTicketSerializer, SupportMessageSerializer,
-    AdminLoginSerializer, AdminUserSerializer
-)
+from .models import *
+from .serializers import *
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
 from vendors.models import VendorProfile
 
