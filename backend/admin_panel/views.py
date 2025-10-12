@@ -830,6 +830,56 @@ class CarBrandViewSet(viewsets.ModelViewSet):
             elif is_active.lower() in ('false', '0'):
                 qs = qs.filter(is_active=False)
         return qs
+    
+    @action(detail=True, methods=['post'])
+    def upload_logo(self, request, pk=None):
+        """Araba markası logosu yükle"""
+        try:
+            brand = self.get_object()
+            logo_file = request.FILES.get('logo')
+            
+            if not logo_file:
+                return Response({
+                    'error': 'Logo dosyası bulunamadı'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Dosya boyutunu kontrol et (5MB max)
+            if logo_file.size > 5 * 1024 * 1024:
+                return Response({
+                    'error': 'Logo dosyası çok büyük (max 5MB)'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Dosya tipini kontrol et
+            allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+            if logo_file.content_type not in allowed_types:
+                return Response({
+                    'error': 'Geçersiz dosya tipi. Sadece JPEG, PNG, GIF ve WebP desteklenir'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Logo dosyasını kaydet
+            brand.logo = logo_file
+            brand.save()
+            
+            # Başarılı yükleme log'u
+            SystemLog.objects.create(
+                level='info',
+                message=f'Araba markası logosu güncellendi: {brand.name}',
+                module='content_management',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                'message': 'Logo başarıyla yüklendi',
+                'logo_url': brand.logo.url if brand.logo else None
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Logo upload error: {e}")
+            return Response({
+                'error': 'Logo yüklenemedi',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SystemLogViewSet(viewsets.ReadOnlyModelViewSet):
     """Sistem log görüntüleme"""

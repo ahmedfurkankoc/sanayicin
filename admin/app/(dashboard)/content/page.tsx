@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import {
   listServiceAreas,
   createServiceArea,
@@ -20,6 +20,13 @@ import {
 } from '../../api/admin'
 import { usePermissions } from '../../contexts/AuthContext'
 import Pagination from '../../components/Pagination'
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Upload,
+  X
+} from 'lucide-react'
 
 export default function ContentManagementPage() {
   const { canRead, canWrite, canDelete } = usePermissions()
@@ -60,12 +67,46 @@ export default function ContentManagementPage() {
   const [newBrand, setNewBrand] = useState<{ name: string; description?: string; is_active: boolean; logo_file: File | null }>({ name: '', is_active: true, logo_file: null })
   const [editingBrand, setEditingBrand] = useState<CarBrand | null>(null)
   const [brandModalOpen, setBrandModalOpen] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const serviceAreaMap = useMemo(() => {
     const m = new Map<number, ServiceArea>()
     for (const s of serviceAreas) m.set(s.id, s)
     return m
   }, [serviceAreas])
+
+  const handleLogoUpload = async (brandId: number, file: File) => {
+    try {
+      setUploadingLogo(brandId)
+      const formData = new FormData()
+      formData.append('logo', file)
+      
+      // API endpoint'ini çağır
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/admin'}/car-brands/${brandId}/upload_logo/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        }
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        setCarBrands(prev => prev.map(brand => 
+          brand.id === brandId ? { ...brand, logo: result.logo_url } : brand
+        ))
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Logo yüklenemedi')
+      }
+    } catch (error) {
+      console.error('Logo upload error:', error)
+      setError('Logo yüklenemedi')
+    } finally {
+      setUploadingLogo(null)
+    }
+  }
 
   useEffect(() => {
     if (!canReadContent) return
@@ -75,7 +116,7 @@ export default function ContentManagementPage() {
         setLoading(true)
         setError(null)
         const [sa, cats, brands] = await Promise.all([
-          listServiceAreas({ page: saPage, page_size: saPageSize, search: saSearch || undefined }),
+          listServiceAreas({ page: 1, page_size: 1000, search: saSearch || undefined }),
           listCategories({ page: catPage, page_size: catPageSize, search: catSearch || undefined }),
           listCarBrands({ page: brandPage, page_size: brandPageSize, search: brandSearch || undefined }),
         ])
@@ -96,7 +137,7 @@ export default function ContentManagementPage() {
     }
     loadAll()
     return () => { cancelled = true }
-  }, [canReadContent, saPage, saPageSize, saSearch, catPage, catPageSize, catSearch, brandPage, brandPageSize, brandSearch])
+  }, [canReadContent, saSearch, catPage, catPageSize, catSearch, brandPage, brandPageSize, brandSearch])
 
   if (!canReadContent) {
     return (
@@ -302,17 +343,9 @@ export default function ContentManagementPage() {
             </tbody>
           </table>
         </div>
-        {/* Pagination */}
-        <div className="mt-4">
-          <Pagination
-            currentPage={saPage}
-            totalPages={Math.max(1, Math.ceil(saTotal / saPageSize))}
-            totalCount={saTotal}
-            pageSize={saPageSize}
-            onPageChange={setSaPage}
-            onPageSizeChange={(size) => { setSaPageSize(size); setSaPage(1) }}
-            itemName="hizmet alanı"
-          />
+        {/* Service area count info */}
+        <div className="mt-4 text-sm text-gray-600">
+          Toplam {saTotal} hizmet alanı gösteriliyor
         </div>
       </section>
       )}
@@ -572,23 +605,50 @@ export default function ContentManagementPage() {
                   value={newBrand.description || ''}
                   onChange={(e) => setNewBrand((p) => ({ ...p, description: e.target.value }))}
                 />
-                <div className="md:col-span-2 flex items-center gap-3">
-                  <input
-                    id="brand-logo-file"
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(e) => setNewBrand((p) => ({ ...p, logo_file: e.target.files?.[0] || null }))}
-                  />
-                  <label
-                    htmlFor="brand-logo-file"
-                    className="cursor-pointer inline-flex items-center px-3 py-2 rounded border border-gray-300 text-sm bg-white hover:bg-gray-50 text-[color:var(--black)]"
-                  >
-                    Dosya Seç
-                  </label>
-                  <span className="text-sm text-gray-600 truncate">
-                    {newBrand.logo_file ? newBrand.logo_file.name : 'Seçili dosya yok'}
-                  </span>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Resim Yükle</label>
+                  
+                  {/* Logo Preview */}
+                  {newBrand.logo_file && (
+                    <div className="mb-3">
+                      <div className="w-[150px] h-[150px] border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
+                        <img 
+                          src={URL.createObjectURL(newBrand.logo_file)} 
+                          alt="Logo Preview" 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="brand-logo-file"
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => setNewBrand((p) => ({ ...p, logo_file: e.target.files?.[0] || null }))}
+                    />
+                    <label
+                      htmlFor="brand-logo-file"
+                      className="cursor-pointer inline-flex items-center px-3 py-2 rounded border border-gray-300 text-sm bg-white hover:bg-gray-50 text-[color:var(--black)]"
+                    >
+                      Resim Seç
+                    </label>
+                    <span className="text-sm text-gray-600 truncate">
+                      {newBrand.logo_file ? newBrand.logo_file.name : 'Seçili dosya yok'}
+                    </span>
+                    {newBrand.logo_file && (
+                      <button
+                        type="button"
+                        onClick={() => setNewBrand((p) => ({ ...p, logo_file: null }))}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Araç logosu boyutu: 150x150 piksel olmalıdır.</p>
                 </div>
               </div>
               <div className="mt-6 flex items-center justify-end gap-3">
@@ -637,13 +697,50 @@ export default function ContentManagementPage() {
               {carBrands.map((brand) => (
                 <tr key={brand.id}>
                   <td className="px-4 py-2 text-sm">
-                    {'logo' in brand && brand.logo ? (
-                      // Try to show image if possible
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={brand.logo as string} alt={brand.name} className="h-8 w-8 object-contain" />
-                    ) : (
-                      <span className="text-gray-400 text-xs">Yok</span>
-                    )}
+                    <div className="relative w-[80px] h-[80px] flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
+                      {'logo' in brand && brand.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img 
+                          src={brand.logo as string} 
+                          alt={brand.name} 
+                          className="w-full h-full object-contain rounded-lg" 
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-sm">Logo Yok</span>
+                      )}
+                      
+                      {/* Upload overlay */}
+                      {editingBrand?.id === brand.id && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                             onClick={() => fileInputRef.current?.click()}>
+                          <div className="text-white text-center">
+                            <Upload className="h-8 w-8 mx-auto mb-2" />
+                            <span className="text-sm">Logo Yükle</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Loading indicator */}
+                      {uploadingLogo === brand.id && (
+                        <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file && editingBrand?.id === brand.id) {
+                          handleLogoUpload(brand.id, file)
+                        }
+                      }}
+                    />
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-900">
                     {editingBrand?.id === brand.id ? (
