@@ -16,8 +16,10 @@ import secrets
 import logging
 from datetime import datetime, timedelta
 from django.utils import timezone
+from core.models import CustomUser
 
 logger = logging.getLogger('admin_panel.views')
+from .services import HostingerAPIService
 from .models import *
 from .serializers import *
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
@@ -914,3 +916,254 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     @admin_permission_required('users', 'delete')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+    @admin_permission_required('users', 'write')
+    def create(self, request, *args, **kwargs):
+        """Yeni admin oluşturma"""
+        serializer = AdminUserCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        # Log admin creation
+        SystemLog.objects.create(
+            level='info',
+            message=f"New admin created: {user.email} (role={user.role})",
+            module='admin_management',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        return Response(AdminUserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+# ========== Admin Permission Management ==========
+class AdminPermissionViewSet(viewsets.ModelViewSet):
+    """Admin permission yönetimi"""
+    queryset = AdminPermission.objects.all()
+    serializer_class = AdminPermissionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [AdminTokenAuthentication]
+
+    @admin_permission_required('settings', 'read')
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @admin_permission_required('settings', 'write')
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @admin_permission_required('settings', 'write')
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @admin_permission_required('settings', 'delete')
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+class AdminRoleManagementView(APIView):
+    """Admin rol tanımları yönetimi"""
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [AdminTokenAuthentication]
+
+    @admin_permission_required('settings', 'read')
+    def get(self, request):
+        """Mevcut rol tanımlarını getir"""
+        # AdminPermission modelinden rol tanımlarını oluştur
+        roles = {}
+        permissions = AdminPermission.objects.all()
+        
+        for perm in permissions:
+            if perm.role not in roles:
+                roles[perm.role] = {
+                    'key': perm.role,
+                    'name': dict(AdminPermission.ROLE_CHOICES).get(perm.role, perm.role.title()),
+                    'description': f'{perm.role.title()} rolü',
+                    'permissions': {}
+                }
+            
+            roles[perm.role]['permissions'][perm.permission] = {
+                'read': perm.can_read,
+                'write': perm.can_write,
+                'delete': perm.can_delete
+            }
+        
+        return Response(list(roles.values()))
+
+    @admin_permission_required('settings', 'write')
+    def post(self, request):
+        """Rol tanımlarını güncelle"""
+        roles_data = request.data.get('roles', [])
+        
+        # Mevcut permission'ları temizle
+        AdminPermission.objects.all().delete()
+        
+        # Yeni permission'ları oluştur
+        for role_data in roles_data:
+            role_key = role_data.get('key')
+            permissions = role_data.get('permissions', {})
+            
+            for permission_key, perm_data in permissions.items():
+                AdminPermission.objects.create(
+                    role=role_key,
+                    permission=permission_key,
+                    can_read=perm_data.get('read', False),
+                    can_write=perm_data.get('write', False),
+                    can_delete=perm_data.get('delete', False)
+                )
+        
+        # Log role update
+        SystemLog.objects.create(
+            level='info',
+            message=f"Admin roles updated by {getattr(request.user, 'email', 'unknown')}",
+            module='admin_management',
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        return Response({'message': 'Rol tanımları güncellendi'}, status=status.HTTP_200_OK)
+
+# ========== Server Monitoring Views ==========
+class ServerMonitoringView(APIView):
+    """Sunucu monitoring API'si"""
+    permission_classes = []  # Geçici olarak devre dışı
+    authentication_classes = []
+
+    def get(self, request):
+        """Tüm sunucuların monitoring verilerini getir"""
+        try:
+            hostinger_service = HostingerAPIService()
+            servers_data = hostinger_service.get_all_servers_summary()
+            
+            # Verileri formatla
+            formatted_data = []
+            for server in servers_data:
+                formatted_server = {
+                    'id': server.get('id'),
+                    'name': server.get('name'),
+                    'os': f"{server.get('os')} {server.get('os_version')}",
+                    'ip_address': server.get('ip_address'),
+                    'status': server.get('status'),
+                    'region': server.get('region'),
+                    'created_at': server.get('created_at'),
+                    'metrics': {
+                        'cpu_usage': hostinger_service.format_percentage(server.get('cpu_usage', 0)),
+                        'memory_usage': hostinger_service.format_percentage(server.get('memory_usage', 0)),
+                        'memory_used': hostinger_service.format_bytes(server.get('memory_used', 0)),
+                        'memory_total': hostinger_service.format_bytes(server.get('memory_total', 0)),
+                        'disk_usage': f"{hostinger_service.format_bytes(server.get('disk_used', 0))} / {hostinger_service.format_bytes(server.get('disk_total', 0))}",
+                        'disk_percentage': hostinger_service.format_percentage(server.get('disk_usage', 0)),
+                        'network_in': hostinger_service.format_bytes(server.get('network_in', 0)),
+                        'network_out': hostinger_service.format_bytes(server.get('network_out', 0)),
+                        'bandwidth_usage': f"{hostinger_service.format_bytes(server.get('bandwidth_used', 0))} / {hostinger_service.format_bytes(server.get('bandwidth_total', 0))}",
+                        'uptime': server.get('uptime', 0),
+                        'load_average': server.get('load_average', [0, 0, 0]),
+                    }
+                }
+                formatted_data.append(formatted_server)
+            
+            return Response({
+                'servers': formatted_data,
+                'total_servers': len(formatted_data),
+                'timestamp': timezone.now().isoformat()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Server monitoring error: {e}")
+            return Response({
+                'error': 'Sunucu verileri alınamadı',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ServerDetailView(APIView):
+    """Belirli bir sunucunun detaylı bilgileri"""
+    permission_classes = []  # Geçici olarak devre dışı
+    authentication_classes = []
+
+    def get(self, request, server_id):
+        """Sunucu detaylarını getir"""
+        try:
+            hostinger_service = HostingerAPIService()
+            server_data = hostinger_service.get_server_monitoring_data(server_id)
+            
+            if not server_data:
+                return Response({
+                    'error': 'Sunucu bulunamadı'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Detaylı formatla
+            formatted_data = {
+                'id': server_data.get('id'),
+                'name': server_data.get('name'),
+                'os': f"{server_data.get('os')} {server_data.get('os_version')}",
+                'ip_address': server_data.get('ip_address'),
+                'status': server_data.get('status'),
+                'region': server_data.get('region'),
+                'created_at': server_data.get('created_at'),
+                'ssh_command': f"ssh root@{server_data.get('ip_address')}",
+                'metrics': {
+                    'cpu_usage': hostinger_service.format_percentage(server_data.get('cpu_usage', 0)),
+                    'cpu_raw': server_data.get('cpu_usage', 0),
+                    'memory_usage': hostinger_service.format_percentage(server_data.get('memory_usage', 0)),
+                    'memory_raw': server_data.get('memory_usage', 0),
+                    'memory_used': hostinger_service.format_bytes(server_data.get('memory_used', 0)),
+                    'memory_total': hostinger_service.format_bytes(server_data.get('memory_total', 0)),
+                    'disk_usage': f"{hostinger_service.format_bytes(server_data.get('disk_used', 0))} / {hostinger_service.format_bytes(server_data.get('disk_total', 0))}",
+                    'disk_percentage': hostinger_service.format_percentage(server_data.get('disk_usage', 0)),
+                    'disk_raw': server_data.get('disk_usage', 0),
+                    'network_in': hostinger_service.format_bytes(server_data.get('network_in', 0)),
+                    'network_out': hostinger_service.format_bytes(server_data.get('network_out', 0)),
+                    'bandwidth_usage': f"{hostinger_service.format_bytes(server_data.get('bandwidth_used', 0))} / {hostinger_service.format_bytes(server_data.get('bandwidth_total', 0))}",
+                    'bandwidth_raw': server_data.get('bandwidth_used', 0),
+                    'uptime': server_data.get('uptime', 0),
+                    'load_average': server_data.get('load_average', [0, 0, 0]),
+                }
+            }
+            
+            return Response(formatted_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Server detail error: {e}")
+            return Response({
+                'error': 'Sunucu detayları alınamadı',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ServerActionView(APIView):
+    """Sunucu aksiyonları (restart, etc.)"""
+    permission_classes = []  # Geçici olarak devre dışı
+    authentication_classes = []
+
+    def post(self, request, server_id):
+        """Sunucu aksiyonu gerçekleştir"""
+        action = request.data.get('action')
+        
+        if not action:
+            return Response({
+                'error': 'Aksiyon belirtilmedi'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            hostinger_service = HostingerAPIService()
+            
+            if action == 'restart':
+                success = hostinger_service.restart_vm(server_id)
+                if success:
+                    return Response({
+                        'message': 'Sunucu yeniden başlatılıyor...',
+                        'action': 'restart',
+                        'server_id': server_id
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({
+                        'error': 'Sunucu yeniden başlatılamadı'
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                return Response({
+                    'error': 'Geçersiz aksiyon'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            logger.error(f"Server action error: {e}")
+            return Response({
+                'error': 'Aksiyon gerçekleştirilemedi',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

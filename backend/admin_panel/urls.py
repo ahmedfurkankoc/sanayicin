@@ -16,6 +16,7 @@ router.register(r'support-messages', SupportMessageViewSet)
 router.register(r'system-logs', SystemLogViewSet)
 router.register(r'notifications', AdminNotificationViewSet)
 router.register(r'settings', AdminSettingsViewSet)
+router.register(r'permissions', AdminPermissionViewSet)
 
 urlpatterns = [
     # Authentication endpoints
@@ -29,6 +30,14 @@ urlpatterns = [
     
     # Image upload
     path('upload-image/', ImageUploadView.as_view(), name='upload-image'),
+    
+    # Role management
+    path('roles/', AdminRoleManagementView.as_view(), name='admin-roles'),
+    
+    # Server monitoring
+    path('servers/', ServerMonitoringView.as_view(), name='server-monitoring'),
+    path('servers/<str:server_id>/', ServerDetailView.as_view(), name='server-detail'),
+    path('servers/<str:server_id>/action/', ServerActionView.as_view(), name='server-action'),
     
     # API endpoints
     path('', include(router.urls)),

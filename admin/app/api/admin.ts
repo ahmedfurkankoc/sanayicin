@@ -438,3 +438,86 @@ export function generateSlug(title: string): string {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
 }
+
+// ========== Admin Role Management ==========
+export interface AdminRole {
+  key: string
+  name: string
+  description: string
+  permissions: Record<string, { read: boolean; write: boolean; delete: boolean }>
+}
+
+export interface AdminUserCreateData {
+  email: string
+  first_name: string
+  last_name: string
+  password: string
+  role: string
+}
+
+export async function getAdminRoles(): Promise<AdminRole[]> {
+  const resp = await apiClient.get<AdminRole[]>('/roles/')
+  return resp.data
+}
+
+export async function updateAdminRoles(roles: AdminRole[]): Promise<{ message: string }> {
+  const resp = await apiClient.post<{ message: string }>('/roles/', { roles })
+  return resp.data
+}
+
+export async function createAdminUser(data: AdminUserCreateData): Promise<AdminUserItem> {
+  const resp = await apiClient.post<AdminUserItem>('/admin-users/', data)
+  return resp.data
+}
+
+// ========== Server Monitoring API ==========
+export interface ServerMetrics {
+  cpu_usage: string
+  cpu_raw: number
+  memory_usage: string
+  memory_raw: number
+  memory_used: string
+  memory_total: string
+  disk_usage: string
+  disk_percentage: string
+  disk_raw: number
+  network_in: string
+  network_out: string
+  bandwidth_usage: string
+  bandwidth_raw: number
+  uptime: number
+  load_average: number[]
+}
+
+export interface ServerInfo {
+  id: string
+  name: string
+  os: string
+  ip_address: string
+  status: string
+  region: string
+  created_at: string
+  ssh_command: string
+  metrics: ServerMetrics
+}
+
+export interface ServerMonitoringResponse {
+  servers: ServerInfo[]
+  total_servers: number
+  timestamp: string
+}
+
+export async function getServerMonitoring(): Promise<ServerMonitoringResponse> {
+  const resp = await apiClient.get<ServerMonitoringResponse>('/servers/')
+  return resp.data
+}
+
+export async function getServerDetail(serverId: string): Promise<ServerInfo> {
+  const resp = await apiClient.get<ServerInfo>(`/servers/${serverId}/`)
+  return resp.data
+}
+
+export async function performServerAction(serverId: string, action: string): Promise<{ message: string; action: string; server_id: string }> {
+  const resp = await apiClient.post<{ message: string; action: string; server_id: string }>(`/servers/${serverId}/action/`, { action })
+  return resp.data
+}
