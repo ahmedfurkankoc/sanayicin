@@ -8,7 +8,9 @@ import {
   Activity,
   RefreshCw,
   Copy,
-  Info
+  Info,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getServerMonitoring, type ServerInfo } from '../api/admin'
@@ -23,6 +25,7 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
   const [serversError, setServersError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
 
   // Load server monitoring data with smart caching
   useEffect(() => {
@@ -160,23 +163,36 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
   }
 
   return (
-    <div className={`bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100 ${className}`}>
+    <div 
+      onClick={() => setIsExpanded(!isExpanded)}
+      className={`bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100 cursor-pointer hover:shadow-xl transition-all duration-300 ${className}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-6 p-6 pb-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-100 rounded-lg">
             <Server className="h-6 w-6 text-blue-600" />
           </div>
-          <div>
+          <div className="text-left">
             <h3 className="text-xl font-semibold text-gray-900">Sunucu Durumu</h3>
             <p className="text-sm text-gray-500">
               {servers.length} sunucu • {lastUpdated && `Son güncelleme: ${lastUpdated.toLocaleTimeString()}`}
             </p>
           </div>
+          <div className="ml-2">
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 text-gray-400" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-gray-400" />
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={handleRefresh}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleRefresh()
+            }}
             disabled={serversLoading}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
           >
@@ -184,7 +200,10 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
             Yenile
           </button>
           <button
-            onClick={() => setShowInfoModal(true)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowInfoModal(true)
+            }}
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Info className="h-4 w-4" />
@@ -194,223 +213,228 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
       </div>
       
       {/* Content */}
-      <div className="px-6 pb-6">
-        {serversError ? (
-          <div className="text-center py-12">
-            <div className="p-3 bg-red-100 rounded-full w-fit mx-auto mb-4">
-              <Server className="h-8 w-8 text-red-600" />
-            </div>
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Sunucu Verileri Alınamadı</h4>
-            <p className="text-red-600 mb-4">{serversError}</p>
-            <button 
-              onClick={handleRefresh}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Tekrar Dene
-            </button>
-          </div>
-        ) : serversLoading ? (
-          <div className="text-center py-12">
-            <div className="p-3 bg-blue-100 rounded-full w-fit mx-auto mb-4">
-              <RefreshCw className="h-8 w-8 text-blue-600 animate-spin" />
-            </div>
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Sunucu Verileri Yükleniyor</h4>
-            <p className="text-gray-600">Lütfen bekleyin...</p>
-          </div>
-        ) : servers.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-4">
-              <Server className="h-8 w-8 text-gray-400" />
-            </div>
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Sunucu Bulunamadı</h4>
-            <p className="text-gray-600">Henüz hiç sunucu eklenmemiş.</p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {servers.map((server) => (
-              <div key={server.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                {/* Server Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-4 h-4 rounded-full ${
-                        server.status === 'running' ? 'bg-green-500 shadow-green-200 shadow-lg' : 
-                        server.status === 'stopped' ? 'bg-red-500 shadow-red-200 shadow-lg' : 
-                        'bg-yellow-500 shadow-yellow-200 shadow-lg'
-                      }`}></div>
-                      <div>
-                        <h4 className="text-xl font-semibold text-gray-900">{server.name}</h4>
-                        <p className="text-sm text-gray-500">{server.os} • {server.ip_address}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => navigator.clipboard.writeText(`ssh root@${server.ip_address}`)}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      <Copy className="h-4 w-4" />
-                      SSH Kopyala
-                    </button>
-                  </div>
-                </div>
-
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* CPU Usage */}
-                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-500 rounded-lg">
-                          <Cpu className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h5 className="font-semibold text-gray-900">CPU Kullanımı</h5>
-                          <p className="text-sm text-gray-600">İşlemci yükü</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">{server.metrics.cpu_usage}</div>
-                        <div className="text-xs text-gray-500">Ortalama</div>
-                      </div>
-                    </div>
-                    <ProgressBar 
-                      value={parseFloat(server.metrics.cpu_usage.replace('%', ''))} 
-                      color="blue" 
-                      size="lg"
-                      unit="%"
-                    />
-                  </div>
-
-                  {/* Memory Usage */}
-                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-500 rounded-lg">
-                          <Activity className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h5 className="font-semibold text-gray-900">Bellek Kullanımı</h5>
-                          <p className="text-sm text-gray-600">RAM kullanımı</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">{server.metrics.memory_usage}</div>
-                        <div className="text-xs text-gray-500">Ortalama</div>
-                      </div>
-                    </div>
-                    <ProgressBar 
-                      value={parseFloat(server.metrics.memory_usage.replace('%', ''))} 
-                      color="green" 
-                      size="lg"
-                      unit="%"
-                    />
-                  </div>
-
-                  {/* Disk Usage */}
-                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500 rounded-lg">
-                          <HardDrive className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h5 className="font-semibold text-gray-900">Disk Kullanımı</h5>
-                          <p className="text-sm text-gray-600">Depolama alanı</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-purple-600">{server.metrics.disk_percentage}</div>
-                        <div className="text-xs text-gray-500">Kullanılan</div>
-                      </div>
-                    </div>
-                    <ProgressBar 
-                      value={parseFloat(server.metrics.disk_percentage.replace('%', ''))} 
-                      color="purple" 
-                      size="lg"
-                      unit="%"
-                    />
-                  </div>
-
-                  {/* Network In */}
-                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500 rounded-lg">
-                          <Wifi className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h5 className="font-semibold text-gray-900">Gelen Trafik</h5>
-                          <p className="text-sm text-gray-600">Network girişi</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-orange-600">{server.metrics.network_in}</div>
-                        <div className="text-xs text-gray-500">MB/s</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Sunucuya gelen veri trafiği. Web siteleri, API istekleri ve dosya indirmeleri buradan geçer.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Network Out */}
-                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-500 rounded-lg">
-                          <Wifi className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h5 className="font-semibold text-gray-900">Giden Trafik</h5>
-                          <p className="text-sm text-gray-600">Network çıkışı</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-indigo-600">{server.metrics.network_out}</div>
-                        <div className="text-xs text-gray-500">MB/s</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Sunucudan çıkan veri trafiği. Sayfa yanıtları, dosya yüklemeleri ve API cevapları buradan geçer.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Bandwidth */}
-                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-pink-500 rounded-lg">
-                          <Wifi className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h5 className="font-semibold text-gray-900">Bant Genişliği</h5>
-                          <p className="text-sm text-gray-600">Aylık limit</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-pink-600">{server.metrics.bandwidth_usage}</div>
-                        <div className="text-xs text-gray-500">TB</div>
-                      </div>
-                    </div>
-                    <ProgressBar 
-                      value={parseFloat(server.metrics.bandwidth_usage.split(' / ')[0].replace(' KB', '')) / (1024 * 1024)} 
-                      color="pink" 
-                      size="lg"
-                      max={parseFloat(server.metrics.bandwidth_usage.split(' / ')[1].replace(' TB', '')) * 1024}
-                      unit=" GB"
-                    />
-                  </div>
-                </div>
+      {isExpanded && (
+        <div className="px-6 pb-6">
+          {serversError ? (
+            <div className="text-center py-12">
+              <div className="p-3 bg-red-100 rounded-full w-fit mx-auto mb-4">
+                <Server className="h-8 w-8 text-red-600" />
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <h4 className="text-lg font-medium text-gray-900 mb-2">Sunucu Verileri Alınamadı</h4>
+              <p className="text-red-600 mb-4">{serversError}</p>
+              <button 
+                onClick={handleRefresh}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Tekrar Dene
+              </button>
+            </div>
+          ) : serversLoading ? (
+            <div className="text-center py-12">
+              <div className="p-3 bg-blue-100 rounded-full w-fit mx-auto mb-4">
+                <RefreshCw className="h-8 w-8 text-blue-600 animate-spin" />
+              </div>
+              <h4 className="text-lg font-medium text-gray-900 mb-2">Sunucu Verileri Yükleniyor</h4>
+              <p className="text-gray-600">Lütfen bekleyin...</p>
+            </div>
+          ) : servers.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="p-3 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                <Server className="h-8 w-8 text-gray-400" />
+              </div>
+              <h4 className="text-lg font-medium text-gray-900 mb-2">Sunucu Bulunamadı</h4>
+              <p className="text-gray-600">Henüz hiç sunucu eklenmemiş.</p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {servers.map((server) => (
+                <div key={server.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                  {/* Server Header */}
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full ${
+                          server.status === 'running' ? 'bg-green-500 shadow-green-200 shadow-lg' : 
+                          server.status === 'stopped' ? 'bg-red-500 shadow-red-200 shadow-lg' : 
+                          'bg-yellow-500 shadow-yellow-200 shadow-lg'
+                        }`}></div>
+                        <div>
+                          <h4 className="text-xl font-semibold text-gray-900">{server.name}</h4>
+                          <p className="text-sm text-gray-500">{server.os} • {server.ip_address}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigator.clipboard.writeText(`ssh root@${server.ip_address}`)
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <Copy className="h-4 w-4" />
+                        SSH Kopyala
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Metrics Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* CPU Usage */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-500 rounded-lg">
+                            <Cpu className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-gray-900">CPU Kullanımı</h5>
+                            <p className="text-sm text-gray-600">İşlemci yükü</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-blue-600">{server.metrics.cpu_usage}</div>
+                          <div className="text-xs text-gray-500">Ortalama</div>
+                        </div>
+                      </div>
+                      <ProgressBar 
+                        value={parseFloat(server.metrics.cpu_usage.replace('%', ''))} 
+                        color="blue" 
+                        size="lg"
+                        unit="%"
+                      />
+                    </div>
+
+                    {/* Memory Usage */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-green-500 rounded-lg">
+                            <Activity className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-gray-900">Bellek Kullanımı</h5>
+                            <p className="text-sm text-gray-600">RAM kullanımı</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-green-600">{server.metrics.memory_usage}</div>
+                          <div className="text-xs text-gray-500">Ortalama</div>
+                        </div>
+                      </div>
+                      <ProgressBar 
+                        value={parseFloat(server.metrics.memory_usage.replace('%', ''))} 
+                        color="green" 
+                        size="lg"
+                        unit="%"
+                      />
+                    </div>
+
+                    {/* Disk Usage */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-purple-500 rounded-lg">
+                            <HardDrive className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-gray-900">Disk Kullanımı</h5>
+                            <p className="text-sm text-gray-600">Depolama alanı</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-purple-600">{server.metrics.disk_percentage}</div>
+                          <div className="text-xs text-gray-500">Kullanılan</div>
+                        </div>
+                      </div>
+                      <ProgressBar 
+                        value={parseFloat(server.metrics.disk_percentage.replace('%', ''))} 
+                        color="purple" 
+                        size="lg"
+                        unit="%"
+                      />
+                    </div>
+
+                    {/* Network In */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-orange-500 rounded-lg">
+                            <Wifi className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-gray-900">Gelen Trafik</h5>
+                            <p className="text-sm text-gray-600">Network girişi</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-orange-600">{server.metrics.network_in}</div>
+                          <div className="text-xs text-gray-500">MB/s</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          Sunucuya gelen veri trafiği. Web siteleri, API istekleri ve dosya indirmeleri buradan geçer.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Network Out */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-500 rounded-lg">
+                            <Wifi className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-gray-900">Giden Trafik</h5>
+                            <p className="text-sm text-gray-600">Network çıkışı</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-indigo-600">{server.metrics.network_out}</div>
+                          <div className="text-xs text-gray-500">MB/s</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          Sunucudan çıkan veri trafiği. Sayfa yanıtları, dosya yüklemeleri ve API cevapları buradan geçer.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Bandwidth */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-pink-500 rounded-lg">
+                            <Wifi className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-gray-900">Bant Genişliği</h5>
+                            <p className="text-sm text-gray-600">Aylık limit</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-pink-600">{server.metrics.bandwidth_usage}</div>
+                          <div className="text-xs text-gray-500">TB</div>
+                        </div>
+                      </div>
+                      <ProgressBar 
+                        value={parseFloat(server.metrics.bandwidth_usage.split(' / ')[0].replace(' KB', '')) / (1024 * 1024)} 
+                        color="pink" 
+                        size="lg"
+                        max={parseFloat(server.metrics.bandwidth_usage.split(' / ')[1].replace(' TB', '')) * 1024}
+                        unit=" GB"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Info Modal */}
       {showInfoModal && (
