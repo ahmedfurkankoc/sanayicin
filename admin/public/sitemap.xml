@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Admin paneli için sitemap boş bırakıldı -->
-</urlset>
-
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Admin paneli için sitemap boş bırakıldı -->
-</urlset>
-
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Admin paneli için sitemap boş bırakıldı -->
-</urlset>
-
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Admin paneli için sitemap boş bırakıldı -->
+  <!-- Admin paneli - Google indexing disabled -->
+  <!-- Bu sitemap boş bırakıldı çünkü admin paneli indexlenmemeli -->
 </urlset>

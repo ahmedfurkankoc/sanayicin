@@ -20,14 +20,20 @@ const PERMISSION_MATRIX: { [key: string]: string[] } = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
+  // SEO engelleme header'ları ekle
+  const response = NextResponse.next()
+  
+  // Google ve diğer arama motorlarını engelle
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow, nosnippet, noarchive, noimageindex')
+  
   // Login sayfasına erişim serbest
   if (pathname === '/login') {
-    return NextResponse.next()
+    return response
   }
 
   // Middleware'i devre dışı bırak - localStorage kontrolü client-side'da yapılıyor
   // Cross-domain cookie sorunu nedeniyle middleware cookie kontrolü yapamıyor
-  return NextResponse.next()
+  return response
 }
 
 function getRequiredPermission(pathname: string): string | null {
