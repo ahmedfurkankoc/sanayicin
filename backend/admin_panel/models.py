@@ -69,6 +69,7 @@ class AdminPermission(models.Model):
         ('content', 'İçerik Yönetimi'),
         ('analytics', 'İstatistikler'),
         ('settings', 'Sistem Ayarları'),
+        ('definitions', 'Tanımlamalar'),
         ('live_support', 'Canlı Destek'),
         ('logs', 'Sistem Logları'),
     ]

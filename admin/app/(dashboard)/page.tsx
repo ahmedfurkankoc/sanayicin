@@ -9,6 +9,7 @@ import {
   Settings
 } from 'lucide-react'
 import { fetchDashboardStats, fetchAdminAuthLogs, type AdminAuthLogItem } from '../api/admin'
+import ServerMonitoringWidget from '../components/ServerMonitoringWidget'
 import { useAuth } from '../contexts/AuthContext'
 import { useEffect, useState } from 'react'
 import { usePermissions } from '../contexts/AuthContext'
@@ -89,7 +90,8 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats grid */}
+      {/* Server Monitoring */}
+      <ServerMonitoringWidget />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon
@@ -321,6 +323,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
 
       {/* Quick actions */}
       <div className="bg-white rounded-lg shadow p-6">

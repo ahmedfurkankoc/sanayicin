@@ -118,6 +118,36 @@ class SupportMessageSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['user', 'created_at']
 
+# ========== Admin Permission Serializers ==========
+class AdminPermissionSerializer(serializers.ModelSerializer):
+    """Admin permission serializer'ı"""
+    class Meta:
+        model = AdminPermission
+        fields = ['id', 'role', 'permission', 'can_read', 'can_write', 'can_delete']
+        read_only_fields = ['id']
+
+class AdminRoleSerializer(serializers.Serializer):
+    """Admin rol tanımları için serializer"""
+    key = serializers.CharField(max_length=20)
+    name = serializers.CharField(max_length=100)
+    description = serializers.CharField(max_length=500)
+    permissions = serializers.DictField()
+
+class AdminUserCreateSerializer(serializers.ModelSerializer):
+    """Yeni admin oluşturma serializer'ı"""
+    password = serializers.CharField(write_only=True, min_length=8)
+    
+    class Meta:
+        model = AdminUser
+        fields = ['email', 'first_name', 'last_name', 'role', 'password']
+    
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = AdminUser.objects.create(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
 # ========== Dashboard Serializers ==========
 class DashboardStatsSerializer(serializers.Serializer):
     """Dashboard istatistikleri serializer'ı"""

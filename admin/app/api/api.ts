@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/admin'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/admin'
 
 // Simple cache for API responses
 const apiCache = new Map<string, { data: unknown; timestamp: number; ttl: number }>()
