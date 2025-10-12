@@ -1,8 +1,12 @@
 User-agent: *
 Disallow: /
 
+# Admin panel - Google indexing disabled
+User-agent: Googlebot
 Disallow: /
 
+User-agent: Bingbot
 Disallow: /
 
+User-agent: Slurp
 Disallow: /

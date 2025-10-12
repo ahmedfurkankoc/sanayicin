@@ -75,3 +75,17 @@ select option {
 .btn-danger:hover {
   background-color: #fecaca; /* red-200 */
 }
+
+/* Login page animations */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
