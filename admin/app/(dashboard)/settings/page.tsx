@@ -252,7 +252,8 @@ export default function SettingsPage() {
                     </div>
                     <button
                       onClick={() => setShowAddDomain(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 text-black rounded-lg transition-colors"
+                      style={{ backgroundColor: 'var(--yellow)' }}
                     >
                       <Plus className="h-4 w-4" />
                       Domain Ekle
@@ -260,51 +261,43 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Domain Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-500 rounded-lg">
-                          <Globe className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">Toplam</h3>
-                          <p className="text-2xl font-bold text-blue-600">{domainStats.total}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="flex items-center">
+                        <Globe className="h-8 w-8 text-blue-600" />
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-500">Toplam</p>
+                          <p className="text-2xl font-semibold text-gray-900">{domainStats.total}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-500 rounded-lg">
-                          <CheckCircle className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">Aktif</h3>
-                          <p className="text-2xl font-bold text-green-600">{domainStats.active}</p>
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="flex items-center">
+                        <CheckCircle className="h-8 w-8 text-green-600" />
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-500">Aktif</p>
+                          <p className="text-2xl font-semibold text-gray-900">{domainStats.active}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 border border-yellow-200">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-500 rounded-lg">
-                          <AlertCircle className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">Yakında Dolacak</h3>
-                          <p className="text-2xl font-bold text-yellow-600">{domainStats.expiring_soon}</p>
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="flex items-center">
+                        <AlertCircle className="h-8 w-8 text-yellow-600" />
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-500">Yakında Dolacak</p>
+                          <p className="text-2xl font-semibold text-gray-900">{domainStats.expiring_soon}</p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-red-500 rounded-lg">
-                          <XCircle className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">Süresi Dolmuş</h3>
-                          <p className="text-2xl font-bold text-red-600">{domainStats.expired}</p>
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="flex items-center">
+                        <XCircle className="h-8 w-8 text-red-600" />
+                        <div className="ml-4">
+                          <p className="text-sm font-medium text-gray-500">Süresi Dolmuş</p>
+                          <p className="text-2xl font-semibold text-gray-900">{domainStats.expired}</p>
                         </div>
                       </div>
                     </div>
@@ -361,7 +354,8 @@ export default function SettingsPage() {
                             <button
                               onClick={handleAddDomain}
                               disabled={!newDomainName.trim() || domainsLoading}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                              className="px-4 py-2 text-black rounded-lg disabled:opacity-50 transition-colors"
+                              style={{ backgroundColor: 'var(--yellow)' }}
                             >
                               {domainsLoading ? 'Ekleniyor...' : 'Ekle'}
                             </button>
@@ -381,7 +375,8 @@ export default function SettingsPage() {
                       <p className="text-red-600 mb-4">{domainsError}</p>
                       <button 
                         onClick={loadDomains}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        className="px-4 py-2 text-black rounded-lg transition-colors"
+                        style={{ backgroundColor: 'var(--yellow)' }}
                       >
                         Tekrar Dene
                       </button>
@@ -403,7 +398,8 @@ export default function SettingsPage() {
                       <p className="text-gray-600 mb-4">İlk domaininizi ekleyerek başlayın</p>
                       <button
                         onClick={() => setShowAddDomain(true)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="px-4 py-2 text-black rounded-lg transition-colors"
+                        style={{ backgroundColor: 'var(--yellow)' }}
                       >
                         Domain Ekle
                       </button>
@@ -669,7 +665,8 @@ export default function SettingsPage() {
                       <button
                         onClick={handleProfileSave}
                         disabled={saving}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                        className="px-4 py-2 text-black rounded-lg disabled:opacity-50 flex items-center gap-2"
+                        style={{ backgroundColor: 'var(--yellow)' }}
                       >
                         <Save className="h-4 w-4" />
                         {saving ? 'Kaydediliyor...' : 'Kaydet'}
@@ -730,7 +727,8 @@ export default function SettingsPage() {
                     <button
                       onClick={handlePasswordChange}
                       disabled={pwdSaving || !currPwd || !newPwd}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                      className="px-4 py-2 text-black rounded-lg disabled:opacity-50 flex items-center gap-2"
+                      style={{ backgroundColor: 'var(--yellow)' }}
                     >
                       <Key className="h-4 w-4" />
                       {pwdSaving ? 'Değiştiriliyor...' : 'Şifreyi Değiştir'}
