@@ -19,7 +19,9 @@ import {
   Menu,
   X,
   Bell,
-  ClipboardList
+  ClipboardList,
+  UserCheck,
+  User
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 
@@ -32,7 +34,8 @@ const navigation = [
   { name: 'İçerik', href: '/content', icon: FileText, permission: 'content' },
   { name: 'İstatistikler', href: '/analytics', icon: BarChart3, permission: 'analytics' },
   { name: 'Kayıtlar', href: '/logs', icon: ClipboardList, permission: 'logs' },
-  { name: 'Tanımlamalar', href: '/definitions', icon: Settings, permission: 'settings' },
+  { name: 'Tanımlamalar', href: '/definitions', icon: UserCheck, permission: 'definitions' },
+  { name: 'Ayarlar', href: '/settings', icon: Settings, permission: 'settings' },
 ]
 
 export default function DashboardLayout({
@@ -128,7 +131,7 @@ export default function DashboardLayout({
               </div>
               <button
                 onClick={logout}
-                className="mt-3 w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-[color:rgba(255,255,255,0.9)] hover:bg-[color:var(--yellow)] hover:text-[color:var(--black)] transition-colors"
+                className="mt-3 w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium sidebar-logout-btn hover:bg-[color:var(--yellow)] transition-colors"
               >
                 <LogOut className="mr-3 h-4 w-4" />
                 Çıkış Yap
@@ -185,7 +188,7 @@ export default function DashboardLayout({
               </div>
               <button
                 onClick={logout}
-                className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-[color:rgba(255,255,255,0.9)] hover:bg-[color:var(--yellow)] hover:text-[color:var(--black)] transition-colors"
+                className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium sidebar-logout-btn hover:bg-[color:var(--yellow)] transition-colors"
               >
                 <LogOut className="mr-3 h-4 w-4" />
                 Çıkış Yap
@@ -249,18 +252,20 @@ export default function DashboardLayout({
                     >
                       <div className="py-1">
                         <Link
-                          href="/profile"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          role="menuitem"
+                          href="/settings?tab=profile"
                           onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          role="menuitem"
                         >
+                          <User className="mr-3 h-4 w-4" />
                           Profil
                         </Link>
                         <button
                           onClick={() => { setUserMenuOpen(false); logout() }}
-                          className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                           role="menuitem"
                         >
+                          <LogOut className="mr-3 h-4 w-4" />
                           Çıkış Yap
                         </button>
                       </div>

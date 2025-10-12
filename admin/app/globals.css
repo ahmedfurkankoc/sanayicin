@@ -32,6 +32,15 @@ button {
   color: var(--black);
 }
 
+/* Sidebar logout button override */
+.sidebar-logout-btn {
+  color: white !important;
+}
+
+.sidebar-logout-btn:hover {
+  color: var(--black) !important;
+}
+
 input::placeholder,
 textarea::placeholder {
   color: #6b7280; /* gray-500 */

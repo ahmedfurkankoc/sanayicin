@@ -1167,3 +1167,182 @@ class ServerActionView(APIView):
                 'error': 'Aksiyon gerçekleştirilemedi',
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# ========== Domain Management Views ==========
+class DomainViewSet(viewsets.ModelViewSet):
+    """Domain yönetimi"""
+    queryset = Domain.objects.all()
+    serializer_class = DomainSerializer
+    permission_classes = []  # Geçici olarak devre dışı
+    authentication_classes = []
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return DomainCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return DomainUpdateSerializer
+        return DomainSerializer
+    
+    def list(self, request):
+        """Domain listesi"""
+        try:
+            domains = Domain.objects.all().order_by('name')
+            serializer = self.get_serializer(domains, many=True)
+            
+            return Response({
+                'domains': serializer.data,
+                'total': domains.count(),
+                'expiring_soon': domains.filter(status='expiring_soon').count(),
+                'expired': domains.filter(status='expired').count(),
+                'active': domains.filter(status='active').count()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Domain list error: {e}")
+            return Response({
+                'error': 'Domain listesi alınamadı',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def create(self, request):
+        """Yeni domain ekle"""
+        try:
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                domain = serializer.save()
+                
+                # Başarılı oluşturma log'u
+                SystemLog.objects.create(
+                    level='info',
+                    message=f'Yeni domain eklendi: {domain.name}',
+                    module='domain_management',
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                )
+                
+                return Response({
+                    'message': 'Domain başarıyla eklendi',
+                    'domain': DomainSerializer(domain).data
+                }, status=status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    'error': 'Geçersiz veri',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            logger.error(f"Domain create error: {e}")
+            return Response({
+                'error': 'Domain eklenemedi',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def update(self, request, pk=None):
+        """Domain güncelle"""
+        try:
+            domain = self.get_object()
+            serializer = self.get_serializer(domain, data=request.data, partial=True)
+            
+            if serializer.is_valid():
+                updated_domain = serializer.save()
+                
+                return Response({
+                    'message': 'Domain başarıyla güncellendi',
+                    'domain': DomainSerializer(updated_domain).data
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Geçersiz veri',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+        except Exception as e:
+            logger.error(f"Domain update error: {e}")
+            return Response({
+                'error': 'Domain güncellenemedi',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def destroy(self, request, pk=None):
+        """Domain sil"""
+        try:
+            domain = self.get_object()
+            domain_name = domain.name
+            domain.delete()
+            
+            # Silme log'u
+            SystemLog.objects.create(
+                level='info',
+                message=f'Domain silindi: {domain_name}',
+                module='domain_management',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                'message': 'Domain başarıyla silindi'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Domain delete error: {e}")
+            return Response({
+                'error': 'Domain silinemedi',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['post'])
+    def refresh(self, request, pk=None):
+        """Domain bilgilerini yenile"""
+        try:
+            domain = self.get_object()
+            from .domain_service import DomainService
+            
+            domain_service = DomainService()
+            domain_info = domain_service.get_domain_info(domain.name)
+            
+            # Domain bilgilerini güncelle
+            domain.registrar = domain_info['registrar']
+            domain.registration_date = domain_info['registration_date']
+            domain.expiration_date = domain_info['expiration_date']
+            domain.nameservers = domain_info['nameservers']
+            domain.admin_email = domain_info['admin_email']
+            domain.tech_email = domain_info['tech_email']
+            domain.status = domain_info['status']
+            domain.save()
+            
+            return Response({
+                'message': 'Domain bilgileri başarıyla yenilendi',
+                'domain': DomainSerializer(domain).data
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Domain refresh error: {e}")
+            return Response({
+                'error': 'Domain bilgileri yenilenemedi',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def expiring_soon(self, request):
+        """Yakında dolacak domainler"""
+        try:
+            days = int(request.query_params.get('days', 30))
+            expiring_domains = Domain.objects.filter(
+                status='expiring_soon',
+                days_until_expiry__lte=days
+            ).order_by('expiration_date')
+            
+            serializer = self.get_serializer(expiring_domains, many=True)
+            
+            return Response({
+                'domains': serializer.data,
+                'count': expiring_domains.count(),
+                'days_threshold': days
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Expiring domains error: {e}")
+            return Response({
+                'error': 'Yakında dolacak domainler alınamadı',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

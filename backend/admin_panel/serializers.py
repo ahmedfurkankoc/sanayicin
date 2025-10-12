@@ -159,3 +159,63 @@ class DashboardStatsSerializer(serializers.Serializer):
     active_service_areas = serializers.IntegerField()
     active_categories = serializers.IntegerField()
     active_car_brands = serializers.IntegerField()
+
+# ========== Domain Serializers ==========
+class DomainSerializer(serializers.ModelSerializer):
+    """Domain serializer'ı"""
+    is_expiring_soon = serializers.BooleanField(read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    
+    class Meta:
+        model = Domain
+        fields = [
+            'id', 'name', 'registrar', 'registration_date', 'expiration_date',
+            'status', 'days_until_expiry', 'nameservers', 'admin_email',
+            'tech_email', 'auto_renew', 'last_checked', 'created_at',
+            'updated_at', 'is_expiring_soon', 'is_expired'
+        ]
+        read_only_fields = [
+            'id', 'status', 'days_until_expiry', 'last_checked',
+            'created_at', 'updated_at', 'is_expiring_soon', 'is_expired'
+        ]
+
+class DomainCreateSerializer(serializers.ModelSerializer):
+    """Domain oluşturma serializer'ı"""
+    class Meta:
+        model = Domain
+        fields = ['name', 'auto_renew']
+    
+    def create(self, validated_data):
+        from .domain_service import DomainService
+        
+        domain_name = validated_data['name']
+        domain_service = DomainService()
+        
+        # WHOIS bilgilerini al
+        domain_info = domain_service.get_domain_info(domain_name)
+        
+        # Domain objesini oluştur
+        domain = Domain.objects.create(
+            name=domain_info['name'],
+            registrar=domain_info['registrar'],
+            registration_date=domain_info['registration_date'],
+            expiration_date=domain_info['expiration_date'],
+            nameservers=domain_info['nameservers'],
+            admin_email=domain_info['admin_email'],
+            tech_email=domain_info['tech_email'],
+            auto_renew=validated_data.get('auto_renew', False),
+            status=domain_info['status']
+        )
+        
+        return domain
+
+class DomainUpdateSerializer(serializers.ModelSerializer):
+    """Domain güncelleme serializer'ı"""
+    class Meta:
+        model = Domain
+        fields = ['auto_renew']
+    
+    def update(self, instance, validated_data):
+        instance.auto_renew = validated_data.get('auto_renew', instance.auto_renew)
+        instance.save()
+        return instance

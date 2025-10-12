@@ -521,3 +521,70 @@ export async function performServerAction(serverId: string, action: string): Pro
   const resp = await apiClient.post<{ message: string; action: string; server_id: string }>(`/servers/${serverId}/action/`, { action })
   return resp.data
 }
+
+// Domain Management API
+export interface Domain {
+  id: number
+  name: string
+  registrar: string
+  registration_date: string | null
+  expiration_date: string | null
+  status: 'active' | 'expired' | 'expiring_soon' | 'error'
+  days_until_expiry: number | null
+  nameservers: string[]
+  admin_email: string
+  tech_email: string
+  auto_renew: boolean
+  last_checked: string
+  created_at: string
+  updated_at: string
+  is_expiring_soon: boolean
+  is_expired: boolean
+}
+
+export interface DomainListResponse {
+  domains: Domain[]
+  total: number
+  expiring_soon: number
+  expired: number
+  active: number
+}
+
+export interface DomainCreateRequest {
+  name: string
+  auto_renew?: boolean
+}
+
+export interface DomainUpdateRequest {
+  auto_renew: boolean
+}
+
+export async function getDomains(): Promise<DomainListResponse> {
+  const resp = await apiClient.get<DomainListResponse>('/domains/')
+  return resp.data
+}
+
+export async function createDomain(data: DomainCreateRequest): Promise<{ message: string; domain: Domain }> {
+  const resp = await apiClient.post<{ message: string; domain: Domain }>('/domains/', data)
+  return resp.data
+}
+
+export async function updateDomain(id: number, data: DomainUpdateRequest): Promise<{ message: string; domain: Domain }> {
+  const resp = await apiClient.patch<{ message: string; domain: Domain }>(`/domains/${id}/`, data)
+  return resp.data
+}
+
+export async function deleteDomain(id: number): Promise<{ message: string }> {
+  const resp = await apiClient.delete<{ message: string }>(`/domains/${id}/`)
+  return resp.data
+}
+
+export async function refreshDomain(id: number): Promise<{ message: string; domain: Domain }> {
+  const resp = await apiClient.post<{ message: string; domain: Domain }>(`/domains/${id}/refresh/`)
+  return resp.data
+}
+
+export async function getExpiringDomains(days: number = 30): Promise<{ domains: Domain[]; count: number; days_threshold: number }> {
+  const resp = await apiClient.get<{ domains: Domain[]; count: number; days_threshold: number }>(`/domains/expiring_soon/?days=${days}`)
+  return resp.data
+}

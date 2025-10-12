@@ -55,6 +55,7 @@ export function getCachedData(url: string, params?: Record<string, unknown>): un
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 30000, // 30 saniye timeout
 })
 
 // Request interceptor - localStorage'dan token al ve Authorization header'a ekle

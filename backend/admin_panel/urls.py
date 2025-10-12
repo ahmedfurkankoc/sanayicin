@@ -17,6 +17,7 @@ router.register(r'system-logs', SystemLogViewSet)
 router.register(r'notifications', AdminNotificationViewSet)
 router.register(r'settings', AdminSettingsViewSet)
 router.register(r'permissions', AdminPermissionViewSet)
+router.register(r'domains', DomainViewSet)
 
 urlpatterns = [
     # Authentication endpoints
