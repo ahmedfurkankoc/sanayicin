@@ -248,18 +248,23 @@ LOGGING = {
         'handlers': ['console'],
         'level': 'INFO',
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'admin_panel': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-    },
+           'loggers': {
+               'django': {
+                   'handlers': ['console'],
+                   'level': 'WARNING',  # INFO'dan WARNING'e düşür
+                   'propagate': False,
+               },
+               'admin_panel': {
+                   'handlers': ['console'],
+                   'level': 'INFO',  # DEBUG'dan INFO'ya düşür
+                   'propagate': False,
+               },
+               'django.server': {
+                   'handlers': ['console'],
+                   'level': 'WARNING',  # Broken pipe loglarını gizle
+                   'propagate': False,
+               },
+           },
 }
 
 # Internationalization
@@ -334,3 +339,10 @@ if DEBUG:
         '127.0.0.1',
         'localhost',
     ]
+    
+    # Broken pipe hatalarını azaltmak için
+    import logging
+    logging.getLogger('django.server').setLevel(logging.WARNING)
+    
+    # WSGI ayarları
+    WSGI_APPLICATION = 'main.wsgi.application'

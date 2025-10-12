@@ -297,3 +297,68 @@ class AdminSettings(models.Model):
         verbose_name_plural = "Admin Ayarları"
     def __str__(self):
         return f"{self.key}: {self.value[:50]}"
+
+class Domain(models.Model):
+    """Domain yönetimi"""
+    STATUS_CHOICES = [
+        ('active', 'Aktif'),
+        ('expired', 'Süresi Dolmuş'),
+        ('expiring_soon', 'Yakında Dolacak'),
+        ('error', 'Hata'),
+    ]
+
+    name = models.CharField(max_length=255, unique=True, verbose_name="Domain Adı")
+    registrar = models.CharField(max_length=255, blank=True, verbose_name="Kayıt Şirketi")
+    registration_date = models.DateTimeField(null=True, blank=True, verbose_name="Kayıt Tarihi")
+    expiration_date = models.DateTimeField(null=True, blank=True, verbose_name="Bitiş Tarihi")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name="Durum")
+    days_until_expiry = models.IntegerField(null=True, blank=True, verbose_name="Kalan Gün")
+    nameservers = models.JSONField(default=list, blank=True, verbose_name="Name Server'lar")
+    admin_email = models.EmailField(blank=True, verbose_name="Admin E-posta")
+    tech_email = models.EmailField(blank=True, verbose_name="Teknik E-posta")
+    auto_renew = models.BooleanField(default=False, verbose_name="Otomatik Yenileme")
+    last_checked = models.DateTimeField(auto_now=True, verbose_name="Son Kontrol")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturulma Tarihi")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Güncellenme Tarihi")
+
+    class Meta:
+        verbose_name = "Domain"
+        verbose_name_plural = "Domainler"
+        ordering = ['name']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['expiration_date']),
+            models.Index(fields=['days_until_expiry']),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        # Domain durumunu güncelle
+        if self.expiration_date:
+            from datetime import datetime, timedelta
+            from django.utils import timezone as django_timezone
+            now = django_timezone.now()
+            days_left = (self.expiration_date - now).days
+            
+            self.days_until_expiry = days_left
+            
+            if days_left < 0:
+                self.status = 'expired'
+            elif days_left <= 30:
+                self.status = 'expiring_soon'
+            else:
+                self.status = 'active'
+        
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expiring_soon(self):
+        """30 gün içinde dolacak mı?"""
+        return self.days_until_expiry is not None and self.days_until_expiry <= 30
+
+    @property
+    def is_expired(self):
+        """Süresi dolmuş mu?"""
+        return self.days_until_expiry is not None and self.days_until_expiry < 0
