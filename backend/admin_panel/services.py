@@ -11,7 +11,9 @@ class HostingerAPIService:
     """Hostinger API ile sunucu monitoring servisi"""
     
     def __init__(self):
-        self.api_key = getattr(settings, 'HOSTINGER_API_KEY', '4TAjmYyX0UZdUncC19zG6tPk1162NtQJFWeYc6YM0e2b09f5')
+        self.api_key = getattr(settings, 'HOSTINGER_API_KEY')
+        if not self.api_key:
+            raise ValueError("HOSTINGER_API_KEY environment variable is required")
         self.base_url = "https://developers.hostinger.com/api/vps/v1"
         self.headers = {
             'Authorization': f'Bearer {self.api_key}',
