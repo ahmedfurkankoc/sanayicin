@@ -1080,39 +1080,15 @@ class ServerMonitoringView(APIView):
     def get(self, request):
         """Tüm sunucuların monitoring verilerini getir"""
         try:
-            hostinger_service = HostingerAPIService()
-            servers_data = hostinger_service.get_all_servers_summary()
+            # Gerçek monitoring servisini kullan
+            from .server_monitoring import RealServerMonitoringService
             
-            # Verileri formatla
-            formatted_data = []
-            for server in servers_data:
-                formatted_server = {
-                    'id': server.get('id'),
-                    'name': server.get('name'),
-                    'os': f"{server.get('os')} {server.get('os_version')}",
-                    'ip_address': server.get('ip_address'),
-                    'status': server.get('status'),
-                    'region': server.get('region'),
-                    'created_at': server.get('created_at'),
-                    'metrics': {
-                        'cpu_usage': hostinger_service.format_percentage(server.get('cpu_usage', 0)),
-                        'memory_usage': hostinger_service.format_percentage(server.get('memory_usage', 0)),
-                        'memory_used': hostinger_service.format_bytes(server.get('memory_used', 0)),
-                        'memory_total': hostinger_service.format_bytes(server.get('memory_total', 0)),
-                        'disk_usage': f"{hostinger_service.format_bytes(server.get('disk_used', 0))} / {hostinger_service.format_bytes(server.get('disk_total', 0))}",
-                        'disk_percentage': hostinger_service.format_percentage(server.get('disk_usage', 0)),
-                        'network_in': hostinger_service.format_bytes(server.get('network_in', 0)),
-                        'network_out': hostinger_service.format_bytes(server.get('network_out', 0)),
-                        'bandwidth_usage': f"{hostinger_service.format_bytes(server.get('bandwidth_used', 0))} / {hostinger_service.format_bytes(server.get('bandwidth_total', 0))}",
-                        'uptime': server.get('uptime', 0),
-                        'load_average': server.get('load_average', [0, 0, 0]),
-                    }
-                }
-                formatted_data.append(formatted_server)
+            real_monitoring = RealServerMonitoringService()
+            servers_data = real_monitoring.get_all_servers_summary()
             
             return Response({
-                'servers': formatted_data,
-                'total_servers': len(formatted_data),
+                'servers': servers_data,
+                'total_servers': len(servers_data),
                 'timestamp': timezone.now().isoformat()
             }, status=status.HTTP_200_OK)
             
@@ -1394,5 +1370,58 @@ class DomainViewSet(viewsets.ModelViewSet):
             logger.error(f"Expiring domains error: {e}")
             return Response({
                 'error': 'Yakında dolacak domainler alınamadı',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# ========== Hostinger Subscriptions Views ==========
+class HostingerSubscriptionsView(APIView):
+    """Hostinger subscriptions API'si"""
+    permission_classes = []  # Geçici olarak devre dışı
+    authentication_classes = []
+
+    def get(self, request):
+        """Tüm subscriptions'ları getir"""
+        try:
+            hostinger_service = HostingerAPIService()
+            subscriptions = hostinger_service.get_subscriptions()
+            
+            return Response({
+                'subscriptions': subscriptions,
+                'total_subscriptions': len(subscriptions),
+                'timestamp': timezone.now().isoformat()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Subscriptions error: {e}")
+            return Response({
+                'error': 'Subscriptions verileri alınamadı',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class HostingerSubscriptionDetailView(APIView):
+    """Belirli bir subscription'ın detayları"""
+    permission_classes = []
+    authentication_classes = []
+
+    def get(self, request, subscription_id):
+        """Belirli bir subscription'ın detaylarını getir"""
+        try:
+            hostinger_service = HostingerAPIService()
+            subscription = hostinger_service.get_subscription_details(subscription_id)
+            
+            if subscription:
+                return Response({
+                    'subscription': subscription,
+                    'timestamp': timezone.now().isoformat()
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Subscription bulunamadı'
+                }, status=status.HTTP_404_NOT_FOUND)
+                
+        except Exception as e:
+            logger.error(f"Subscription detail error: {e}")
+            return Response({
+                'error': 'Subscription detayları alınamadı',
                 'details': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

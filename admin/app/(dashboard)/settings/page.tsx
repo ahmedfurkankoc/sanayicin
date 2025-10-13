@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { updateAdminUser, changeAdminPassword, getDomains, createDomain, deleteDomain, refreshDomain, type Domain } from '../../api/admin'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import ServerMonitoringWidget from '../../components/ServerMonitoringWidget'
+import HostingerSubscriptionsWidget from '../../components/HostingerSubscriptionsWidget'
 import { 
   Server,
   Globe, 
@@ -239,6 +240,9 @@ export default function SettingsPage() {
                   
                   {/* Server Monitoring Widget */}
                   <ServerMonitoringWidget className="shadow-none border-0" />
+                  
+                  {/* Hostinger Subscriptions Widget */}
+                  <HostingerSubscriptionsWidget className="shadow-none border-0" />
                 </div>
               </div>
             )}

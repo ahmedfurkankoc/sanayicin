@@ -588,3 +588,36 @@ export async function getExpiringDomains(days: number = 30): Promise<{ domains: 
   const resp = await apiClient.get<{ domains: Domain[]; count: number; days_threshold: number }>(`/domains/expiring_soon/?days=${days}`)
   return resp.data
 }
+
+// ========== Hostinger Subscriptions ==========
+
+export interface HostingerSubscription {
+  id: string
+  name: string
+  status: 'active' | 'suspended' | 'cancelled' | 'expired'
+  billing_period: number
+  billing_period_unit: 'day' | 'week' | 'month' | 'year'
+  currency_code: string
+  total_price: number
+  renewal_price: number
+  is_auto_renewed: boolean
+  created_at: string
+  expires_at: string | null
+  next_billing_at: string
+}
+
+export interface SubscriptionsResponse {
+  subscriptions: HostingerSubscription[]
+  total_subscriptions: number
+  timestamp: string
+}
+
+export async function getHostingerSubscriptions(): Promise<SubscriptionsResponse> {
+  const resp = await apiClient.get<SubscriptionsResponse>('/subscriptions/')
+  return resp.data
+}
+
+export async function getHostingerSubscriptionDetail(subscriptionId: string): Promise<{ subscription: HostingerSubscription; timestamp: string }> {
+  const resp = await apiClient.get<{ subscription: HostingerSubscription; timestamp: string }>(`/subscriptions/${subscriptionId}/`)
+  return resp.data
+}

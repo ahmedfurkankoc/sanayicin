@@ -28,32 +28,9 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
-  // Load server monitoring data with smart caching
+  // Load server monitoring data without frontend cache
   useEffect(() => {
-    const CACHE_KEY = 'server_monitoring_cache'
-    const CACHE_DURATION = 5 * 60 * 1000 // 5 dakika cache
-    
-    const loadServers = async (forceRefresh = false) => {
-      // Önce cache'i kontrol et
-      if (!forceRefresh) {
-        const cachedData = localStorage.getItem(CACHE_KEY)
-        if (cachedData) {
-          try {
-            const { data, timestamp } = JSON.parse(cachedData)
-            const now = Date.now()
-            
-            // Cache hala geçerli mi?
-            if (now - timestamp < CACHE_DURATION) {
-              setServers(data.servers || [])
-              setLastUpdated(new Date(timestamp))
-              return // Cache'den yüklendi, API'ye gitme
-            }
-          } catch (error) {
-            console.warn('Cache parse error:', error)
-          }
-        }
-      }
-      
+    const loadServers = async () => {
       setServersLoading(true)
       setServersError(null)
       
@@ -64,12 +41,6 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
         setServers(serverData)
         setLastUpdated(new Date())
         
-        // Cache'e kaydet
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          data: response,
-          timestamp: Date.now()
-        }))
-        
       } catch (error: unknown) {
         console.error('Server monitoring error:', error)
         const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Sunucu verileri yüklenemedi'
@@ -79,19 +50,16 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
       }
     }
 
-    // İlk yükleme - cache varsa onu kullan, yoksa API'ye git
-    loadServers(false)
+    // İlk yükleme
+    loadServers()
     
-    // Auto-refresh every 5 minutes (300 seconds)
-    const interval = setInterval(() => loadServers(true), 300000)
+    // Auto-refresh every 1 hour (3600 seconds)
+    const interval = setInterval(() => loadServers(), 3600000)
     
     return () => clearInterval(interval)
   }, [])
 
   const handleRefresh = async () => {
-    // Cache'i temizle ve zorla yenile
-    localStorage.removeItem('server_monitoring_cache')
-    
     setServersLoading(true)
     setServersError(null)
     
@@ -99,12 +67,6 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
       const response = await getServerMonitoring()
       setServers(response.servers || [])
       setLastUpdated(new Date())
-      
-      // Yeni veriyi cache'e kaydet
-      localStorage.setItem('server_monitoring_cache', JSON.stringify({
-        data: response,
-        timestamp: Date.now()
-      }))
       
     } catch (error: unknown) {
       console.error('Server monitoring refresh error:', error)
@@ -372,7 +334,7 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
                         </div>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-orange-600">{server.metrics.network_in}</div>
-                          <div className="text-xs text-gray-500">MB/s</div>
+                          <div className="text-xs text-gray-500">Toplam</div>
                         </div>
                       </div>
                       <div className="mt-3 p-3 bg-gray-50 rounded-lg">
@@ -396,7 +358,7 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
                         </div>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-indigo-600">{server.metrics.network_out}</div>
-                          <div className="text-xs text-gray-500">MB/s</div>
+                          <div className="text-xs text-gray-500">Toplam</div>
                         </div>
                       </div>
                       <div className="mt-3 p-3 bg-gray-50 rounded-lg">
@@ -420,15 +382,15 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
                         </div>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-pink-600">{server.metrics.bandwidth_usage}</div>
-                          <div className="text-xs text-gray-500">TB</div>
+                          <div className="text-xs text-gray-500">Kullanım</div>
                         </div>
                       </div>
                       <ProgressBar 
-                        value={parseFloat(server.metrics.bandwidth_usage.split(' / ')[0].replace(' KB', '')) / (1024 * 1024)} 
+                        value={parseFloat(server.metrics.bandwidth_usage.split(' / ')[0].replace(/[^\d.]/g, ''))} 
                         color="pink" 
                         size="lg"
-                        max={parseFloat(server.metrics.bandwidth_usage.split(' / ')[1].replace(' TB', '')) * 1024}
-                        unit=" GB"
+                        max={parseFloat(server.metrics.bandwidth_usage.split(' / ')[1].replace(/[^\d.]/g, '')) * 1024 * 1024}
+                        unit=" MB"
                       />
                     </div>
                   </div>

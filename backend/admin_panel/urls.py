@@ -40,6 +40,10 @@ urlpatterns = [
     path('servers/<str:server_id>/', ServerDetailView.as_view(), name='server-detail'),
     path('servers/<str:server_id>/action/', ServerActionView.as_view(), name='server-action'),
     
+    # Hostinger subscriptions
+    path('subscriptions/', HostingerSubscriptionsView.as_view(), name='hostinger-subscriptions'),
+    path('subscriptions/<str:subscription_id>/', HostingerSubscriptionDetailView.as_view(), name='hostinger-subscription-detail'),
+    
     # API endpoints
     path('', include(router.urls)),
 ]
