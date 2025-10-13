@@ -17,10 +17,6 @@ export default function SupportPage() {
   const canReadSupport = canRead('support')
   const canWriteSupport = canWrite('support')
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Ticket list state
   const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [ticketTotal, setTicketTotal] = useState(0)
   const [ticketPage, setTicketPage] = useState(1)
@@ -40,8 +36,7 @@ export default function SupportPage() {
     let cancelled = false
     const loadTickets = async () => {
       try {
-        setLoading(true)
-        setError(null)
+        setTicketTotal(0)
         const res = await listSupportTickets({
           page: ticketPage,
           page_size: ticketPageSize,
@@ -56,17 +51,14 @@ export default function SupportPage() {
           const found = res.items.find((t: SupportTicket) => t.id === activeTicket.id)
           if (!found) setActiveTicket(null)
         }
-      } catch (e: unknown) {
+      } catch {
         if (cancelled) return
-        setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Destek talepleri yüklenemedi')
-      } finally {
-        if (cancelled) return
-        setLoading(false)
+        // ignore errors
       }
     }
     loadTickets()
     return () => { cancelled = true }
-  }, [canReadSupport, ticketPage, ticketPageSize, ticketSearch, ticketStatus])
+  }, [canReadSupport, ticketPage, ticketPageSize, ticketSearch, ticketStatus, activeTicket])
 
   useEffect(() => {
     let cancelled = false

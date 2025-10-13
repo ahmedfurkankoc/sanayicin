@@ -18,8 +18,6 @@ import {
   Plus,
   RefreshCw,
   Trash2,
-  Calendar,
-  Clock,
   CheckCircle,
   XCircle,
   AlertCircle
@@ -87,8 +85,9 @@ export default function SettingsPage() {
       })
       setSaveMsg('Profil başarıyla güncellendi')
       setEditMode(false)
-    } catch (error: any) {
-      setSaveMsg(error?.response?.data?.error || 'Profil güncellenirken hata oluştu')
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Profil güncellenirken hata oluştu'
+      setSaveMsg(errorMessage)
     } finally {
       setSaving(false)
     }
@@ -101,15 +100,13 @@ export default function SettingsPage() {
     setPwdMsg(null)
     
     try {
-      await changeAdminPassword({
-        current_password: currPwd,
-        new_password: newPwd,
-      })
+      await changeAdminPassword(currPwd, newPwd)
       setPwdMsg('Şifre başarıyla değiştirildi')
       setCurrPwd('')
       setNewPwd('')
-    } catch (error: any) {
-      setPwdMsg(error?.response?.data?.error || 'Şifre değiştirilirken hata oluştu')
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Şifre değiştirilirken hata oluştu'
+      setPwdMsg(errorMessage)
     } finally {
       setPwdSaving(false)
     }
@@ -129,8 +126,9 @@ export default function SettingsPage() {
         expiring_soon: response.expiring_soon,
         expired: response.expired
       })
-    } catch (error: any) {
-      setDomainsError(error?.response?.data?.error || 'Domain listesi yüklenemedi')
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain listesi yüklenemedi'
+      setDomainsError(errorMessage)
     } finally {
       setDomainsLoading(false)
     }
@@ -152,8 +150,9 @@ export default function SettingsPage() {
       setNewDomainAutoRenew(false)
       setShowAddDomain(false)
       await loadDomains() // Refresh list
-    } catch (error: any) {
-      setDomainsError(error?.response?.data?.error || 'Domain eklenemedi')
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain eklenemedi'
+      setDomainsError(errorMessage)
     } finally {
       setDomainsLoading(false)
     }
@@ -168,8 +167,9 @@ export default function SettingsPage() {
     try {
       await deleteDomain(id)
       await loadDomains() // Refresh list
-    } catch (error: any) {
-      setDomainsError(error?.response?.data?.error || 'Domain silinemedi')
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain silinemedi'
+      setDomainsError(errorMessage)
     } finally {
       setDomainsLoading(false)
     }
@@ -182,8 +182,9 @@ export default function SettingsPage() {
     try {
       await refreshDomain(id)
       await loadDomains() // Refresh list
-    } catch (error: any) {
-      setDomainsError(error?.response?.data?.error || 'Domain bilgileri yenilenemedi')
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain bilgileri yenilenemedi'
+      setDomainsError(errorMessage)
     } finally {
       setDomainsLoading(false)
     }
@@ -482,7 +483,7 @@ export default function SettingsPage() {
                             
                             {domain.nameservers.length > 0 && (
                               <div className="md:col-span-2 lg:col-span-3">
-                                <label className="block text-sm font-medium text-gray-700">Name Server'lar</label>
+                                <label className="block text-sm font-medium text-gray-700">Name Server&apos;lar</label>
                                 <div className="mt-1 flex flex-wrap gap-2">
                                   {domain.nameservers.map((ns, index) => (
                                     <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
@@ -577,7 +578,7 @@ export default function SettingsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700">SSL Sertifikası</label>
-                          <p className="mt-1 text-sm text-gray-900">Let's Encrypt - Geçerli</p>
+                          <p className="mt-1 text-sm text-gray-900">Let&apos;s Encrypt - Geçerli</p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700">Son Yenileme</label>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -53,9 +54,11 @@ export default function LoginPage() {
           {/* Logo */}
           <div className="flex justify-center mb-8">
             <div className="w-16 h-16 flex items-center justify-center">
-              <img 
+              <Image 
                 src="/sanayicin-icon.png" 
                 alt="Sanayicin Logo" 
+                width={64}
+                height={64}
                 className="w-full h-full object-contain animate-spin-slow"
               />
             </div>

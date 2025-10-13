@@ -51,6 +51,9 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'True').lower() == 'true'
 CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'True').lower() == 'true'
 
+# Hostinger API Configuration
+HOSTINGER_API_KEY = os.environ.get('HOSTINGER_API_KEY')
+
 # Resend Email Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
 RESEND_SMTP_PORT = 465

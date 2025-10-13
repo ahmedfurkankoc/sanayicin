@@ -20,10 +20,8 @@ import {
 } from '../../api/admin'
 import { usePermissions } from '../../contexts/AuthContext'
 import Pagination from '../../components/Pagination'
+import Image from 'next/image'
 import { 
-  Plus, 
-  Edit, 
-  Trash2, 
   Upload,
   X
 } from 'lucide-react'
@@ -43,8 +41,6 @@ export default function ContentManagementPage() {
   const [activeTab, setActiveTab] = useState<'services' | 'categories' | 'brands'>('services')
 
   // Pagination state per tab
-  const [saPage, setSaPage] = useState(1)
-  const [saPageSize, setSaPageSize] = useState(10)
   const [saTotal, setSaTotal] = useState(0)
   const [saSearch, setSaSearch] = useState('')
   const [catPage, setCatPage] = useState(1)
@@ -194,7 +190,7 @@ export default function ContentManagementPage() {
                 placeholder="Ara..."
                 className="w-full border border-gray-300 rounded px-3 py-2"
                 value={saSearch}
-                onChange={(e) => { setSaSearch(e.target.value); setSaPage(1) }}
+                onChange={(e) => { setSaSearch(e.target.value) }}
               />
             </div>
             {canWriteContent && (
@@ -612,9 +608,11 @@ export default function ContentManagementPage() {
                   {newBrand.logo_file && (
                     <div className="mb-3">
                       <div className="w-[150px] h-[150px] border border-gray-200 rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
-                        <img 
+                        <Image 
                           src={URL.createObjectURL(newBrand.logo_file)} 
                           alt="Logo Preview" 
+                          width={150}
+                          height={150}
                           className="w-full h-full object-contain"
                         />
                       </div>
@@ -699,10 +697,11 @@ export default function ContentManagementPage() {
                   <td className="px-4 py-2 text-sm">
                     <div className="relative w-[80px] h-[80px] flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
                       {'logo' in brand && brand.logo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img 
+                        <Image 
                           src={brand.logo as string} 
                           alt={brand.name} 
+                          width={80}
+                          height={80}
                           className="w-full h-full object-contain rounded-lg" 
                         />
                       ) : (

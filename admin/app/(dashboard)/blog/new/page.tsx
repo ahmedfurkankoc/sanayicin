@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Save, Eye, ArrowLeft, X } from 'lucide-react'
 // import { useAuth } from '../../../contexts/AuthContext' // Kullanılmıyor
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import 'quill/dist/quill.snow.css'
 import { listBlogCategories, getBlogPost as apiGetBlogPost, createBlogPost, updateBlogPost, uploadImage as apiUploadImage, generateSlug as apiGenerateSlug } from '../../../api/admin'
 
@@ -140,7 +141,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     }
   }
 
-  const fetchBlogPost = async () => {
+  const fetchBlogPost = useCallback(async () => {
     if (!params.id) return
     
     setLoading(true)
@@ -167,14 +168,14 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id])
 
   useEffect(() => {
     fetchCategories()
     if (isEdit) {
       fetchBlogPost()
     }
-  }, [isEdit, params.id])
+  }, [isEdit, params.id, fetchBlogPost])
 
   // const generateSlug = (title: string) => {
   //   return title
@@ -698,7 +699,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                   </div>
                   {imagePreview && (
                     <div>
-                      <img src={imagePreview} alt="Önizleme" className="w-full h-40 object-cover rounded-lg border" />
+                      <Image src={imagePreview} alt="Önizleme" width={400} height={160} className="w-full h-40 object-cover rounded-lg border" />
                     </div>
                   )}
               <div>
@@ -818,7 +819,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
             <div className="space-y-3">
               {formData.featured_image ? (
                 <div className="relative">
-                  <img src={resolveMediaUrl(formData.featured_image)} alt={formData.title || 'Kapak görseli'} className="w-full h-40 object-cover rounded-lg border" />
+                  <Image src={resolveMediaUrl(formData.featured_image)} alt={formData.title || 'Kapak görseli'} width={400} height={160} className="w-full h-40 object-cover rounded-lg border" />
                   <div className="mt-2 flex items-center gap-2">
                     <button
                       type="button"
