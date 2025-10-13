@@ -74,45 +74,12 @@ class HostingerAPIService:
         return False
     
     def get_server_monitoring_data(self, vm_id: str) -> Dict:
-        """Sunucu monitoring verilerini birleştir"""
-        vm_details = self.get_vm_details(vm_id)
+        """Sunucu monitoring verilerini birleştir - Gerçek veri kullanımı için RealServerMonitoringService'e yönlendir"""
+        # Hostinger API'sinde monitoring verisi olmadığı için gerçek monitoring servisini kullan
+        from .server_monitoring import RealServerMonitoringService
         
-        if not vm_details:
-            return {}
-        
-        # Temel sunucu bilgileri
-        server_data = {
-            'id': vm_details.get('id'),
-            'name': vm_details.get('hostname', 'Unknown'),
-            'os': vm_details.get('template', {}).get('name', 'Unknown'),
-            'os_version': '',
-            'ip_address': vm_details.get('ipv4', [{}])[0].get('address', 'Unknown'),
-            'status': vm_details.get('state', 'unknown'),
-            'created_at': vm_details.get('created_at'),
-            'region': f"Data Center {vm_details.get('data_center_id', 'Unknown')}",
-            'plan': vm_details.get('plan', 'Unknown'),
-            'cpus': vm_details.get('cpus', 0),
-            'memory_total': vm_details.get('memory', 0) * 1024 * 1024,  # MB to bytes
-            'disk_total': vm_details.get('disk', 0) * 1024 * 1024,  # MB to bytes
-            'bandwidth_total': vm_details.get('bandwidth', 0) * 1024 * 1024,  # MB to bytes
-        }
-        
-        # Mock performans verileri (gerçek API'de bu endpoint'ler yok)
-        # Bu verileri gerçek monitoring sistemi ile değiştirebilirsiniz
-        server_data.update({
-            'cpu_usage': 15.5,  # Mock CPU kullanımı
-            'memory_usage': 18.2,  # Mock RAM kullanımı
-            'memory_used': int(server_data['memory_total'] * 0.182),
-            'disk_usage': 6.0,  # Mock disk kullanımı
-            'disk_used': int(server_data['disk_total'] * 0.06),
-            'network_in': 1024 * 1024 * 0.5,  # Mock network in (0.5MB)
-            'network_out': 1024 * 1024 * 0.5,  # Mock network out (0.5MB)
-            'bandwidth_used': 1024 * 1024 * 0.001,  # Mock bandwidth (0.001TB)
-            'uptime': 99.9,  # Mock uptime
-            'load_average': [0.15, 0.12, 0.08],  # Mock load average
-        })
-        
-        return server_data
+        real_monitoring = RealServerMonitoringService()
+        return real_monitoring.get_current_server_info()
     
     def format_bytes(self, bytes_value: int) -> str:
         """Bytes'ı okunabilir formata çevir"""
@@ -132,32 +99,59 @@ class HostingerAPIService:
         return f"{value:.1f}%"
     
     def get_all_servers_summary(self) -> List[Dict]:
-        """Tüm sunucuların özet bilgilerini getir"""
-        cache_key = "hostinger_all_servers_summary"
+        """Tüm sunucuların özet bilgilerini getir - Gerçek monitoring servisini kullan"""
+        # Hostinger API'sinde monitoring verisi olmadığı için gerçek monitoring servisini kullan
+        from .server_monitoring import RealServerMonitoringService
+        
+        real_monitoring = RealServerMonitoringService()
+        return real_monitoring.get_all_servers_summary()
+    
+    def get_subscriptions(self) -> List[Dict]:
+        """Hostinger subscriptions listesini getir"""
+        cache_key = "hostinger_subscriptions"
         cached_data = cache.get(cache_key)
         
-        # Cache varsa ve 1 saatten eski değilse, cache'den döndür
         if cached_data:
             return cached_data
         
+        # Billing API için farklı base URL kullan
+        billing_base_url = "https://developers.hostinger.com/api"
+        url = f"{billing_base_url}/billing/v1/subscriptions"
+        
         try:
-            vms = self.get_virtual_machines()
-            servers_summary = []
-            
-            for vm in vms:
-                vm_id = vm.get('id')
-                if vm_id:
-                    server_data = self.get_server_monitoring_data(vm_id)
-                    if server_data:
-                        servers_summary.append(server_data)
-            
-            # Başarılı ise cache'e kaydet
-            if servers_summary:
-                cache.set(cache_key, servers_summary, 3600)  # 1 saat cache
-            
-            return servers_summary
-            
-        except Exception as e:
-            logger.error(f"Error getting servers summary: {e}")
-            # Hata durumunda cache'den eski veriyi döndür
-            return cached_data if cached_data else []
+            response = requests.get(url, headers=self.headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                cache.set(cache_key, data, 3600)  # 1 saat cache
+                return data
+            else:
+                logger.error(f"Billing API error: {response.status_code} - {response.text}")
+                return []
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Billing API request failed: {e}")
+            return []
+    
+    def get_subscription_details(self, subscription_id: str) -> Optional[Dict]:
+        """Belirli bir subscription'ın detaylarını getir"""
+        cache_key = f"hostinger_subscription_{subscription_id}"
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return cached_data
+        
+        # Billing API için farklı base URL kullan
+        billing_base_url = "https://developers.hostinger.com/api"
+        url = f"{billing_base_url}/billing/v1/subscriptions/{subscription_id}"
+        
+        try:
+            response = requests.get(url, headers=self.headers, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                cache.set(cache_key, data, 3600)  # 1 saat cache
+                return data
+            else:
+                logger.error(f"Billing API error: {response.status_code} - {response.text}")
+                return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Billing API request failed: {e}")
+            return None
