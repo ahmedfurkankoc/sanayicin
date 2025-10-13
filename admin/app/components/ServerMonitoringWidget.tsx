@@ -17,15 +17,16 @@ import { getServerMonitoring, type ServerInfo } from '../api/admin'
 
 interface ServerMonitoringWidgetProps {
   className?: string
+  defaultExpanded?: boolean
 }
 
-export default function ServerMonitoringWidget({ className = '' }: ServerMonitoringWidgetProps) {
+export default function ServerMonitoringWidget({ className = '', defaultExpanded = true }: ServerMonitoringWidgetProps) {
   const [servers, setServers] = useState<ServerInfo[]>([])
   const [serversLoading, setServersLoading] = useState(false)
   const [serversError, setServersError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
   // Load server monitoring data with smart caching
   useEffect(() => {
@@ -69,9 +70,10 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
           timestamp: Date.now()
         }))
         
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Server monitoring error:', error)
-        setServersError(error?.response?.data?.error || 'Sunucu verileri yüklenemedi')
+        const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Sunucu verileri yüklenemedi'
+        setServersError(errorMessage)
       } finally {
         setServersLoading(false)
       }
@@ -104,9 +106,10 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
         timestamp: Date.now()
       }))
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Server monitoring refresh error:', error)
-      setServersError(error?.response?.data?.error || 'Sunucu verileri yenilenemedi')
+      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Sunucu verileri yenilenemedi'
+      setServersError(errorMessage)
     } finally {
       setServersLoading(false)
     }
@@ -464,7 +467,7 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
                   </h4>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     İşlemci kullanım yüzdesi. Yüksek değerler sunucunun yoğun çalıştığını gösterir. 
-                    %80'in üzerinde sürekli kalması performans sorunlarına işaret edebilir.
+                    %80&apos;in üzerinde sürekli kalması performans sorunlarına işaret edebilir.
                   </p>
                 </div>
                 
@@ -475,7 +478,7 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
                   </h4>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     RAM (Random Access Memory) kullanım yüzdesi. Sunucunun ne kadar bellek kullandığını gösterir. 
-                    %90'ın üzerinde kalması bellek yetersizliği sorunlarına yol açabilir.
+                    %90&apos;ın üzerinde kalması bellek yetersizliği sorunlarına yol açabilir.
                   </p>
                 </div>
                 
@@ -486,7 +489,7 @@ export default function ServerMonitoringWidget({ className = '' }: ServerMonitor
                   </h4>
                   <p className="text-gray-600 text-sm leading-relaxed">
                     Sabit disk alanının ne kadarının kullanıldığını gösterir. 
-                    %85'in üzerinde kalması disk alanı sorunlarına neden olabilir.
+                    %85&apos;in üzerinde kalması disk alanı sorunlarına neden olabilir.
                   </p>
                 </div>
                 

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { usePermissions } from '../../contexts/AuthContext'
 import { Users, Shield, PlusCircle, Save, Trash2 } from 'lucide-react'
-import { listAdminUsers, updateAdminUserRole, getAdminRoles, updateAdminRoles, createAdminUser, AdminRole, AdminUserCreateData } from '../../api/admin'
+import { listAdminUsers, updateAdminUserRole, getAdminRoles, updateAdminRoles, createAdminUser, AdminUserCreateData } from '../../api/admin'
 
 type DefTab = 'roles' | 'assign' | 'new_admin'
 
@@ -59,11 +59,6 @@ export default function DefinitionsPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fullPerms = (): Record<ModuleKey, PermissionTriple> => {
-    const p: Record<ModuleKey, PermissionTriple> = {} as Record<ModuleKey, PermissionTriple>
-    modules.forEach((m) => (p[m.key] = { read: true, write: true, delete: true }))
-    return p
-  }
 
   const emptyPerms = (): Record<ModuleKey, PermissionTriple> => {
     const p: Record<ModuleKey, PermissionTriple> = {} as Record<ModuleKey, PermissionTriple>
