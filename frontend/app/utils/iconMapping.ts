@@ -123,7 +123,9 @@ export const iconMapping = {
   // Sosyal medya ikonları
   'instagram': Instagram,
   'twitter': Twitter,
-  'x-social': (({ size = 20, color = '#111' }: { size?: number; color?: string }) => {
+  'x-social': ((props: { size?: string | number; color?: string }) => {
+    const size = typeof props.size === 'string' ? parseInt(props.size) : (props.size || 20);
+    const color = props.color || '#111';
     return React.createElement(
       'svg',
       { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' },

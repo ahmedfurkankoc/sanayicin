@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Admin paneli için güvenlik ayarları
+  images: {
+    unoptimized: true, // Resim optimizasyonunu devre dışı bırak
+  },
   async rewrites() {
     const backendOrigin = process.env.BACKEND_ORIGIN || 'http://localhost:8000'
     return [
