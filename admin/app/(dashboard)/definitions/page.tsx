@@ -703,6 +703,9 @@ export default function DefinitionsPage() {
 
           {active === 'new_admin' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Autofill decoy fields for Chrome */}
+              <input type="text" name="decoy-username" autoComplete="username" tabIndex={-1} style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }} aria-hidden="true" />
+              <input type="password" name="decoy-password" autoComplete="new-password" tabIndex={-1} style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }} aria-hidden="true" />
               <div>
                 <label className="block text-sm font-medium text-gray-700">E-posta</label>
                 <input
@@ -711,6 +714,8 @@ export default function DefinitionsPage() {
                   onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
                   className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                   placeholder="admin@sanayicin.com"
+                  name="new-admin-email"
+                  autoComplete="section-new email"
                 />
               </div>
               <div>
@@ -719,6 +724,11 @@ export default function DefinitionsPage() {
                   type="text"
                   value={newAdmin.firstName}
                   onChange={(e) => setNewAdmin({ ...newAdmin, firstName: e.target.value })}
+                  placeholder="Adınız"
+                  name="new-admin-given-name"
+                  autoComplete="section-new given-name"
+                  autoCorrect="off"
+                  autoCapitalize="none"
                   className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                 />
               </div>
@@ -728,6 +738,11 @@ export default function DefinitionsPage() {
                   type="text"
                   value={newAdmin.lastName}
                   onChange={(e) => setNewAdmin({ ...newAdmin, lastName: e.target.value })}
+                  placeholder="Soyadınız"
+                  name="new-admin-family-name"
+                  autoComplete="section-new family-name"
+                  autoCorrect="off"
+                  autoCapitalize="none"
                   className="mt-1 w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                 />
               </div>
@@ -740,6 +755,8 @@ export default function DefinitionsPage() {
                     onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
                     className="w-full rounded border border-[color:var(--yellow)] bg-white text-[color:var(--black)] px-3 py-2 focus:ring-2 focus:ring-[color:var(--yellow)]"
                     placeholder="En az 8 karakter"
+                    name="new-admin-password"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
