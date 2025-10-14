@@ -10,9 +10,8 @@ import { usePermissions } from '../../contexts/AuthContext'
 import Pagination from '../../components/Pagination'
 
 export default function SupportPage() {
-  const { canRead, canWrite } = usePermissions()
+  const { canRead } = usePermissions()
   const canReadSupport = canRead('support')
-  const canWriteSupport = canWrite('support')
 
   const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [ticketTotal, setTicketTotal] = useState(0)
@@ -51,7 +50,7 @@ export default function SupportPage() {
 
   const sortedTickets = useMemo(() => {
     const priority: Record<string, number> = { open: 0, pending: 1, resolved: 2, closed: 3 }
-    const byDate = (a: any, b: any) => {
+    const byDate = (a: SupportTicket, b: SupportTicket) => {
       const ta = new Date(a.created_at).getTime()
       const tb = new Date(b.created_at).getTime()
       return sortOrder === 'desc' ? (tb - ta) : (ta - tb)
