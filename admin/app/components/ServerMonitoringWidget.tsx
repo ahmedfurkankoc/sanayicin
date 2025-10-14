@@ -161,18 +161,18 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
       className={`bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100 cursor-pointer hover:shadow-xl transition-all duration-300 ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 p-6 pb-0">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 p-6 pb-0 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 bg-blue-100 rounded-lg">
             <Server className="h-6 w-6 text-blue-600" />
           </div>
-          <div className="text-left">
-            <h3 className="text-xl font-semibold text-gray-900">Sunucu Durumu</h3>
-            <p className="text-sm text-gray-500">
+          <div className="text-left min-w-0">
+            <h3 className="text-xl font-semibold text-gray-900 truncate">Sunucu Durumu</h3>
+            <p className="text-sm text-gray-500 truncate">
               {servers.length} sunucu • {lastUpdated && `Son güncelleme: ${lastUpdated.toLocaleTimeString()}`}
             </p>
           </div>
-          <div className="ml-2">
+          <div className="ml-2 flex-shrink-0">
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 text-gray-400" />
             ) : (
@@ -241,19 +241,25 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
           ) : (
             <div className="space-y-8">
               {servers.map((server) => (
-                <div key={server.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div key={server.id} className="bg-white p-6">
                   {/* Server Header */}
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className={`w-4 h-4 rounded-full ${
                           server.status === 'running' ? 'bg-green-500 shadow-green-200 shadow-lg' : 
                           server.status === 'stopped' ? 'bg-red-500 shadow-red-200 shadow-lg' : 
                           'bg-yellow-500 shadow-yellow-200 shadow-lg'
                         }`}></div>
-                        <div>
+                        <div className="min-w-0">
                           <h4 className="text-xl font-semibold text-gray-900">{server.name}</h4>
-                          <p className="text-sm text-gray-500">{server.os} • {server.ip_address}</p>
+                          {/* Mobile: single-line truncate; Desktop: full/wrapped */}
+                          <p className="text-sm text-gray-500 truncate sm:hidden w-full" title={`${server.os} • ${server.ip_address}`}>
+                            {(server.os && server.os.split(' ')[0]) || server.os} • {server.ip_address}
+                          </p>
+                          <p className="text-sm text-gray-500 hidden sm:block break-words whitespace-normal">
+                            {server.os} • {server.ip_address}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -272,7 +278,7 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
                   </div>
 
                   {/* Metrics Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* CPU Usage */}
                     <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300">
                       <div className="flex items-center justify-between mb-4">

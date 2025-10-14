@@ -112,6 +112,10 @@ export async function updateAdminUserRole(userId: number, role: string) {
   return resp.data
 }
 
+export async function deleteAdminUser(userId: number): Promise<void> {
+  await apiClient.delete(`/admin-users/${userId}/`)
+}
+
 export async function updateAdminUser(userId: number, payload: Partial<Pick<AdminUserItem, 'first_name' | 'last_name' | 'is_active' | 'role'>>) {
   const resp = await apiClient.patch<AdminUserItem>(`/admin-users/${userId}/`, payload)
   return resp.data

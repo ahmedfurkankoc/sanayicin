@@ -210,8 +210,8 @@ export default function SettingsPage() {
 
         <div className="bg-white rounded-lg shadow">
           {/* Tab Navigation */}
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <div className="border-b border-gray-200 overflow-x-auto">
+            <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6 min-w-max" aria-label="Tabs">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -222,7 +222,7 @@ export default function SettingsPage() {
                       activeTab === tab.id
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                    } whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                   >
                     <Icon className="h-4 w-4" />
                     {tab.name}
@@ -241,10 +241,10 @@ export default function SettingsPage() {
                   <p className="text-gray-600 mb-6">Sunucu performansını ve durumunu gerçek zamanlı olarak takip edin.</p>
                   
                   {/* Server Monitoring Widget */}
-                  <ServerMonitoringWidget className="shadow-none border-0" />
+                  <ServerMonitoringWidget className="mb-10" />
                   
                   {/* Hostinger Subscriptions Widget */}
-                  <HostingerSubscriptionsWidget className="shadow-none border-0" />
+                  <HostingerSubscriptionsWidget />
                 </div>
               </div>
             )}
@@ -252,14 +252,14 @@ export default function SettingsPage() {
             {activeTab === 'domain' && (
               <div className="space-y-6">
                 <div>
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
                     <div>
                       <h2 className="text-lg font-semibold text-gray-900">Domain Yönetimi</h2>
                       <p className="text-gray-600">Domain bilgilerini takip edin ve yenileme tarihlerini yönetin</p>
                     </div>
                     <button
                       onClick={() => setShowAddDomain(true)}
-                      className="flex items-center gap-2 px-4 py-2 text-black rounded-lg transition-colors"
+                      className="mt-2 sm:mt-0 flex items-center gap-2 px-4 py-2 text-black rounded-lg transition-colors"
                       style={{ backgroundColor: 'var(--yellow)' }}
                     >
                       <Plus className="h-4 w-4" />

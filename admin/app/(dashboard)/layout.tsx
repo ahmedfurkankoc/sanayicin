@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import logoEsnaf from '../../public/sanayicin-esnaf-logo.png'
+import logoIcon from '../../public/sanayicin-icon.png'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '../contexts/AuthContext'
 import { usePermissions } from '../contexts/AuthContext'
@@ -49,6 +50,15 @@ export default function DashboardLayout({
   const { canAccess } = usePermissions()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem('admin:desktopCollapsed') === '1'
+      } catch {}
+    }
+    return false
+  })
+  
 
   const filteredNavigation = navigation.filter(item => 
     canAccess(item.permission)
@@ -71,6 +81,14 @@ export default function DashboardLayout({
       document.removeEventListener('mousedown', onClick)
     }
   }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('admin:desktopCollapsed', desktopCollapsed ? '1' : '0')
+    } catch {}
+  }, [desktopCollapsed])
+
+  
 
   return (
     <ProtectedRoute requiredPermission="dashboard">
@@ -142,11 +160,15 @@ export default function DashboardLayout({
         </div>
 
         {/* Desktop sidebar */}
-        <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+        <div className={`hidden lg:fixed lg:inset-y-0 lg:flex ${desktopCollapsed ? 'lg:w-16' : 'lg:w-64'} lg:flex-col`}>
           <div className="flex flex-col flex-grow bg-gradient-to-b from-[var(--black)] via-[#222222] to-[var(--black)] pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center justify-start flex-shrink-0 px-4">
               <Link href="/">
-                <Image src={logoEsnaf} alt="Sanayicin Esnaf Logo" priority className="h-14 w-auto" />
+                {desktopCollapsed ? (
+                  <Image src={logoIcon} alt="Sanayicin Icon" priority className="h-10 w-auto object-contain animate-[spin_12s_linear_infinite]" />
+                ) : (
+                  <Image src={logoEsnaf} alt="Sanayicin Esnaf Logo" priority className="h-14 w-auto" />
+                )}
               </Link>
             </div>
             <nav className="mt-8 flex-1 px-3 space-y-2">
@@ -162,8 +184,8 @@ export default function DashboardLayout({
                         : 'text-[color:rgba(255,255,255,0.8)] hover:bg-[color:var(--yellow)] hover:text-[color:var(--black)]'
                     }`}
                   >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {item.name}
+                    <item.icon className={`${desktopCollapsed ? 'mr-0' : 'mr-3'} h-5 w-5`} />
+                    <span className={`${desktopCollapsed ? 'hidden' : 'inline'}`}>{item.name}</span>
                   </Link>
                 )
               })}
@@ -177,7 +199,7 @@ export default function DashboardLayout({
                     </span>
                   </div>
                 </div>
-                <div className="ml-3">
+                <div className={`ml-3 ${desktopCollapsed ? 'hidden' : 'block'}`}>
                   <p className="text-sm font-medium text-white">
                     {user?.first_name || user?.email}
                   </p>
@@ -189,17 +211,19 @@ export default function DashboardLayout({
               </div>
               <button
                 onClick={logout}
-                className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium sidebar-logout-btn hover:bg-[color:var(--yellow)] transition-colors"
+                className={`w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium sidebar-logout-btn transition-colors ${desktopCollapsed ? 'justify-center' : ''} ${desktopCollapsed ? 'hover:bg-red-100/20' : 'hover:bg-[color:var(--yellow)]'}`}
+                title="Çıkış Yap"
+                aria-label="Çıkış Yap"
               >
-                <LogOut className="mr-3 h-4 w-4" />
-                Çıkış Yap
+                <LogOut className={`h-5 w-5 flex-shrink-0 ${desktopCollapsed ? 'text-red-600' : 'text-white mr-3'}`} />
+                <span className={`${desktopCollapsed ? 'hidden' : 'inline'}`}>Çıkış Yap</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Main content */}
-        <div className="lg:pl-64 flex flex-col flex-1">
+        <div className={`${desktopCollapsed ? 'lg:pl-16' : 'lg:pl-64'} flex flex-col flex-1`}>
           {/* Top navbar */}
           <header className="bg-white shadow-sm border-b border-gray-200">
             <div className="flex items-center justify-between px-6 py-4">
@@ -209,6 +233,16 @@ export default function DashboardLayout({
                 className="lg:hidden text-gray-500 hover:text-gray-600"
               >
                 <Menu className="h-6 w-6" />
+              </button>
+
+              {/* Desktop collapse/expand button */}
+              <button
+                onClick={() => setDesktopCollapsed((v) => !v)}
+                className="hidden lg:inline-flex items-center px-2 py-2 text-gray-500 hover:text-gray-700"
+                aria-label={desktopCollapsed ? 'Sidebarı aç' : 'Sidebarı kapat'}
+                title={desktopCollapsed ? 'Sidebarı aç' : 'Sidebarı kapat'}
+              >
+                {desktopCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
               </button>
 
               {/* System status chips (API & WS) */}

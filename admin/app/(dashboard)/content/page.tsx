@@ -65,12 +65,30 @@ export default function ContentManagementPage() {
   const [brandModalOpen, setBrandModalOpen] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'created_desc' | 'created_asc'>('name_asc')
+  const [serviceAreaFilter, setServiceAreaFilter] = useState<number | ''>('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
 
   const serviceAreaMap = useMemo(() => {
     const m = new Map<number, ServiceArea>()
     for (const s of serviceAreas) m.set(s.id, s)
     return m
   }, [serviceAreas])
+
+  // Visible slices for pagination after global sorting/filtering
+  const visibleCategories = useMemo(() => {
+    const start = (catPage - 1) * catPageSize
+    const end = start + catPageSize
+    return categories.slice(start, end)
+  }, [categories, catPage, catPageSize])
+
+  const visibleBrands = useMemo(() => {
+    const start = (brandPage - 1) * brandPageSize
+    const end = start + brandPageSize
+    return carBrands.slice(start, end)
+  }, [carBrands, brandPage, brandPageSize])
 
   const handleLogoUpload = async (brandId: number, file: File) => {
     try {
@@ -111,17 +129,24 @@ export default function ContentManagementPage() {
       try {
         setLoading(true)
         setError(null)
+        // Fetch with large page_size to allow global sorting across full dataset
         const [sa, cats, brands] = await Promise.all([
           listServiceAreas({ page: 1, page_size: 1000, search: saSearch || undefined }),
-          listCategories({ page: catPage, page_size: catPageSize, search: catSearch || undefined }),
-          listCarBrands({ page: brandPage, page_size: brandPageSize, search: brandSearch || undefined }),
+          listCategories({ page: 1, page_size: 1000, search: catSearch || undefined, service_area: serviceAreaFilter || undefined }),
+          listCarBrands({ page: 1, page_size: 1000, search: brandSearch || undefined, is_active: statusFilter === 'all' ? undefined : statusFilter === 'active' }),
         ])
         if (cancelled) return
-        setServiceAreas(sa.items)
+        const sortFunc = (a: { name: string; created_at?: string }, b: { name: string; created_at?: string }) => {
+          if (sortBy === 'name_asc') return a.name.localeCompare(b.name)
+          if (sortBy === 'name_desc') return b.name.localeCompare(a.name)
+          if (sortBy === 'created_desc') return (new Date(b.created_at || 0).getTime()) - (new Date(a.created_at || 0).getTime())
+          return (new Date(a.created_at || 0).getTime()) - (new Date(b.created_at || 0).getTime())
+        }
+        setServiceAreas(sa.items.slice().sort(sortFunc))
         setSaTotal(sa.count)
-        setCategories(cats.items)
+        setCategories(cats.items.slice().sort(sortFunc))
         setCatTotal(cats.count)
-        setCarBrands(brands.items)
+        setCarBrands(brands.items.slice().sort(sortFunc))
         setBrandTotal(brands.count)
       } catch (e: unknown) {
         if (cancelled) return
@@ -133,7 +158,7 @@ export default function ContentManagementPage() {
     }
     loadAll()
     return () => { cancelled = true }
-  }, [canReadContent, saSearch, catPage, catPageSize, catSearch, brandPage, brandPageSize, brandSearch])
+  }, [canReadContent, saSearch, catPage, catPageSize, catSearch, brandPage, brandPageSize, brandSearch, serviceAreaFilter, statusFilter, sortBy])
 
   if (!canReadContent) {
     return (
@@ -181,10 +206,14 @@ export default function ContentManagementPage() {
       {/* Service Areas */}
       {activeTab === 'services' && (
       <section className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Hizmet Alanları</h2>
-          <div className="flex items-center gap-3">
-            <div className="w-64">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setFiltersOpen(true)}
+              className="px-3 py-2 rounded border border-gray-300 hover:bg-gray-50 text-sm w-full sm:w-auto"
+            >Filtreler</button>
+            <div className="w-full sm:w-64">
               <input
                 type="text"
                 placeholder="Ara..."
@@ -196,7 +225,7 @@ export default function ContentManagementPage() {
             {canWriteContent && (
               <button
                 onClick={() => setSaModalOpen(true)}
-                className="bg-[color:var(--yellow)] text-[color:var(--black)] font-medium rounded px-4 py-2"
+                className="bg-[color:var(--yellow)] text-[color:var(--black)] font-medium rounded px-4 py-2 w-full sm:w-auto"
               >Yeni</button>
             )}
           </div>
@@ -283,12 +312,13 @@ export default function ContentManagementPage() {
                       sa.description || '-'
                     )}
                   </td>
-                  <td className="px-4 py-2 text-sm text-right space-x-2">
-                    {editingServiceArea?.id === sa.id ? (
-                      <>
-                        <button
-                          className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50"
-                          onClick={async () => {
+                  <td className="px-4 py-2 text-sm">
+                    <div className="flex justify-end gap-2 flex-nowrap">
+                      {editingServiceArea?.id === sa.id ? (
+                        <>
+                          <button
+                            className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 shrink-0"
+                            onClick={async () => {
                             if (!editingServiceArea) return
                             try {
                               setLoading(true)
@@ -301,18 +331,18 @@ export default function ContentManagementPage() {
                               setLoading(false)
                             }
                           }}
-                        >Kaydet</button>
-                        <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50" onClick={() => setEditingServiceArea(null)}>İptal</button>
-                      </>
-                    ) : (
-                      <>
-                        {canWriteContent && (
-                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)]" onClick={() => setEditingServiceArea(sa)}>Düzenle</button>
-                        )}
-                        {canDeleteContent && (
-                          <button
-                            className="px-3 py-1 rounded btn-danger"
-                            onClick={async () => {
+                          >Kaydet</button>
+                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 shrink-0" onClick={() => setEditingServiceArea(null)}>İptal</button>
+                        </>
+                      ) : (
+                        <>
+                          {canWriteContent && (
+                            <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)] shrink-0" onClick={() => setEditingServiceArea(sa)}>Düzenle</button>
+                          )}
+                          {canDeleteContent && (
+                            <button
+                              className="px-3 py-1 rounded btn-danger shrink-0"
+                              onClick={async () => {
                               if (!confirm('Silmek istediğinize emin misiniz?')) return
                               try {
                                 setLoading(true)
@@ -323,11 +353,12 @@ export default function ContentManagementPage() {
                               } finally {
                                 setLoading(false)
                               }
-                            }}
-                          >Sil</button>
-                        )}
-                      </>
-                    )}
+                              }}
+                            >Sil</button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -349,10 +380,14 @@ export default function ContentManagementPage() {
       {/* Categories */}
       {activeTab === 'categories' && (
       <section className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Kategoriler</h2>
-          <div className="flex items-center gap-3">
-            <div className="w-64">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setFiltersOpen(true)}
+              className="px-3 py-2 rounded border border-gray-300 hover:bg-gray-50 text-sm w-full sm:w-auto"
+            >Filtreler</button>
+            <div className="w-full sm:w-64">
               <input
                 type="text"
                 placeholder="Ara..."
@@ -364,7 +399,7 @@ export default function ContentManagementPage() {
             {canWriteContent && (
               <button
                 onClick={() => setCatModalOpen(true)}
-                className="bg-[color:var(--yellow)] text-[color:var(--black)] font-medium rounded px-4 py-2"
+                className="bg-[color:var(--yellow)] text-[color:var(--black)] font-medium rounded px-4 py-2 w-full sm:w-auto"
               >Yeni</button>
             )}
           </div>
@@ -442,7 +477,7 @@ export default function ContentManagementPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {categories.map((cat) => (
+              {visibleCategories.map((cat) => (
                 <tr key={cat.id}>
                   <td className="px-4 py-2 text-sm text-gray-900">
                     {editingCategory?.id === cat.id ? (
@@ -473,11 +508,12 @@ export default function ContentManagementPage() {
                       cat.description || '-'
                     )}
                   </td>
-                  <td className="px-4 py-2 text-sm text-right space-x-2">
+                  <td className="px-4 py-2 text-sm">
+                    <div className="flex justify-end gap-2 flex-nowrap">
                     {editingCategory?.id === cat.id ? (
                       <>
                         <button
-                          className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                          className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 shrink-0"
                           onClick={async () => {
                             if (!editingCategory) return
                             try {
@@ -496,16 +532,16 @@ export default function ContentManagementPage() {
                             }
                           }}
                         >Kaydet</button>
-                        <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50" onClick={() => setEditingCategory(null)}>İptal</button>
+                        <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 shrink-0" onClick={() => setEditingCategory(null)}>İptal</button>
                       </>
                     ) : (
                       <>
                         {canWriteContent && (
-                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)]" onClick={() => setEditingCategory(cat)}>Düzenle</button>
+                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)] shrink-0" onClick={() => setEditingCategory(cat)}>Düzenle</button>
                         )}
                         {canDeleteContent && (
                           <button
-                            className="px-3 py-1 rounded btn-danger"
+                            className="px-3 py-1 rounded btn-danger shrink-0"
                             onClick={async () => {
                               if (!confirm('Silmek istediğinize emin misiniz?')) return
                               try {
@@ -522,6 +558,7 @@ export default function ContentManagementPage() {
                         )}
                       </>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -551,10 +588,14 @@ export default function ContentManagementPage() {
       {/* Car Brands */}
       {activeTab === 'brands' && (
       <section className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Araba Markaları</h2>
-          <div className="flex items-center gap-3">
-            <div className="w-64">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setFiltersOpen(true)}
+              className="px-3 py-2 rounded border border-gray-300 hover:bg-gray-50 text-sm w-full sm:w-auto"
+            >Filtreler</button>
+            <div className="w-full sm:w-64">
               <input
                 type="text"
                 placeholder="Ara..."
@@ -566,7 +607,7 @@ export default function ContentManagementPage() {
             {canWriteContent && (
               <button
                 onClick={() => setBrandModalOpen(true)}
-                className="bg-[color:var(--yellow)] text-[color:var(--black)] font-medium rounded px-4 py-2"
+                className="bg-[color:var(--yellow)] text-[color:var(--black)] font-medium rounded px-4 py-2 w-full sm:w-auto"
               >Yeni</button>
             )}
           </div>
@@ -692,18 +733,35 @@ export default function ContentManagementPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {carBrands.map((brand) => (
+              {visibleBrands.map((brand) => (
                 <tr key={brand.id}>
                   <td className="px-4 py-2 text-sm">
                     <div className="relative w-[80px] h-[80px] flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
                       {'logo' in brand && brand.logo ? (
-                        <Image 
-                          src={brand.logo as string} 
-                          alt={brand.name} 
-                          width={80}
-                          height={80}
-                          className="w-full h-full object-contain rounded-lg" 
-                        />
+                        editingBrand?.id === brand.id ? (
+                          <Image 
+                            src={brand.logo as string} 
+                            alt={brand.name} 
+                            width={80}
+                            height={80}
+                            className="w-full h-full object-contain rounded-lg" 
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setLightboxUrl(String(brand.logo))}
+                            className="w-full h-full"
+                            aria-label="Logo önizlemeyi büyüt"
+                          >
+                            <Image 
+                              src={brand.logo as string} 
+                              alt={brand.name} 
+                              width={80}
+                              height={80}
+                              className="w-full h-full object-contain rounded-lg cursor-zoom-in" 
+                            />
+                          </button>
+                        )
                       ) : (
                         <span className="text-gray-400 text-sm">Logo Yok</span>
                       )}
@@ -765,11 +823,12 @@ export default function ContentManagementPage() {
                       brand.description || '-'
                     )}
                   </td>
-                  <td className="px-4 py-2 text-sm text-right space-x-2">
+                  <td className="px-4 py-2 text-sm">
+                    <div className="flex justify-end gap-2 flex-nowrap">
                     {editingBrand?.id === brand.id ? (
                       <>
                         <button
-                          className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                          className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 shrink-0"
                           onClick={async () => {
                             if (!editingBrand) return
                             try {
@@ -788,16 +847,16 @@ export default function ContentManagementPage() {
                             }
                           }}
                         >Kaydet</button>
-                        <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50" onClick={() => setEditingBrand(null)}>İptal</button>
+                        <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 shrink-0" onClick={() => setEditingBrand(null)}>İptal</button>
                       </>
                     ) : (
                       <>
                         {canWriteContent && (
-                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)]" onClick={() => setEditingBrand(brand)}>Düzenle</button>
+                          <button className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-50 text-[color:var(--black)] shrink-0" onClick={() => setEditingBrand(brand)}>Düzenle</button>
                         )}
                         {canDeleteContent && (
                           <button
-                            className="px-3 py-1 rounded btn-danger"
+                            className="px-3 py-1 rounded btn-danger shrink-0"
                             onClick={async () => {
                               if (!confirm('Silmek istediğinize emin misiniz?')) return
                               try {
@@ -814,6 +873,7 @@ export default function ContentManagementPage() {
                         )}
                       </>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -838,6 +898,80 @@ export default function ContentManagementPage() {
           />
         </div>
       </section>
+      )}
+
+      {filtersOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setFiltersOpen(false)} />
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Filtreler ve Sıralama</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sıralama</label>
+                <select className="w-full border rounded px-3 py-2" value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
+                  <option value="name_asc">Ad (A→Z)</option>
+                  <option value="name_desc">Ad (Z→A)</option>
+                  <option value="created_desc">Oluşturulma (Yeni→Eski)</option>
+                  <option value="created_asc">Oluşturulma (Eski→Yeni)</option>
+                </select>
+              </div>
+              {activeTab === 'categories' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Hizmet Alanı (Kategoriler)</label>
+                  <select className="w-full border rounded px-3 py-2" value={serviceAreaFilter} onChange={(e) => setServiceAreaFilter(e.target.value ? Number(e.target.value) : '')}>
+                    <option value="">Hepsi</option>
+                    {serviceAreas.map((sa) => (
+                      <option key={sa.id} value={sa.id}>{sa.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {activeTab === 'brands' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Durum (Markalar)</label>
+                  <select className="w-full border rounded px-3 py-2" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
+                    <option value="all">Tümü</option>
+                    <option value="active">Aktif</option>
+                    <option value="inactive">Pasif</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button className="px-4 py-2 rounded border border-gray-300" onClick={() => setFiltersOpen(false)}>Kapat</button>
+              <button
+                className="px-4 py-2 rounded text-[color:var(--black)]"
+                style={{ backgroundColor: 'var(--yellow)' }}
+                onClick={() => { setCatPage(1); setBrandPage(1); setFiltersOpen(false) }}
+              >Uygula</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal for brand logo */}
+      {lightboxUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setLightboxUrl(null)} />
+          <div className="relative bg-white rounded-lg shadow-2xl p-2 max-w-[90vw] max-h-[90vh]">
+            <button
+              className="absolute -top-3 -right-3 bg-white border border-gray-300 rounded-full p-1 shadow"
+              onClick={() => setLightboxUrl(null)}
+              aria-label="Kapat"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="w-[85vw] max-w-[800px] h-[85vh] max-h-[80vh] flex items-center justify-center">
+              <Image
+                src={lightboxUrl}
+                alt="Logo"
+                width={800}
+                height={800}
+                className="w-auto h-auto max-w-full max-h-full object-contain"
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
