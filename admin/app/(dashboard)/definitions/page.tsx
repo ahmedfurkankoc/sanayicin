@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { usePermissions } from '../../contexts/AuthContext'
 import { Users, Shield, PlusCircle, Save, Trash2 } from 'lucide-react'
@@ -53,8 +54,10 @@ interface RoleDef {
 // inline create form removed in favor of modal
 
 export default function DefinitionsPage() {
+  const searchParams = useSearchParams()
+  const tabParam = (searchParams.get('tab') as DefTab | null) || null
   const { canAccess } = usePermissions()
-  const [active, setActive] = useState<DefTab>('roles')
+  const [active, setActive] = useState<DefTab>(tabParam ?? 'roles')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -184,6 +187,15 @@ export default function DefinitionsPage() {
   }
 
   useEffect(() => setMessage(null), [active])
+
+  // Sync active tab with URL param changes
+  useEffect(() => {
+    const nextTab = (searchParams.get('tab') as DefTab | null) || null
+    if (nextTab && nextTab !== active) {
+      setActive(nextTab)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   // Load roles and users from backend
   useEffect(() => {
