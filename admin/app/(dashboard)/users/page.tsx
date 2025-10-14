@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { 
   Search, 
   Filter, 
@@ -14,6 +15,7 @@ import { fetchClients, ClientListItem } from '../../api/clients'
 import Pagination from '../../components/Pagination'
 
 export default function UsersPage() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [data, setData] = useState<ClientListItem[]>([])
@@ -172,7 +174,7 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
-                      <button className="text-[color:var(--black)] hover:text-[color:#000000]">
+                      <button onClick={() => router.push(`/users/${user.id}`)} className="text-[color:var(--black)] hover:text-[color:#000000]">
                         <Eye className="h-4 w-4" />
                       </button>
                       <button className="text-gray-600 hover:text-gray-900">

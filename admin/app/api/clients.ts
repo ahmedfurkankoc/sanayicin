@@ -21,4 +21,9 @@ export async function fetchClients(params?: { search?: string; page?: number; pa
   return data as { count: number; next: string | null; previous: string | null; results: ClientListItem[] }
 }
 
+export async function fetchClient(id: number) {
+  const resp = await apiClient.get<ClientListItem>(`/users/${id}/`)
+  return resp.data
+}
+
 

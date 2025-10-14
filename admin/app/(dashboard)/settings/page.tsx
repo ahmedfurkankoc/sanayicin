@@ -135,6 +135,8 @@ export default function SettingsPage() {
     }
   }
 
+  // Frontend daily timer removed; backend Celery Beat handles daily refresh at 00:01 TR
+
   const handleAddDomain = async () => {
     if (!newDomainName.trim()) return
     
@@ -191,7 +193,7 @@ export default function SettingsPage() {
     }
   }
 
-  // Load domains when domain tab is active
+  // Load domains when domain tab is active (no frontend auto-refresh)
   useEffect(() => {
     if (activeTab === 'domain') {
       loadDomains()

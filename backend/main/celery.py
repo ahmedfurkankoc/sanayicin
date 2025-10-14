@@ -46,6 +46,21 @@ app.conf.update(
     }
 )
 
+# Celery Beat periodic tasks
+app.conf.beat_schedule = {
+    'refresh-all-domains-daily-0001-tr': {
+        'task': 'admin_panel.refresh_all_domains',
+        'schedule': {
+            'type': 'crontab',
+            'minute': 1,
+            'hour': 0,
+        },
+        'options': {
+            'queue': 'default',
+        },
+    },
+}
+
 @app.task(bind=True)
 def debug_task(self):
     print(f'Request: {self.request!r}') 

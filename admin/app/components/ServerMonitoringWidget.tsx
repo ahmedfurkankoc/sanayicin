@@ -27,10 +27,13 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+  const REFRESH_MS = 30 * 60 * 1000 // 30 dakika
 
-  // Load server monitoring data without frontend cache
+  // Load with lightweight frontend cache and 30-min auto-refresh
   useEffect(() => {
-    const loadServers = async () => {
+    const cacheKey = 'serverMonitoring:cache'
+
+    const loadServers = async (fromManual = false) => {
       setServersLoading(true)
       setServersError(null)
       
@@ -39,22 +42,42 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
         const serverData = response.servers || []
         
         setServers(serverData)
-        setLastUpdated(new Date())
+        const now = new Date()
+        setLastUpdated(now)
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({ ts: now.getTime(), servers: serverData }))
+        } catch {}
         
       } catch (error: unknown) {
         console.error('Server monitoring error:', error)
-        const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Sunucu verileri yüklenemedi'
+        const errorMessage = error && typeof error === 'object' && 'response' in error && (error as any).response && typeof (error as any).response === 'object' && 'data' in (error as any).response && (error as any).response.data && typeof (error as any).response.data === 'object' && 'error' in (error as any).response.data ? String((error as any).response.data.error) : 'Sunucu verileri yüklenemedi'
         setServersError(errorMessage)
       } finally {
         setServersLoading(false)
       }
     }
 
-    // İlk yükleme
-    loadServers()
+    // İlk yüklemede önbelleği dene
+    try {
+      const raw = localStorage.getItem(cacheKey)
+      if (raw) {
+        const parsed = JSON.parse(raw) as { ts: number; servers: ServerInfo[] }
+        const isFresh = Date.now() - parsed.ts < REFRESH_MS
+        if (isFresh) {
+          setServers(parsed.servers || [])
+          setLastUpdated(new Date(parsed.ts))
+        } else {
+          void loadServers()
+        }
+      } else {
+        void loadServers()
+      }
+    } catch {
+      void loadServers()
+    }
     
-    // Auto-refresh every 1 hour (3600 seconds)
-    const interval = setInterval(() => loadServers(), 3600000)
+    // 30 dakikada bir otomatik yenile
+    const interval = setInterval(() => { void loadServers() }, REFRESH_MS)
     
     return () => clearInterval(interval)
   }, [])
@@ -65,8 +88,13 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
     
     try {
       const response = await getServerMonitoring()
-      setServers(response.servers || [])
-      setLastUpdated(new Date())
+      const serverData = response.servers || []
+      setServers(serverData)
+      const now = new Date()
+      setLastUpdated(now)
+      try {
+        localStorage.setItem('serverMonitoring:cache', JSON.stringify({ ts: now.getTime(), servers: serverData }))
+      } catch {}
       
     } catch (error: unknown) {
       console.error('Server monitoring refresh error:', error)
