@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { usePermissions } from '../../contexts/AuthContext'
 import { Users, Shield, PlusCircle, Save, Trash2 } from 'lucide-react'
-import { listAdminUsers, updateAdminUserRole, getAdminRoles, updateAdminRoles, createAdminUser, AdminUserCreateData } from '../../api/admin'
+import { listAdminUsers, updateAdminUserRole, getAdminRoles, updateAdminRoles, createAdminUser, deleteAdminUser, AdminUserCreateData } from '../../api/admin'
 
 type DefTab = 'roles' | 'assign' | 'new_admin'
 
@@ -82,6 +82,7 @@ export default function DefinitionsPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
   const [selectedRole, setSelectedRole] = useState<RoleKey>('support')
   const [assigningIds, setAssigningIds] = useState<number[]>([])
+  const [deletingIds, setDeletingIds] = useState<number[]>([])
 
   // New admin form
   const [newAdmin, setNewAdmin] = useState({
@@ -591,6 +592,29 @@ export default function DefinitionsPage() {
                               ))}
                             </select>
                           </td>
+                          <td className="px-3 py-2 text-right">
+                            <button
+                              onClick={async () => {
+                                if (!confirm(`${u.email} kullanıcısını silmek istediğinize emin misiniz?`)) return
+                                try {
+                                  setDeletingIds((prev) => [...prev, u.id])
+                                  await deleteAdminUser(u.id)
+                                  setUsers((prev) => prev.filter((x) => x.id !== u.id))
+                                  setSelectedUserIds((prev) => prev.filter((id) => id !== u.id))
+                                  setMessage('Kullanıcı silindi.')
+                                } catch (error) {
+                                  console.error('Delete user error:', error)
+                                  setMessage('Kullanıcı silinemedi.')
+                                } finally {
+                                  setDeletingIds((prev) => prev.filter((id) => id !== u.id))
+                                }
+                              }}
+                              disabled={deletingIds.includes(u.id) || !canAccess('settings')}
+                              className="px-3 py-1 rounded border border-gray-300 text-red-700 hover:bg-red-50 disabled:opacity-60"
+                            >
+                              Sil
+                            </button>
+                          </td>
                         </tr>
                       ))}
                   </tbody>
@@ -600,9 +624,39 @@ export default function DefinitionsPage() {
               {/* Bulk apply */}
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-600">
-                  {selectedUserIds.length} kullanıcı seçildi
+                  Toplam kullanıcı: {users.length}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <span className="text-sm text-gray-600">{selectedUserIds.length} kullanıcı seçildi</span>
+                  <button
+                    onClick={async () => {
+                      if (selectedUserIds.length === 0) return
+                      if (!confirm(`${selectedUserIds.length} kullanıcıyı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`)) return
+                      setSaving(true)
+                      try {
+                        await Promise.all(selectedUserIds.map((id) => deleteAdminUser(id)))
+                        const res = await listAdminUsers({ page_size: 500 })
+                        setUsers(
+                          res.items.map((u: { id: number; email: string; role: string }) => ({
+                            id: u.id,
+                            email: u.email,
+                            role: u.role as RoleKey,
+                          }))
+                        )
+                        setSelectedUserIds([])
+                        setMessage('Seçili kullanıcılar silindi.')
+                      } catch (error) {
+                        console.error('Bulk delete error:', error)
+                        setMessage('Seçili kullanıcılar silinemedi.')
+                      } finally {
+                        setSaving(false)
+                      }
+                    }}
+                    disabled={saving || selectedUserIds.length === 0 || !canAccess('settings')}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-gray-300 text-red-700 hover:bg-red-50 disabled:opacity-60"
+                  >
+                    Seçilenleri Sil
+                  </button>
                   <button
                     onClick={() => setSelectedUserIds([])}
                     className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"

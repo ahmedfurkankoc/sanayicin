@@ -129,18 +129,18 @@ export default function HostingerSubscriptionsWidget({ className = '', defaultEx
       className={`bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg border border-gray-100 cursor-pointer hover:shadow-xl transition-all duration-300 ${className}`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 p-6 pb-0">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 p-6 pb-0 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 bg-blue-100 rounded-lg">
             <CreditCard className="h-6 w-6 text-blue-600" />    
           </div>
-          <div className="text-left">
-            <h3 className="text-xl font-semibold text-gray-900">Hostinger Abonelik</h3>
-            <p className="text-sm text-gray-500">
+          <div className="text-left min-w-0">
+            <h3 className="text-xl font-semibold text-gray-900 truncate">Hostinger Abonelik</h3>
+            <p className="text-sm text-gray-500 truncate">
               {subscriptions.length} abonelik • {lastUpdated && `Son güncelleme: ${lastUpdated.toLocaleTimeString()}`}
             </p>
           </div>
-          <div className="ml-2">
+          <div className="ml-2 flex-shrink-0">
             {isExpanded ? (
               <ChevronUp className="h-5 w-5 text-gray-400" />
             ) : (
@@ -205,7 +205,7 @@ export default function HostingerSubscriptionsWidget({ className = '', defaultEx
                 return (
                   <div key={subscription.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                     {/* Subscription Header */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                       <div className="flex items-center gap-3">
                         {getStatusIcon(subscription.status)}
                         <div>
@@ -213,7 +213,7 @@ export default function HostingerSubscriptionsWidget({ className = '', defaultEx
                           <p className="text-sm text-gray-500">ID: {subscription.id}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="mt-2 sm:mt-0 flex items-center gap-2">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(subscription.status)}`}>
                           {subscription.status.toUpperCase()}
                         </span>
@@ -226,7 +226,7 @@ export default function HostingerSubscriptionsWidget({ className = '', defaultEx
                     </div>
 
                     {/* Subscription Details */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {/* Pricing */}
                       <div className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center gap-2 mb-2">
