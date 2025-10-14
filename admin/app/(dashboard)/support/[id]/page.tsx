@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   getSupportTicket,
@@ -157,16 +157,16 @@ export default function SupportDetailPage() {
                 <div className="border rounded-lg p-4 bg-gray-50">
                   <div className="text-sm font-semibold text-gray-800 mb-3">Talep Sahibi</div>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between gap-3"><span className="text-gray-500">Ad</span><span className="font-medium text-gray-900">{ticket.user_name || (ticket as any).requester_name || '-'}</span></div>
-                    <div className="flex justify-between gap-3"><span className="text-gray-500">E-posta</span><span className="font-medium text-gray-900 break-all">{ticket.user_email || (ticket as any).requester_email || '-'}</span></div>
-                    <div className="flex justify-between gap-3"><span className="text-gray-500">Rol</span><span className="font-medium text-gray-900 uppercase">{(ticket as any).role || '-'}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-gray-500">Ad</span><span className="font-medium text-gray-900">{ticket.user_name || '-'}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-gray-500">E-posta</span><span className="font-medium text-gray-900 break-all">{ticket.user_email || '-'}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-gray-500">Rol</span><span className="font-medium text-gray-900 uppercase">-</span></div>
                   </div>
                   <div className="h-px bg-gray-200 my-3" />
                   <div className="text-sm font-semibold text-gray-800 mb-2">Talep Bilgileri</div>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between gap-3"><span className="text-gray-500">Kod</span><span className="font-medium text-gray-900">{(ticket as any).public_id || '-'}</span></div>
-                    <div className="flex justify-between gap-3"><span className="text-gray-500">Kategori</span><span className="font-medium text-gray-900">{(ticket as any).category || '-'}</span></div>
-                    <div className="flex justify-between gap-3"><span className="text-gray-500">Öncelik</span><span className="font-medium text-gray-900 capitalize">{(ticket as any).priority || 'normal'}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-gray-500">Kod</span><span className="font-medium text-gray-900">{ticket.public_id || '-'}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-gray-500">Kategori</span><span className="font-medium text-gray-900">-</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-gray-500">Öncelik</span><span className="font-medium text-gray-900 capitalize">normal</span></div>
                     <div className="flex justify-between gap-3"><span className="text-gray-500">Oluşturma</span><span className="font-medium text-gray-900">{new Date(ticket.created_at).toLocaleString()}</span></div>
                   </div>
                 </div>

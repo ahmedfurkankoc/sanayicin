@@ -295,7 +295,11 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
   useEffect(() => {
     let isMounted = true
     ;(async () => {
-      if (!editorRef.current || editorInitializedRef.current) return
+      // Copy refs to variables inside the effect to avoid stale closure issues
+      const editorContainer = editorContainerRef.current
+      const editor = editorRef.current
+      
+      if (!editor || editorInitializedRef.current) return
       try {
         const QuillModule = await import('quill')
         const Quill = (QuillModule as { default?: unknown }).default || QuillModule
@@ -314,15 +318,15 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
 
         // Clear any previous Quill DOM (toolbars, editor) to avoid duplicates
         try {
-          if (editorContainerRef.current) {
-            const toolbars = editorContainerRef.current.querySelectorAll('.ql-toolbar')
+          if (editorContainer) {
+            const toolbars = editorContainer.querySelectorAll('.ql-toolbar')
             toolbars.forEach(tb => tb.parentElement?.removeChild(tb))
           }
-          editorRef.current.innerHTML = ''
+          editor.innerHTML = ''
         } catch {}
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const quill: any = new (Quill as any)(editorRef.current, {
+        const quill: any = new (Quill as any)(editor, {
           theme: 'snow',
           modules: {
             toolbar: {
@@ -384,6 +388,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     return () => {
       isMounted = false
       // Cleanup DOM to avoid duplicate toolbars on Strict Mode remounts
+      // Use the same variables from the effect scope
       const editorContainer = editorContainerRef.current
       const editor = editorRef.current
       try {

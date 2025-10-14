@@ -33,7 +33,7 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
   useEffect(() => {
     const cacheKey = 'serverMonitoring:cache'
 
-    const loadServers = async (fromManual = false) => {
+    const loadServers = async () => {
       setServersLoading(true)
       setServersError(null)
       
@@ -50,7 +50,21 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
         
       } catch (error: unknown) {
         console.error('Server monitoring error:', error)
-        const errorMessage = error && typeof error === 'object' && 'response' in error && (error as any).response && typeof (error as any).response === 'object' && 'data' in (error as any).response && (error as any).response.data && typeof (error as any).response.data === 'object' && 'error' in (error as any).response.data ? String((error as any).response.data.error) : 'Sunucu verileri yüklenemedi'
+        let errorMessage = 'Sunucu verileri yüklenemedi'
+        
+        if (error && typeof error === 'object') {
+          const errorObj = error as Record<string, unknown>
+          if ('response' in errorObj && errorObj.response && typeof errorObj.response === 'object') {
+            const response = errorObj.response as Record<string, unknown>
+            if ('data' in response && response.data && typeof response.data === 'object') {
+              const data = response.data as Record<string, unknown>
+              if ('error' in data && typeof data.error === 'string') {
+                errorMessage = data.error
+              }
+            }
+          }
+        }
+        
         setServersError(errorMessage)
       } finally {
         setServersLoading(false)
@@ -80,7 +94,7 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
     const interval = setInterval(() => { void loadServers() }, REFRESH_MS)
     
     return () => clearInterval(interval)
-  }, [])
+  }, [REFRESH_MS])
 
   const handleRefresh = async () => {
     setServersLoading(true)
@@ -98,7 +112,21 @@ export default function ServerMonitoringWidget({ className = '', defaultExpanded
       
     } catch (error: unknown) {
       console.error('Server monitoring refresh error:', error)
-      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Sunucu verileri yenilenemedi'
+      let errorMessage = 'Sunucu verileri yenilenemedi'
+      
+      if (error && typeof error === 'object') {
+        const errorObj = error as Record<string, unknown>
+        if ('response' in errorObj && errorObj.response && typeof errorObj.response === 'object') {
+          const response = errorObj.response as Record<string, unknown>
+          if ('data' in response && response.data && typeof response.data === 'object') {
+            const data = response.data as Record<string, unknown>
+            if ('error' in data && typeof data.error === 'string') {
+              errorMessage = data.error
+            }
+          }
+        }
+      }
+      
       setServersError(errorMessage)
     } finally {
       setServersLoading(false)
