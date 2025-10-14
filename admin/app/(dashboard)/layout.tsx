@@ -24,6 +24,7 @@ import {
   User
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
+import Breadcrumbs from '../components/Breadcrumbs'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home, permission: 'dashboard' },
@@ -279,6 +280,7 @@ export default function DashboardLayout({
           {/* Page content */}
           <main className="flex-1 p-6">
             <div className="max-w-7xl mx-auto">
+              <Breadcrumbs />
               {children}
             </div>
           </main>
