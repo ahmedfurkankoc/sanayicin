@@ -72,9 +72,14 @@ function MyTickets() {
                 </div>
               </div>
               <div className="support-item-right">
-                <span className={`ticket-status ${t.status === 'open' ? 'status-open' : 'status-closed'}`}>
-                  {t.status === 'open' ? 'Açık' : 'Kapalı'}
-                </span>
+                {(() => {
+                  const key = t.status === 'open' ? 'cevaplanmadi' : (t.status === 'pending' ? 'cevaplandi' : (t.status === 'resolved' ? 'cozuldu' : 'kapali'))
+                  const label = key === 'cevaplanmadi' ? 'Cevaplanmadı' : key === 'cevaplandi' ? 'Cevaplandı' : key === 'cozuldu' ? 'Çözüldü' : 'Kapalı'
+                  const cls = key === 'cevaplanmadi' ? 'status-red' : key === 'cevaplandi' ? 'status-green' : key === 'cozuldu' ? 'status-blue' : 'status-gray'
+                  return (
+                    <span className={`ticket-status ${cls}`}>{label}</span>
+                  )
+                })()}
               </div>
             </div>
           )})}

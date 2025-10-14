@@ -678,7 +678,25 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
     
     @admin_permission_required('support', 'write')
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        # Force sender_user and is_admin for admin side messages
+        data = request.data.copy()
+        data['sender_user'] = getattr(request.user, 'id', None)
+        data['is_admin'] = True
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        # Ensure ticket status is at least 'pending' (Cevaplandı)
+        try:
+            msg = serializer.instance
+            if msg and msg.ticket and msg.ticket.status not in ('resolved', 'closed') and msg.ticket.status != 'pending':
+                from django.utils import timezone as dj_tz
+                msg.ticket.status = 'pending'
+                msg.ticket.updated_at = dj_tz.now()
+                msg.ticket.save(update_fields=['status', 'updated_at'])
+        except Exception:
+            pass
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
     @admin_permission_required('support', 'write')
     def update(self, request, *args, **kwargs):
@@ -726,10 +744,15 @@ class SupportMessageViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related('ticket', 'user').order_by('created_at')
+        qs = super().get_queryset().select_related('ticket', 'sender_user')
         ticket_id = self.request.query_params.get('ticket')
         if ticket_id and ticket_id.isdigit():
             qs = qs.filter(ticket_id=int(ticket_id))
+        ordering = self.request.query_params.get('ordering')
+        if ordering == '-created_at':
+            qs = qs.order_by('-created_at')
+        else:
+            qs = qs.order_by('created_at')
         return qs
 
 class ServiceAreaViewSet(viewsets.ModelViewSet):

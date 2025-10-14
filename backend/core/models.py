@@ -12,6 +12,8 @@ from io import BytesIO
 from django.core.files import File
 from .utils import avatar_upload_path
 from .utils.crypto import encrypt_text, decrypt_text
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Create your models here.
 
@@ -631,8 +633,8 @@ class SupportTicket(models.Model):
         ('unknown', 'Bilinmiyor'),
     ]
     STATUS_CHOICES = [
-        ('open', 'Açık'),
-        ('pending', 'Beklemede'),
+        ('open', 'Cevaplanmadı'),
+        ('pending', 'Cevaplandı'),
         ('resolved', 'Çözüldü'),
         ('closed', 'Kapalı'),
     ]
@@ -700,4 +702,20 @@ class SupportMessage(models.Model):
     def __str__(self):
         sender = 'Admin' if self.is_admin else (self.sender_user.email if self.sender_user else 'Anonim')
         return f"{self.ticket.public_id} - {sender} - {self.created_at.strftime('%d.%m.%Y %H:%M')}"
+
+
+# --- Signals ---
+@receiver(post_save, sender=SupportMessage)
+def update_ticket_status_on_admin_message(sender, instance: 'SupportMessage', created: bool, **kwargs):
+    """Admin mesajı oluşturulunca ticket durumunu en az 'pending' (Cevaplandı) yap.
+    Çözülen/Kapalı ticket'larda durum değiştirilmez.
+    """
+    try:
+        if instance.is_admin and instance.ticket and instance.ticket.status not in ('resolved', 'closed'):
+            if instance.ticket.status != 'pending':
+                instance.ticket.status = 'pending'
+                instance.ticket.save(update_fields=['status', 'updated_at'])
+    except Exception:
+        # Status update best-effort; hata durumunda sessiz geç
+        pass
 
