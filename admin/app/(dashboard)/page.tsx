@@ -8,6 +8,7 @@ import {
   Settings
 } from 'lucide-react'
 import { fetchDashboardStats, fetchAdminAuthLogs, type AdminAuthLogItem } from '../api/admin'
+import { useRouter } from 'next/navigation'
 import ServerMonitoringWidget from '../components/ServerMonitoringWidget'
 import { useAuth } from '../contexts/AuthContext'
 import { useEffect, useState } from 'react'
@@ -24,6 +25,7 @@ const recentActivities = [
 ]
 
 export default function Dashboard() {
+  const router = useRouter()
   const { user } = useAuth()
   const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email || ''
   const { canRead } = usePermissions()
@@ -213,19 +215,19 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Hızlı İşlemler</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
+          <button onClick={() => router.push('/definitions?tab=new_admin')} className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
             <div className="text-center">
               <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-600">Yeni Kullanıcı Ekle</p>
             </div>
           </button>
-          <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
+          <button onClick={() => router.push('/blog/new')} className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
             <div className="text-center">
               <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-600">Blog Yazısı Yaz</p>
             </div>
           </button>
-          <button className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
+          <button onClick={() => router.push('/content')} className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors">
             <div className="text-center">
               <Settings className="h-8 w-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-600">İçerik Ekle</p>
