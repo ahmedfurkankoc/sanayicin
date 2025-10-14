@@ -266,21 +266,30 @@ export async function deleteCarBrand(id: number) {
 // ========== Support (Tickets & Messages) ==========
 export interface SupportTicket {
   id: number
+  public_id?: string
   subject: string
   message: string
   status: 'open' | 'pending' | 'resolved' | 'closed'
   user: number | null
   user_email?: string
   user_name?: string
+  category?: string
+  role?: string
+  priority?: string
   created_at: string
   updated_at: string
+  last_message_at?: string | null
+  message_count?: number
+  effective_status?: 'open' | 'pending' | 'resolved' | 'closed'
+  effective_status_key?: 'cevaplanmadi' | 'beklemede' | 'cozuldu' | 'kapali'
+  effective_status_label?: string
 }
 
 export interface SupportMessage {
   id: number
   ticket: number
   content: string
-  user: number | null
+  sender_user: number | null
   user_email?: string
   user_name?: string
   created_at: string
@@ -299,7 +308,7 @@ export async function getSupportTicket(id: number) {
 }
 
 export async function listSupportMessages(ticketId: number) {
-  const resp = await apiClient.get<SupportMessage[] | { results: SupportMessage[] }>(`/support-messages/`, { params: { ticket: ticketId, page_size: 500 } })
+  const resp = await apiClient.get<SupportMessage[] | { results: SupportMessage[] }>(`/support-messages/`, { params: { ticket: ticketId, page_size: 500, ordering: 'created_at' } })
   const data = resp.data as { results: SupportMessage[]; count: number; total_pages: number }
   return Array.isArray(data) ? data : (data.results ?? [])
 }

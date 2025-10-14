@@ -1,13 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import {
   listSupportTickets,
-  listSupportMessages,
-  sendSupportMessage,
-  updateSupportTicket,
   type SupportTicket,
-  type SupportMessage,
 } from '../../api/admin'
 import { usePermissions } from '../../contexts/AuthContext'
 import Pagination from '../../components/Pagination'
@@ -23,13 +20,9 @@ export default function SupportPage() {
   const [ticketPageSize, setTicketPageSize] = useState(10)
   const [ticketSearch, setTicketSearch] = useState('')
   const [ticketStatus, setTicketStatus] = useState<string>('')
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
 
-  // Selection
-  const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null)
-  const [messages, setMessages] = useState<SupportMessage[]>([])
-  const [newMessage, setNewMessage] = useState('')
-  const [sending, setSending] = useState(false)
-  const [updatingTicket, setUpdatingTicket] = useState(false)
+  // Selection removed: navigate to detail page instead
 
   useEffect(() => {
     if (!canReadSupport) return
@@ -46,11 +39,7 @@ export default function SupportPage() {
         if (cancelled) return
         setTickets(res.items)
         setTicketTotal(res.count)
-        // Keep active ticket in list or reset
-        if (activeTicket) {
-          const found = res.items.find((t: SupportTicket) => t.id === activeTicket.id)
-          if (!found) setActiveTicket(null)
-        }
+        // nothing else to do here
       } catch {
         if (cancelled) return
         // ignore errors
@@ -58,23 +47,31 @@ export default function SupportPage() {
     }
     loadTickets()
     return () => { cancelled = true }
-  }, [canReadSupport, ticketPage, ticketPageSize, ticketSearch, ticketStatus, activeTicket])
+  }, [canReadSupport, ticketPage, ticketPageSize, ticketSearch, ticketStatus])
 
-  useEffect(() => {
-    let cancelled = false
-    const loadMessages = async () => {
-      if (!activeTicket) return
-      try {
-        const res = await listSupportMessages(activeTicket.id)
-        if (cancelled) return
-        setMessages(res)
-    } catch {
-      // ignore
+  const sortedTickets = useMemo(() => {
+    const priority: Record<string, number> = { open: 0, pending: 1, resolved: 2, closed: 3 }
+    const byDate = (a: any, b: any) => {
+      const ta = new Date(a.created_at).getTime()
+      const tb = new Date(b.created_at).getTime()
+      return sortOrder === 'desc' ? (tb - ta) : (ta - tb)
     }
+    const arr = [...tickets]
+    // When showing all statuses, put 'open' (cevaplanmadi) first
+    if (!ticketStatus) {
+      arr.sort((a, b) => {
+        const pa = priority[a.status] ?? 99
+        const pb = priority[b.status] ?? 99
+        if (pa !== pb) return pa - pb
+        return byDate(a, b)
+      })
+      return arr
     }
-    loadMessages()
-    return () => { cancelled = true }
-  }, [activeTicket])
+    // Otherwise keep selected status list, sort by date only
+    arr.sort(byDate)
+    return arr
+  }, [tickets, ticketStatus, sortOrder])
+  
 
   if (!canReadSupport) {
     return (
@@ -86,9 +83,9 @@ export default function SupportPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6">
       {/* Tickets list */}
-      <div className="lg:col-span-1 bg-white rounded-lg shadow p-4 flex flex-col">
+      <div className="bg-white rounded-lg shadow p-4 flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-gray-900">Talepler</h2>
         </div>
@@ -106,31 +103,38 @@ export default function SupportPage() {
             onChange={(e) => { setTicketStatus(e.target.value); setTicketPage(1) }}
           >
             <option value="">Durum (hepsi)</option>
-            <option value="open">Açık</option>
-            <option value="pending">Beklemede</option>
+            <option value="open">Cevaplanmadı</option>
+            <option value="pending">Cevaplandı</option>
             <option value="resolved">Çözüldü</option>
             <option value="closed">Kapalı</option>
           </select>
+          <select
+            className="border border-gray-300 rounded px-2 py-2 text-sm"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
+            title="Sıralama"
+          >
+            <option value="desc">Yeni → Eski</option>
+            <option value="asc">Eski → Yeni</option>
+          </select>
         </div>
         <div className="overflow-y-auto divide-y divide-gray-200" style={{ maxHeight: 600 }}>
-          {tickets.map((t) => (
-            <button
-              key={t.id}
-              className={`w-full text-left px-3 py-2 hover:bg-gray-50 ${activeTicket?.id === t.id ? 'bg-gray-50' : ''}`}
-              onClick={() => setActiveTicket(t)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="font-medium text-gray-900 truncate">{t.subject}</div>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  t.status === 'open' ? 'bg-green-100 text-green-700' :
-                  t.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                  t.status === 'resolved' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                }`}>{t.status}</span>
-              </div>
-              <div className="text-xs text-gray-500 truncate">{t.user_email || '-'}</div>
-              <div className="text-xs text-gray-400">{new Date(t.created_at).toLocaleString()}</div>
-            </button>
-          ))}
+          {sortedTickets.map((t) => {
+            // Show strictly by DB status to avoid confusion
+            const key = (t.status === 'open' ? 'cevaplanmadi' : t.status === 'pending' ? 'beklemede' : t.status === 'resolved' ? 'cozuldu' : 'kapali') as 'cevaplanmadi' | 'beklemede' | 'cozuldu' | 'kapali'
+            const label = key === 'cevaplanmadi' ? 'Cevaplanmadı' : key === 'beklemede' ? 'Cevaplandı' : key === 'cozuldu' ? 'Çözüldü' : 'Kapalı'
+            const badgeClass = key === 'cevaplanmadi' ? 'bg-red-100 text-red-700' : key === 'beklemede' ? 'bg-yellow-100 text-yellow-700' : key === 'cozuldu' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+            return (
+              <Link href={`/support/${t.id}`} key={t.id} className="block w-full px-3 py-2 hover:bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="font-medium text-gray-900 truncate">{t.subject}</div>
+                  <span className={`text-xs px-2 py-1 rounded ${badgeClass}`}>{label}</span>
+                </div>
+                <div className="text-xs text-gray-500 truncate">Kod: {t.public_id || '-'}</div>
+                <div className="text-xs text-gray-400">{new Date(t.created_at).toLocaleString()}</div>
+              </Link>
+            )
+          })}
           {tickets.length === 0 && (
             <div className="text-sm text-gray-500 px-3 py-6">Kayıt yok</div>
           )}
@@ -148,113 +152,7 @@ export default function SupportPage() {
           />
         </div>
       </div>
-
-      {/* Ticket detail + messages */}
-      <div className="lg:col-span-2 bg-white rounded-lg shadow p-6 flex flex-col min-h-[600px]">
-        {activeTicket ? (
-          <>
-            <div className="flex items-start justify-between mb-4">
-              <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-gray-900">{activeTicket.subject}</h3>
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Kullanıcı:</span> {activeTicket.user_name || activeTicket.user_email || '-'}
-                </div>
-                <div className="text-xs text-gray-500">{new Date(activeTicket.created_at).toLocaleString()}</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <select
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
-                  value={activeTicket.status}
-                  disabled={!canWriteSupport || updatingTicket}
-                  onChange={async (e) => {
-                    const next = e.target.value as SupportTicket['status']
-                    try {
-                      setUpdatingTicket(true)
-                      const updated = await updateSupportTicket(activeTicket.id, { status: next })
-                      setActiveTicket(updated)
-                      setTickets((prev) => prev.map(t => t.id === updated.id ? updated : t))
-                    } catch {
-                      // ignore
-                    } finally {
-                      setUpdatingTicket(false)
-                    }
-                  }}
-                >
-                  <option value="open">Açık</option>
-                  <option value="pending">Beklemede</option>
-                  <option value="resolved">Çözüldü</option>
-                  <option value="closed">Kapalı</option>
-                </select>
-                <button
-                  className="px-3 py-1 rounded btn-danger"
-                  disabled={!canWriteSupport}
-                  onClick={async () => {
-                    if (!confirm('Talebi kapatmak istediğinize emin misiniz?')) return
-                    try {
-                      setUpdatingTicket(true)
-                      const updated = await updateSupportTicket(activeTicket.id, { status: 'closed' })
-                      setActiveTicket(updated)
-                      setTickets((prev) => prev.map(t => t.id === updated.id ? updated : t))
-                    } catch {
-                      // ignore
-                    } finally {
-                      setUpdatingTicket(false)
-                    }
-                  }}
-                >Kapat</button>
-              </div>
-            </div>
-
-            {/* Ticket initial message (if any) */}
-            {activeTicket.message && (
-              <div className="mb-4 border rounded p-4 bg-gray-50">
-                <div className="text-sm text-gray-800 whitespace-pre-wrap">{activeTicket.message}</div>
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto space-y-4 border rounded p-4">
-              {messages.map((m) => (
-                <div key={m.id} className="flex flex-col">
-                  <div className="text-sm text-gray-700 whitespace-pre-wrap">{m.content}</div>
-                  <div className="text-xs text-gray-500 mt-1">{m.user_email || 'Sistem'} • {new Date(m.created_at).toLocaleString()}</div>
-                </div>
-              ))}
-              {messages.length === 0 && (
-                <div className="text-sm text-gray-500">Henüz mesaj yok</div>
-              )}
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              <textarea
-                className="flex-1 border border-gray-300 rounded px-3 py-2"
-                rows={3}
-                placeholder="Mesaj yazın..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-              />
-              <button
-                disabled={!canWriteSupport || !newMessage.trim() || sending}
-                className="bg-[color:var(--yellow)] text-[color:var(--black)] font-medium rounded px-4 py-2 disabled:opacity-50"
-                onClick={async () => {
-                  if (!activeTicket || !newMessage.trim()) return
-                  try {
-                    setSending(true)
-                    const created = await sendSupportMessage(activeTicket.id, newMessage.trim())
-                    setMessages((prev) => [...prev, created])
-                    setNewMessage('')
-                  } catch {
-                    // ignore
-                  } finally {
-                    setSending(false)
-                  }
-                }}
-              >Gönder</button>
-            </div>
-          </>
-        ) : (
-          <div className="text-sm text-gray-500">Soldan bir talep seçin</div>
-        )}
-      </div>
+      
     </div>
   )
 }

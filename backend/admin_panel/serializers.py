@@ -110,13 +110,13 @@ class SupportTicketSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'created_at', 'updated_at']
 
 class SupportMessageSerializer(serializers.ModelSerializer):
-    user_email = serializers.CharField(source='user.email', read_only=True)
-    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    user_email = serializers.CharField(source='sender_user.email', read_only=True)
+    user_name = serializers.CharField(source='sender_user.get_full_name', read_only=True)
     
     class Meta:
         model = SupportMessage
         fields = '__all__'
-        read_only_fields = ['user', 'created_at']
+        read_only_fields = ['sender_user', 'created_at']
 
 # ========== Admin Permission Serializers ==========
 class AdminPermissionSerializer(serializers.ModelSerializer):
