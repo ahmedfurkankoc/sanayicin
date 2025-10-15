@@ -95,15 +95,19 @@ function VendorDetailContent() {
     ])
       .then(([vendorRes, reviewsRes]: any) => {
         setVendor(vendorRes.data);
-        setReviews(reviewsRes.data);
-        
+        // Reviews yanıtını normalize et (düz liste veya sayfalı { results, count })
+        const payload = reviewsRes?.data ?? reviewsRes;
+        const list: any[] = Array.isArray(payload)
+          ? payload
+          : (Array.isArray(payload?.results) ? payload.results : []);
+        setReviews(list);
+
         // Ortalama puanı ve toplam değerlendirme sayısını hesapla
-        const reviewData = reviewsRes.data;
-        const total = reviewData.length;
-        const average = total > 0 
-          ? reviewData.reduce((acc: number, curr: any) => acc + curr.rating, 0) / total 
+        const total: number = (typeof payload?.count === 'number') ? payload.count : list.length;
+        const average: number = list.length > 0
+          ? list.reduce((acc: number, curr: any) => acc + (Number(curr?.rating) || 0), 0) / list.length
           : 0;
-        
+
         setTotalReviews(total);
         setAverageRating(average);
         setError("");
