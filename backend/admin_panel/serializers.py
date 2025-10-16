@@ -35,12 +35,27 @@ class BlogPostSerializer(serializers.ModelSerializer):
 
 # ========== System Serializers ==========
 class SystemLogSerializer(serializers.ModelSerializer):
-    user_email = serializers.CharField(source='user.email', read_only=True)
+    user_email = serializers.SerializerMethodField()
     
     class Meta:
         model = SystemLog
         fields = '__all__'
         read_only_fields = ['created_at']
+    
+    def get_user_email(self, obj):
+        """Get user email from either CustomUser or AdminUser"""
+        if obj.user:
+            # CustomUser'dan email al
+            return obj.user.email
+        else:
+            # Message içinden email'i parse et (AdminUser için)
+            message = obj.message or ''
+            # Email pattern'ini ara: email=xxx@xxx.com, username=xxx@xxx.com, veya admin_email=xxx@xxx.com
+            import re
+            email_match = re.search(r'(?:email=|username=|admin_email=)([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', message)
+            if email_match:
+                return email_match.group(1)
+        return None
 
 class AdminNotificationSerializer(serializers.ModelSerializer):
     class Meta:
