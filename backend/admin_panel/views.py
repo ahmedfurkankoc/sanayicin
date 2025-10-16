@@ -25,6 +25,22 @@ from .serializers import *
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
 from vendors.models import VendorProfile
 
+# Helper function for admin logging
+def create_admin_log(level, message, module, request, admin_user=None):
+    """Create SystemLog with admin user info in message"""
+    if admin_user:
+        message_with_user = f"{message} (admin_email={admin_user.email} admin_id={admin_user.id})"
+    else:
+        message_with_user = message
+    
+    return SystemLog.objects.create(
+        level=level,
+        message=message_with_user,
+        module=module,
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT', '')
+    )
+
 # Admin Authentication Views
 @method_decorator(csrf_exempt, name='dispatch')
 class AdminLoginView(APIView):
@@ -998,12 +1014,12 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         user = serializer.save()
         
         # Log admin creation
-        SystemLog.objects.create(
+        create_admin_log(
             level='info',
             message=f"New admin created: {user.email} (role={user.role})",
             module='admin_management',
-            ip_address=request.META.get('REMOTE_ADDR'),
-            user_agent=request.META.get('HTTP_USER_AGENT', '')
+            request=request,
+            admin_user=request.user
         )
         
         return Response(AdminUserSerializer(user).data, status=status.HTTP_201_CREATED)
@@ -1261,12 +1277,12 @@ class DomainViewSet(viewsets.ModelViewSet):
                 domain = serializer.save()
                 
                 # Başarılı oluşturma log'u
-                SystemLog.objects.create(
+                create_admin_log(
                     level='info',
                     message=f'Yeni domain eklendi: {domain.name}',
                     module='domain_management',
-                    ip_address=request.META.get('REMOTE_ADDR'),
-                    user_agent=request.META.get('HTTP_USER_AGENT', '')
+                    request=request,
+                    admin_user=request.user
                 )
                 
                 return Response({
