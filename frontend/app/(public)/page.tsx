@@ -136,7 +136,7 @@ export default function Home() {
                   <span className="accent">Hemen Bulun!</span>
                 </h1>
                 
-                <p className="hero-copy-desc" style={{marginTop: 12}}>
+                <p className="hero-copy-desc">
                   Türkiye'nin en iyi otomobil servisleri ve otomobil ustaları bu adreste!
                 </p>
                 <SearchBar variant="stacked" />

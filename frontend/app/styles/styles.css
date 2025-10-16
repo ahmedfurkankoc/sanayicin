@@ -348,20 +348,19 @@ section[aria-label="Notifications alt+T"] {
   position: relative;
   color: var(--black);
   text-align: left;
-  height: 80vh;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: hidden;
   background: var(--yellow);
-  padding-top: 36px !important;
+  padding-top: 0px !important;
 }
 
 
 .heroSection .container {
   position: relative;
   z-index: 2;
-  max-width: 1320px;
+  max-width: 1250px;
   padding: 0 24px;
 }
 .hero-grid {
@@ -369,7 +368,6 @@ section[aria-label="Notifications alt+T"] {
   grid-template-columns: 600px 1fr;
   gap: 80px;
   align-items: center;
-  padding-top: 60px;
 }
 
 .hero-card-title {
@@ -378,13 +376,14 @@ section[aria-label="Notifications alt+T"] {
   margin: 0 0 14px 0;
 }
 .hero-copy-title {
-  font-size: 74px;
+  font-size: 62px;
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -1px;
+  margin-bottom: 0px !important;
 }
 .hero-copy-title .accent { color: var(--black); }
-.hero-copy-desc { font-size: 18px; max-width: 540px; opacity: .9; }
+.hero-copy-desc { font-size: 16px; max-width: 540px; opacity: .9; margin-bottom: 30px !important; }
 .hero-copy-desc.small { opacity: .8; font-size: 16px; margin-top: 6px; }
 
 .heroSection::after {
@@ -2157,7 +2156,9 @@ footer {
   border-radius: 16px;
   box-shadow: none;
   padding: 12px;
-  max-width: none;
+  max-width: 520px;
+  margin: 0;
+  align-self: flex-start;
   overflow: visible;
   position: relative;
 }
@@ -2289,6 +2290,8 @@ footer {
     justify-content: center;
     align-items: center;
   }
+  /* Keep stacked variant full-width on small screens */
+  .modernSearchBar--stacked { max-width: 100%; margin: 0; }
   .modernSearchButton {
     background: var(--black);
     color: var(--yellow);
