@@ -8,10 +8,18 @@ import {
   Edit, 
   Trash2, 
   Eye,
-  UserPlus
+  UserPlus,
+  Users,
+  Shield,
+  MessageSquare,
+  FileText
 } from 'lucide-react'
 
 import { fetchClients, ClientListItem } from '../../api/clients'
+import { fetchDashboardStats } from '../../api/admin'
+import StatsGrid from '../../components/StatsGrid'
+
+type StatItem = { name: string; value: string | number; icon: React.ComponentType<{ className?: string }>; change?: string; changeType?: 'positive' | 'negative' }
 import Pagination from '../../components/Pagination'
 
 export default function UsersPage() {
@@ -23,6 +31,7 @@ export default function UsersPage() {
   const [pageSize, setPageSize] = useState(20)
   const [totalCount, setTotalCount] = useState(0)
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [stats, setStats] = useState<StatItem[]>([])
 
   // Debounce searchTerm to avoid spamming server
   useEffect(() => {
@@ -44,6 +53,23 @@ export default function UsersPage() {
       })
     return () => { cancelled = true }
   }, [debouncedSearch, page, pageSize])
+
+  useEffect(() => {
+    let cancelled = false
+    fetchDashboardStats()
+      .then((statsData) => {
+        if (cancelled) return
+        const s: StatItem[] = [
+          { name: 'Toplam Kullanıcı', value: statsData.total_users, icon: Users, change: `${Math.round(statsData.users_change_pct)}%`, changeType: statsData.users_change_pct >= 0 ? 'positive' : 'negative' },
+          { name: 'Aktif Esnaf', value: statsData.total_vendors, icon: Shield, change: `${Math.round(statsData.vendors_change_pct)}%`, changeType: statsData.vendors_change_pct >= 0 ? 'positive' : 'negative' },
+          { name: 'Destek Talepleri', value: statsData.pending_support_tickets, icon: MessageSquare, change: `${Math.round(statsData.support_change_pct)}%`, changeType: statsData.support_change_pct >= 0 ? 'positive' : 'negative' },
+          { name: 'Blog Yazıları', value: statsData.published_blog_posts, icon: FileText, change: `${Math.round(statsData.blog_change_pct)}%`, changeType: statsData.blog_change_pct >= 0 ? 'positive' : 'negative' },
+        ]
+        setStats(s)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   const filteredUsers = useMemo(() => {
     // Server-side search applied; only apply lightweight status filter on current page
@@ -75,6 +101,9 @@ export default function UsersPage() {
           Yeni Kullanıcı
         </button>
       </div>
+
+      {/* Stats */}
+      <StatsGrid stats={stats} />
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-6">
