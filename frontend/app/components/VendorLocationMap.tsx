@@ -3,10 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-// Leaflet CSS'i dinamik olarak yükle
-if (typeof window !== 'undefined') {
-  import('leaflet/dist/leaflet.css');
-}
+// Leaflet CSS globalde import edildi (app/styles/styles.css)
 
 // Leaflet icon sorununu çöz (sadece client-side'da)
 const setupLeafletIcons = () => {

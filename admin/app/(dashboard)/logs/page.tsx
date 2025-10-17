@@ -16,7 +16,7 @@ type LogItem = {
   ip_address?: string | null
   created_at: string
   activity_type?: string
-  activity_data?: Record<string, any>
+  activity_data?: Record<string, unknown>
 }
 
 const levelBadge: Record<LogLevel, string> = {
@@ -91,7 +91,7 @@ export default function LogsPage() {
           ip_address: r.ip_address || null,
           created_at: r.created_at,
           activity_type: (r as { activity_type?: string }).activity_type || 'system',
-          activity_data: (r as { activity_data?: Record<string, any> }).activity_data || {},
+          activity_data: (r as { activity_data?: Record<string, unknown> }).activity_data || {},
         }))
         const items = mapped.slice(0, pageSize)
         setData(items)

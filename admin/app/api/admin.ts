@@ -39,7 +39,7 @@ export interface RecentActivity {
   message: string
   time: string
   icon: string
-  data: Record<string, any>
+  data: Record<string, unknown>
 }
 
 export async function fetchDashboardStats() {
