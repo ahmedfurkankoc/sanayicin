@@ -982,3 +982,154 @@ class ClientServiceRequestReplyView(APIView):
         sr.unread_for_vendor = True
         sr.save()
         return Response(ServiceRequestSerializer(sr).data)
+
+
+class VendorLocationUpdateView(APIView):
+    """Vendor konum bilgilerini günceller"""
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def post(self, request):
+        """Konum bilgilerini güncelle"""
+        try:
+            vendor = request.user.vendor_profile
+        except VendorProfile.DoesNotExist:
+            return Response({"detail": "Vendor profili bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+        
+        # Koordinat validasyonu
+        if latitude is not None:
+            try:
+                lat_float = float(latitude)
+                if not (-90 <= lat_float <= 90):
+                    return Response({"detail": "Geçersiz enlem değeri"}, status=status.HTTP_400_BAD_REQUEST)
+                vendor.latitude = lat_float
+            except (ValueError, TypeError):
+                return Response({"detail": "Geçersiz enlem formatı"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if longitude is not None:
+            try:
+                lng_float = float(longitude)
+                if not (-180 <= lng_float <= 180):
+                    return Response({"detail": "Geçersiz boylam değeri"}, status=status.HTTP_400_BAD_REQUEST)
+                vendor.longitude = lng_float
+            except (ValueError, TypeError):
+                return Response({"detail": "Geçersiz boylam formatı"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        vendor.save()
+        
+        return Response({
+            "detail": "Konum bilgileri güncellendi",
+            "latitude": vendor.latitude,
+            "longitude": vendor.longitude
+        }, status=status.HTTP_200_OK)
+
+
+class VendorLocationGetView(APIView):
+    """Vendor konum bilgilerini getirir"""
+    permission_classes = [AllowAny]
+
+    def get(self, request, slug):
+        """Belirli bir vendor'ın konum bilgilerini getirir"""
+        try:
+            vendor = VendorProfile.objects.get(
+                slug=slug,
+                user__is_verified=True,
+                user__is_active=True
+            )
+        except VendorProfile.DoesNotExist:
+            return Response({"detail": "Vendor bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({
+            "slug": vendor.slug,
+            "display_name": vendor.display_name,
+            "city": vendor.city,
+            "district": vendor.district,
+            "subdistrict": vendor.subdistrict,
+            "address": vendor.address,
+            "latitude": vendor.latitude,
+            "longitude": vendor.longitude,
+            "has_location": vendor.latitude is not None and vendor.longitude is not None
+        }, status=status.HTTP_200_OK)
+
+
+class NearbyVendorsView(APIView):
+    """Yakındaki vendor'ları getirir"""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        """Belirli koordinatlara yakın vendor'ları getirir"""
+        latitude = request.query_params.get('latitude')
+        longitude = request.query_params.get('longitude')
+        radius = request.query_params.get('radius', 10)  # km cinsinden, varsayılan 10km
+        
+        if not latitude or not longitude:
+            return Response({"detail": "Latitude ve longitude parametreleri gerekli"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            lat_float = float(latitude)
+            lng_float = float(longitude)
+            radius_float = float(radius)
+        except (ValueError, TypeError):
+            return Response({"detail": "Geçersiz koordinat formatı"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Haversine formülü ile yakın vendor'ları bul
+        from django.db.models import F, FloatField
+        from django.db.models.functions import Radians, Sin, Cos, ATan2, Sqrt
+        
+        # Haversine formülü için SQL sorgusu
+        vendors = VendorProfile.objects.filter(
+            user__is_verified=True,
+            user__is_active=True,
+            latitude__isnull=False,
+            longitude__isnull=False
+        ).annotate(
+            distance=(
+                6371 * ATan2(
+                    Sqrt(
+                        Sin(Radians(F('latitude') - lat_float)) / 2 * 
+                        Sin(Radians(F('latitude') - lat_float)) / 2 +
+                        Cos(Radians(lat_float)) * Cos(Radians(F('latitude'))) *
+                        Sin(Radians(F('longitude') - lng_float)) / 2 *
+                        Sin(Radians(F('longitude') - lng_float)) / 2
+                    ),
+                    Sqrt(
+                        1 - (
+                            Sin(Radians(F('latitude') - lat_float)) / 2 * 
+                            Sin(Radians(F('latitude') - lat_float)) / 2 +
+                            Cos(Radians(lat_float)) * Cos(Radians(F('latitude'))) *
+                            Sin(Radians(F('longitude') - lng_float)) / 2 *
+                            Sin(Radians(F('longitude') - lng_float)) / 2
+                        )
+                    )
+                )
+            )
+        ).filter(distance__lte=radius_float).order_by('distance')
+        
+        # Sonuçları serialize et
+        result = []
+        for vendor in vendors:
+            result.append({
+                "slug": vendor.slug,
+                "display_name": vendor.display_name,
+                "company_title": vendor.company_title,
+                "city": vendor.city,
+                "district": vendor.district,
+                "address": vendor.address,
+                "latitude": vendor.latitude,
+                "longitude": vendor.longitude,
+                "distance": round(vendor.distance, 2),
+                "business_phone": vendor.business_phone,
+                "avatar": vendor.user.avatar.url if vendor.user.avatar else None
+            })
+        
+        return Response({
+            "vendors": result,
+            "count": len(result),
+            "center": {
+                "latitude": lat_float,
+                "longitude": lng_float
+            },
+            "radius": radius_float
+        }, status=status.HTTP_200_OK)

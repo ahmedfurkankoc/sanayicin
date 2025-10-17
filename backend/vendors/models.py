@@ -33,6 +33,9 @@ class VendorProfile(models.Model):
 	city = models.CharField(max_length=64)
 	district = models.CharField(max_length=64)
 	subdistrict = models.CharField(max_length=128)
+	# Konum bilgileri (harita için)
+	latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, help_text="Enlem")
+	longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, help_text="Boylam")
 	# Sosyal medya
 	social_media = models.JSONField(default=dict, blank=True)
 	# Çalışma saatleri

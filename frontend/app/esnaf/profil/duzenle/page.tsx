@@ -8,6 +8,7 @@ import { useEsnaf } from "../../context/EsnafContext";
 import { api } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import LocationPicker from "@/app/components/LocationPicker";
 
 
 export default function EsnafProfilDuzenlePage() {
@@ -23,6 +24,7 @@ export default function EsnafProfilDuzenlePage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [carBrandsDropdownOpen, setCarBrandsDropdownOpen] = useState(false);
   const [carBrandSearch, setCarBrandSearch] = useState("");
+  const [location, setLocation] = useState<{ latitude?: number; longitude?: number }>({});
 
   // Turkey data (city/district/neighbourhood)
   const { cities, loadTurkeyData, getDistricts, getNeighbourhoods } = useTurkeyData();
@@ -49,6 +51,21 @@ export default function EsnafProfilDuzenlePage() {
       }
     };
 
+    // Konum bilgilerini yükle
+    const loadLocation = async () => {
+      if (user?.slug) {
+        try {
+          const response = await api.getVendorLocation(user.slug);
+          setLocation({
+            latitude: response.data.latitude,
+            longitude: response.data.longitude
+          });
+        } catch (error) {
+          console.log('Konum bilgisi bulunamadı:', error);
+        }
+      }
+    };
+
     if (!loading && user) {
       // Çalışma saatleri için default değerleri ayarla
       const defaultWorkingHours = {
@@ -69,6 +86,7 @@ export default function EsnafProfilDuzenlePage() {
           : defaultWorkingHours
       });
       loadData();
+      loadLocation();
     }
   }, [loading, user]);
 
@@ -150,6 +168,10 @@ export default function EsnafProfilDuzenlePage() {
         }
       }
     }));
+  };
+
+  const handleLocationChange = (lat: number, lng: number) => {
+    setLocation({ latitude: lat, longitude: lng });
   };
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -247,6 +269,19 @@ export default function EsnafProfilDuzenlePage() {
 
 
       const response = await api.updateProfile(formData);
+
+      // Konum bilgilerini güncelle
+      if (location.latitude && location.longitude) {
+        try {
+          await api.updateVendorLocation({
+            latitude: location.latitude,
+            longitude: location.longitude
+          });
+        } catch (error) {
+          console.error('Konum güncellenirken hata:', error);
+          toast.error('Konum güncellenirken hata oluştu!');
+        }
+      }
 
       toast.success("Profil başarıyla güncellendi!");
       
@@ -633,6 +668,29 @@ export default function EsnafProfilDuzenlePage() {
                   </div>
                 </div>
 
+                {/* Konum Haritası */}
+                {profile.city && profile.district && profile.subdistrict && (
+                  <div className="esnaf-form-group">
+                    <label>Konum Seçimi</label>
+                    <div className="esnaf-location-picker-container">
+                      <LocationPicker
+                        initialLat={location.latitude || 41.0082}
+                        initialLng={location.longitude || 28.9784}
+                        onLocationChange={handleLocationChange}
+                        city={profile.city}
+                        district={profile.district}
+                        subdistrict={profile.subdistrict}
+                        height="400px"
+                        className="esnaf-location-picker"
+                      />
+                      <div className="esnaf-location-info">
+                        <p className="esnaf-help-text">
+                          Haritaya tıklayarak işletmenizin tam konumunu belirleyin.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               </div>
 
