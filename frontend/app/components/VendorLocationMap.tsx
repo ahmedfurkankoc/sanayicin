@@ -54,8 +54,6 @@ export default function VendorLocationMap({
   className = '',
   showNearbyVendors = false
 }: VendorLocationMapProps) {
-  const [nearbyVendors, setNearbyVendors] = useState<any[]>([]);
-  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   // Client-side render kontrolü
@@ -64,28 +62,6 @@ export default function VendorLocationMap({
     setupLeafletIcons();
   }, []);
 
-  // Yakındaki vendor'ları yükle
-  useEffect(() => {
-    if (showNearbyVendors && latitude && longitude) {
-      setIsLoadingNearby(true);
-      
-      fetch(`/api/vendors/nearby/?latitude=${latitude}&longitude=${longitude}&radius=5`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.vendors) {
-            // Kendi vendor'ını filtrele
-            const filtered = data.vendors.filter((v: any) => v.slug !== vendor.slug);
-            setNearbyVendors(filtered.slice(0, 5)); // En yakın 5 tanesi
-          }
-        })
-        .catch(error => {
-          console.error('Yakındaki vendor\'lar yüklenemedi:', error);
-        })
-        .finally(() => {
-          setIsLoadingNearby(false);
-        });
-    }
-  }, [showNearbyVendors, latitude, longitude, vendor.slug]);
 
   // Client-side render kontrolü
   if (!isClient) {
@@ -202,109 +178,7 @@ export default function VendorLocationMap({
             </div>
           </Popup>
         </Marker>
-        
-        {/* Yakındaki vendor'lar */}
-        {nearbyVendors.map((nearbyVendor) => (
-          <Marker 
-            key={nearbyVendor.slug} 
-            position={[nearbyVendor.latitude, nearbyVendor.longitude]}
-            icon={typeof window !== 'undefined' ? require('leaflet').divIcon({
-              className: 'nearby-vendor-marker',
-              html: `<div style="
-                background: #ffd600;
-                color: #111;
-                border-radius: 50%;
-                width: 20px;
-                height: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 10px;
-                font-weight: bold;
-                border: 2px solid #fff;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-              ">${Math.round(nearbyVendor.distance * 100) / 100}km</div>`,
-              iconSize: [20, 20],
-              iconAnchor: [10, 10]
-            }) : undefined}
-          >
-            <Popup>
-              <div style={{ minWidth: '200px' }}>
-                <div style={{ fontWeight: 'bold', marginBottom: '6px' }}>
-                  {nearbyVendor.display_name}
-                </div>
-                <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
-                  {nearbyVendor.company_title}
-                </div>
-                <div style={{ fontSize: '12px', marginBottom: '4px' }}>
-                  📍 {nearbyVendor.address || `${nearbyVendor.subdistrict ? nearbyVendor.subdistrict + ', ' : ''}${nearbyVendor.district}, ${nearbyVendor.city}`}
-                </div>
-                <div style={{ fontSize: '12px', marginBottom: '4px' }}>
-                  📞 {nearbyVendor.business_phone}
-                </div>
-                <div style={{ fontSize: '12px', marginBottom: '8px' }}>
-                  🏢 {nearbyVendor.city}, {nearbyVendor.district}
-                </div>
-                <div style={{ fontSize: '11px', color: '#ffd600', fontWeight: 'bold', marginBottom: '8px' }}>
-                  📏 {nearbyVendor.distance} km uzaklıkta
-                </div>
-                
-                {/* Yol Tarifi Butonu */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
-                  <button
-                    onClick={() => {
-                      // Varsayılan olarak Google Maps açılır
-                      window.open(`https://maps.google.com/maps?daddr=${nearbyVendor.latitude},${nearbyVendor.longitude}`, '_blank');
-                    }}
-                    style={{
-                      background: '#4285f4',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '6px 12px',
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      fontWeight: '600',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.background = '#3367d6';
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.background = '#4285f4';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    🗺️ Yol Tarifi
-                  </button>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
       </MapContainer>
-      
-      {/* Yakındaki vendor'lar yükleniyor */}
-      {isLoadingNearby && (
-        <div style={{
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          background: 'rgba(255, 255, 255, 0.9)',
-          padding: '6px 12px',
-          borderRadius: '6px',
-          fontSize: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          zIndex: 1000
-        }}>
-          Yakındaki esnaflar yükleniyor...
-        </div>
-      )}
       
       {/* Konum bilgisi */}
       <div style={{
