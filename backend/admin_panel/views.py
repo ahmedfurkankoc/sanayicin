@@ -298,7 +298,7 @@ class DashboardStatsView(APIView):
             return ((curr - prev) / prev) * 100.0
 
         # Totals
-        total_users = CustomUser.objects.all().count()
+        total_users = CustomUser.objects.filter(role='client').count()
         total_vendors = CustomUser.objects.filter(role='vendor').count()
         total_admins = AdminUser.objects.filter(is_active=True).count()
         published_blog_posts = BlogPost.objects.filter(status='published').count()
@@ -413,7 +413,7 @@ class AdminAuthLogsView(APIView):
 # ViewSets
 class UserViewSet(viewsets.ModelViewSet):
     """Kullanıcı yönetimi"""
-    queryset = CustomUser.objects.all()
+    queryset = CustomUser.objects.filter(role='client')
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
