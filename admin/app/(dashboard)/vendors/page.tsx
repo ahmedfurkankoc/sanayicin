@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { 
   Search, 
   Filter, 
@@ -23,6 +24,7 @@ import { usePermissions } from '../../contexts/AuthContext'
 import Pagination from '../../components/Pagination'
 
 export default function VendorsPage() {
+  const router = useRouter()
   const { canRead, canWrite } = usePermissions()
   const canReadVendors = canRead('vendors')
   const canWriteVendors = canWrite('vendors')
@@ -311,6 +313,7 @@ export default function VendorsPage() {
                         <button 
                           className="text-[color:var(--black)] hover:text-black"
                           title="Görüntüle"
+                          onClick={() => router.push(`/vendors/${vendor.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </button>
