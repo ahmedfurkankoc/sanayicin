@@ -33,8 +33,22 @@ export async function loginAdmin(email: string, password: string) {
   return resp.data
 }
 
+export interface RecentActivity {
+  id: string
+  type: 'user' | 'vendor' | 'support' | 'blog'
+  message: string
+  time: string
+  icon: string
+  data: Record<string, any>
+}
+
 export async function fetchDashboardStats() {
   const resp = await apiClient.get<DashboardStats>('/dashboard-stats/')
+  return resp.data
+}
+
+export async function fetchRecentActivities() {
+  const resp = await apiClient.get<RecentActivity[]>('/recent-activities/')
   return resp.data
 }
 

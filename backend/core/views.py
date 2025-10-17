@@ -44,6 +44,20 @@ def create_support_ticket(request):
     serializer = SupportTicketSerializer(data=data)
     if serializer.is_valid():
         ticket = serializer.save(user=request.user)
+        
+        # Activity log
+        from admin_panel.activity_logger import log_support_activity
+        log_support_activity(
+            f'Yeni destek talebi: {ticket.subject[:50]}...',
+            {
+                'ticket_id': ticket.id,
+                'subject': ticket.subject,
+                'priority': ticket.priority,
+                'status': ticket.status,
+                'user_email': request.user.email
+            }
+        )
+        
         try:
             # E-posta bildirimi (opsiyonel, varsa)
             EmailService.send_generic_email(
@@ -1311,6 +1325,18 @@ def client_register(request):
             about=data.get('about', ''),
             is_verified=False,
             phone_number=phone_number
+        )
+        
+        # Activity log
+        from admin_panel.activity_logger import log_user_activity
+        log_user_activity(
+            f'Yeni müşteri kaydoldu: {email}',
+            {
+                'user_id': user.id,
+                'email': email,
+                'role': 'client',
+                'is_verified': False
+            }
         )
         
         # Avatar varsa kaydet

@@ -215,13 +215,23 @@ class BlogPost(models.Model):
         super().save(*args, **kwargs)
 
 class SystemLog(models.Model):
-    """Sistem logları"""
+    """Sistem logları - genişletilmiş (activity logları dahil)"""
     LOG_LEVEL_CHOICES = [
         ('debug', 'Debug'),
         ('info', 'Info'),
         ('warning', 'Warning'),
         ('error', 'Error'),
         ('critical', 'Critical'),
+    ]
+    
+    ACTIVITY_TYPE_CHOICES = [
+        ('system', 'Sistem'),
+        ('user_registered', 'Kullanıcı Kaydı'),
+        ('vendor_created', 'Esnaf Oluşturuldu'),
+        ('support_ticket', 'Destek Talebi'),
+        ('blog_published', 'Blog Yayınlandı'),
+        ('user_verified', 'Kullanıcı Doğrulandı'),
+        ('vendor_verified', 'Esnaf Doğrulandı'),
     ]
 
     level = models.CharField(max_length=10, choices=LOG_LEVEL_CHOICES, verbose_name="Seviye")
@@ -237,6 +247,16 @@ class SystemLog(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP Adresi")
     user_agent = models.TextField(blank=True, verbose_name="User Agent")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturulma Tarihi")
+    
+    # Activity log alanları
+    activity_type = models.CharField(
+        max_length=20, 
+        choices=ACTIVITY_TYPE_CHOICES, 
+        default='system',
+        db_index=True,
+        verbose_name="Aktivite Türü"
+    )
+    activity_data = models.JSONField(default=dict, blank=True, verbose_name="Aktivite Verisi")
 
     class Meta:
         verbose_name = "Sistem Logu"
@@ -246,6 +266,8 @@ class SystemLog(models.Model):
             models.Index(fields=['module']),
             models.Index(fields=['level']),
             models.Index(fields=['created_at']),
+            models.Index(fields=['activity_type']),
+            models.Index(fields=['activity_type', 'created_at']),
         ]
 
     def __str__(self):

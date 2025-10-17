@@ -197,6 +197,19 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         profile.categories.set(categories)
         profile.service_areas.set([service_area])  # service_area'yı service_areas olarak set et
         
+        # Activity log
+        from admin_panel.activity_logger import log_vendor_activity
+        log_vendor_activity(
+            f'Yeni esnaf profili oluşturuldu: {profile.display_name}',
+            {
+                'vendor_id': profile.id,
+                'display_name': profile.display_name,
+                'city': profile.city,
+                'business_type': profile.business_type,
+                'user_email': user.email
+            }
+        )
+        
         # Not: Mağaza logosu kaldırıldı. Avatar CustomUser.avatar olarak kaydedilir.
         
         return profile

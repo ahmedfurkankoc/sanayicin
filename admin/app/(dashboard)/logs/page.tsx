@@ -15,6 +15,8 @@ type LogItem = {
   user?: string | null
   ip_address?: string | null
   created_at: string
+  activity_type?: string
+  activity_data?: Record<string, any>
 }
 
 const levelBadge: Record<LogLevel, string> = {
@@ -31,6 +33,26 @@ const levelIcon: Record<LogLevel, ReactNode> = {
   WARNING: <AlertTriangle className="h-3.5 w-3.5" />,
   ERROR: <AlertTriangle className="h-3.5 w-3.5" />,
   CRITICAL: <AlertTriangle className="h-3.5 w-3.5" />,
+}
+
+const activityTypeBadge: Record<string, string> = {
+  system: 'bg-gray-100 text-gray-800',
+  user_registered: 'bg-blue-100 text-blue-800',
+  vendor_created: 'bg-green-100 text-green-800',
+  support_ticket: 'bg-yellow-100 text-yellow-800',
+  blog_published: 'bg-purple-100 text-purple-800',
+  user_verified: 'bg-emerald-100 text-emerald-800',
+  vendor_verified: 'bg-teal-100 text-teal-800',
+}
+
+const activityTypeLabels: Record<string, string> = {
+  system: 'Sistem',
+  user_registered: 'Kullanıcı Kaydı',
+  vendor_created: 'Esnaf Oluşturuldu',
+  support_ticket: 'Destek Talebi',
+  blog_published: 'Blog Yayınlandı',
+  user_verified: 'Kullanıcı Doğrulandı',
+  vendor_verified: 'Esnaf Doğrulandı',
 }
 
 export default function LogsPage() {
@@ -68,6 +90,8 @@ export default function LogsPage() {
           user: (r as { user_email?: string }).user_email || null,
           ip_address: r.ip_address || null,
           created_at: r.created_at,
+          activity_type: (r as { activity_type?: string }).activity_type || 'system',
+          activity_data: (r as { activity_data?: Record<string, any> }).activity_data || {},
         }))
         const items = mapped.slice(0, pageSize)
         setData(items)
@@ -118,6 +142,7 @@ export default function LogsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seviye</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tür</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mesaj</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kaynak</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kullanıcı</th>
@@ -128,15 +153,15 @@ export default function LogsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-500">Yükleniyor...</td>
+                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Yükleniyor...</td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-red-600">{error}</td>
+                  <td colSpan={7} className="px-6 py-10 text-center text-red-600">{error}</td>
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-500">Kayıt bulunamadı</td>
+                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Kayıt bulunamadı</td>
                 </tr>
               ) : (
                 data.map((item) => (
@@ -145,6 +170,11 @@ export default function LogsPage() {
                       <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${levelBadge[item.level]}`}>
                         {levelIcon[item.level]}
                         {item.level}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${activityTypeBadge[item.activity_type || 'system']}`}>
+                        {activityTypeLabels[item.activity_type || 'system']}
                       </span>
                     </td>
                     <td className="px-6 py-4">

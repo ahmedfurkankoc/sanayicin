@@ -28,6 +28,7 @@ urlpatterns = [
     
     # Dashboard
     path('dashboard-stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
+    path('recent-activities/', RecentActivitiesView.as_view(), name='recent-activities'),
     
     # Image upload
     path('upload-image/', ImageUploadView.as_view(), name='upload-image'),
