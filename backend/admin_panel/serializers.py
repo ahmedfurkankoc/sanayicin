@@ -31,7 +31,7 @@ class BlogPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlogPost
         fields = '__all__'
-        read_only_fields = ['author', 'created_at', 'updated_at', 'view_count']
+        read_only_fields = ['created_at', 'updated_at', 'view_count']
 
 # ========== System Serializers ==========
 class SystemLogSerializer(serializers.ModelSerializer):

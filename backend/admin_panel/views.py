@@ -597,7 +597,32 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        blog = serializer.save()
+        
+        # Activity log
+        from .activity_logger import log_blog_activity
+        if blog.status == 'published':
+            log_blog_activity(
+                f'Yeni blog yazısı yayınlandı: {blog.title[:50]}...',
+                {
+                    'blog_id': blog.id,
+                    'title': blog.title,
+                    'slug': blog.slug,
+                    'author': request.user.email if request.user else None
+                }
+            )
+        else:
+            log_blog_activity(
+                f'Yeni blog yazısı oluşturuldu: {blog.title[:50]}...',
+                {
+                    'blog_id': blog.id,
+                    'title': blog.title,
+                    'slug': blog.slug,
+                    'status': blog.status,
+                    'author': request.user.email if request.user else None
+                }
+            )
+        
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
@@ -930,6 +955,83 @@ class SystemLogViewSet(viewsets.ReadOnlyModelViewSet):
     @admin_permission_required('logs', 'read')
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+class RecentActivitiesView(APIView):
+    """Son aktiviteler - optimize edilmiş cache-based"""
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [AdminTokenAuthentication]
+    
+    @admin_permission_required('dashboard', 'read')
+    def get(self, request):
+        """Son aktiviteleri getir - cache'den"""
+        cache_key = 'admin_recent_activities'
+        activities = cache.get(cache_key)
+        
+        if activities is None:
+            activities = self._fetch_recent_activities()
+            # 5 dakika cache
+            cache.set(cache_key, activities, 300)
+        
+        return Response(activities, status=status.HTTP_200_OK)
+    
+    def _fetch_recent_activities(self):
+        """SystemLog'dan son aktiviteleri getir - optimize edilmiş"""
+        from django.utils import timezone
+        
+        # Son 10 aktiviteyi getir (sadece activity_type != 'system' olanlar)
+        recent_activities = SystemLog.objects.filter(
+            activity_type__in=['user_registered', 'vendor_created', 'support_ticket', 'blog_published', 'user_verified', 'vendor_verified']
+        ).order_by('-created_at')[:10]
+        
+        activities = []
+        for activity in recent_activities:
+            # Activity type'a göre icon belirle
+            icon_map = {
+                'user_registered': 'Users',
+                'vendor_created': 'Shield',
+                'support_ticket': 'MessageSquare',
+                'blog_published': 'FileText',
+                'user_verified': 'Users',
+                'vendor_verified': 'Shield',
+            }
+            
+            # Type'a göre frontend type belirle
+            type_map = {
+                'user_registered': 'user',
+                'vendor_created': 'vendor',
+                'support_ticket': 'support',
+                'blog_published': 'blog',
+                'user_verified': 'user',
+                'vendor_verified': 'vendor',
+            }
+            
+            activities.append({
+                'id': f'activity_{activity.id}',
+                'type': type_map.get(activity.activity_type, 'user'),
+                'message': activity.message,
+                'time': self._get_time_ago(activity.created_at),
+                'icon': icon_map.get(activity.activity_type, 'Users'),
+                'data': activity.activity_data
+            })
+        
+        return activities
+    
+    def _get_time_ago(self, datetime_obj):
+        """Zaman farkını Türkçe olarak döndür"""
+        from django.utils import timezone
+        now = timezone.now()
+        diff = now - datetime_obj
+        
+        if diff.days > 0:
+            return f'{diff.days} gün önce'
+        elif diff.seconds > 3600:
+            hours = diff.seconds // 3600
+            return f'{hours} saat önce'
+        elif diff.seconds > 60:
+            minutes = diff.seconds // 60
+            return f'{minutes} dakika önce'
+        else:
+            return 'Az önce'
 
 class AdminNotificationViewSet(viewsets.ModelViewSet):
     """Admin bildirim yönetimi"""

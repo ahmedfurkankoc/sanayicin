@@ -2,10 +2,8 @@
 
 import { 
   Users, 
-  Shield, 
-  MessageSquare, 
-  FileText, 
-  Settings
+  Settings,
+  FileText
 } from 'lucide-react'
 import { fetchAdminAuthLogs, type AdminAuthLogItem } from '../api/admin'
 import { useRouter } from 'next/navigation'
@@ -15,14 +13,9 @@ import { useEffect, useState } from 'react'
 import { usePermissions } from '../contexts/AuthContext'
 import Pagination from '../components/Pagination'
 import StatsGrid from '../components/StatsGrid'
+import RecentActivities from '../components/RecentActivities'
 
 
-const recentActivities = [
-  { id: 1, type: 'user', message: 'Yeni kullanıcı kaydoldu', time: '2 dakika önce', icon: Users },
-  { id: 2, type: 'vendor', message: 'Esnaf onayı bekliyor', time: '5 dakika önce', icon: Shield },
-  { id: 3, type: 'support', message: 'Yeni destek talebi', time: '10 dakika önce', icon: MessageSquare },
-  { id: 4, type: 'blog', message: 'Blog yazısı yayınlandı', time: '1 saat önce', icon: FileText },
-]
 
 export default function Dashboard() {
   const router = useRouter()
@@ -147,25 +140,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent activities */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Son Aktiviteler</h3>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => {
-              const Icon = activity.icon
-              return (
-                <div key={activity.id} className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <Icon className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">{activity.message}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+        <RecentActivities />
       </div>
 
 
