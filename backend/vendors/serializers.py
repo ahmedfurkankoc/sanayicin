@@ -40,6 +40,8 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
     district = serializers.CharField()
     subdistrict = serializers.CharField()
     address = serializers.CharField()
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True)
     first_name = serializers.CharField()  # CustomUser'a kaydedilecek
     last_name = serializers.CharField()   # CustomUser'a kaydedilecek
     manager_birthdate = serializers.DateField()
@@ -52,6 +54,7 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
             'email', 'password', 'password2', 'business_type', 'service_area', 'categories',
             'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'avatar',
             'business_phone', 'city', 'district', 'subdistrict', 'address',
+            'latitude', 'longitude',
             'first_name', 'last_name', 'manager_birthdate', 'manager_tc', 'phone_number'
         )
 
@@ -228,6 +231,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'id', 'slug', 'user', 'vendor_profile', 'business_type', 'service_areas', 'categories', 'categories_ids', 
             'car_brands', 'car_brands_ids', 'company_title', 'tax_office', 'tax_no',
             'display_name', 'about', 'business_phone', 'city', 'district', 'subdistrict', 'address',
+            'latitude', 'longitude',
             'social_media', 'working_hours', 'unavailable_dates', 'manager_birthdate', 'manager_tc',
             'rating', 'review_count'
         )

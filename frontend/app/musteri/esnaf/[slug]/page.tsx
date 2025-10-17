@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import ReviewModal from '../../components/ReviewModal';
 import QuoteRequestModal from '@/app/musteri/components/QuoteRequestModal';
 import Reviews from '../../components/Reviews';
+import VendorLocationMap from '@/app/components/VendorLocationMap';
 
 interface Vendor {
   id: number;
@@ -27,6 +28,8 @@ interface Vendor {
   district: string;
   subdistrict: string;
   address: string;
+  latitude?: number;
+  longitude?: number;
   about?: string;
   // Logo artık avatar üzerinden gösterilir
   profile_photo?: string;
@@ -444,6 +447,58 @@ function VendorDetailContent() {
               </div>
             </div>
           )}
+
+          {/* Konum */}
+          <div className="m-vendor-section">
+            <h3 className="m-vendor-section-title">
+              Konum
+            </h3>
+            
+            {/* Konum Bilgileri */}
+            <div className="m-location-info">
+              <div className="m-location-details">
+                <div className="m-location-item">
+                  <span className="m-location-label">Adres:</span>
+                  <span className="m-location-value">
+                    {vendor.address || `${vendor.subdistrict ? vendor.subdistrict + ', ' : ''}${vendor.district}, ${vendor.city}`}
+                  </span>
+                </div>
+                <div className="m-location-item">
+                  <span className="m-location-label">İl:</span>
+                  <span className="m-location-value">{vendor.city}</span>
+                </div>
+                <div className="m-location-item">
+                  <span className="m-location-label">İlçe:</span>
+                  <span className="m-location-value">{vendor.district}</span>
+                </div>
+                {vendor.subdistrict && (
+                  <div className="m-location-item">
+                    <span className="m-location-label">Mahalle:</span>
+                    <span className="m-location-value">{vendor.subdistrict}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Konum Haritası */}
+            <VendorLocationMap
+              vendor={{
+                slug: vendor.slug,
+                display_name: vendor.display_name,
+                company_title: vendor.company_title,
+                city: vendor.city,
+                district: vendor.district,
+                subdistrict: vendor.subdistrict,
+                address: vendor.address,
+                business_phone: vendor.business_phone,
+                avatar: vendor.user?.avatar
+              }}
+              latitude={vendor.latitude}
+              longitude={vendor.longitude}
+              height="300px"
+              showNearbyVendors={true}
+            />
+          </div>
 
           {/* Değerlendirmeler */}
           <Reviews

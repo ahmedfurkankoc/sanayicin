@@ -8,10 +8,31 @@ import EsnafPanelLayout from "../components/EsnafPanelLayout";
 import { useEsnaf } from "../context/EsnafContext";
 import { api } from "@/app/utils/api";
 import Icon from "@/app/components/ui/Icon";
+import VendorLocationMap from "@/app/components/VendorLocationMap";
 
 export default function EsnafProfilPage() {
   const router = useRouter();
   const { user } = useEsnaf();
+  const [location, setLocation] = useState<{ latitude?: number; longitude?: number }>({});
+
+  // Konum bilgilerini yükle
+  useEffect(() => {
+    const loadLocation = async () => {
+      if (user?.slug) {
+        try {
+          const response = await api.getVendorLocation(user.slug);
+          setLocation({
+            latitude: response.data.latitude,
+            longitude: response.data.longitude
+          });
+        } catch (error) {
+          console.log('Konum bilgisi bulunamadı:', error);
+        }
+      }
+    };
+
+    loadLocation();
+  }, [user?.slug]);
 
   // İşletme türünü Türkçe'ye çevir
   const getBusinessTypeName = (businessType: string) => {
@@ -255,6 +276,34 @@ export default function EsnafProfilPage() {
                     <span className="esnaf-contact-value">{user.tax_office || "Belirtilmemiş"}</span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Location Map */}
+            <div className="esnaf-profile-card">
+              <h3 className="esnaf-card-title">Konum</h3>
+              <div className="esnaf-location-section">
+                <div className="esnaf-location-info">
+                  <Icon name="map-pin" size="sm" color="var(--black)" />
+                  <span className="esnaf-location-text">
+                    {user.subdistrict ? `${user.subdistrict}, ` : ''}
+                    {user.district}, {user.city}
+                  </span>
+                </div>
+                <VendorLocationMap
+                  vendor={{
+                    slug: user.slug || '',
+                    display_name: user.display_name || user.company_title || 'İşletme',
+                    city: user.city || '',
+                    district: user.district || '',
+                    subdistrict: user.subdistrict || ''
+                  }}
+                  latitude={location.latitude}
+                  longitude={location.longitude}
+                  height="300px"
+                  className="esnaf-profile-map"
+                  showNearbyVendors={false}
+                />
               </div>
             </div>
 

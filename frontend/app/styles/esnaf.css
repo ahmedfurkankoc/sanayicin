@@ -4983,3 +4983,64 @@
   .esnaf-requests-grid { grid-template-columns: 1fr; }
   .esnaf-offer-fields { grid-template-columns: 1fr; }
 }
+
+/* ===== LOCATION MAP STYLES ===== */
+
+.esnaf-location-section {
+  margin-top: 1rem;
+}
+
+.esnaf-location-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--gray-50);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--gray-700);
+}
+
+.esnaf-location-text {
+  font-weight: 500;
+}
+
+.esnaf-profile-map {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.esnaf-location-picker-container {
+  margin-top: 1rem;
+}
+
+.esnaf-location-picker {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.esnaf-location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--gray-50);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--gray-700);
+}
+
+
+/* ===== RESPONSIVE LOCATION MAP ===== */
+
+@media (max-width: 768px) {
+  .esnaf-location-picker,
+  .esnaf-profile-map {
+    height: 250px !important;
+  }
+}

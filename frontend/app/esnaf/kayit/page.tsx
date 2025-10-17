@@ -8,6 +8,7 @@ import { api, setAuthEmail } from "@/app/utils/api";
 
 // UI Components
 import EsnafAuthHeader from "../../components/AuthHeader";
+import LocationPicker from "../../components/LocationPicker";
 
 // Hooks
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
@@ -89,6 +90,12 @@ export default function EsnafKayitPage() {
     subdistrict: "",
     address: "",
     location: "",
+  });
+  
+  // Konum bilgileri
+  const [location, setLocation] = useState({
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
   const [companyError, setCompanyError] = useState("");
 
@@ -275,6 +282,10 @@ export default function EsnafKayitPage() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setCompanyInfo((prev) => ({ ...prev, photo: file, photoName: file ? file.name : "" }));
+  };
+  
+  const handleLocationChange = (lat: number, lng: number) => {
+    setLocation({ latitude: lat, longitude: lng });
   };
   const handleBackStep3 = () => setStep(2);
   const handleNextStep3 = (e: React.FormEvent) => {
@@ -498,6 +509,12 @@ export default function EsnafKayitPage() {
       formData.append('district', selectedDistrict);
       formData.append('subdistrict', selectedNeighbourhood);
       formData.append('address', companyInfo.address);
+      
+      // Konum bilgilerini ekle
+      if (location.latitude !== null && location.longitude !== null) {
+        formData.append('latitude', location.latitude.toString());
+        formData.append('longitude', location.longitude.toString());
+      }
       formData.append('first_name', firstName);
       formData.append('last_name', lastName);
       formData.append('manager_birthdate', managerInfo.birthdate);
@@ -756,6 +773,48 @@ export default function EsnafKayitPage() {
               onChange={handleCompanyInput}
               required
             />
+            
+            {/* Harita Bileşeni */}
+            {selectedCity && selectedDistrict && selectedNeighbourhood && (
+              <>
+                <label className="esnaf-register-label" style={{ marginTop: '20px' }}>
+                  İşyeri Konumu
+                </label>
+                <div style={{ 
+                  marginBottom: '16px',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <LocationPicker
+                    initialLat={location.latitude || undefined}
+                    initialLng={location.longitude || undefined}
+                    onLocationChange={handleLocationChange}
+                    city={selectedCity}
+                    district={selectedDistrict}
+                    subdistrict={selectedNeighbourhood}
+                    height="350px"
+                  />
+                </div>
+                <small className="esnaf-register-help-text">
+                  Haritaya tıklayarak işyerinizin tam konumunu belirleyin. Bu konum müşterileriniz tarafından görülecektir.
+                </small>
+                {location.latitude && location.longitude && (
+                  <div style={{
+                    marginTop: '8px',
+                    padding: '8px 12px',
+                    background: '#f0f9ff',
+                    border: '1px solid #0ea5e9',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    color: '#0369a1'
+                  }}>
+                    ✅ Konum belirlendi: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                  </div>
+                )}
+              </>
+            )}
 
             {companyError && <div className="esnaf-register-error">{companyError}</div>}
             <div className="esnaf-register-step-btns">

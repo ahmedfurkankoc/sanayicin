@@ -9,11 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/leaflet": "^1.9.21",
     "axios": "^1.11.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.533.0",
     "next": "15.4.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-leaflet": "^5.0.0",
     "sonner": "^2.0.6",
     "turkey-neighbourhoods": "^4.0.3"
   },

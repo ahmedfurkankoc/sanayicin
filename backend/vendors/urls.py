@@ -26,11 +26,15 @@ urlpatterns = [
     path('client/appointments/', ClientAppointmentListView.as_view(), name='client-appointment-list'),
     # Dashboard summary
     path('dashboard/summary/', VendorDashboardSummaryView.as_view(), name='vendor-dashboard-summary'),
+    # Location endpoints
+    path('location/update/', VendorLocationUpdateView.as_view(), name='vendor-location-update'),
+    path('nearby/', NearbyVendorsView.as_view(), name='nearby-vendors'),
     # Slug-scoped endpoints
     path('<str:slug>/service-requests/', ServiceRequestCreateView.as_view(), name='service-request-create'),
     path('<str:slug>/appointments/', ClientAppointmentView.as_view(), name='client-appointment'),
     path('<str:slug>/analytics/view/', VendorAnalyticsViewEvent.as_view(), name='vendor-analytics-view'),
     path('<str:slug>/analytics/call/', VendorAnalyticsCallEvent.as_view(), name='vendor-analytics-call'),
+    path('<str:slug>/location/', VendorLocationGetView.as_view(), name='vendor-location-get'),
     path('<str:vendor_slug>/reviews/', ReviewViewSet.as_view({
         'get': 'list',
         'post': 'create'

@@ -563,4 +563,12 @@ export const api = {
     casco_expiry: string;
   }>) => apiClient.patch(`/vehicles/${id}/`, data),
   deleteVehicle: (id: number) => apiClient.delete(`/vehicles/${id}/`),
+
+  // Location APIs
+  updateVendorLocation: (data: { latitude: number; longitude: number }) =>
+    apiClient.post('/vendors/location/update/', data),
+  getVendorLocation: (slug: string) =>
+    apiClient.get(`/vendors/${slug}/location/`),
+  getNearbyVendors: (params: { latitude: number; longitude: number; radius?: number }) =>
+    apiClient.get('/vendors/nearby/', { params }),
 }; 
