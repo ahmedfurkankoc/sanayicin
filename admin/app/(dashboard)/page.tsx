@@ -7,7 +7,7 @@ import {
   FileText, 
   Settings
 } from 'lucide-react'
-import { fetchDashboardStats, fetchAdminAuthLogs, type AdminAuthLogItem } from '../api/admin'
+import { fetchAdminAuthLogs, type AdminAuthLogItem } from '../api/admin'
 import { useRouter } from 'next/navigation'
 import ServerMonitoringWidget from '../components/ServerMonitoringWidget'
 import { useAuth } from '../contexts/AuthContext'
@@ -16,7 +16,6 @@ import { usePermissions } from '../contexts/AuthContext'
 import Pagination from '../components/Pagination'
 import StatsGrid from '../components/StatsGrid'
 
-type StatItem = { name: string; value: string | number; icon: React.ComponentType<{ className?: string }>; change?: string; changeType?: 'positive' | 'negative' }
 
 const recentActivities = [
   { id: 1, type: 'user', message: 'Yeni kullanıcı kaydoldu', time: '2 dakika önce', icon: Users },
@@ -31,7 +30,6 @@ export default function Dashboard() {
   const fullName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email || ''
   const { canRead } = usePermissions()
   const canReadLogs = canRead('logs')
-  const [stats, setStats] = useState<StatItem[]>([])
   const [authLogs, setAuthLogs] = useState<AdminAuthLogItem[]>([])
   const [logsLoading, setLogsLoading] = useState(false)
   const [logsError, setLogsError] = useState<string | null>(null)
@@ -40,22 +38,6 @@ export default function Dashboard() {
   const [logsTotal, setLogsTotal] = useState(0)
   // const [authLogsLoading, setAuthLogsLoading] = useState(false) // Kullanılmıyor
 
-  useEffect(() => {
-    let cancelled = false
-    fetchDashboardStats()
-      .then((statsData) => {
-        if (cancelled) return
-        const s: StatItem[] = [
-          { name: 'Toplam Kullanıcı', value: statsData.total_users, icon: Users, change: `${Math.round(statsData.users_change_pct)}%`, changeType: statsData.users_change_pct >= 0 ? 'positive' : 'negative' },
-          { name: 'Aktif Esnaf', value: statsData.total_vendors, icon: Shield, change: `${Math.round(statsData.vendors_change_pct)}%`, changeType: statsData.vendors_change_pct >= 0 ? 'positive' : 'negative' },
-          { name: 'Destek Talepleri', value: statsData.pending_support_tickets, icon: MessageSquare, change: `${Math.round(statsData.support_change_pct)}%`, changeType: statsData.support_change_pct >= 0 ? 'positive' : 'negative' },
-          { name: 'Blog Yazıları', value: statsData.published_blog_posts, icon: FileText, change: `${Math.round(statsData.blog_change_pct)}%`, changeType: statsData.blog_change_pct >= 0 ? 'positive' : 'negative' },
-        ]
-        setStats(s)
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [])
 
   useEffect(() => {
     if (!canReadLogs) return
@@ -93,7 +75,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <StatsGrid stats={stats} />
+      <StatsGrid />
       <ServerMonitoringWidget defaultExpanded={false} />
 
       {/* Charts and activities */}
