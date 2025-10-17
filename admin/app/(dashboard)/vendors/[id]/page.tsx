@@ -212,7 +212,8 @@ export default function VendorDetailPage() {
                   Object.entries(vendor.working_hours).map(([day, hours]) => {
                     let hoursText = ''
                     if (typeof hours === 'object' && hours !== null) {
-                      const hoursObj = hours as any
+                      type HoursObject = { open?: string; close?: string; closed?: boolean }
+                      const hoursObj = hours as HoursObject
                       if (hoursObj.open && hoursObj.close) {
                         hoursText = `${hoursObj.open} - ${hoursObj.close}`
                       } else if (hoursObj.closed) {
