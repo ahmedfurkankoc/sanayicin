@@ -5756,12 +5756,13 @@ footer {
 .auth-header {
   display: flex;
   background: var(--yellow);
-  height: 80px;
+  height: 86px; /* Match public navbar height */
   text-align: center;
   justify-content: space-between;
   align-items: center;
   align-self: center;
-  padding: 0 60px 0 60px;
+  /* Full-width background, inner alignment like public navbar */
+  padding: 0 max(24px, calc((100vw - 1200px) / 2));
 }
 
 .auth-header.auth-header--dark {
@@ -5829,7 +5830,7 @@ footer {
 
 @media (max-width: 480px) {
   .auth-header {
-    padding: 0 24px 0 24px;
+    padding: 0 12px; /* Slightly tighter on very small screens */
   }
   .auth-logo img {
     width: 140px;

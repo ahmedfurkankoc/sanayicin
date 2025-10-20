@@ -53,16 +53,19 @@
 .musteri-header {
   background: var(--dark);
   color: var(--white);
-  padding: 1rem 0;
+  padding: 0; /* Use fixed height container below for consistent logo alignment */
   box-shadow: var(--shadow-sm);
 }
 
 .musteri-header-content {
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 24px; /* Match public navbar horizontal padding */
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 86px; /* Match public navbar height for vertical centering */
+  max-width: 1200px; /* Match public navbar width */
+  box-sizing: border-box;
 }
 
 /* Sol: Logo */
@@ -83,7 +86,7 @@
 
 /* Logo image sizing */
 .musteri-logo-img {
-  width: 200px;
+  width: 200px; /* Same visual width as public logo */
   height: auto;
 }
 
@@ -553,6 +556,8 @@
   .musteri-header-content {
     flex-direction: row;
     gap: 1rem;
+    height: 86px; /* Keep consistent height on mobile like public */
+    padding: 0 12px;
   }
   .musteri-logo-img { width: 160px; }
   .musteri-header-center { display: none; }

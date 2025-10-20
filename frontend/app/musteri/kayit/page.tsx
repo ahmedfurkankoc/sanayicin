@@ -543,6 +543,9 @@ export default function MusteriKayitPage() {
                     Giriş yapın
                   </Link>
                 </p>
+                <p style={{ marginTop: 8, textAlign: 'center', opacity: 0.7 }}>
+                  © {new Date().getFullYear()} Sanayicin. Tüm hakları saklıdır.
+                </p>
               </div>
             </div>
           </div>
