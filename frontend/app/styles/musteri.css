@@ -64,7 +64,6 @@
   justify-content: space-between;
   align-items: center;
   height: 86px; /* Match public navbar height for vertical centering */
-  max-width: 1200px; /* Match public navbar width */
   box-sizing: border-box;
 }
 
