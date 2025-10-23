@@ -150,7 +150,10 @@ export default function VendorsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Esnaflar</h1>
           <p className="text-gray-600">Tüm esnafları yönetin ve onaylayın</p>
         </div>
-        <button className="bg-[color:var(--yellow)] text-[color:var(--black)] px-4 py-2 rounded-lg hover:brightness-95 transition-colors flex items-center">
+        <button 
+          onClick={() => router.push('/vendors/new')}
+          className="bg-[color:var(--yellow)] text-[color:var(--black)] px-4 py-2 rounded-lg hover:brightness-95 transition-colors flex items-center"
+        >
           <UserPlus className="h-4 w-4 mr-2" />
           Yeni Esnaf
         </button>

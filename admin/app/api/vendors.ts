@@ -74,4 +74,27 @@ export async function deleteVendor(id: number) {
   await apiClient.delete(`/vendors/${id}/`)
 }
 
+export async function createVendor(data: {
+  user: number
+  business_type: 'sahis' | 'limited' | 'anonim' | 'esnaf'
+  company_title: string
+  tax_office: string
+  tax_no: string
+  display_name: string
+  about?: string
+  business_phone: string
+  address: string
+  city: string
+  district: string
+  subdistrict?: string
+  manager_birthdate: string
+  manager_tc: string
+  social_media?: Record<string, string>
+  working_hours?: Record<string, string>
+  unavailable_dates?: string[]
+}) {
+  const resp = await apiClient.post<VendorProfile>('/vendors/', data)
+  return resp.data
+}
+
 

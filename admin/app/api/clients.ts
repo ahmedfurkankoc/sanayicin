@@ -26,4 +26,18 @@ export async function fetchClient(id: number) {
   return resp.data
 }
 
+export async function createClient(data: {
+  email: string
+  first_name?: string
+  last_name?: string
+  phone_number?: string
+  password?: string
+  role?: 'client' | 'vendor'
+  is_verified?: boolean
+  is_active?: boolean
+}) {
+  const resp = await apiClient.post<ClientListItem>('/users/', data)
+  return resp.data
+}
+
 
