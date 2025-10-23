@@ -72,13 +72,36 @@ class AdminSettingsSerializer(serializers.ModelSerializer):
 # ========== User Serializers ==========
 class UserSerializer(serializers.ModelSerializer):
     """CustomUser serializer'ı"""
+    password = serializers.CharField(write_only=True, required=False, min_length=6)
+    
     class Meta:
         model = CustomUser
         fields = [
             'id', 'email', 'first_name', 'last_name', 'role', 'is_verified', 
-            'is_active', 'date_joined', 'last_login', 'phone_number'
+            'is_active', 'date_joined', 'last_login', 'phone_number', 'password'
         ]
         read_only_fields = ['id', 'date_joined', 'last_login']
+    
+    def create(self, validated_data):
+        """Kullanıcı oluştururken şifre hash'lenir"""
+        password = validated_data.pop('password', None)
+        if password:
+            user = CustomUser.objects.create_user(
+                username=validated_data['email'],  # username = email
+                password=password,
+                **validated_data
+            )
+        else:
+            # Şifre yoksa geçici şifre oluştur
+            import secrets
+            import string
+            temp_password = ''.join(secrets.choices(string.ascii_letters + string.digits, k=12))
+            user = CustomUser.objects.create_user(
+                username=validated_data['email'],
+                password=temp_password,
+                **validated_data
+            )
+        return user
 
 # ========== Vendor Serializers ==========
 class VendorProfileSerializer(serializers.ModelSerializer):

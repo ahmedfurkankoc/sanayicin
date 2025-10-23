@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import Banner from "../components/Banner";
 import Footer from "../../components/Footer";
+import { Backpack } from "lucide-react";
 
 export default function AboutPage() {
   return (
@@ -11,8 +12,8 @@ export default function AboutPage() {
         backgroundColor="var(--black)"
         textColor="var(--white)"
       />
-      <main className="container">
-        <section className="about-section">
+      <section className="about-section" style={{backgroundColor: 'var(--white)'}}>
+        <div className="container">
           <h2 className="sectionTitle">Sanayicin Nedir?</h2>
           <p className="about-text">
             Sanayicin, otomotiv sektöründe hizmet veren ustalar ile hizmet almak isteyen kullanıcıları bir araya getiren modern bir platformdur. Amacımız, güvenilir ve hızlı bir şekilde en yakın ustaya ulaşmanızı sağlamak ve sektördeki dijital dönüşüme öncülük etmektir.
@@ -36,10 +37,10 @@ export default function AboutPage() {
           <p className="about-text">
             Sanayicin ekibi olarak, sizlere en iyi deneyimi sunmak için sürekli çalışıyoruz. Bize her türlü öneri ve geri bildiriminizi iletebilirsiniz.
           </p>
-        </section>
+        </div>
+      </section>
 
-      </main>
-      
+
       <section className="company-history-section">
         <div className="container">
           <div className="history-header">

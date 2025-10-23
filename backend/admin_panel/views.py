@@ -413,7 +413,7 @@ class AdminAuthLogsView(APIView):
 # ViewSets
 class UserViewSet(viewsets.ModelViewSet):
     """Kullanıcı yönetimi"""
-    queryset = CustomUser.objects.filter(role='client')
+    queryset = CustomUser.objects.all()  # Tüm kullanıcıları getir (client ve vendor)
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]

@@ -3164,7 +3164,7 @@ footer {
 /* About Page */
 
 .about-section {
-  max-width: 900px;
+  background-color: var(--white);
   width: 100%;
   margin: 0 auto;
   border-radius: 22px;
@@ -3962,6 +3962,580 @@ footer {
   transform: translateY(-2px);
 }
 
+/* Müşteri Kazanımı ve Bildirimler Section */
+.neden-esnaf-page .customer-acquisition-section {
+  padding: 100px 0;
+  background: var(--white);
+}
+
+.neden-esnaf-page .acquisition-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.neden-esnaf-page .acquisition-text {
+  max-width: 600px;
+}
+
+.neden-esnaf-page .acquisition-features {
+  margin: 40px 0;
+}
+
+.neden-esnaf-page .feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.neden-esnaf-page .feature-item:hover {
+  background: var(--gray);
+  transform: translateX(10px);
+}
+
+.neden-esnaf-page .feature-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--yellow);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--black);
+  flex-shrink: 0;
+}
+
+.neden-esnaf-page .feature-content h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--black);
+}
+
+.neden-esnaf-page .feature-content p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.neden-esnaf-page .acquisition-cta {
+  margin-top: 40px;
+}
+
+.neden-esnaf-page .acquisition-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 36px;
+  background: var(--yellow);
+  color: var(--black);
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3);
+}
+
+.neden-esnaf-page .acquisition-button:hover {
+  background: var(--black);
+  color: var(--yellow);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.neden-esnaf-page .acquisition-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.neden-esnaf-page .visual-card {
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 400px;
+  width: 100%;
+  border: 1px solid #f0f0f0;
+}
+
+.neden-esnaf-page .card-header {
+  background: var(--black);
+  color: var(--white);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.neden-esnaf-page .notification-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--yellow);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+  }
+}
+
+.neden-esnaf-page .card-content {
+  padding: 24px;
+}
+
+.neden-esnaf-page .notification-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--gray);
+  border-radius: 12px;
+}
+
+.neden-esnaf-page .notification-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--yellow);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--black);
+}
+
+.neden-esnaf-page .notification-text strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+
+.neden-esnaf-page .notification-text p {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+.neden-esnaf-page .service-details {
+  background: var(--gray);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.neden-esnaf-page .detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.neden-esnaf-page .detail-row:last-child {
+  border-bottom: none;
+}
+
+.neden-esnaf-page .detail-row .label {
+  font-weight: 500;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.neden-esnaf-page .detail-row .value {
+  font-weight: 600;
+  color: var(--black);
+  font-size: 0.9rem;
+}
+
+/* Otomatik Sistem Section */
+.neden-esnaf-page .automated-system-section {
+  padding: 100px 0;
+  background: var(--gray);
+}
+
+.neden-esnaf-page .automated-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.neden-esnaf-page .automated-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.neden-esnaf-page .screenshots-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.neden-esnaf-page .screenshot-card {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.neden-esnaf-page .screenshot-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2);
+}
+
+.neden-esnaf-page .main-screenshot {
+  z-index: 2;
+}
+
+.neden-esnaf-page .secondary-screenshot {
+  z-index: 1;
+  transform: scale(0.9);
+  margin-left: -20px;
+}
+
+.neden-esnaf-page .screenshot-header {
+  background: #f5f5f5;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.neden-esnaf-page .browser-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.neden-esnaf-page .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.neden-esnaf-page .dot.red {
+  background: #ff5f57;
+}
+
+.neden-esnaf-page .dot.yellow {
+  background: #ffbd2e;
+}
+
+.neden-esnaf-page .dot.green {
+  background: #28ca42;
+}
+
+.neden-esnaf-page .url-bar {
+  background: var(--white);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #666;
+  flex: 1;
+  border: 1px solid #e0e0e0;
+}
+
+.neden-esnaf-page .screenshot-content {
+  padding: 20px;
+}
+
+/* Dashboard Preview Styles */
+.neden-esnaf-page .dashboard-preview {
+  background: var(--white);
+}
+
+.neden-esnaf-page .dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.neden-esnaf-page .dashboard-header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--black);
+  margin: 0;
+}
+
+.neden-esnaf-page .status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #28ca42;
+  font-weight: 500;
+}
+
+.neden-esnaf-page .status-dot {
+  width: 8px;
+  height: 8px;
+  background: #28ca42;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.neden-esnaf-page .dashboard-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.neden-esnaf-page .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--gray);
+  border-radius: 8px;
+}
+
+.neden-esnaf-page .stat-icon {
+  font-size: 1.2rem;
+}
+
+.neden-esnaf-page .stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.neden-esnaf-page .stat-number {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--black);
+  line-height: 1;
+}
+
+.neden-esnaf-page .stat-label {
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.neden-esnaf-page .recent-requests h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--black);
+  margin: 0 0 12px 0;
+}
+
+.neden-esnaf-page .request-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.neden-esnaf-page .request-item:last-child {
+  border-bottom: none;
+}
+
+.neden-esnaf-page .request-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.neden-esnaf-page .request-type {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--black);
+}
+
+.neden-esnaf-page .request-time {
+  font-size: 0.7rem;
+  color: #666;
+}
+
+.neden-esnaf-page .request-status {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.neden-esnaf-page .request-status.auto {
+  background: #e8f5e8;
+  color: #28ca42;
+}
+
+/* Customer View Styles */
+.neden-esnaf-page .customer-view {
+  background: var(--white);
+}
+
+.neden-esnaf-page .search-section h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--black);
+  margin: 0 0 12px 0;
+}
+
+.neden-esnaf-page .search-bar {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.neden-esnaf-page .search-bar input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px 0 0 6px;
+  font-size: 0.8rem;
+}
+
+.neden-esnaf-page .search-bar button {
+  padding: 8px 12px;
+  background: var(--yellow);
+  border: 1px solid var(--yellow);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.neden-esnaf-page .vendor-card {
+  background: var(--gray);
+  padding: 12px;
+  border-radius: 8px;
+  position: relative;
+}
+
+.neden-esnaf-page .vendor-info h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--black);
+  margin: 0 0 4px 0;
+}
+
+.neden-esnaf-page .rating {
+  font-size: 0.7rem;
+  color: var(--yellow);
+  margin-bottom: 4px;
+}
+
+.neden-esnaf-page .price {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.neden-esnaf-page .auto-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--yellow);
+  color: var(--black);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 600;
+}
+
+/* Automated Text Styles */
+.neden-esnaf-page .automated-text {
+  max-width: 600px;
+}
+
+.neden-esnaf-page .automated-features {
+  margin: 40px 0;
+}
+
+.neden-esnaf-page .automated-features .feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.neden-esnaf-page .automated-features .feature-item:hover {
+  background: var(--white);
+  transform: translateX(10px);
+}
+
+.neden-esnaf-page .automated-features .feature-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--yellow);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--black);
+  flex-shrink: 0;
+}
+
+.neden-esnaf-page .automated-features .feature-content h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--black);
+}
+
+.neden-esnaf-page .automated-features .feature-content p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.neden-esnaf-page .automated-stats {
+  display: flex;
+  gap: 30px;
+  margin: 40px 0;
+  justify-content: center;
+}
+
+.neden-esnaf-page .automated-stats .stat-item {
+  text-align: center;
+  padding: 20px;
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.neden-esnaf-page .automated-stats .stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--yellow);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.neden-esnaf-page .automated-stats .stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
 /* Responsive Design for Neden Esnaf */
 
   .neden-esnaf-page .stat-number {
@@ -3971,6 +4545,317 @@ footer {
   .neden-esnaf-page .cta-content h2 {
     font-size: 2rem;
   }
+
+/* Customer Acquisition Section Responsive */
+@media (max-width: 768px) {
+  .neden-esnaf-page .customer-acquisition-section {
+    padding: 60px 0;
+  }
+  
+  .neden-esnaf-page .acquisition-content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .neden-esnaf-page .acquisition-text {
+    text-align: center;
+  }
+  
+  .neden-esnaf-page .acquisition-features {
+    margin: 30px 0;
+  }
+  
+  .neden-esnaf-page .feature-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+    padding: 20px 15px;
+  }
+  
+  .neden-esnaf-page .feature-item:hover {
+    transform: none;
+  }
+  
+  .neden-esnaf-page .feature-icon {
+    margin: 0 auto;
+  }
+  
+  .neden-esnaf-page .acquisition-button {
+    padding: 16px 32px;
+    font-size: 1rem;
+  }
+  
+  .neden-esnaf-page .visual-card {
+    max-width: 350px;
+  }
+  
+  .neden-esnaf-page .card-header {
+    padding: 16px;
+    font-size: 0.9rem;
+  }
+  
+  .neden-esnaf-page .card-content {
+    padding: 20px;
+  }
+  
+  .neden-esnaf-page .notification-item {
+    padding: 12px;
+  }
+  
+  .neden-esnaf-page .service-details {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .neden-esnaf-page .customer-acquisition-section {
+    padding: 40px 0;
+  }
+  
+  .neden-esnaf-page .acquisition-content {
+    gap: 30px;
+  }
+  
+  .neden-esnaf-page .feature-item {
+    padding: 15px 10px;
+    margin-bottom: 20px;
+  }
+  
+  .neden-esnaf-page .feature-content h3 {
+    font-size: 1.1rem;
+  }
+  
+  .neden-esnaf-page .feature-content p {
+    font-size: 0.9rem;
+  }
+  
+  .neden-esnaf-page .acquisition-button {
+    padding: 14px 28px;
+    font-size: 0.95rem;
+  }
+  
+  .neden-esnaf-page .visual-card {
+    max-width: 300px;
+  }
+  
+  .neden-esnaf-page .card-header {
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+  
+  .neden-esnaf-page .card-content {
+    padding: 16px;
+  }
+  
+  .neden-esnaf-page .notification-item {
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .neden-esnaf-page .service-details {
+    padding: 12px;
+  }
+  
+  .neden-esnaf-page .detail-row {
+    padding: 6px 0;
+  }
+  
+  .neden-esnaf-page .detail-row .label,
+  .neden-esnaf-page .detail-row .value {
+    font-size: 0.8rem;
+  }
+}
+
+/* Automated System Section Responsive */
+@media (max-width: 768px) {
+  .neden-esnaf-page .automated-system-section {
+    padding: 60px 0;
+  }
+  
+  .neden-esnaf-page .automated-content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .neden-esnaf-page .automated-text {
+    text-align: center;
+    order: 2;
+  }
+  
+  .neden-esnaf-page .automated-visual {
+    order: 1;
+  }
+  
+  .neden-esnaf-page .screenshots-container {
+    max-width: 400px;
+    gap: 20px;
+  }
+  
+  .neden-esnaf-page .secondary-screenshot {
+    transform: scale(0.95);
+    margin-left: -10px;
+  }
+  
+  .neden-esnaf-page .automated-features .feature-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+    padding: 20px 15px;
+  }
+  
+  .neden-esnaf-page .automated-features .feature-item:hover {
+    transform: none;
+  }
+  
+  .neden-esnaf-page .automated-features .feature-icon {
+    margin: 0 auto;
+  }
+  
+  .neden-esnaf-page .automated-stats {
+    flex-direction: column;
+    gap: 20px;
+    margin: 30px 0;
+  }
+  
+  .neden-esnaf-page .screenshot-content {
+    padding: 16px;
+  }
+  
+  .neden-esnaf-page .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .neden-esnaf-page .automated-system-section {
+    padding: 40px 0;
+  }
+  
+  .neden-esnaf-page .automated-content {
+    gap: 30px;
+  }
+  
+  .neden-esnaf-page .screenshots-container {
+    max-width: 320px;
+    gap: 15px;
+  }
+  
+  .neden-esnaf-page .secondary-screenshot {
+    transform: scale(0.9);
+    margin-left: -5px;
+  }
+  
+  .neden-esnaf-page .screenshot-header {
+    padding: 8px 12px;
+  }
+  
+  .neden-esnaf-page .url-bar {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+  
+  .neden-esnaf-page .screenshot-content {
+    padding: 12px;
+  }
+  
+  .neden-esnaf-page .dashboard-header h3 {
+    font-size: 1rem;
+  }
+  
+  .neden-esnaf-page .dashboard-stats {
+    gap: 8px;
+  }
+  
+  .neden-esnaf-page .stat-item {
+    padding: 8px;
+  }
+  
+  .neden-esnaf-page .stat-icon {
+    font-size: 1rem;
+  }
+  
+  .neden-esnaf-page .stat-number {
+    font-size: 0.9rem;
+  }
+  
+  .neden-esnaf-page .stat-label {
+    font-size: 0.6rem;
+  }
+  
+  .neden-esnaf-page .recent-requests h4 {
+    font-size: 0.8rem;
+  }
+  
+  .neden-esnaf-page .request-type {
+    font-size: 0.7rem;
+  }
+  
+  .neden-esnaf-page .request-time {
+    font-size: 0.6rem;
+  }
+  
+  .neden-esnaf-page .request-status {
+    font-size: 0.6rem;
+    padding: 3px 6px;
+  }
+  
+  .neden-esnaf-page .search-section h3 {
+    font-size: 0.9rem;
+  }
+  
+  .neden-esnaf-page .search-bar input {
+    font-size: 0.7rem;
+    padding: 6px 8px;
+  }
+  
+  .neden-esnaf-page .search-bar button {
+    font-size: 0.7rem;
+    padding: 6px 8px;
+  }
+  
+  .neden-esnaf-page .vendor-info h4 {
+    font-size: 0.8rem;
+  }
+  
+  .neden-esnaf-page .rating {
+    font-size: 0.6rem;
+  }
+  
+  .neden-esnaf-page .price {
+    font-size: 0.7rem;
+  }
+  
+  .neden-esnaf-page .auto-badge {
+    font-size: 0.5rem;
+    padding: 1px 4px;
+  }
+  
+  .neden-esnaf-page .automated-features .feature-item {
+    padding: 15px 10px;
+    margin-bottom: 20px;
+  }
+  
+  .neden-esnaf-page .automated-features .feature-content h3 {
+    font-size: 1.1rem;
+  }
+  
+  .neden-esnaf-page .automated-features .feature-content p {
+    font-size: 0.9rem;
+  }
+  
+  .neden-esnaf-page .automated-stats .stat-item {
+    padding: 15px;
+  }
+  
+  .neden-esnaf-page .automated-stats .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .neden-esnaf-page .automated-stats .stat-label {
+    font-size: 0.8rem;
+  }
+}
 
 /* En Yakın Sayfası Styles */
 .en-yakin-page {

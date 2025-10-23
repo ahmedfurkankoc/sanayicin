@@ -29,8 +29,8 @@ const Footer = () => (
         </div>
         <div className="footer-link-group">
           <div className="footer-link-title">Esnaf</div>
-          <a href="/neden-esnaf">Neden Esnaf Olmalıyım?</a>
-          <a href="/hizmet-vermek">Hizmet Vermek İstiyorum</a>
+          <a href="/neden-esnaf-olmaliyim">Neden Esnaf Olmalıyım?</a>
+          <a href="/hizmet-vermek-istiyorum">Hizmet Vermek İstiyorum</a>
         </div>
         <div className="footer-link-group">
           <div className="footer-link-title">Sözleşmeler ve Kurallar</div>
