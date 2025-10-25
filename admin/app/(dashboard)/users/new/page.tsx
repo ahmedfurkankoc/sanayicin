@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Save, User } from 'lucide-react'
+import { ArrowLeft, Save } from 'lucide-react'
 import { createClient } from '../../../api/clients'
 import { useTurkeyData } from '../../../hooks/useTurkeyData'
 
