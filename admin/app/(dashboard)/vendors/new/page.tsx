@@ -1,15 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Save, Building2 } from 'lucide-react'
 import { createClient } from '../../../api/clients'
 import { createVendor } from '../../../api/vendors'
+import { useTurkeyData } from '../../../hooks/useTurkeyData'
 
 export default function NewVendorPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { cities, isLoading: turkeyDataLoading, loadTurkeyData, getDistricts, getNeighbourhoods } = useTurkeyData()
+  const [districts, setDistricts] = useState<string[]>([])
+  const [neighbourhoods, setNeighbourhoods] = useState<string[]>([])
   const [formData, setFormData] = useState({
     // User fields
     email: '',
@@ -38,6 +42,37 @@ export default function NewVendorPage() {
     working_hours: {},
     unavailable_dates: []
   })
+
+  // Turkey data'yı yükle
+  useEffect(() => {
+    loadTurkeyData()
+  }, [loadTurkeyData])
+
+  // Şehir değiştiğinde ilçeleri yükle
+  useEffect(() => {
+    if (formData.city) {
+      const cityDistricts = getDistricts(formData.city)
+      setDistricts(cityDistricts)
+      // İlçe ve mahalle alanlarını temizle
+      setFormData(prev => ({ ...prev, district: '', subdistrict: '' }))
+      setNeighbourhoods([])
+    } else {
+      setDistricts([])
+      setNeighbourhoods([])
+    }
+  }, [formData.city, getDistricts])
+
+  // İlçe değiştiğinde mahalleleri yükle
+  useEffect(() => {
+    if (formData.city && formData.district) {
+      const districtNeighbourhoods = getNeighbourhoods(formData.city, formData.district)
+      setNeighbourhoods(districtNeighbourhoods)
+      // Mahalle alanını temizle
+      setFormData(prev => ({ ...prev, subdistrict: '' }))
+    } else {
+      setNeighbourhoods([])
+    }
+  }, [formData.city, formData.district, getNeighbourhoods])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -392,16 +427,23 @@ export default function NewVendorPage() {
                 <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
                   Şehir *
                 </label>
-                <input
-                  type="text"
+                <select
                   id="city"
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent"
-                  placeholder="Şehir"
-                />
+                  disabled={turkeyDataLoading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent disabled:bg-gray-100"
+                >
+                  <option value="">Şehir seçin</option>
+                  {cities.map(city => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+                {turkeyDataLoading && (
+                  <p className="text-sm text-gray-500 mt-1">Şehirler yükleniyor...</p>
+                )}
               </div>
 
               {/* District */}
@@ -409,16 +451,23 @@ export default function NewVendorPage() {
                 <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-2">
                   İlçe *
                 </label>
-                <input
-                  type="text"
+                <select
                   id="district"
                   name="district"
                   value={formData.district}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent"
-                  placeholder="İlçe"
-                />
+                  disabled={!formData.city || districts.length === 0}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent disabled:bg-gray-100"
+                >
+                  <option value="">İlçe seçin</option>
+                  {districts.map(district => (
+                    <option key={district} value={district}>{district}</option>
+                  ))}
+                </select>
+                {!formData.city && (
+                  <p className="text-sm text-gray-500 mt-1">Önce şehir seçin</p>
+                )}
               </div>
 
               {/* Subdistrict */}
@@ -426,15 +475,22 @@ export default function NewVendorPage() {
                 <label htmlFor="subdistrict" className="block text-sm font-medium text-gray-700 mb-2">
                   Mahalle
                 </label>
-                <input
-                  type="text"
+                <select
                   id="subdistrict"
                   name="subdistrict"
                   value={formData.subdistrict}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent"
-                  placeholder="Mahalle"
-                />
+                  disabled={!formData.district || neighbourhoods.length === 0}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[color:var(--yellow)] focus:border-transparent disabled:bg-gray-100"
+                >
+                  <option value="">Mahalle seçin</option>
+                  {neighbourhoods.map(neighbourhood => (
+                    <option key={neighbourhood} value={neighbourhood}>{neighbourhood}</option>
+                  ))}
+                </select>
+                {!formData.district && (
+                  <p className="text-sm text-gray-500 mt-1">Önce ilçe seçin</p>
+                )}
               </div>
             </div>
           </div>
