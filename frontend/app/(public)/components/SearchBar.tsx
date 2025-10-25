@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { api } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 type SearchBarVariant = 'default' | 'stacked';
 
 interface SearchBarProps {
@@ -102,12 +103,28 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // En az bir filtre seçilmiş olmalı
+    if (!selectedCity && !selectedDistrict && !selectedService && !selectedCarBrand) {
+      toast.error("Lütfen en az bir filtre seçiniz", {
+        description: "Şehir, ilçe, hizmet alanı veya araba markası seçerek arama yapabilirsiniz."
+      });
+      return;
+    }
+    
     // Arama sonuçları sayfasına her zaman yönlendir (giriş gerekmez)
-    const params = new URLSearchParams({
-      city: selectedCity,
-      district: selectedDistrict,
-      service: selectedService,
-    });
+    const params = new URLSearchParams();
+    
+    if (selectedCity) params.set('city', selectedCity);
+    if (selectedDistrict) params.set('district', selectedDistrict);
+    
+    // Service name ile ekle (ID yerine)
+    if (selectedService) {
+      const serviceName = services.find(service => service.id.toString() === selectedService)?.name;
+      if (serviceName) {
+        params.append('service', serviceName);
+      }
+    }
     
     // Araba markası seçilmişse ekle
     if (selectedCarBrand) {
