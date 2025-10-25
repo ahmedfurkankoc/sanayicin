@@ -11,15 +11,14 @@ import AuthModal from "@/app/components/AuthModal";
 import { useFavorites } from "../context/FavoritesContext";
 import { useMusteri } from "../context/MusteriContext";
 
-// Güvenlik: Input sanitization fonksiyonları
-const sanitizeInput = (input: string): string => {
+// Basit input validation (UX için)
+const validateInput = (input: string, maxLength: number = 100): string => {
   if (!input) return '';
-  // HTML tag'ları, script'leri ve tehlikeli karakterleri temizle
-  return input
-    .replace(/[<>]/g, '') // < > karakterlerini kaldır
-    .replace(/javascript:/gi, '') // javascript: protokolünü kaldır
-    .replace(/on\w+=/gi, '') // on* event handler'ları kaldır
-    .trim();
+  // Maksimum uzunluk kontrolü
+  if (input.length > maxLength) {
+    return input.substring(0, maxLength);
+  }
+  return input.trim();
 };
 
 // Case-insensitive arama için input'u normalize et
@@ -301,12 +300,28 @@ function AramaSonuclariContent() {
   const { services, categories, getCategoriesByService } = useServices();
   const abortControllerRef = useRef<AbortController | null>(null);
   
-  const city = searchParams.get("city") || "";
-  const district = searchParams.get("district") || "";
-  const service = searchParams.get("service") || "";
-  const category = searchParams.get("category") || "";
+  const city = validateInput(searchParams.get("city") || "", 50);
+  const district = validateInput(searchParams.get("district") || "", 50);
+  const service = validateInput(searchParams.get("service") || "", 100);
+  const category = validateInput(searchParams.get("category") || "", 50);
   const page = searchParams.get("page") || "1";
-  const searchQuery = searchParams.get("q") || "";  // Text search parametresi
+  const searchQuery = validateInput(searchParams.get("q") || "", 200);  // Text search parametresi
+  
+  // Page parametresini validate et
+  const pageNum = parseInt(page);
+  const validPage = isNaN(pageNum) || pageNum < 1 ? 1 : pageNum;
+  
+  // Service name'i ID'ye çeviren fonksiyon
+  const getServiceIdFromName = (serviceName: string): string => {
+    if (!serviceName) return "";
+    // Önce ID olarak mı geldiğini kontrol et
+    if (serviceName.match(/^\d+$/)) {
+      return serviceName;
+    }
+    // Name olarak geldiyse ID'ye çevir
+    const foundService = services.find(s => s.name === serviceName);
+    return foundService ? foundService.id.toString() : "";
+  };
   
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -341,7 +356,7 @@ function AramaSonuclariContent() {
   }, [isSortOpen]);
   
   // Pagination state'leri
-  const [currentPage, setCurrentPage] = useState(parseInt(page));
+  const [currentPage, setCurrentPage] = useState(validPage);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -400,7 +415,9 @@ function AramaSonuclariContent() {
     }
     
     if (service) {
-      setSelectedService(service);
+      // Service name'i ID'ye çevir ve set et
+      const serviceId = getServiceIdFromName(service);
+      setSelectedService(serviceId);
     }
     
     if (category) {
@@ -408,9 +425,9 @@ function AramaSonuclariContent() {
     }
     
     if (page) {
-      setCurrentPage(parseInt(page));
+      setCurrentPage(validPage);
     }
-  }, [city, district, service, category, page, cities, getDistricts]);
+  }, [city, district, service, category, page, cities, getDistricts, services, validPage]);
 
   // İl değişince ilçeleri güncelle
   useEffect(() => {
@@ -436,7 +453,7 @@ function AramaSonuclariContent() {
         setError("");
         
         // URL'deki parametreleri kullanarak search yap
-        const searchParamsObject: any = { page: '1' };
+        const searchParamsObject: any = { page: validPage.toString() };
         
         if (city) searchParamsObject.city = city;
         if (district) searchParamsObject.district = district;
@@ -444,7 +461,7 @@ function AramaSonuclariContent() {
         if (category) searchParamsObject.category = category;
         if (searchQuery) searchParamsObject.q = normalizeSearchInput(searchQuery);
         
-        const carBrandParam = searchParams.get("carBrand");
+        const carBrandParam = validateInput(searchParams.get("carBrand") || "", 50);
         if (carBrandParam) searchParamsObject.carBrand = carBrandParam;
         
         const response = await api.searchVendors(searchParamsObject);
@@ -470,7 +487,7 @@ function AramaSonuclariContent() {
     };
     
     initialSearch();
-  }, [city, district, service, category, searchQuery]); // URL parametrelerini dependency olarak ekle
+  }, [city, district, service, category, searchQuery, validPage]); // URL parametrelerini dependency olarak ekle
 
   // Debounced search
   useEffect(() => {
@@ -487,27 +504,27 @@ function AramaSonuclariContent() {
         setLoading(true);
         setError("");
         
-        // Güvenlik: Input'ları sanitize et
-        const sanitizedParams = {
-          city: sanitizeInput(debouncedCity),
-          district: sanitizeInput(debouncedDistrict),
-          service: sanitizeInput(debouncedService),
-          category: sanitizeInput(debouncedCategory),
-          carBrand: sanitizeInput(debouncedCarBrand)
+        // Input'ları validate et
+        const validatedParams = {
+          city: validateInput(debouncedCity, 50),
+          district: validateInput(debouncedDistrict, 50),
+          service: validateInput(debouncedService, 100),
+          category: validateInput(debouncedCategory, 50),
+          carBrand: validateInput(debouncedCarBrand, 50)
         };
         
         // Güvenlik: Parametreleri validate et
-        if (!validateSearchParams(sanitizedParams)) {
+        if (!validateSearchParams(validatedParams)) {
           setError("Geçersiz arama parametreleri");
           return;
         }
         
         // Hizmet ve araba markası birlikte seçildiyse, sadece o kombinasyonu ara
         const searchParams: any = {
-          city: sanitizedParams.city,
-          district: sanitizedParams.district,
-          service: sanitizedParams.service,
-          category: sanitizedParams.category,
+          city: validatedParams.city,
+          district: validatedParams.district,
+          service: validatedParams.service,
+          category: validatedParams.category,
           page: currentPage.toString(), // Sayfa numarasını ekle
         };
         
@@ -517,8 +534,8 @@ function AramaSonuclariContent() {
         }
         
         // Araba markası seçildiyse ekle
-        if (sanitizedParams.carBrand) {
-          searchParams.carBrand = sanitizedParams.carBrand;
+        if (validatedParams.carBrand) {
+          searchParams.carBrand = validatedParams.carBrand;
         }
         
         const response = await api.searchVendors(searchParams);
@@ -592,27 +609,33 @@ function AramaSonuclariContent() {
   }, []);
 
   const handleSearch = useCallback(() => {
-    // Güvenlik: Input'ları sanitize et
-    const sanitizedParams = {
-      city: sanitizeInput(selectedCity),
-      district: sanitizeInput(selectedDistrict),
-      service: sanitizeInput(selectedService),
-      category: sanitizeInput(selectedCategory),
-      carBrand: sanitizeInput(selectedCarBrand)
+    // Input'ları validate et
+    const validatedParams = {
+      city: validateInput(selectedCity, 50),
+      district: validateInput(selectedDistrict, 50),
+      service: validateInput(selectedService, 100),
+      category: validateInput(selectedCategory, 50),
+      carBrand: validateInput(selectedCarBrand, 50)
     };
     
     // Güvenlik: Parametreleri validate et
-    if (!validateSearchParams(sanitizedParams)) {
+    if (!validateSearchParams(validatedParams)) {
       setError("Geçersiz arama parametreleri");
       return;
     }
     
     const params = new URLSearchParams();
-    if (sanitizedParams.city) params.set('city', sanitizedParams.city);
-    if (sanitizedParams.district) params.set('district', sanitizedParams.district);
-    if (sanitizedParams.service) params.set('service', sanitizedParams.service);
-    if (sanitizedParams.category) params.set('category', sanitizedParams.category);
-    if (sanitizedParams.carBrand) params.set('carBrand', sanitizedParams.carBrand);
+    if (validatedParams.city) params.set('city', validatedParams.city);
+    if (validatedParams.district) params.set('district', validatedParams.district);
+    if (validatedParams.service) {
+      // Service ID'sini name'e çevir
+      const serviceName = services.find(s => s.id.toString() === validatedParams.service)?.name;
+      if (serviceName) {
+        params.set('service', serviceName);
+      }
+    }
+    if (validatedParams.category) params.set('category', validatedParams.category);
+    if (validatedParams.carBrand) params.set('carBrand', validatedParams.carBrand);
     
     // Güvenlik: URL'i encode et
     const safeUrl = `/musteri/esnaflar?${params.toString()}`;
@@ -630,13 +653,19 @@ function AramaSonuclariContent() {
     const params = new URLSearchParams();
     if (selectedCity) params.set('city', selectedCity);
     if (selectedDistrict) params.set('district', selectedDistrict);
-    if (selectedService) params.set('service', selectedService);
+    if (selectedService) {
+      // Service ID'sini name'e çevir
+      const serviceName = services.find(s => s.id.toString() === selectedService)?.name;
+      if (serviceName) {
+        params.set('service', serviceName);
+      }
+    }
     if (selectedCategory) params.set('category', selectedCategory);
     if (selectedCarBrand) params.set('carBrand', selectedCarBrand);
     params.set('page', page.toString());
     
     router.push(`/musteri/esnaflar?${params.toString()}`);
-  }, [selectedCity, selectedDistrict, selectedService, selectedCategory, selectedCarBrand, router]);
+  }, [selectedCity, selectedDistrict, selectedService, selectedCategory, selectedCarBrand, router, services]);
 
   const handleNextPage = useCallback(() => {
     if (hasNextPage) {

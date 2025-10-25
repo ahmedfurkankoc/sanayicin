@@ -61,8 +61,8 @@ export default function Home() {
                     key={service.id} 
                     className="category-chip"
                     onClick={() => {
-                      // Hizmet arama sayfasına yönlendir (ID ile)
-                      window.location.href = `/musteri/esnaflar?service=${service.id}`;
+                      // Hizmet arama sayfasına yönlendir (name ile)
+                      window.location.href = `/musteri/esnaflar?service=${encodeURIComponent(service.name)}`;
                     }}
                   >
                     {service.name}
