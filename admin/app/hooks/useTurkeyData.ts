@@ -1,4 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+
+interface City {
+  name: string;
+  code: string;
+}
 
 interface TurkeyData {
   getCityNames: () => string[];
@@ -25,7 +30,7 @@ export const useTurkeyData = () => {
         
         // Şehir adından plaka kodunu bulmak için map oluştur
         const cityCodeMap = new Map<string, string>();
-        citiesData.forEach((city: any) => {
+        citiesData.forEach((city: City) => {
           cityCodeMap.set(city.name, city.code);
         });
         

@@ -294,11 +294,11 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
 
   useEffect(() => {
     let isMounted = true
+    // Copy refs to variables inside the effect to avoid stale closure issues
+    const editorContainer = editorContainerRef.current
+    const editor = editorRef.current
+    
     ;(async () => {
-      // Copy refs to variables inside the effect to avoid stale closure issues
-      const editorContainer = editorContainerRef.current
-      const editor = editorRef.current
-      
       if (!editor || editorInitializedRef.current) return
       try {
         const QuillModule = await import('quill')
@@ -388,9 +388,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     return () => {
       isMounted = false
       // Cleanup DOM to avoid duplicate toolbars on Strict Mode remounts
-      // Use the same variables from the effect scope
-      const editorContainer = editorContainerRef.current
-      const editor = editorRef.current
+      // Use the same variables from the effect scope to avoid stale closure
       try {
         if (editorContainer) {
           const toolbars = editorContainer.querySelectorAll('.ql-toolbar')

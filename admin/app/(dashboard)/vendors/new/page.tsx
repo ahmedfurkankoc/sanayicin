@@ -129,15 +129,6 @@ export default function NewVendorPage() {
     }))
   }
 
-  const getBusinessTypeText = (type: string) => {
-    const types = {
-      'sahis': 'Şahıs Şirketi',
-      'limited': 'Limited Şirketi', 
-      'anonim': 'Anonim Şirketi',
-      'esnaf': 'Esnaf'
-    }
-    return types[type as keyof typeof types] || type
-  }
 
   return (
     <div className="space-y-6">
