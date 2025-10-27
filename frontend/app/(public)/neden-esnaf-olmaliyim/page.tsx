@@ -196,10 +196,17 @@ const NedenEsnafPage = () => {
                             </div>
                           </div>
                           <div className="stat-item">
-                            <div className="stat-icon">💰</div>
+                            <div className="stat-icon">⭐</div>
                             <div className="stat-info">
-                              <span className="stat-number">₺12,450</span>
-                              <span className="stat-label">Toplam Kazanç</span>
+                              <span className="stat-number">4.9</span>
+                              <span className="stat-label">Değerlendirme Puanı</span>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <div className="stat-icon">📅</div>
+                            <div className="stat-info">
+                              <span className="stat-number">12</span>
+                              <span className="stat-label">Aktif Randevu</span>
                             </div>
                           </div>
                         </div>
@@ -247,9 +254,12 @@ const NedenEsnafPage = () => {
                             <div className="vendor-info">
                               <h4>Ahmet Usta</h4>
                               <div className="rating">⭐⭐⭐⭐⭐ 4.9</div>
-                              <div className="price">₺450 - ₺650</div>
+                              <div className="service-areas">
+                                <span className="service-badge">Motor Bakımı</span>
+                                <span className="service-badge">Fren Sistemi</span>
+                              </div>
+                              <div className="location">📍 Beyoğlu, İstanbul</div>
                             </div>
-                            <div className="auto-badge">Otomatik Teklif</div>
                           </div>
                         </div>
                       </div>
