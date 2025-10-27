@@ -168,7 +168,7 @@ export default function Home() {
             title="Usta Bul"
             description="Aracınızda bir sorun mu var? Elektrik, elektronik, mekanik veya kaporta boya işleriniz için güvenilir ustalar mı arıyorsunuz? Sanayicin ile size en yakın, deneyimli ve güvenilir otomotiv ustalarını bulun. Hızlı fiyat teklifleri alın, değerlendirmeleri inceleyin ve aracınızı güvenle teslim edin."
             buttonText="Hemen Bul"
-            buttonHref="#usta-ara"
+            buttonHref="/usta-ariyorum"
             variant="user"
             imageSrc="/images/hizmet-bul.jpg"
             imageAlt="Hizmet alanlar için usta bul görseli"
