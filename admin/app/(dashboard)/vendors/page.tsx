@@ -22,6 +22,7 @@ import {
 } from '../../api/vendors'
 import { usePermissions } from '../../contexts/AuthContext'
 import Pagination from '../../components/Pagination'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 export default function VendorsPage() {
   const router = useRouter()
@@ -38,6 +39,8 @@ export default function VendorsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [vendorToDelete, setVendorToDelete] = useState<VendorProfile | null>(null)
 
   // Debounce searchTerm to avoid spamming server
   useEffect(() => {
@@ -93,16 +96,30 @@ export default function VendorsPage() {
     }
   }
 
-  const handleDelete = async (vendorId: number) => {
+  const handleDeleteClick = (vendor: VendorProfile) => {
     if (!canWriteVendors) return
-    if (!confirm('Bu esnafı silmek istediğinize emin misiniz?')) return
+    setVendorToDelete(vendor)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!vendorToDelete) return
+    
     try {
-      await deleteVendor(vendorId)
-      setVendors(prev => prev.filter(v => v.id !== vendorId))
+      await deleteVendor(vendorToDelete.id)
+      setVendors(prev => prev.filter(v => v.id !== vendorToDelete.id))
       setTotalCount(prev => prev - 1)
+      setDeleteModalOpen(false)
+      setVendorToDelete(null)
     } catch (e) {
       console.error('Silme hatası:', e)
+      alert('Esnaf silinirken bir hata oluştu')
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false)
+    setVendorToDelete(null)
   }
 
   const getStatusBadge = (isVerified: boolean) => {
@@ -321,6 +338,7 @@ export default function VendorsPage() {
                           <Eye className="h-4 w-4" />
                         </button>
                         <button 
+                          onClick={() => router.push(`/vendors/${vendor.id}/edit`)}
                           className="text-gray-600 hover:text-gray-900"
                           title="Düzenle"
                         >
@@ -349,7 +367,7 @@ export default function VendorsPage() {
                             <button 
                               className="text-red-600 hover:text-red-900"
                               title="Sil"
-                              onClick={() => handleDelete(vendor.id)}
+                              onClick={() => handleDeleteClick(vendor)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -374,6 +392,23 @@ export default function VendorsPage() {
         onPageChange={setPage}
         onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
         itemName="esnaf"
+      />
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Esnafı Sil"
+        itemName="esnaf"
+        itemDetails={vendorToDelete ? {
+          id: vendorToDelete.id,
+          display_name: vendorToDelete.display_name,
+          email: vendorToDelete.user_email,
+          company_title: vendorToDelete.company_title
+        } : undefined}
+        description="Bu esnaf hesabını kalıcı olarak silmek istediğinizden emin misiniz?"
+        warningMessage="Bu esnaf hesabı kalıcı olarak silinecek. Tüm esnaf bilgileri, hizmetleri, yorumları ve ilişkili veriler kaybolacaktır."
       />
     </div>
   )

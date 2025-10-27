@@ -22,7 +22,8 @@ import {
   Bell,
   ClipboardList,
   UserCheck,
-  User
+  User,
+  Star
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import Breadcrumbs from '../components/Breadcrumbs'
@@ -31,6 +32,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: Home, permission: 'dashboard' },
   { name: 'Kullanıcılar', href: '/users', icon: Users, permission: 'users' },
   { name: 'Esnaflar', href: '/vendors', icon: Shield, permission: 'vendors' },
+  { name: 'Yorumlar', href: '/reviews', icon: Star, permission: 'vendors' },
   { name: 'Blog', href: '/blog', icon: FileText, permission: 'blog' },
   { name: 'Destek', href: '/support', icon: MessageSquare, permission: 'support' },
   { name: 'İçerik', href: '/content', icon: FileText, permission: 'content' },

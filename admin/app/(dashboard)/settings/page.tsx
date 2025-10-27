@@ -7,6 +7,7 @@ import { updateAdminUser, changeAdminPassword, getDomains, createDomain, deleteD
 import ProtectedRoute from '../../components/ProtectedRoute'
 import ServerMonitoringWidget from '../../components/ServerMonitoringWidget'
 import HostingerSubscriptionsWidget from '../../components/HostingerSubscriptionsWidget'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 import { 
   Server,
   Globe, 
@@ -51,6 +52,8 @@ export default function SettingsPage() {
   const [showAddDomain, setShowAddDomain] = useState(false)
   const [newDomainName, setNewDomainName] = useState('')
   const [newDomainAutoRenew, setNewDomainAutoRenew] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [domainToDelete, setDomainToDelete] = useState<Domain | null>(null)
   const [domainStats, setDomainStats] = useState({
     total: 0,
     active: 0,
@@ -161,21 +164,33 @@ export default function SettingsPage() {
     }
   }
 
-  const handleDeleteDomain = async (id: number) => {
-    if (!confirm('Bu domaini silmek istediğinizden emin misiniz?')) return
+  const handleDeleteDomainClick = (domain: Domain) => {
+    setDomainToDelete(domain)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteDomainConfirm = async () => {
+    if (!domainToDelete) return
     
     setDomainsLoading(true)
     setDomainsError(null)
     
     try {
-      await deleteDomain(id)
+      await deleteDomain(domainToDelete.id)
       await loadDomains() // Refresh list
+      setDeleteModalOpen(false)
+      setDomainToDelete(null)
     } catch (error: unknown) {
       const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain silinemedi'
       setDomainsError(errorMessage)
     } finally {
       setDomainsLoading(false)
     }
+  }
+
+  const handleDeleteDomainCancel = () => {
+    setDeleteModalOpen(false)
+    setDomainToDelete(null)
   }
 
   const handleRefreshDomain = async (id: number) => {
@@ -443,7 +458,7 @@ export default function SettingsPage() {
                                 <RefreshCw className={`h-4 w-4 ${domainsLoading ? 'animate-spin' : ''}`} />
                               </button>
                               <button
-                                onClick={() => handleDeleteDomain(domain.id)}
+                                onClick={() => handleDeleteDomainClick(domain)}
                                 disabled={domainsLoading}
                                 className="p-2 text-red-600 hover:text-red-900 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
                                 title="Sil"
@@ -766,6 +781,21 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
+
+        {/* Delete Confirm Modal */}
+        <DeleteConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={handleDeleteDomainCancel}
+          onConfirm={handleDeleteDomainConfirm}
+          title="Domaini Sil"
+          itemName="domain"
+          itemDetails={domainToDelete ? {
+            id: domainToDelete.id,
+            name: domainToDelete.name,
+          } : undefined}
+          description="Bu domaini kalıcı olarak silmek istediğinizden emin misiniz?"
+          warningMessage="Bu domain kalıcı olarak silinecek. Domain bilgileri ve ilişkili veriler kaybolacaktır."
+        />
       </div>
     </ProtectedRoute>
   )

@@ -35,7 +35,7 @@ interface BlogPost {
 
 export default function BlogEditor({ params }: { params: { id?: string } }) {
   const router = useRouter()
-  const isEdit = !!params.id
+  const isEdit = !!params?.id
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -64,6 +64,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
   const editorRef = useRef<HTMLDivElement | null>(null)
   const quillInstanceRef = useRef<unknown>(null)
   const editorInitializedRef = useRef<boolean>(false)
+  const contentLoadedRef = useRef<boolean>(false)
   const [showSeoGuide, setShowSeoGuide] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   // const [showCategoryManager] = useState(false) // Kullanılmıyor
@@ -142,11 +143,11 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
   }
 
   const fetchBlogPost = useCallback(async () => {
-    if (!params.id) return
+    if (!params?.id) return
     
     setLoading(true)
     try {
-      const data = await apiGetBlogPost(Number(params.id))
+      const data = await apiGetBlogPost(Number(params?.id))
       setFormData({
         id: data.id,
         title: data.title,
@@ -168,14 +169,14 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     } finally {
       setLoading(false)
     }
-  }, [params.id])
+  }, [params?.id])
 
   useEffect(() => {
     fetchCategories()
     if (isEdit) {
       fetchBlogPost()
     }
-  }, [isEdit, params.id, fetchBlogPost])
+  }, [isEdit, fetchBlogPost])
 
   // const generateSlug = (title: string) => {
   //   return title
@@ -266,7 +267,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     try {
       const payload = { ...formData, status, content: normalizeContentHtml(formData.content) }
       const data = isEdit
-        ? await updateBlogPost(Number(params.id), payload)
+        ? await updateBlogPost(Number(params?.id), payload)
         : await createBlogPost(payload)
       
       if (!isEdit) {
@@ -356,7 +357,9 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         } catch {}
 
         // Render-time: use absolute URLs for images so they appear inside admin editor
-        quill.clipboard.dangerouslyPasteHTML(absolutizeContentHtml(formData.content || ''))
+        if (formData.content) {
+          quill.clipboard.dangerouslyPasteHTML(absolutizeContentHtml(formData.content))
+        }
 
         // Mutation observer to rewrite any newly inserted /media src to absolute for editor display
         try {
@@ -373,10 +376,13 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
           observer.observe(quill.root, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] })
         } catch {}
 
-        quill.on('text-change', () => {
+        quill.on('text-change', (delta: any, oldDelta: any, source: string) => {
           if (!isMounted) return
-          const html = quill.root.innerHTML
-          handleContentChange(html)
+          // Only trigger handleContentChange if source is 'user' (not 'api' or 'silent')
+          if (source === 'user') {
+            const html = quill.root.innerHTML
+            handleContentChange(html)
+          }
         })
 
         quillInstanceRef.current = quill
@@ -400,9 +406,11 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
       }
       quillInstanceRef.current = null
       editorInitializedRef.current = false
+      contentLoadedRef.current = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editorRef])
+  }, [editorRef, formData.content])
+
 
   const handleCreateCategory = async () => {
     const name = newCategoryName.trim()

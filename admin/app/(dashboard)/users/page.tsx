@@ -11,9 +11,10 @@ import {
   UserPlus
 } from 'lucide-react'
 
-import { fetchClients, ClientListItem } from '../../api/clients'
+import { fetchClients, ClientListItem, deleteClient } from '../../api/clients'
 import StatsGrid from '../../components/StatsGrid'
 import Pagination from '../../components/Pagination'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 export default function UsersPage() {
   const router = useRouter()
@@ -24,6 +25,8 @@ export default function UsersPage() {
   const [pageSize, setPageSize] = useState(20)
   const [totalCount, setTotalCount] = useState(0)
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<ClientListItem | null>(null)
 
   // Debounce searchTerm to avoid spamming server
   useEffect(() => {
@@ -62,6 +65,33 @@ export default function UsersPage() {
       pending: 'bg-yellow-100 text-yellow-800'
     }
     return styles[status as keyof typeof styles] || styles.inactive
+  }
+
+  const handleDeleteClick = (user: ClientListItem) => {
+    setUserToDelete(user)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return
+    
+    try {
+      await deleteClient(userToDelete.id)
+      // Kullanıcıyı listeden kaldır
+      setData(prev => prev.filter(u => u.id !== userToDelete.id))
+      setTotalCount(prev => prev - 1)
+      // Modal'ı kapat
+      setDeleteModalOpen(false)
+      setUserToDelete(null)
+    } catch (error) {
+      console.error('Kullanıcı silinirken hata:', error)
+      alert('Kullanıcı silinirken bir hata oluştu')
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false)
+    setUserToDelete(null)
   }
 
   return (
@@ -182,13 +212,13 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
-                      <button onClick={() => router.push(`/users/${user.id}`)} className="text-[color:var(--black)] hover:text-[color:#000000]">
+                      <button onClick={() => router.push(`/users/${user.id}`)} className="text-[color:var(--black)] hover:text-[color:#000000]" title="Görüntüle">
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="text-gray-600 hover:text-gray-900">
+                      <button onClick={() => router.push(`/users/${user.id}/edit`)} className="text-gray-600 hover:text-gray-900" title="Düzenle">
                         <Edit className="h-4 w-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button onClick={() => handleDeleteClick(user)} className="text-red-600 hover:text-red-900" title="Sil">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -209,6 +239,22 @@ export default function UsersPage() {
         onPageChange={setPage}
         onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
         itemName="kullanıcı"
+      />
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Kullanıcıyı Sil"
+        itemName="kullanıcı"
+        itemDetails={userToDelete ? {
+          id: userToDelete.id,
+          name: `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || userToDelete.email,
+          email: userToDelete.email
+        } : undefined}
+        description="Bu kullanıcıyı kalıcı olarak silmek istediğinizden emin misiniz?"
+        warningMessage="Bu kullanıcı hesabı kalıcı olarak silinecek. Tüm kullanıcı bilgileri, yorumları ve ilişkili veriler kaybolacaktır."
       />
     </div>
   )
