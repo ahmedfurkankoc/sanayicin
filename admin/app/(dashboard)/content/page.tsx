@@ -21,6 +21,7 @@ import {
 import { usePermissions } from '../../contexts/AuthContext'
 import Pagination from '../../components/Pagination'
 import Image from 'next/image'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 import { 
   Upload,
   X
@@ -70,12 +71,50 @@ export default function ContentManagementPage() {
   const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'created_desc' | 'created_asc'>('name_asc')
   const [serviceAreaFilter, setServiceAreaFilter] = useState<number | ''>('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteModalType, setDeleteModalType] = useState<'service_area' | 'category' | 'brand'>('service_area')
+  const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string } | null>(null)
 
   const serviceAreaMap = useMemo(() => {
     const m = new Map<number, ServiceArea>()
     for (const s of serviceAreas) m.set(s.id, s)
     return m
   }, [serviceAreas])
+
+  const handleDelete = (type: 'service_area' | 'category' | 'brand', id: number, name: string) => {
+    setItemToDelete({ id, name })
+    setDeleteModalType(type)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return
+    
+    try {
+      setLoading(true)
+      if (deleteModalType === 'service_area') {
+        await deleteServiceArea(itemToDelete.id)
+        setServiceAreas((prev) => prev.filter((x) => x.id !== itemToDelete.id))
+      } else if (deleteModalType === 'category') {
+        await deleteCategory(itemToDelete.id)
+        setCategories((prev) => prev.filter((x) => x.id !== itemToDelete.id))
+      } else {
+        await deleteCarBrand(itemToDelete.id)
+        setCarBrands((prev) => prev.filter((x) => x.id !== itemToDelete.id))
+      }
+      setDeleteModalOpen(false)
+      setItemToDelete(null)
+    } catch (e: unknown) {
+      setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Silme işlemi başarısız')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false)
+    setItemToDelete(null)
+  }
 
   // Visible slices for pagination after global sorting/filtering
   const visibleCategories = useMemo(() => {
@@ -342,18 +381,7 @@ export default function ContentManagementPage() {
                           {canDeleteContent && (
                             <button
                               className="px-3 py-1 rounded btn-danger shrink-0"
-                              onClick={async () => {
-                              if (!confirm('Silmek istediğinize emin misiniz?')) return
-                              try {
-                                setLoading(true)
-                                await deleteServiceArea(sa.id)
-                                setServiceAreas((prev) => prev.filter((x) => x.id !== sa.id))
-                              } catch (e: unknown) {
-                                setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Hizmet alanı silinemedi')
-                              } finally {
-                                setLoading(false)
-                              }
-                              }}
+                              onClick={() => handleDelete('service_area', sa.id, sa.name)}
                             >Sil</button>
                           )}
                         </>
@@ -542,18 +570,7 @@ export default function ContentManagementPage() {
                         {canDeleteContent && (
                           <button
                             className="px-3 py-1 rounded btn-danger shrink-0"
-                            onClick={async () => {
-                              if (!confirm('Silmek istediğinize emin misiniz?')) return
-                              try {
-                                setLoading(true)
-                                await deleteCategory(cat.id)
-                                setCategories((prev) => prev.filter((x) => x.id !== cat.id))
-                              } catch (e: unknown) {
-                                setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Kategori silinemedi')
-                              } finally {
-                                setLoading(false)
-                              }
-                            }}
+                            onClick={() => handleDelete('category', cat.id, cat.name)}
                           >Sil</button>
                         )}
                       </>
@@ -857,18 +874,7 @@ export default function ContentManagementPage() {
                         {canDeleteContent && (
                           <button
                             className="px-3 py-1 rounded btn-danger shrink-0"
-                            onClick={async () => {
-                              if (!confirm('Silmek istediğinize emin misiniz?')) return
-                              try {
-                                setLoading(true)
-                                await deleteCarBrand(brand.id)
-                                setCarBrands((prev) => prev.filter((x) => x.id !== brand.id))
-                              } catch (e: unknown) {
-                                setError((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Marka silinemedi')
-                              } finally {
-                                setLoading(false)
-                              }
-                            }}
+                            onClick={() => handleDelete('brand', brand.id, brand.name)}
                           >Sil</button>
                         )}
                       </>
@@ -973,6 +979,29 @@ export default function ContentManagementPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title={deleteModalType === 'service_area' ? 'Hizmet Alanını Sil' : deleteModalType === 'category' ? 'Kategoriyi Sil' : 'Markayı Sil'}
+        itemName={deleteModalType === 'service_area' ? 'hizmet alanı' : deleteModalType === 'category' ? 'kategori' : 'marka'}
+        itemDetails={itemToDelete ? {
+          id: itemToDelete.id,
+          name: itemToDelete.name
+        } : undefined}
+        description={deleteModalType === 'service_area' 
+          ? "Bu hizmet alanını kalıcı olarak silmek istediğinizden emin misiniz?" 
+          : deleteModalType === 'category'
+          ? "Bu kategoriyi kalıcı olarak silmek istediğinizden emin misiniz?"
+          : "Bu markayı kalıcı olarak silmek istediğinizden emin misiniz?"}
+        warningMessage={deleteModalType === 'service_area'
+          ? "Bu hizmet alanı kalıcı olarak silinecek. İlişkili kategoriler etkilenebilir."
+          : deleteModalType === 'category'
+          ? "Bu kategori kalıcı olarak silinecek. İlişkili içerik etkilenebilir."
+          : "Bu marka kalıcı olarak silinecek. İlişkili veriler kaybolacaktır."}
+      />
     </div>
   )
 }

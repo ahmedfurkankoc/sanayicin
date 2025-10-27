@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Edit, Trash2, Eye } from 'lucide-react'
 // import { useAuth } from '../../contexts/AuthContext' // Kullanılmıyor
 import Pagination from '../../components/Pagination'
 import { listBlogPosts, deleteBlogPost, listBlogCategories, createBlogCategory, updateBlogCategory, deleteBlogCategory } from '../../api/admin'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 interface BlogPost {
   id: number
@@ -24,6 +26,7 @@ interface BlogPost {
 }
 
 export default function BlogManagement() {
+  const router = useRouter()
   // const { user } = useAuth() // Kullanılmıyor
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(false)
@@ -41,6 +44,9 @@ export default function BlogManagement() {
   const [showCatModal, setShowCatModal] = useState(false)
   const [editingCatId, setEditingCatId] = useState<number | null>(null)
   const [editingCatName, setEditingCatName] = useState<string>('')
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteModalType, setDeleteModalType] = useState<'post' | 'category'>('post')
+  const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string; category?: string } | null>(null)
 
   const fetchBlogPosts = useCallback(async () => {
     setLoading(true)
@@ -100,27 +106,43 @@ export default function BlogManagement() {
     }
   }
 
-  const handleDeleteCategory = async (id: number) => {
-    if (!confirm('Bu kategoriyi silmek istediğinizden emin misiniz?')) return
-    try {
-      await deleteBlogCategory(id)
-      setCategories(prev => prev.filter(c => c.id !== id))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Kategori silinemedi')
-    }
+  const handleDeleteCategory = (id: number) => {
+    const category = categories.find(c => c.id === id)
+    if (!category) return
+    setItemToDelete({ id, name: category.name })
+    setDeleteModalType('category')
+    setDeleteModalOpen(true)
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Bu blog yazısını silmek istediğinizden emin misiniz?')) {
-      return
-    }
+  const handleDelete = (id: number) => {
+    const post = blogPosts.find(p => p.id === id)
+    if (!post) return
+    setItemToDelete({ id, name: post.title, category: post.category_name })
+    setDeleteModalType('post')
+    setDeleteModalOpen(true)
+  }
 
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return
+    
     try {
-      await deleteBlogPost(id)
-      fetchBlogPosts()
+      if (deleteModalType === 'category') {
+        await deleteBlogCategory(itemToDelete.id)
+        setCategories(prev => prev.filter(c => c.id !== itemToDelete.id))
+      } else {
+        await deleteBlogPost(itemToDelete.id)
+        fetchBlogPosts()
+      }
+      setDeleteModalOpen(false)
+      setItemToDelete(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Silme işlemi başarısız')
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false)
+    setItemToDelete(null)
   }
 
   const getStatusBadge = (status: string) => {
@@ -289,13 +311,13 @@ export default function BlogManagement() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
-                          <a
-                            href={`/admin/blog/${post.id}/edit`}
+                          <button
+                            onClick={() => router.push(`/blog/${post.id}/edit`)}
                             className="text-blue-600 hover:text-blue-900"
                             title="Düzenle"
                           >
                             <Edit className="h-4 w-4" />
-                          </a>
+                          </button>
                           <a
                             href={`/blog/${post.slug}`}
                             target="_blank"
@@ -447,6 +469,28 @@ export default function BlogManagement() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirm Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title={deleteModalType === 'post' ? 'Blog Yazısını Sil' : 'Kategori Sil'}
+        itemName={deleteModalType === 'post' ? 'blog yazısı' : 'kategori'}
+        itemDetails={itemToDelete ? {
+          id: itemToDelete.id,
+          name: itemToDelete.name,
+          category: itemToDelete.category
+        } : undefined}
+        description={deleteModalType === 'post' 
+          ? "Bu blog yazısını kalıcı olarak silmek istediğinizden emin misiniz?"
+          : "Bu kategoriyi kalıcı olarak silmek istediğinizden emin misiniz?"
+        }
+        warningMessage={deleteModalType === 'post'
+          ? "Bu blog yazısı kalıcı olarak silinecek. Tüm içerik ve ilişkili veriler kaybolacaktır."
+          : "Bu kategori kalıcı olarak silinecek. Bu kategoriye ait tüm blog yazıları etkilenebilir."
+        }
+      />
     </div>
   )
 }

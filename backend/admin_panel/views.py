@@ -23,7 +23,7 @@ from .services import HostingerAPIService
 from .models import *
 from .serializers import *
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
-from vendors.models import VendorProfile
+from vendors.models import VendorProfile, Review
 
 # Helper function for admin logging
 def create_admin_log(level, message, module, request, admin_user=None):
@@ -795,6 +795,81 @@ class SupportMessageViewSet(viewsets.ModelViewSet):
         else:
             qs = qs.order_by('created_at')
         return qs
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    """Müşteri yorumları yönetimi"""
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [AdminTokenAuthentication]
+    
+    @admin_permission_required('vendors', 'read')
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Search functionality
+        search = request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                models.Q(comment__icontains=search) |
+                models.Q(user__email__icontains=search) |
+                models.Q(user__first_name__icontains=search) |
+                models.Q(user__last_name__icontains=search) |
+                models.Q(vendor__display_name__icontains=search)
+            )
+        
+        # Filter by user
+        user_id = request.query_params.get('user', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        
+        # Filter by vendor
+        vendor_id = request.query_params.get('vendor', None)
+        if vendor_id:
+            queryset = queryset.filter(vendor_id=vendor_id)
+        
+        # Filter by rating
+        rating = request.query_params.get('rating', None)
+        if rating:
+            queryset = queryset.filter(rating=rating)
+        
+        
+        # Order by creation date (newest first)
+        queryset = queryset.order_by('-created_at')
+        
+        # Manual pagination
+        page_size = int(request.query_params.get('page_size', 20))
+        page = int(request.query_params.get('page', 1))
+        
+        paginator = Paginator(queryset, page_size)
+        total_count = paginator.count
+        
+        try:
+            page_obj = paginator.page(page)
+        except:
+            page_obj = paginator.page(1)
+            page = 1
+        
+        serializer = self.get_serializer(page_obj.object_list, many=True)
+        
+        return Response({
+            'results': serializer.data,
+            'count': total_count,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': paginator.num_pages
+        })
+    
+    @admin_permission_required('vendors', 'write')
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+    
+    @admin_permission_required('vendors', 'delete')
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        return super().get_queryset().select_related('user', 'vendor', 'service')
 
 class ServiceAreaViewSet(viewsets.ModelViewSet):
     """Hizmet alanı yönetimi"""

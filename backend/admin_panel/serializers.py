@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
 from .models import *
-from vendors.models import VendorProfile
+from vendors.models import VendorProfile, Review
 
 User = get_user_model()
 
@@ -114,6 +114,22 @@ class VendorProfileSerializer(serializers.ModelSerializer):
         model = VendorProfile
         fields = '__all__'
         read_only_fields = ['user', 'created_at', 'updated_at']
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Değerlendirme serializer'ı"""
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    vendor_display_name = serializers.CharField(source='vendor.display_name', read_only=True)
+    service_name = serializers.CharField(source='service.name', read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = [
+            'id', 'vendor', 'vendor_display_name', 'user', 'user_email', 'user_name',
+            'service', 'service_name', 'rating', 'comment', 'service_date',
+            'is_read', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
 
 # ========== Content Management Serializers ==========
 class ServiceAreaSerializer(serializers.ModelSerializer):
