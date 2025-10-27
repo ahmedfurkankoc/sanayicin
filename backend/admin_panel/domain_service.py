@@ -26,25 +26,56 @@ class DomainService:
         try:
             # Domain adını temizle
             domain_name = domain_name.strip().lower()
-            if not domain_name.startswith('http'):
-                domain_name = domain_name.replace('www.', '')
+            
+            # URL prefix'lerini temizle
+            if domain_name.startswith('http://'):
+                domain_name = domain_name.replace('http://', '')
+            elif domain_name.startswith('https://'):
+                domain_name = domain_name.replace('https://', '')
+            
+            # www. prefix'ini temizle
+            domain_name = domain_name.replace('www.', '')
+            
+            # Trailing slash'ı temizle
+            domain_name = domain_name.rstrip('/')
             
             logger.info(f"WHOIS sorgusu başlatılıyor: {domain_name}")
             
             # WHOIS sorgusu - retry mekanizması ile
             domain_info = None
             last_error = None
+            search_domains = [domain_name]  # İlk olarak orijinal domain
             
-            for attempt in range(self.max_retries):
-                try:
-                    domain_info = whois.whois(domain_name)
+            # Eğer .tr uzantılı bir domain ise alternatif formatları dene
+            if '.tr' in domain_name:
+                # Örnek: sanayicin.com.tr -> sanayicin.com.tr, sanayicom.tr
+                parts = domain_name.split('.')
+                if len(parts) >= 3:
+                    # Örneğin: sanayicin.com.tr -> sanayicin, com, tr
+                    # Alternatif: sadece son iki kısmı kullan
+                    alt_domain = '.'.join(parts[-2:])
+                    if alt_domain not in search_domains:
+                        search_domains.append(alt_domain)
+            
+            for search_domain in search_domains:
+                for attempt in range(self.max_retries):
+                    try:
+                        logger.info(f"WHOIS sorgusu deneniyor: {search_domain}")
+                        domain_info = whois.whois(search_domain)
+                        # Eğer başarılı olduysa domain adını güncelle
+                        if search_domain != domain_name:
+                            logger.info(f"Alternatif domain başarılı: {search_domain}")
+                        break
+                    except Exception as e:
+                        last_error = e
+                        logger.warning(f"WHOIS sorgusu deneme {attempt + 1} başarısız ({search_domain}): {str(e)}")
+                        if attempt < self.max_retries - 1:
+                            import time
+                            time.sleep(2)  # 2 saniye bekle
+                
+                # Eğer başarılı olduysa döngüden çık
+                if domain_info is not None:
                     break
-                except Exception as e:
-                    last_error = e
-                    logger.warning(f"WHOIS sorgusu deneme {attempt + 1} başarısız ({domain_name}): {str(e)}")
-                    if attempt < self.max_retries - 1:
-                        import time
-                        time.sleep(2)  # 2 saniye bekle
             
             if domain_info is None:
                 raise Exception(f"WHOIS sorgusu {self.max_retries} deneme sonrası başarısız: {str(last_error)}")
@@ -54,15 +85,47 @@ class DomainService:
             admin_email = ''
             tech_email = ''
             
-            if emails and isinstance(emails, list) and len(emails) > 0:
-                admin_email = str(emails[0]) if emails[0] else ''
-                tech_email = str(emails[1]) if len(emails) > 1 and emails[1] else ''
+            if emails:
+                if isinstance(emails, list) and len(emails) > 0:
+                    if emails[0]:
+                        try:
+                            admin_email = str(emails[0])
+                        except:
+                            admin_email = ''
+                    if len(emails) > 1 and emails[1]:
+                        try:
+                            tech_email = str(emails[1])
+                        except:
+                            tech_email = ''
+                elif isinstance(emails, str):
+                    admin_email = emails
+            
+            # Registrar bilgisini parse et
+            registrar = ''
+            try:
+                registrar_value = getattr(domain_info, 'registrar', None)
+                if registrar_value:
+                    registrar = str(registrar_value)
+            except:
+                pass
+            
+            # Dates
+            reg_date = None
+            exp_date = None
+            try:
+                reg_date = self._parse_date(getattr(domain_info, 'creation_date', None))
+            except:
+                pass
+            try:
+                exp_date = self._parse_date(getattr(domain_info, 'expiration_date', None))
+            except:
+                pass
             
             result = {
                 'name': domain_name,
-                'registrar': getattr(domain_info, 'registrar', '') or '',
-                'registration_date': self._parse_date(getattr(domain_info, 'creation_date', None)),
-                'expiration_date': self._parse_date(getattr(domain_info, 'expiration_date', None)),
+                'registrar': registrar,
+                'registration_date': reg_date,
+                'expiration_date': exp_date,
                 'nameservers': self._parse_nameservers(getattr(domain_info, 'name_servers', None)),
                 'admin_email': admin_email,
                 'tech_email': tech_email,

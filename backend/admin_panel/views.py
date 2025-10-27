@@ -1596,7 +1596,12 @@ class DomainViewSet(viewsets.ModelViewSet):
             domain.admin_email = domain_info['admin_email']
             domain.tech_email = domain_info['tech_email']
             domain.status = domain_info['status']
+            
+            # days_until_expiry güncellenmiş olacak (save() metodu içinde hesaplanır)
             domain.save()
+            
+            # Refresh domain to get calculated fields
+            domain.refresh_from_db()
             
             return Response({
                 'message': 'Domain bilgileri başarıyla yenilendi',
