@@ -29,6 +29,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
   const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number} | null>(null);
   const [mounted, setMounted] = useState(false);
   
+  // Validation state
+  const [hasValidationError, setHasValidationError] = useState(false);
+  
   // Ref'ler
   const cityRef = useRef<HTMLDivElement>(null);
   const districtRef = useRef<HTMLDivElement>(null);
@@ -56,6 +59,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
       setSelectedDistrict("");
     }
   }, [selectedCity, getDistricts]);
+
+  // Seçim yapıldığında validation error'ı temizle
+  useEffect(() => {
+    if (selectedCity || selectedDistrict || selectedService || selectedCarBrand) {
+      setHasValidationError(false);
+    }
+  }, [selectedCity, selectedDistrict, selectedService, selectedCarBrand]);
 
   // Hizmet alanlarını çek
   useEffect(() => {
@@ -106,11 +116,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
     
     // En az bir filtre seçilmiş olmalı
     if (!selectedCity && !selectedDistrict && !selectedService && !selectedCarBrand) {
+      setHasValidationError(true);
       toast.error("Lütfen en az bir filtre seçiniz", {
         description: "Şehir, ilçe, hizmet alanı veya araba markası seçerek arama yapabilirsiniz."
       });
       return;
     }
+    
+    // Validation geçtiyse error state'i temizle
+    setHasValidationError(false);
     
     // Arama sonuçları sayfasına her zaman yönlendir (giriş gerekmez)
     const params = new URLSearchParams();
@@ -137,9 +151,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
 
   return (
     <>
-      <form className={`modernSearchBar ${variant === 'stacked' ? 'modernSearchBar--stacked' : ''}`} autoComplete="off" onSubmit={handleSubmit}>
+      <form className={`modernSearchBar ${variant === 'stacked' ? 'modernSearchBar--stacked' : ''} ${hasValidationError ? 'has-error' : ''}`} autoComplete="off" onSubmit={handleSubmit}>
         {/* İl Seçimi */}
-        <div className={`custom-select ${openDropdown === 'city' ? 'open' : ''}`} ref={cityRef}>
+        <div className={`custom-select ${openDropdown === 'city' ? 'open' : ''} ${hasValidationError && !selectedCity && !selectedDistrict && !selectedService && !selectedCarBrand ? 'error' : ''}`} ref={cityRef}>
           <div 
             className="custom-select-trigger"
             onClick={() => {
@@ -160,7 +174,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
         </div>
 
         {/* İlçe Seçimi */}
-        <div className={`custom-select ${openDropdown === 'district' ? 'open' : ''}`} ref={districtRef}>
+        <div className={`custom-select ${openDropdown === 'district' ? 'open' : ''} ${hasValidationError && !selectedCity && !selectedDistrict && !selectedService && !selectedCarBrand ? 'error' : ''}`} ref={districtRef}>
           <div 
             className="custom-select-trigger"
             onClick={() => {
@@ -183,7 +197,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
         </div>
 
         {/* Hizmet Seçimi */}
-        <div className={`custom-select ${openDropdown === 'service' ? 'open' : ''}`} ref={serviceRef}>
+        <div className={`custom-select ${openDropdown === 'service' ? 'open' : ''} ${hasValidationError && !selectedCity && !selectedDistrict && !selectedService && !selectedCarBrand ? 'error' : ''}`} ref={serviceRef}>
           <div 
             className="custom-select-trigger"
             onClick={() => {
@@ -207,7 +221,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
         </div>
 
         {/* Araba Markası Seçimi */}
-        <div className={`custom-select ${openDropdown === 'carBrand' ? 'open' : ''}`} ref={carBrandRef}>
+        <div className={`custom-select ${openDropdown === 'carBrand' ? 'open' : ''} ${hasValidationError && !selectedCity && !selectedDistrict && !selectedService && !selectedCarBrand ? 'error' : ''}`} ref={carBrandRef}>
           <div 
             className="custom-select-trigger"
             onClick={() => {
@@ -231,6 +245,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
         </div>
 
         <button type="submit" className="modernSearchButton">Ara</button>
+        
+        {/* Validation Error Message */}
+        {hasValidationError && (
+          <div className="search-bar-error-message">
+            <p>⚠️ Lütfen en az bir filtre seçiniz</p>
+          </div>
+        )}
       </form>
 
       {/* Portal ile dropdown'ları body'ye render et */}

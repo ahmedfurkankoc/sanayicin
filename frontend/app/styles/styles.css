@@ -2181,6 +2181,22 @@ footer {
   width: 100%;
 }
 
+.custom-select.error .custom-select-trigger {
+  border: 2px solid var(--red);
+  background: #fff5f5;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+.custom-select.error .custom-select-trigger:hover {
+  background: #fff5f5;
+}
+
 .custom-select-trigger {
   display: flex;
   align-items: center;
@@ -2282,6 +2298,35 @@ footer {
   background: var(--black);
   color: var(--yellow);
 }
+
+/* Search Bar Error Message */
+.search-bar-error-message {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #fff5f5;
+  border-left: 4px solid var(--red);
+  border-radius: 8px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-bar-error-message p {
+  margin: 0;
+  color: var(--red);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   /* Modern Search Bar Mobile */
   .modernSearchBar {
@@ -2302,10 +2347,21 @@ footer {
     padding: 16px 0;
     font-size: 1rem;
   }
+  
+  .search-bar-error-message {
+    margin-top: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
 }
   
   /* Custom Select Mobile Responsive */
   @media (max-width: 768px) {
+    .custom-select.error .custom-select-trigger {
+      animation: shake 0.3s ease-in-out;
+      border-width: 1px;
+    }
+    
     .custom-select-trigger {
       padding: 14px 16px;
       font-size: 1rem;
@@ -4437,22 +4493,29 @@ footer {
   margin-bottom: 4px;
 }
 
-.neden-esnaf-page .price {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--black);
+.neden-esnaf-page .service-areas {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
 }
 
-.neden-esnaf-page .auto-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+.neden-esnaf-page .service-badge {
   background: var(--yellow);
   color: var(--black);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.6rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 0.65rem;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.neden-esnaf-page .location {
+  font-size: 0.7rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Automated Text Styles */
@@ -4819,14 +4882,19 @@ footer {
     font-size: 0.6rem;
   }
   
-  .neden-esnaf-page .price {
-    font-size: 0.7rem;
+  .neden-esnaf-page .service-areas {
+    gap: 4px;
   }
   
-  .neden-esnaf-page .auto-badge {
+  .neden-esnaf-page .service-badge {
     font-size: 0.5rem;
-    padding: 1px 4px;
+    padding: 2px 6px;
   }
+  
+  .neden-esnaf-page .location {
+    font-size: 0.6rem;
+  }
+
   
   .neden-esnaf-page .automated-features .feature-item {
     padding: 15px 10px;
