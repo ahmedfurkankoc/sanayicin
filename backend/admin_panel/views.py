@@ -507,6 +507,52 @@ class VendorProfileViewSet(viewsets.ModelViewSet):
     @admin_permission_required('vendors', 'delete')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+    
+    @action(detail=False, methods=['get'], url_path='search-minimal')
+    def search_minimal(self, request):
+        """
+         Yalnızca id ve display_name değerlerini döndüren optimize edilmiş satıcı arama uç noktası.
+        Yönetici panelinde açılır menü/otomatik tamamlama kullanımı için tasarlanmıştır.
+        Veritabanı yükünü en aza indirmek için yoğun şekilde önbelleğe alınmıştır. Yalnızca id ve display_name değerlerini döndüren optimize edilmiş satıcı arama uç noktası.
+        Yönetici panelinde açılır menü/otomatik tamamlama kullanımı için tasarlanmıştır.
+        Veritabanı yükünü en aza indirmek için yoğun şekilde önbelleğe alınmıştır.
+        """
+        search_query = request.query_params.get('q', '').strip()
+        
+        # Minimum 2 characters to search
+        if len(search_query) < 2:
+            return Response({
+                'results': [],
+                'count': 0
+            })
+        
+        # Build cache key
+        cache_key = f'vendor_search_{hashlib.md5(search_query.lower().encode()).hexdigest()}'
+        
+        # Check cache first (5 minute TTL)
+        cached_result = cache.get(cache_key)
+        if cached_result is not None:
+            return Response(cached_result)
+        
+        # Perform optimized database query
+        # Only select id and display_name to minimize data transfer
+        queryset = VendorProfile.objects.values('id', 'display_name')
+        
+        # Search by display_name (most common use case)
+        queryset = queryset.filter(display_name__icontains=search_query)
+        
+        # Limit to 20 results for performance
+        results = list(queryset[:10])
+        
+        response_data = {
+            'results': results,
+            'count': len(results)
+        }
+        
+        # Cache the result for 5 minutes
+        cache.set(cache_key, response_data, 300)
+        
+        return Response(response_data)
 
 class BlogCategoryViewSet(viewsets.ModelViewSet):
     """Blog kategori yönetimi"""

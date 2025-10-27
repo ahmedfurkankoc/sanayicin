@@ -5,6 +5,7 @@ import { Search, Trash2, Edit, Star, X, Check } from 'lucide-react'
 import { fetchReviews, updateReview, deleteReview, type ReviewItem } from '../../api/clients'
 import Pagination from '../../components/Pagination'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
+import VendorDropdown from '../../components/VendorDropdown'
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>([])
@@ -156,15 +157,13 @@ export default function ReviewsPage() {
           </select>
 
           {/* Vendor Filter */}
-          <input
-            type="text"
-            placeholder="Esnaf ID"
+          <VendorDropdown
             value={vendorFilter}
-            onChange={(e) => {
-              setVendorFilter(e.target.value)
+            onChange={(vendorId) => {
+              setVendorFilter(vendorId)
               setCurrentPage(1)
             }}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            placeholder="Esnaf ara..."
           />
         </div>
       </div>

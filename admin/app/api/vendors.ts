@@ -74,6 +74,23 @@ export async function deleteVendor(id: number) {
   await apiClient.delete(`/vendors/${id}/`)
 }
 
+export interface VendorSearchResult {
+  id: number
+  display_name: string
+}
+
+export interface VendorSearchResponse {
+  results: VendorSearchResult[]
+  count: number
+}
+
+export async function searchVendorsMinimal(searchQuery: string): Promise<VendorSearchResponse> {
+  const resp = await apiClient.get<VendorSearchResponse>(`/vendors/search-minimal/`, { 
+    params: { q: searchQuery } 
+  })
+  return resp.data
+}
+
 export async function createVendor(data: {
   user: number
   business_type: 'sahis' | 'limited' | 'anonim' | 'esnaf'
