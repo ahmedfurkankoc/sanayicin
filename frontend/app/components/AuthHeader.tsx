@@ -13,6 +13,9 @@ export default function AuthHeader({ currentPage, segment = 'esnaf', theme }: Au
   const basePath = `/${segment}`;
   const resolvedTheme: 'yellow' | 'dark' = theme ?? (segment === 'musteri' ? 'dark' : 'yellow');
   const logoSrc = resolvedTheme === 'dark' ? '/sanayicin-esnaf-logo.png' : '/sanayicin-logo.png';
+  const isEsnaf = segment === 'esnaf';
+  const registerBtnClass = 'auth-btn auth-btn-register-alt';
+  const loginBtnClass = isEsnaf ? registerBtnClass : 'auth-btn auth-btn-login';
 
   return (
     <div className={`auth-header ${resolvedTheme === 'dark' ? 'auth-header--dark' : ''}`}>
@@ -30,14 +33,14 @@ export default function AuthHeader({ currentPage, segment = 'esnaf', theme }: Au
         {currentPage === 'login' ? (
           <button 
             onClick={() => router.push(`${basePath}/kayit`)}
-            className="auth-btn auth-btn-register-alt"
+            className={registerBtnClass}
           >
             Kayıt Ol
           </button>
         ) : (
           <button 
             onClick={() => router.push(`${basePath}/giris`)}
-            className="auth-btn auth-btn-login"
+            className={loginBtnClass}
           >
             Giriş Yap
           </button>
