@@ -44,6 +44,7 @@ export default function UserDetailPage() {
 
   useEffect(() => {
     loadReviews()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params?.id])
 
   const loadReviews = async () => {

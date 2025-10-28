@@ -20,14 +20,19 @@ export default function VendorDropdown({ value, onChange, placeholder = 'Esnaf s
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Initialize display text from selected vendor
+  // Sync display text with selected value from parent
   useEffect(() => {
-    if (selectedVendor) {
-      setDisplayText(selectedVendor.display_name)
-    } else if (!isOpen && !searchQuery) {
+    if (!value) {
+      setSelectedVendor(null)
       setDisplayText('')
+      return
     }
-  }, [selectedVendor])
+    const existing = vendors.find(v => v.id.toString() === value)
+    if (existing) {
+      setSelectedVendor(existing)
+      setDisplayText(existing.display_name)
+    }
+  }, [value, vendors])
 
   // Debounce helper
   useEffect(() => {

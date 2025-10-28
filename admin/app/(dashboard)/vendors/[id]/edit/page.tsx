@@ -81,15 +81,15 @@ export default function VendorEditPage() {
     }
   }
 
-  const getBusinessTypeText = (type: string) => {
-    const types = {
-      'sahis': 'Şahıs Şirketi',
-      'limited': 'Limited Şirketi', 
-      'anonim': 'Anonim Şirketi',
-      'esnaf': 'Esnaf'
-    }
-    return types[type as keyof typeof types] || type
-  }
+  // const getBusinessTypeText = (type: VendorProfile['business_type'] | string) => {
+  //   const types = {
+  //     'sahis': 'Şahıs Şirketi',
+  //     'limited': 'Limited Şirketi', 
+  //     'anonim': 'Anonim Şirketi',
+  //     'esnaf': 'Esnaf'
+  //   }
+  //   return types[type as keyof typeof types] || type
+  // }
 
   if (loading) {
     return (
@@ -166,7 +166,7 @@ export default function VendorEditPage() {
               </label>
               <select
                 value={vendor.business_type || 'esnaf'}
-                onChange={(e) => setVendor({ ...vendor, business_type: e.target.value as any })}
+                onChange={(e) => setVendor({ ...vendor, business_type: e.target.value as VendorProfile['business_type'] })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
               >
                 <option value="esnaf">Esnaf</option>
