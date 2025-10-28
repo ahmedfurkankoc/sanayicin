@@ -376,7 +376,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
           observer.observe(quill.root, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] })
         } catch {}
 
-        quill.on('text-change', (delta: any, oldDelta: any, source: string) => {
+        quill.on('text-change', (_delta: unknown, _oldDelta: unknown, source: string) => {
           if (!isMounted) return
           // Only trigger handleContentChange if source is 'user' (not 'api' or 'silent')
           if (source === 'user') {

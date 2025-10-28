@@ -24,6 +24,7 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     loadReviews()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, search, vendorFilter, ratingFilter])
 
   const loadReviews = async () => {
@@ -285,7 +286,7 @@ export default function ReviewsPage() {
           totalCount={totalCount}
           pageSize={pageSize}
           onPageChange={setCurrentPage}
-          onPageSizeChange={(size) => {
+          onPageSizeChange={() => {
             // Page size değiştiğinde ilk sayfaya dön
             setCurrentPage(1)
             // Bu durumda page size değiştiremiyoruz çünkü sabit tutuyoruz

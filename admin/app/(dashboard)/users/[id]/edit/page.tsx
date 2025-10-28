@@ -5,10 +5,12 @@ import { useParams, useRouter } from 'next/navigation'
 import { fetchClient, type ClientListItem } from '../../../../api/clients'
 import { apiClient } from '../../../../api/api'
 
+type EditableUser = Partial<ClientListItem> & { is_active?: boolean }
+
 export default function UserEditPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
-  const [user, setUser] = useState<Partial<ClientListItem> | null>(null)
+  const [user, setUser] = useState<EditableUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,14 +44,14 @@ export default function UserEditPage() {
     setSaving(true)
     try {
       // Only send fields that exist in CustomUser model
-      const updateData: any = {
+      const updateData: Partial<ClientListItem> & { is_active?: boolean } = {
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
         phone_number: user.phone_number,
         role: user.role,
         is_verified: user.is_verified,
-        is_active: (user as any).is_active
+        is_active: user.is_active
       }
       await apiClient.patch(`/users/${user.id}/`, updateData)
       alert('Kullanıcı bilgileri başarıyla güncellendi')
@@ -160,7 +162,7 @@ export default function UserEditPage() {
               </label>
               <select
                 value={user.role || ''}
-                onChange={(e) => setUser({ ...user, role: e.target.value as any })}
+                onChange={(e) => setUser({ ...user, role: e.target.value as ClientListItem['role'] })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
               >
                 <option value="client">Müşteri</option>
@@ -189,8 +191,8 @@ export default function UserEditPage() {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={(user as any).is_active !== false}
-                  onChange={(e) => setUser({ ...user, is_active: e.target.checked } as any)}
+                  checked={user.is_active !== false}
+                  onChange={(e) => setUser({ ...user, is_active: e.target.checked })}
                   className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
                 />
                 <span className="ml-2 text-sm text-gray-700">Aktif</span>

@@ -13,7 +13,11 @@ interface DeleteConfirmModalProps {
     id?: number
     name?: string
     email?: string
-    [key: string]: any
+    display_name?: string
+    company_title?: string
+    vendor?: string
+    comment?: string
+    [key: string]: string | number | undefined
   }
   description?: string
   warningMessage?: string
