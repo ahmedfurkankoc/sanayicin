@@ -557,6 +557,9 @@ class Favorite(models.Model):
         ordering = ['-created_at']
         verbose_name = "Favori"
         verbose_name_plural = "Favoriler"
+        indexes = [
+            models.Index(fields=['vendor', 'created_at']),
+        ]
     
     def __str__(self):
         return f"{self.user.email} -> {self.vendor.display_name}"

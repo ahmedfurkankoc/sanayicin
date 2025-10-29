@@ -12,7 +12,7 @@ from core.models import ServiceArea, CarBrand
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 import json
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -191,28 +191,64 @@ class VendorDashboardSummaryView(APIView):
         vendor = request.user.vendor_profile
         now = timezone.now()
         month_bucket = now.strftime('%Y-%m')
+        # Month window [start, next_start)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        next_month = (month_start + timedelta(days=32)).replace(day=1)
 
         profile_views_month = VendorView.objects.filter(vendor=vendor, month_bucket=month_bucket).count()
         calls_month = VendorCall.objects.filter(vendor=vendor, month_bucket=month_bucket).count()
 
-        # messages_total: vendor kullanıcısının dahil olduğu tüm konuşmalardaki mesaj sayısı
+        # messages: vendor kullanıcısının dahil olduğu konuşmalardaki mesaj sayıları
         user_obj = vendor.user
         conv_ids = Conversation.objects.filter(Q(user1=user_obj) | Q(user2=user_obj)).values_list('id', flat=True)
-        messages_total = Message.objects.filter(conversation_id__in=conv_ids).count()
+        # Monthly
+        messages_month = Message.objects.filter(
+            conversation_id__in=conv_ids,
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        # All-time
+        messages_total_all_time = Message.objects.filter(
+            conversation_id__in=conv_ids
+        ).count()
 
+        # Reviews - monthly
         reviews_qs = vendor.reviews.all()
-        reviews_total = reviews_qs.count()
+        reviews_month = reviews_qs.filter(
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
         from django.db.models import Avg
         average_rating = reviews_qs.aggregate(avg=Avg('rating'))['avg'] or 0
+
+        # Appointments - for this month by scheduled date
+        appointments_month = vendor.appointments.filter(
+            appointment_date__gte=month_start.date(),
+            appointment_date__lt=next_month.date()
+        ).count()
+
+        # Favorites - monthly
+        from core.models import Favorite
+        favorites_qs = Favorite.objects.filter(vendor=vendor)
+        favorites_month = favorites_qs.filter(
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        favorites_total_all_time = favorites_qs.count()
 
         data = {
             "profile_views_month": profile_views_month,
             "calls_month": calls_month,
-            "messages_total": messages_total,
-            "appointments_total": vendor.appointments.count(),
+            # Backward-compat field names but monthly values
+            # Provide both monthly and all-time for messages
+            "messages_month": messages_month,
+            "messages_total": messages_total_all_time,
+            "appointments_total": appointments_month,
             "appointments_today": vendor.appointments.filter(appointment_date=now.date()).count(),
-            "favorites_total": 0,
-            "reviews_total": reviews_total,
+            # Provide both monthly and all-time for favorites
+            "favorites_month": favorites_month,
+            "favorites_total": favorites_total_all_time,
+            "reviews_total": reviews_month,
             "average_rating": round(float(average_rating), 1)
         }
         return Response(data)

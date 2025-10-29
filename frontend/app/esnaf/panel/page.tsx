@@ -11,9 +11,11 @@ export default function EsnafPanelPage() {
   const [dashboardStats, setDashboardStats] = useState({
     profileViews: 0,
     messages: 0,
+    messagesTotal: 0,
     appointments: 0,
     appointmentsToday: 0,
     favorites: 0,
+    favoritesTotal: 0,
     favoritesNew: 0,
     reviews: 0,
     averageRating: 0,
@@ -32,10 +34,12 @@ export default function EsnafPanelPage() {
         setDashboardStats((prev) => ({
           ...prev,
           profileViews: s.profile_views_month ?? prev.profileViews,
-          messages: s.messages_total ?? prev.messages,
+          messages: (s.messages_month ?? s.messages_total) ?? prev.messages,
+          messagesTotal: s.messages_total ?? prev.messagesTotal,
           appointments: s.appointments_total ?? prev.appointments,
           appointmentsToday: s.appointments_today ?? prev.appointmentsToday,
-          favorites: s.favorites_total ?? prev.favorites,
+          favorites: (s.favorites_month ?? s.favorites_total) ?? prev.favorites,
+          favoritesTotal: s.favorites_total ?? prev.favoritesTotal,
           reviews: s.reviews_total ?? prev.reviews,
           averageRating: s.average_rating ?? prev.averageRating,
           calls: s.calls_month ?? prev.calls,
@@ -87,7 +91,7 @@ export default function EsnafPanelPage() {
           <p className="esnaf-dashboard-description">Bu ay alınan toplam mesaj sayısı.</p>
           
           <div className="esnaf-dashboard-tags">
-            <span className="esnaf-stat-tag">💬 Toplam {dashboardStats.messages.toLocaleString()}</span>
+            <span className="esnaf-stat-tag">💬 Toplam {dashboardStats.messagesTotal > 99 ? '99+' : dashboardStats.messagesTotal.toLocaleString()}</span>
           </div>
         </div>
 
@@ -123,7 +127,7 @@ export default function EsnafPanelPage() {
           <p className="esnaf-dashboard-description">Profilinizi favorilere ekleyen müşteri sayısı (bu ay).</p>
           
           <div className="esnaf-dashboard-tags">
-            <span className="esnaf-stat-tag">❤️ Toplam {dashboardStats.favorites.toLocaleString()}</span>
+            <span className="esnaf-stat-tag">❤️ Toplam {dashboardStats.favoritesTotal.toLocaleString()}</span>
           </div>
         </div>
 
