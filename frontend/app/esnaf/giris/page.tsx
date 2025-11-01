@@ -88,13 +88,13 @@ export default function EsnafGirisPage() {
     return (
       <>
       <AuthHeader currentPage="login" />
-      <main className="esnaf-login-main">
+      <section className="esnaf-login-main">
         <div className="esnaf-login-container">
           <div className="esnaf-login-loading">
             <p>Yönlendiriliyor...</p>
           </div>
         </div>
-      </main>
+      </section>
       {/* Footer intentionally hidden on auth page */}
       </>
     );
@@ -103,7 +103,7 @@ export default function EsnafGirisPage() {
   return (
     <>
     <AuthHeader currentPage="login" />
-    <main className="esnaf-login-main">
+    <section className="esnaf-login-main">
       <div className="esnaf-login-container">
         {/* Header */}
 
@@ -161,9 +161,12 @@ export default function EsnafGirisPage() {
         <div className="esnaf-login-footer">
           <p>Hesabınız yok mu? <Link href="/esnaf/kayit">Hemen Kayıt Olun</Link></p>
           <a className="esnaf-modal-btn text-black" href="/" onClick={(e) => { e.preventDefault(); if (typeof window !== 'undefined') { window.location.href = '/'; } }}>Ana Sayfaya Dön</a>
+          <p className="esnaf-login-copyright">
+            © {new Date().getFullYear()} Sanayicin. Tüm hakları saklıdır.
+          </p>
         </div>
       </div>
-    </main>
+    </section>
     {/* Footer intentionally hidden on auth page */}
     </>
   );

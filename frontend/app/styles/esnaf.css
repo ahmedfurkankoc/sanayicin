@@ -104,68 +104,225 @@
   height: 28px;
 }
 
-.esnaf-register-main {
+/* ============================================
+   KAYIT SAYFASI - SIFIRDAN YENİ YAPI
+   ============================================ */
+
+/* Ana Section */
+.register-section {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
   position: relative;
+  background: #fffef0;
   overflow: hidden;
+  padding: 0 !important;
 }
 
-.esnaf-register-main::before {
+/* Arka Plan Görseli - Section Arka Planı */
+.register-section::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23333" stroke-width="0.5" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-  opacity: 0.1;
+  background-image: url('/images/register-bg-shape.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.6;
+  z-index: 0;
 }
 
-.esnaf-register-container {
+/* Hoş Geldiniz Header */
+.register-welcome {
+  width: 100%;
+  padding-top: 36px;
+  padding-bottom: 140px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.register-welcome__title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--black);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Ana Container */
+.register-wrapper {
+  max-width: 700px;
+  width: 100%;
+  margin: 40px auto 60px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Vektörel Karakter - Kartın Sağ Üstünde, Kartla Çakışıyor */
+.register-character {
+  position: absolute;
+  top: -180px;
+  right: 0;
+  width: 250px;
+  height: 550px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.register-character img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: top right;
+}
+
+/* Kart */
+.register-card {
   background: var(--white);
-  backdrop-filter: blur(20px);
   border-radius: 20px;
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   padding: 48px 40px;
-  max-width: 600px;
-  width: 100%;
-  margin: 60px auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
   position: relative;
   z-index: 1;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  min-height: 600px;
+  overflow: visible;
 }
 
-.esnaf-register-title {
+/* Progress Indicator */
+.register-progress {
+  font-size: 0.875rem;
+  color: #999;
+  text-align: center;
+  margin-bottom: 8px;
+  font-weight: 500;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+.register-progress__step {
+  transition: color 0.3s ease;
+  color: #999;
+}
+
+.register-progress__step--active {
+  color: var(--black);
+  font-weight: 600;
+}
+
+.register-progress__separator {
+  color: #ccc;
+  margin: 0 4px;
+  font-weight: 400;
+}
+
+/* Başlık */
+.register-card__title {
   font-size: 2rem;
   font-weight: 800;
   color: var(--black);
-  margin-bottom: 32px;
+  margin: 0 0 8px 0;
   text-align: center;
   letter-spacing: -0.5px;
+  position: relative;
+  z-index: 1;
 }
 
-.esnaf-register-form {
+/* Açıklama */
+.register-card__description {
+  font-size: 0.95rem;
+  color: #666;
+  text-align: center;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+/* Form */
+.register-form {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  position: relative;
+  z-index: 1;
 }
 
-.esnaf-register-label {
+/* Step 1 Özel Layout */
+.register-form--step1 {
+  gap: 24px;
+}
+
+.register-step1__content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  justify-items: center;
+}
+
+/* Özellikler Listesi */
+.register-features {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 12px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.register-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.register-feature__icon {
+  width: 36px;
+  height: 36px;
+  background: var(--yellow);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--black);
+}
+
+.register-feature__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.register-feature__text {
+  font-size: 1rem;
+  color: var(--black);
+  font-weight: 500;
+}
+
+/* İşletme Türü Seçimi */
+.register-business-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Label */
+.register-label {
   font-weight: 600;
   color: var(--black);
   margin-bottom: 4px;
 }
 
-.esnaf-register-help-text {
+.register-help {
   font-size: 0.875rem;
   color: #666;
   margin-top: 4px;
@@ -174,7 +331,8 @@
   line-height: 1.4;
 }
 
-.esnaf-register-input {
+/* Input */
+.register-input {
   padding: 16px 20px;
   border-radius: 12px;
   border: 2px solid #e8e8e8;
@@ -183,20 +341,28 @@
   color: var(--black);
   transition: all 0.3s ease;
   box-sizing: border-box;
+  width: 100%;
 }
 
-.esnaf-register-input:focus {
+.register-input:focus {
   outline: none;
   border-color: var(--yellow);
   box-shadow: 0 0 0 4px rgba(255, 214, 0, 0.15);
   transform: translateY(-1px);
 }
 
+/* Copyright Metni - Kayıt Sayfası */
+.register-copyright {
+  margin-top: 8px;
+  text-align: center;
+  opacity: 0.7;
+}
+
 .esnaf-business-types,
 .esnaf-service-areas,
 .esnaf-categories {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12px;
   margin-bottom: 8px;
 }
@@ -207,7 +373,7 @@
   background: var(--gray);
   border: 1.5px solid #e0e0e0;
   border-radius: 8px;
-  padding: 10px 18px;
+  padding: 14px 18px;
   font-size: 1rem;
   cursor: pointer;
   transition: border 0.2s, background 0.2s;
@@ -223,16 +389,14 @@
   color: var(--black);
 }
 
-.esnaf-register-step-btns {
+/* Butonlar */
+.register-buttons {
   display: flex;
   gap: 12px;
   margin-top: 18px;
 }
 
-.esnaf-register-next-btn,
-.esnaf-register-submit-btn {
-  background: linear-gradient(135deg, var(--yellow) 0%, #e6c200 100%);
-  color: var(--black);
+.register-btn {
   border: none;
   border-radius: 12px;
   padding: 16px 24px;
@@ -244,14 +408,19 @@
   position: relative;
   overflow: hidden;
 }
-.esnaf-register-next-btn:hover,
-.esnaf-register-submit-btn:hover {
+
+.register-btn--primary {
+  background: linear-gradient(135deg, var(--yellow) 0%, #e6c200 100%);
+  color: var(--black);
+}
+
+.register-btn--primary:hover:not(:disabled) {
   background: linear-gradient(135deg, #e6c200 0%, var(--yellow) 100%);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(255, 214, 0, 0.4);
 }
 
-.esnaf-register-back-btn {
+.register-btn--secondary {
   background: var(--gray);
   color: var(--black);
   border: 1.5px solid #e0e0e0;
@@ -259,55 +428,196 @@
   padding: 12px 24px;
   font-size: 1rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  flex: 1;
 }
-.esnaf-register-next-btn:disabled {
+
+.register-btn--secondary:hover {
+  background: #f0f0f0;
+}
+
+.register-btn:disabled {
   background: #e0e0e0;
   color: #999;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
-.esnaf-register-error {
+/* Hata Mesajları */
+.register-error {
   background: #fee;
   color: #c33;
   padding: 12px;
   border-radius: 8px;
   font-size: 0.9rem;
   border: 1px solid #fcc;
+  position: relative;
+  z-index: 1;
 }
 
-.esnaf-photo-filename {
-  font-size: 0.9rem;
-  color: #666;
-  margin-top: 4px;
-}
-
-.esnaf-register-checkbox-label {
+/* Checkbox */
+.register-checkbox {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   font-size: 0.9rem;
   color: var(--black);
   cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
 
-.esnaf-register-success {
+/* Photo Filename */
+.register-photo-name {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Success Message */
+.register-success {
   text-align: center;
   padding: 40px 20px;
+  position: relative;
+  z-index: 1;
 }
 
-.esnaf-register-success h2 {
+.register-success h2 {
   color: var(--black);
   font-size: 1.5rem;
   margin-bottom: 12px;
 }
 
-.esnaf-register-success p {
+.register-success p {
   color: #666;
   font-size: 1rem;
   line-height: 1.5;
+}
+
+/* Loading */
+.register-loading {
+  text-align: center;
+  padding: 40px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .register-welcome {
+    padding: 40px 0;
+  }
+  
+  .register-welcome__title {
+    font-size: 2rem;
+  }
+  
+  .register-wrapper {
+    max-width: 95%;
+    margin: 30px auto 40px;
+  }
+  
+  .register-card {
+    padding: 36px 28px;
+    min-height: auto;
+  }
+  
+  .register-step1__content {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .register-character {
+    width: 320px;
+    height: 400px;
+    right: -40px;
+    opacity: 20%;
+  }
+  
+  .register-progress {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-welcome {
+    padding: 40px 0;
+  }
+  
+  .register-welcome__title {
+    font-size: 1.75rem;
+  }
+  
+  .register-wrapper {
+    max-width: 100%;
+    margin-bottom: 20px;
+    margin-top: 0px;
+  }
+  
+  .register-card {
+    padding: 32px 20px;
+    border-radius: 16px;
+    min-height: auto;
+  }
+  
+  .register-card__title {
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+  }
+  
+  .register-step1__content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .register-features {
+    gap: 20px;
+  }
+  
+  .register-feature__icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .register-feature__icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .register-character {
+    width: 240px;
+    height: 300px;
+    right: -30px;
+    opacity: 20%;
+  }
+  
+  .register-card__title {
+    font-size: 1.5rem;
+  }
+  
+  .register-progress {
+    font-size: 0.7rem;
+    line-height: 1.6;
+  }
+  
+  .register-progress__separator {
+    display: inline;
+    margin: 0 2px;
+  }
+  
+  .register-progress__step {
+    display: inline;
+  }
+  
+  .register-input {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
+  
+  .register-btn {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
 }
 
 .esnaf-panel-layout {
@@ -663,8 +973,10 @@
   padding: 20px;
   position: relative;
   overflow: hidden;
+  background: #fffef0;
 }
 
+/* Arka Plan Görseli - Section Arka Planı */
 .esnaf-login-main::before {
   content: '';
   position: absolute;
@@ -672,8 +984,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23333" stroke-width="0.5" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-  opacity: 0.1;
+  background-image: url('/images/register-bg-shape.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.6;
+  z-index: 0;
 }
 
 .esnaf-login-container {
@@ -837,6 +1153,13 @@
 .esnaf-login-footer a:hover {
   color: #e6c200;
   text-decoration: underline;
+}
+
+/* Copyright Metni - Giriş Sayfası */
+.esnaf-login-copyright {
+  margin-top: 28px;
+  text-align: center;
+  opacity: 0.7;
 }
 
 /* Login Responsive */

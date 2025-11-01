@@ -57,6 +57,15 @@ const businessTypes = [
   { value: "esnaf", label: "Esnaf" },
 ];
 
+// Adım bilgileri
+const steps = [
+  { number: 1, label: "İşletme" },
+  { number: 2, label: "Hizmet" },
+  { number: 3, label: "İşyeri" },
+  { number: 4, label: "Yetkili" },
+  { number: 5, label: "Doğrulama" },
+];
+
 export default function EsnafKayitPage() {
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState("");
@@ -193,13 +202,15 @@ export default function EsnafKayitPage() {
     return (
       <>
       <EsnafAuthHeader currentPage="register" />
-      <main className="esnaf-register-main">
-        <div className="esnaf-register-container">
-          <div className="esnaf-register-loading">
-            <p>Yönlendiriliyor...</p>
+      <section className="register-section">
+        <div className="register-wrapper">
+          <div className="register-card">
+            <div className="register-loading">
+              <p>Yönlendiriliyor...</p>
+            </div>
           </div>
         </div>
-      </main>
+      </section>
       {/* Footer intentionally hidden on auth page */}
       </>
     );
@@ -565,40 +576,123 @@ export default function EsnafKayitPage() {
     }
   };
 
+  // Progress indicator için aktif adımı belirle
+  const getActiveStep = () => {
+    if (step === 6) return 5; // Email verification son adım olarak göster
+    return step;
+  };
+
   return (
     <>
     <EsnafAuthHeader currentPage="register" />
-    <main className="esnaf-register-main">
-      <div className="esnaf-register-container">
-        <h1 className="esnaf-register-title">Esnaf Hesabınızı Oluşturun</h1>
-        {step === 1 && (
-          <form onSubmit={handleNextStep1} className="esnaf-register-form">
-            <label className="esnaf-register-label">İşletme Türü Seçiniz:</label>
-            <div className="esnaf-business-types">
-              {businessTypes.map((type) => (
-                <label key={type.value} className={`esnaf-business-type-option${selectedType === type.value ? " selected" : ""}`}>
-                  <input
-                    type="radio"
-                    name="businessType"
-                    value={type.value}
-                    checked={selectedType === type.value}
-                    onChange={() => setSelectedType(type.value)}
-                    required
-                  />
-                  {type.label}
-                </label>
-              ))}
+    <section className="register-section">
+      {/* Hoş Geldiniz Başlığı */}
+      <div className="register-welcome">
+        <h1 className="register-welcome__title">Sanayicin'e Hoş Geldiniz!</h1>
+      </div>
+      
+      {/* Ana Container */}
+      <div className="register-wrapper">
+        {/* Vektörel Karakter - Kartın Sağ Üstünde */}
+        <div className="register-character">
+          <img 
+            src="/images/register-vectorel-image.png" 
+            alt="Esnaf karakteri" 
+          />
+        </div>
+        
+        {/* Kart */}
+        <div className="register-card">
+          {/* Progress Indicator */}
+          <div className="register-progress">
+            {steps.map((stepItem, index) => (
+              <React.Fragment key={stepItem.number}>
+                <span 
+                  className={`register-progress__step ${
+                    getActiveStep() >= stepItem.number ? 'register-progress__step--active' : ''
+                  }`}
+                >
+                  {stepItem.number}. {stepItem.label}
+                </span>
+                {index < steps.length - 1 && (
+                  <span className="register-progress__separator"> &gt; </span>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+          
+          {/* Başlık */}
+          <h1 className="register-card__title">Esnaf Hesabınızı Oluşturun</h1>
+          {step === 1 && (
+            <form onSubmit={handleNextStep1} className="register-form register-form--step1">
+              <p className="register-card__description">
+                Kayıt işlemi sadece 2 dakikanızı alır. Şirket tipinizi seçin ve devam edin.
+              </p>
+              <div className="register-step1__content">
+                <div className="register-features">
+                  <div className="register-feature">
+                    <span className="register-feature__icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" fill="none"/>
+                      <path d="M12 8V16M8 12H16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                    </svg>
+                  </span>
+                    <span className="register-feature__text">Yeni Müşteriler Edinin</span>
+                  </div>
+                  <div className="register-feature">
+                    <span className="register-feature__icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+                      <path d="M8 12L11 15L16 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
+                    <span className="register-feature__text">Profilinizle Güven Kazanın</span>
+                  </div>
+                  <div className="register-feature">
+                    <span className="register-feature__icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 21H21V23H3V21Z" fill="currentColor"/>
+                      <path d="M5 21V7L12 2L19 7V21H17V8L12 4L7 8V21H5Z" fill="currentColor"/>
+                      <path d="M9 21V13H15V21H9Z" fill="currentColor"/>
+                      <path d="M11 13V17H13V13H11Z" fill="currentColor"/>
+                      <path d="M9 13H15V15H9V13Z" fill="currentColor"/>
+                    </svg>
+                  </span>
+                    <span className="register-feature__text">Sanayi Sitelerinde Görünür Olun</span>
+                  </div>
+                </div>
+                <div className="register-business-wrapper">
+                  <label className="register-label">İşletme Türü Seçiniz:</label>
+                <div className="esnaf-business-types">
+                  {businessTypes.map((type) => (
+                    <label key={type.value} className={`esnaf-business-type-option${selectedType === type.value ? " selected" : ""}`}>
+                      <input
+                        type="radio"
+                        name="businessType"
+                        value={type.value}
+                        checked={selectedType === type.value}
+                        onChange={() => setSelectedType(type.value)}
+                        required
+                      />
+                      {type.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
-            <button type="submit" className="esnaf-register-next-btn" disabled={!selectedType}>
-              Sonraki Adım
-            </button>
-          </form>
-        )}
+              <button type="submit" className="register-btn register-btn--primary" disabled={!selectedType}>
+                Sonraki Adım
+              </button>
+              <p className="register-copyright">
+                © {new Date().getFullYear()} Sanayicin. Tüm hakları saklıdır.
+              </p>
+            </form>
+          )}
         {step === 2 && (
-          <form onSubmit={handleNextStep2} className="esnaf-register-form">
-            <label className="esnaf-register-label">Hizmet Verdiğiniz Alan:</label>
+          <form onSubmit={handleNextStep2} className="register-form">
+            <label className="register-label">Hizmet Verdiğiniz Alan:</label>
             <select
-              className="esnaf-register-input"
+              className="register-input"
               value={selectedService}
               onChange={e => handleServiceChange(e.target.value)}
               required
@@ -610,7 +704,7 @@ export default function EsnafKayitPage() {
             </select>
             {selectedService && (
               <>
-                <label className="esnaf-register-label" style={{ marginTop: 18 }}>Arama Listelerinde Yer Almak İstediğiniz Kategoriler:</label>
+                <label className="register-label" style={{ marginTop: 18 }}>Arama Listelerinde Yer Almak İstediğiniz Kategoriler:</label>
                 <div className="esnaf-categories-box">
                   {categories.length === 0 && <div>Kategori bulunamadı.</div>}
                   {categories.map((cat) => (
@@ -628,13 +722,13 @@ export default function EsnafKayitPage() {
                 </div>
               </>
             )}
-            <div className="esnaf-register-step-btns">
-              <button type="button" className="esnaf-register-back-btn" onClick={handleBackStep2}>
+            <div className="register-buttons">
+              <button type="button" className="register-btn register-btn--secondary" onClick={handleBackStep2}>
                 Geri
               </button>
               <button
                 type="submit"
-                className="esnaf-register-next-btn"
+                className="register-btn register-btn--primary"
                 disabled={!selectedService || selectedCategories.length === 0}
               >
                 Sonraki Adım
@@ -643,26 +737,26 @@ export default function EsnafKayitPage() {
           </form>
         )}
         {step === 3 && (
-          <form onSubmit={handleNextStep3} className="esnaf-register-form">
-            <label className="esnaf-register-label">İşyeri Unvanı</label>
+          <form onSubmit={handleNextStep3} className="register-form">
+            <label className="register-label">İşyeri Unvanı</label>
             <input
               type="text"
               name="title"
-              className="esnaf-register-input"
+              className="register-input"
               value={companyInfo.title}
               onChange={handleCompanyInput}
               required
             />
-            <label className="esnaf-register-label">Vergi Dairesi</label>
+            <label className="register-label">Vergi Dairesi</label>
             <input
               type="text"
               name="taxOffice"
-              className="esnaf-register-input"
+              className="register-input"
               value={companyInfo.taxOffice}
               onChange={handleCompanyInput}
               required
             />
-            <label className="esnaf-register-label">
+            <label className="register-label">
               {selectedType === "sahis" || selectedType === "esnaf" 
                 ? "TC Kimlik Numarası" 
                 : "Vergi Numarası"}
@@ -670,7 +764,7 @@ export default function EsnafKayitPage() {
             <input
               type="text"
               name="taxNo"
-              className="esnaf-register-input"
+              className="register-input"
               value={companyInfo.taxNo}
               onChange={handleCompanyInput}
               placeholder={selectedType === "sahis" || selectedType === "esnaf" 
@@ -678,42 +772,42 @@ export default function EsnafKayitPage() {
                 : "10 haneli vergi numarası"}
               required
             />
-            <label className="esnaf-register-label">Profilde Görünecek İşyeri İsmi</label>
+            <label className="register-label">Profilde Görünecek İşyeri İsmi</label>
             <input
               type="text"
               name="displayName"
-              className="esnaf-register-input"
+              className="register-input"
               value={companyInfo.displayName}
               onChange={handleCompanyInput}
               required
             />
-            <label className="esnaf-register-label">Firmanız Hakkında</label>
+            <label className="register-label">Firmanız Hakkında</label>
             <textarea
               name="about"
-              className="esnaf-register-input"
+              className="register-input"
               value={companyInfo.about}
               onChange={handleCompanyInput}
               required
               rows={3}
             />
-            <label className="esnaf-register-label">Profil Fotoğrafı</label>
+            <label className="register-label">Profil Fotoğrafı</label>
             <input
               type="file"
               name="photo"
-              className="esnaf-register-input"
+              className="register-input"
               accept="image/*"
               onChange={handlePhotoChange}
             />
             {companyInfo.photoName && (
-              <div className="esnaf-photo-filename">Seçilen dosya: {companyInfo.photoName}</div>
+              <div className="register-photo-name">Seçilen dosya: {companyInfo.photoName}</div>
             )}
-            <label className="esnaf-register-label">İşyeri Telefon Numarası *</label>
+            <label className="register-label">İşyeri Telefon Numarası *</label>
             <div style={{ width: '100%', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0 12px', background: '#fff' }}>
               <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8 }}>+90</span>
               <input
                 type="tel"
                 name="phone"
-                className="esnaf-register-input"
+                className="register-input"
                 value={companyInfo.phone}
                 onChange={handleCompanyInput}
                 placeholder="555 555 55 55"
@@ -721,12 +815,12 @@ export default function EsnafKayitPage() {
                 style={{ flex: 1, border: 'none', outline: 'none', padding: '12px 0', background: 'transparent' }}
               />
             </div>
-            <small className="esnaf-register-help-text">
+            <small className="register-help">
               Bu telefon numarası müşterileriniz tarafından görülecek ve iletişim kurulacak numaradır.
             </small>
-            <label className="esnaf-register-label">İşyeri İli</label>
+            <label className="register-label">İşyeri İli</label>
             <select
-              className="esnaf-register-input"
+              className="register-input"
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
               onFocus={loadTurkeyData}
@@ -738,9 +832,9 @@ export default function EsnafKayitPage() {
                 <option key={city} value={city}>{city}</option>
               ))}
             </select>
-            <label className="esnaf-register-label">İşyeri İlçesi</label>
+            <label className="register-label">İşyeri İlçesi</label>
             <select
-              className="esnaf-register-input"
+              className="register-input"
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
               required
@@ -751,9 +845,9 @@ export default function EsnafKayitPage() {
                 <option key={district} value={district}>{district}</option>
               ))}
             </select>
-            <label className="esnaf-register-label">İşyeri Semti</label>
+            <label className="register-label">İşyeri Semti</label>
             <select
-              className="esnaf-register-input"
+              className="register-input"
               value={selectedNeighbourhood}
               onChange={(e) => setSelectedNeighbourhood(e.target.value)}
               required
@@ -764,11 +858,11 @@ export default function EsnafKayitPage() {
                 <option key={neighbourhood} value={neighbourhood}>{neighbourhood}</option>
               ))}
             </select>
-            <label className="esnaf-register-label">Açık Adres</label>
+            <label className="register-label">Açık Adres</label>
             <input
               type="text"
               name="address"
-              className="esnaf-register-input"
+              className="register-input"
               value={companyInfo.address}
               onChange={handleCompanyInput}
               required
@@ -777,7 +871,7 @@ export default function EsnafKayitPage() {
             {/* Harita Bileşeni */}
             {selectedCity && selectedDistrict && selectedNeighbourhood && (
               <>
-                <label className="esnaf-register-label" style={{ marginTop: '20px' }}>
+                <label className="register-label" style={{ marginTop: '20px' }}>
                   İşyeri Konumu
                 </label>
                 <div style={{ 
@@ -797,7 +891,7 @@ export default function EsnafKayitPage() {
                     height="350px"
                   />
                 </div>
-                <small className="esnaf-register-help-text">
+                <small className="register-help">
                   Haritaya tıklayarak işyerinizin tam konumunu belirleyin. Bu konum müşterileriniz tarafından görülecektir.
                 </small>
                 {location.latitude && location.longitude && (
@@ -816,68 +910,68 @@ export default function EsnafKayitPage() {
               </>
             )}
 
-            {companyError && <div className="esnaf-register-error">{companyError}</div>}
-            <div className="esnaf-register-step-btns">
-              <button type="button" className="esnaf-register-back-btn" onClick={handleBackStep3}>
+            {companyError && <div className="register-error">{companyError}</div>}
+            <div className="register-buttons">
+              <button type="button" className="register-btn register-btn--secondary" onClick={handleBackStep3}>
                 Geri
               </button>
-              <button type="submit" className="esnaf-register-next-btn">
+              <button type="submit" className="register-btn register-btn--primary">
                 Sonraki Adım
               </button>
             </div>
           </form>
         )}
         {step === 4 && (
-          <form onSubmit={handleSubmitManager} className="esnaf-register-form">
+          <form onSubmit={handleSubmitManager} className="register-form">
             <div className="esnaf-name-row">
               <div className="esnaf-name-field">
-                <label className="esnaf-register-label">Ad</label>
+                <label className="register-label">Ad</label>
                 <input
                   type="text"
                   name="firstName"
-                  className="esnaf-register-input"
+                  className="register-input"
                   value={managerInfo.firstName}
                   onChange={handleManagerInput}
                   required
                 />
               </div>
               <div className="esnaf-name-field">
-                <label className="esnaf-register-label">Soyad</label>
+                <label className="register-label">Soyad</label>
                 <input
                   type="text"
                   name="lastName"
-                  className="esnaf-register-input"
+                  className="register-input"
                   value={managerInfo.lastName}
                   onChange={handleManagerInput}
                   required
                 />
               </div>
             </div>
-            <label className="esnaf-register-label">Doğum Tarihi</label>
+            <label className="register-label">Doğum Tarihi</label>
             <input
               type="date"
               name="birthdate"
-              className="esnaf-register-input"
+              className="register-input"
               value={managerInfo.birthdate}
               onChange={handleManagerInput}
               required
             />
-            <label className="esnaf-register-label">TC Kimlik No</label>
+            <label className="register-label">TC Kimlik No</label>
             <input
               type="text"
               name="tc"
-              className="esnaf-register-input"
+              className="register-input"
               value={managerInfo.tc}
               onChange={handleManagerInput}
               required
             />
-            <label className="esnaf-register-label">Cep Telefonu</label>
+            <label className="register-label">Cep Telefonu</label>
             <div style={{ width: '100%', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0 12px', background: '#fff' }}>
               <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8 }}>+90</span>
               <input
                 type="tel"
                 name="phone"
-                className="esnaf-register-input"
+                className="register-input"
                 value={managerInfo.phone}
                 onChange={handleManagerInput}
                 placeholder="555 555 55 55"
@@ -885,36 +979,36 @@ export default function EsnafKayitPage() {
                 style={{ flex: 1, border: 'none', outline: 'none', padding: '12px 0', background: 'transparent' }}
               />
             </div>
-            <label className="esnaf-register-label">E-posta</label>
+            <label className="register-label">E-posta</label>
             <input
               type="email"
               name="email"
-              className="esnaf-register-input"
+              className="register-input"
               value={managerInfo.email}
               onChange={handleManagerInput}
               required
             />
-            <label className="esnaf-register-label">Şifre</label>
+            <label className="register-label">Şifre</label>
             <input
               type="password"
               name="password"
-              className="esnaf-register-input"
+              className="register-input"
               value={managerInfo.password}
               onChange={handleManagerInput}
               required
               autoComplete="new-password"
             />
-            <label className="esnaf-register-label">Şifre Tekrar</label>
+            <label className="register-label">Şifre Tekrar</label>
             <input
               type="password"
               name="password2"
-              className="esnaf-register-input"
+              className="register-input"
               value={managerInfo.password2}
               onChange={handleManagerInput}
               required
               autoComplete="new-password"
             />
-            <label className="esnaf-register-checkbox-label">
+            <label className="register-checkbox">
               <input
                 type="checkbox"
                 name="agreement"
@@ -926,12 +1020,12 @@ export default function EsnafKayitPage() {
                 Kurumsal üyelik sözleşmesi'ni ve gizlilik politikasını kabul ediyorum
               </span>
             </label>
-            {managerError && <div className="esnaf-register-error">{managerError}</div>}
-            <div className="esnaf-register-step-btns">
-              <button type="button" className="esnaf-register-back-btn" onClick={handleBackStep4}>
+            {managerError && <div className="register-error">{managerError}</div>}
+            <div className="register-buttons">
+              <button type="button" className="register-btn register-btn--secondary" onClick={handleBackStep4}>
                 Geri
               </button>
-              <button type="submit" className="esnaf-register-next-btn">
+              <button type="submit" className="register-btn register-btn--primary">
                 Başvuruyu Tamamla
               </button>
             </div>
@@ -953,7 +1047,7 @@ export default function EsnafKayitPage() {
           </form>
         )}
         {step === 5 && (
-          <form onSubmit={handleSubmitVerification} className="esnaf-register-form">
+          <form onSubmit={handleSubmitVerification} className="register-form">
             <h2 style={{ textAlign: 'center', marginBottom: '24px', color: '#333' }}>
               Doğrulama Yöntemi Seçin
             </h2>
@@ -1022,15 +1116,15 @@ export default function EsnafKayitPage() {
               </label>
             </div>
             
-            {verificationError && <div className="esnaf-register-error">{verificationError}</div>}
+            {verificationError && <div className="register-error">{verificationError}</div>}
             
-            <div className="esnaf-register-step-btns">
-              <button type="button" className="esnaf-register-back-btn" onClick={() => setStep(4)}>
+            <div className="register-buttons">
+              <button type="button" className="register-btn register-btn--secondary" onClick={() => setStep(4)}>
                 Geri
               </button>
               <button 
                 type="submit" 
-                className="esnaf-register-next-btn"
+                className="register-btn register-btn--primary"
                 disabled={!verificationMethod}
               >
                 Doğrulama Gönder
@@ -1068,8 +1162,11 @@ export default function EsnafKayitPage() {
             </div>
           </div>
         )}
+        </div>
+        {/* Kart kapanış */}
       </div>
-    </main>
+      {/* Container kapanış */}
+    </section>
     {/* Footer intentionally hidden on auth page */}
     </>
   );
