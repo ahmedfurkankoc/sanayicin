@@ -7,6 +7,42 @@ import { api, setAuthEmail } from "@/app/utils/api";
 import { iconMapping } from "@/app/utils/iconMapping";
 import MusteriHeader from "../components/MusteriHeader";
 
+// Güçlü şifre doğrulama fonksiyonu
+const validateStrongPassword = (password: string): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  
+  if (password.length < 8) {
+    errors.push("Şifre en az 8 karakter olmalıdır.");
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    errors.push("Şifre en az bir büyük harf (A-Z) içermelidir.");
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    errors.push("Şifre en az bir küçük harf (a-z) içermelidir.");
+  }
+  
+  if (!/[0-9]/.test(password)) {
+    errors.push("Şifre en az bir sayı (0-9) içermelidir.");
+  }
+  
+  if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+    errors.push("Şifre en az bir özel karakter (!@#$%^&* vb.) içermelidir.");
+  }
+  
+  // Basit şifre kontrolü
+  const commonPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123', 'admin123', '12345678', 'letmein', 'welcome123', 'sanayicin123'];
+  if (commonPasswords.includes(password.toLowerCase())) {
+    errors.push("Çok basit bir şifre seçtiniz. Lütfen daha güvenli bir şifre kullanın.");
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
 export default function MusteriKayitPage() {
   const router = useRouter();
   
@@ -27,7 +63,7 @@ export default function MusteriKayitPage() {
   const [verificationError, setVerificationError] = useState("");
   const [verificationEmail, setVerificationEmail] = useState("");
   
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | string[]>("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -122,8 +158,11 @@ export default function MusteriKayitPage() {
       return;
     }
     
-    if (formData.password.length < 6) {
-      setError("Şifre en az 6 karakter olmalı.");
+    // Güçlü şifre doğrulaması
+    const passwordValidation = validateStrongPassword(formData.password);
+    if (!passwordValidation.isValid) {
+      // Hataları liste olarak göster
+      setError(passwordValidation.errors);
       return;
     }
     
@@ -386,7 +425,15 @@ export default function MusteriKayitPage() {
 
                 {error && (
                   <div className="musteri-error-message">
-                    {error}
+                    {Array.isArray(error) ? (
+                      <ul style={{ margin: 0, paddingLeft: '20px', textAlign: 'left' }}>
+                        {error.map((err, index) => (
+                          <li key={index} style={{ marginBottom: '4px', textAlign: 'left' }}>{err}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      error
+                    )}
                   </div>
                 )}
 

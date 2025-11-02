@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import VendorProfile, Appointment, Review, ServiceRequest
 from core.models import ServiceArea, Category, CarBrand
+from core.utils.password_validator import validate_strong_password
 
 
 class ServiceAreaDetailSerializer(serializers.ModelSerializer):
@@ -146,13 +147,8 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         if password != password2:
             raise serializers.ValidationError("Şifreler eşleşmiyor.")
         
-        # Şifre güvenlik kontrolü
-        if len(password) < 6:
-            raise serializers.ValidationError("Şifre en az 6 karakter olmalıdır.")
-        
-        # Basit şifre kontrolü
-        if password.lower() in ['password', '123456', 'qwerty']:
-            raise serializers.ValidationError("Çok basit bir şifre seçtiniz.")
+        # Güçlü şifre doğrulaması
+        validate_strong_password(password)
         
         return attrs
 
