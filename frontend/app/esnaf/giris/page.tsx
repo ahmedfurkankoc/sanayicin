@@ -88,10 +88,12 @@ export default function EsnafGirisPage() {
     return (
       <>
       <AuthHeader currentPage="login" />
-      <section className="esnaf-login-main">
-        <div className="esnaf-login-container">
-          <div className="esnaf-login-loading">
-            <p>Yönlendiriliyor...</p>
+      <section className="register-section">
+        <div className="register-wrapper">
+          <div className="register-card">
+            <div className="register-loading">
+              <p>Yönlendiriliyor...</p>
+            </div>
           </div>
         </div>
       </section>
@@ -103,67 +105,69 @@ export default function EsnafGirisPage() {
   return (
     <>
     <AuthHeader currentPage="login" />
-    <section className="esnaf-login-main">
-      <div className="esnaf-login-container">
-        {/* Header */}
-
-        <h1 className="esnaf-login-title">Esnaf Girişi</h1>
-        <p className="esnaf-login-subtitle">Esnaf hesabınıza giriş yaparak hizmet vermeye başlayın</p>
+    <section className="register-section">
+      {/* Ana Container */}
+      <div className="register-wrapper">
+        {/* Vektörel Karakter - Kartın Sağ Üstünde */}
+        <div className="register-character">
+          <img 
+            src="/images/register-vectorel-image.png" 
+            alt="Esnaf karakteri" 
+          />
+        </div>
         
-        <form onSubmit={handleSubmit} className="esnaf-login-form">
-          <div className="esnaf-input-group">
-            <label className="esnaf-login-label">E-posta Adresi</label>
-            <input
-              type="email"
-              className="esnaf-login-input"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="ornek@email.com"
-              required
-              autoComplete="username"
-            />
-          </div>
+        {/* Kart */}
+        <div className="register-card">
+          <h1 className="register-card__title">Esnaf Girişi</h1>
+          <p className="register-card__description">Esnaf hesabınıza giriş yaparak hizmet vermeye başlayın</p>
           
-          <div className="esnaf-input-group">
-            <label className="esnaf-login-label">Şifre</label>
-            <input
-              type="password"
-              className="esnaf-login-input"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-            />
-            <div style={{ textAlign: 'right', marginTop: '8px' }}>
-              <Link 
-                href="/esnaf/sifremi-unuttum" 
-                style={{ 
-                  color: '#666', 
-                  fontSize: '14px', 
-                  textDecoration: 'none',
-                  fontWeight: '500'
-                }}
-              >
-                Şifremi Unuttum
-              </Link>
+          <form onSubmit={handleSubmit} className="register-form">
+            <div className="esnaf-input-group">
+              <label className="register-label">E-posta Adresi</label>
+              <input
+                type="email"
+                className="register-input"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="ornek@email.com"
+                required
+                autoComplete="username"
+              />
             </div>
-          </div>
-          
-          {error && <div className="esnaf-login-error">{error}</div>}
-          
-          <button type="submit" className="esnaf-login-btn" disabled={loading}>
-            {loading ? "Giriş Yapılıyor..." : "Giriş Yap"}
-          </button>
-        </form>
+            
+            <div className="esnaf-input-group">
+              <label className="register-label">Şifre</label>
+              <input
+                type="password"
+                className="register-input"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                autoComplete="current-password"
+              />
+              <div className="register-forgot-password">
+                <Link href="/esnaf/sifremi-unuttum" className="register-forgot-link">
+                  Şifremi Unuttum
+                </Link>
+              </div>
+            </div>
+            
+            {error && <div className="register-error">{error}</div>}
+            
+            <button type="submit" className="register-btn register-btn--primary" disabled={loading}>
+              {loading ? "Giriş Yapılıyor..." : "Giriş Yap"}
+            </button>
+          </form>
 
-        {/* Footer */}
-        <div className="esnaf-login-footer">
-          <p>Hesabınız yok mu? <Link href="/esnaf/kayit">Hemen Kayıt Olun</Link></p>
-          <a className="esnaf-modal-btn text-black" href="/" onClick={(e) => { e.preventDefault(); if (typeof window !== 'undefined') { window.location.href = '/'; } }}>Ana Sayfaya Dön</a>
-          <p className="esnaf-login-copyright">
-            © {new Date().getFullYear()} Sanayicin. Tüm hakları saklıdır.
-          </p>
+          {/* Footer */}
+          <div className="esnaf-login-footer">
+            <p>Hesabınız yok mu? <Link href="/esnaf/kayit">Hemen Kayıt Olun</Link></p>
+            <a className="esnaf-modal-btn text-black" href="/" onClick={(e) => { e.preventDefault(); if (typeof window !== 'undefined') { window.location.href = '/'; } }}>Ana Sayfaya Dön</a>
+            <p className="esnaf-login-copyright">
+              © {new Date().getFullYear()} Sanayicin. Tüm hakları saklıdır.
+            </p>
+          </div>
         </div>
       </div>
     </section>

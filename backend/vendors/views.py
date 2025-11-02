@@ -7,6 +7,7 @@ from .serializers import *
 from core.models import CustomUser
 from .models import VendorProfile, Appointment, Review, ServiceRequest, VendorView, VendorCall
 from chat.models import Conversation, Message
+from core.utils.password_validator import validate_strong_password_simple
 import hashlib
 from core.models import ServiceArea, CarBrand
 from rest_framework.decorators import action
@@ -355,8 +356,11 @@ class SetVendorPasswordView(APIView):
             return Response({"detail": "Tüm alanlar zorunludur."}, status=status.HTTP_400_BAD_REQUEST)
         if password != password2:
             return Response({"detail": "Şifreler eşleşmiyor."}, status=status.HTTP_400_BAD_REQUEST)
-        if len(password) < 6:
-            return Response({"detail": "Şifre en az 6 karakter olmalı."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Güçlü şifre doğrulaması
+        password_errors = validate_strong_password_simple(password)
+        if password_errors:
+            return Response({"detail": " ".join(password_errors)}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = CustomUser.objects.get(email=email, role="vendor")
         except CustomUser.DoesNotExist:

@@ -11,6 +11,7 @@ from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreat
 from admin_panel.models import BlogPost
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
+from .utils.password_validator import validate_strong_password_simple
 import logging
 import secrets
 from django.urls import reverse
@@ -1303,9 +1304,11 @@ def client_register(request):
                 'detail': 'Şifreler eşleşmiyor'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        if len(password) < 6:
+        # Güçlü şifre doğrulaması
+        password_errors = validate_strong_password_simple(password)
+        if password_errors:
             return Response({
-                'detail': 'Şifre en az 6 karakter olmalı'
+                'detail': ' '.join(password_errors)
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Email zaten var mı kontrol et
@@ -1464,9 +1467,11 @@ def client_set_password(request):
                 'detail': 'Şifreler eşleşmiyor'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        if len(password) < 6:
+        # Güçlü şifre doğrulaması
+        password_errors = validate_strong_password_simple(password)
+        if password_errors:
             return Response({
-                'detail': 'Şifre en az 6 karakter olmalı'
+                'detail': ' '.join(password_errors)
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Kullanıcıyı bul

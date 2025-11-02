@@ -45,6 +45,42 @@ const validatePhone = (phone: string): boolean => {
   return /^\d{10}$/.test(phone);
 };
 
+// Güçlü şifre doğrulama fonksiyonu
+const validateStrongPassword = (password: string): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  
+  if (password.length < 8) {
+    errors.push("Şifre en az 8 karakter olmalıdır.");
+  }
+  
+  if (!/[A-Z]/.test(password)) {
+    errors.push("Şifre en az bir büyük harf (A-Z) içermelidir.");
+  }
+  
+  if (!/[a-z]/.test(password)) {
+    errors.push("Şifre en az bir küçük harf (a-z) içermelidir.");
+  }
+  
+  if (!/[0-9]/.test(password)) {
+    errors.push("Şifre en az bir sayı (0-9) içermelidir.");
+  }
+  
+  if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+    errors.push("Şifre en az bir özel karakter (!@#$%^&* vb.) içermelidir.");
+  }
+  
+  // Basit şifre kontrolü
+  const commonPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123', 'admin123', '12345678', 'letmein', 'welcome123', 'sanayicin123'];
+  if (commonPasswords.includes(password.toLowerCase())) {
+    errors.push("Çok basit bir şifre seçtiniz. Lütfen daha güvenli bir şifre kullanın.");
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
 const validateTaxNo = (taxNo: string): boolean => {
   return /^\d{10}$/.test(taxNo);
 };
@@ -120,7 +156,7 @@ export default function EsnafKayitPage() {
     password2: "",
     agreement: false,
   });
-  const [managerError, setManagerError] = useState("");
+  const [managerError, setManagerError] = useState<string | string[]>("");
 
   // 5. adım - Doğrulama seçimi state
   const [verificationMethod, setVerificationMethod] = useState<'email' | 'sms' | null>('email');
@@ -452,8 +488,12 @@ export default function EsnafKayitPage() {
       setManagerError("Şifreler eşleşmiyor.");
       return;
     }
-    if (password.length < 6) {
-      setManagerError("Şifre en az 6 karakter olmalı.");
+    
+    // Güçlü şifre doğrulaması
+    const passwordValidation = validateStrongPassword(password);
+    if (!passwordValidation.isValid) {
+      // Hataları liste olarak göster
+      setManagerError(passwordValidation.errors);
       return;
     }
     if (!agreement) {
@@ -586,11 +626,6 @@ export default function EsnafKayitPage() {
     <>
     <EsnafAuthHeader currentPage="register" />
     <section className="register-section">
-      {/* Hoş Geldiniz Başlığı */}
-      <div className="register-welcome">
-        <h1 className="register-welcome__title">Sanayicin'e Hoş Geldiniz!</h1>
-      </div>
-      
       {/* Ana Container */}
       <div className="register-wrapper">
         {/* Vektörel Karakter - Kartın Sağ Üstünde */}
@@ -1020,7 +1055,19 @@ export default function EsnafKayitPage() {
                 Kurumsal üyelik sözleşmesi'ni ve gizlilik politikasını kabul ediyorum
               </span>
             </label>
-            {managerError && <div className="register-error">{managerError}</div>}
+            {managerError && (
+              <div className="register-error">
+                {Array.isArray(managerError) ? (
+                  <ul style={{ margin: 0, paddingLeft: '20px', textAlign: 'left' }}>
+                    {managerError.map((error, index) => (
+                      <li key={index} style={{ marginBottom: '4px', textAlign: 'left' }}>{error}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  managerError
+                )}
+              </div>
+            )}
             <div className="register-buttons">
               <button type="button" className="register-btn register-btn--secondary" onClick={handleBackStep4}>
                 Geri

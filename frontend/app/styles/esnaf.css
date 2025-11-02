@@ -114,7 +114,7 @@
   position: relative;
   background: #fffef0;
   overflow: hidden;
-  padding: 0 !important;
+  padding-top: 160px;
 }
 
 /* Arka Plan Görseli - Section Arka Planı */
@@ -133,24 +133,6 @@
   z-index: 0;
 }
 
-/* Hoş Geldiniz Header */
-.register-welcome {
-  width: 100%;
-  padding-top: 36px;
-  padding-bottom: 140px;
-  text-align: center;
-  position: relative;
-  z-index: 2;
-}
-
-.register-welcome__title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--black);
-  margin: 0;
-  letter-spacing: -0.5px;
-}
-
 /* Ana Container */
 .register-wrapper {
   max-width: 700px;
@@ -158,6 +140,11 @@
   margin: 40px auto 60px;
   position: relative;
   z-index: 1;
+}
+
+/* Giriş Sayfası için Daha Küçük Genişlik */
+.register-section:has(.esnaf-login-footer) .register-wrapper {
+  max-width: 500px;
 }
 
 /* Vektörel Karakter - Kartın Sağ Üstünde, Kartla Çakışıyor */
@@ -451,6 +438,18 @@
   border: 1px solid #fcc;
   position: relative;
   z-index: 1;
+  text-align: left;
+}
+
+.register-error ul {
+  text-align: left;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.register-error li {
+  text-align: left;
+  margin-bottom: 4px;
 }
 
 /* Checkbox */
@@ -504,14 +503,6 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .register-welcome {
-    padding: 40px 0;
-  }
-  
-  .register-welcome__title {
-    font-size: 2rem;
-  }
-  
   .register-wrapper {
     max-width: 95%;
     margin: 30px auto 40px;
@@ -540,14 +531,6 @@
 }
 
 @media (max-width: 480px) {
-  .register-welcome {
-    padding: 40px 0;
-  }
-  
-  .register-welcome__title {
-    font-size: 1.75rem;
-  }
-  
   .register-wrapper {
     max-width: 100%;
     margin-bottom: 20px;
@@ -964,172 +947,28 @@
   margin-left: 10px;
 }
 
-/* Login Page */
-.esnaf-login-main {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  position: relative;
-  overflow: hidden;
-  background: #fffef0;
-}
-
-/* Arka Plan Görseli - Section Arka Planı */
-.esnaf-login-main::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/images/register-bg-shape.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  opacity: 0.6;
-  z-index: 0;
-}
-
-.esnaf-login-container {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  padding: 48px 40px;
-  border-radius: 20px;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  width: 100%;
-  max-width: 420px;
-  position: relative;
-  z-index: 1;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.esnaf-login-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #111827;
-  text-align: center;
-  margin: 0 0 8px 0;
-}
-
-.esnaf-login-subtitle {
-  color: #6b7280;
-  text-align: center;
-  margin: 0 0 32px 0;
-  line-height: 1.5;
-}
-
-.esnaf-login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
+/* Login Page - Artık register-section ve register-card kullanıyor */
 .esnaf-input-group {
   position: relative;
 }
 
-.esnaf-login-label {
-  font-weight: 600;
-  color: var(--black);
-  font-size: 14px;
-  margin-bottom: 8px;
-  display: block;
-}
-
-.esnaf-login-input {
-  width: 100%;
-  padding: 16px 20px;
-  border: 2px solid #e8e8e8;
-  border-radius: 12px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  background: white;
-  color: var(--black);
-  box-sizing: border-box;
-}
-
-.esnaf-login-input:focus {
-  outline: none;
-  border-color: var(--yellow);
-  box-shadow: 0 0 0 4px rgba(255, 214, 0, 0.15);
-  transform: translateY(-1px);
-}
-
-.esnaf-login-input::placeholder {
-  color: #999;
-}
-
-.esnaf-login-btn {
-  background: linear-gradient(135deg, var(--yellow) 0%, #e6c200 100%);
-  color: var(--black);
-  border: none;
-  padding: 16px 24px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
+/* Şifremi Unuttum Linki */
+.register-forgot-password {
+  text-align: right;
   margin-top: 8px;
-  position: relative;
-  overflow: hidden;
 }
 
-.esnaf-login-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.esnaf-login-btn:hover::before {
-  left: 100%;
-}
-
-.esnaf-login-btn:hover {
-  background: linear-gradient(135deg, #e6c200 0%, var(--yellow) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 214, 0, 0.4);
-}
-
-.esnaf-login-btn:active {
-  transform: translateY(0);
-}
-
-.esnaf-login-btn:disabled {
-  background: #e0e0e0;
-  color: #999;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.esnaf-login-btn:disabled::before {
-  display: none;
-}
-
-.esnaf-login-error {
-  background: linear-gradient(135deg, #fee 0%, #fcc 100%);
-  color: #c33;
-  padding: 16px 20px;
-  border-radius: 12px;
+.register-forgot-link {
+  color: #666;
   font-size: 14px;
-  border: 1px solid #faa;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
 }
 
-.esnaf-login-error::before {
-  content: '⚠️';
-  font-size: 16px;
+.register-forgot-link:hover {
+  color: var(--yellow);
+  text-decoration: underline;
 }
 
 .esnaf-login-footer {
@@ -1162,35 +1001,7 @@
   opacity: 0.7;
 }
 
-/* Login Responsive */
-@media (max-width: 480px) {
-  .esnaf-login-container {
-    padding: 32px 24px;
-    margin: 16px;
-    border-radius: 16px;
-  }
-  .esnaf-login-header {
-    padding: 0 24px 0 24px;
-  }
-  
-  .esnaf-login-logo img {
-    width: 140px;
-  }
-  
-  .esnaf-login-title {
-    font-size: 1.5rem;
-  }
-  
-  .esnaf-login-input {
-    padding: 14px 16px;
-    font-size: 16px;
-  }
-  
-  .esnaf-login-btn {
-    padding: 14px 20px;
-    font-size: 16px;
-  }
-}
+/* Login Page Artık Register Stillerini Kullanıyor */
 
 /* Register Responsive */
 @media (max-width: 480px) {
