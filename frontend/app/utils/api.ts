@@ -313,7 +313,11 @@ export const api = {
   // Blog - public
   listBlogPosts: (params?: { page?: number; page_size?: number; search?: string; category?: string; ordering?: string }) =>
     apiClient.get('/blog/posts/', { params }),
+  listBlogPostsByCategory: (categorySlug: string, params?: { page?: number; page_size?: number; ordering?: string }) =>
+    apiClient.get('/blog/posts/', { params: { ...params, category: categorySlug } }),
+  listBlogCategories: () => apiClient.get('/blog/categories/'),
   getBlogPost: (slug: string) => apiClient.get(`/blog/posts/${slug}/`),
+  getRelatedBlogPosts: (slug: string) => apiClient.get(`/blog/posts/${slug}/related/`),
   // Profil işlemleri - Role'e göre farklı endpoint'ler
   getProfile: (role: 'vendor' | 'client' = 'vendor') => 
     apiClient.get(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/'),

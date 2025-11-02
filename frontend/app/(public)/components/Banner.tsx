@@ -2,7 +2,7 @@ import React from "react";
 
 interface BannerProps {
   title: string;
-  description: string;
+  description?: string;
   backgroundColor?: string;
   textColor?: string;
   className?: string;
@@ -28,7 +28,7 @@ const Banner = ({
       <div className="container">
         <div className="hero-content">
           <h1 className="hero-title">{title}</h1>
-          <p className="hero-description">{description}</p>
+          {description && <p className="hero-description">{description}</p>}
           {breadcrumb && (
             <div className="hero-breadcrumb">
               {breadcrumb}

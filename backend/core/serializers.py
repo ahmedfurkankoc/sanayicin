@@ -141,7 +141,7 @@ class PublicBlogPostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlogPost
         fields = (
-            'id', 'title', 'slug', 'excerpt', 'cover_image', 'category_name', 'published_at'
+            'id', 'title', 'slug', 'excerpt', 'cover_image', 'category_name', 'category_slug', 'published_at'
         )
 
     def get_cover_image(self, obj):
@@ -159,15 +159,50 @@ class PublicBlogPostListSerializer(serializers.ModelSerializer):
             return obj.category.name if obj.category else None
         except Exception:
             return None
+    
+    category_slug = serializers.SerializerMethodField()
+    
+    def get_category_slug(self, obj):
+        try:
+            return obj.category.slug if obj.category else None
+        except Exception:
+            return None
 
 
 class PublicBlogPostDetailSerializer(PublicBlogPostListSerializer):
     content = serializers.CharField()
+    meta_title = serializers.CharField(read_only=True)
+    meta_description = serializers.CharField(read_only=True)
+    meta_keywords = serializers.CharField(read_only=True)
+    canonical_url = serializers.URLField(read_only=True)
+    og_title = serializers.CharField(read_only=True)
+    og_description = serializers.CharField(read_only=True)
+    og_image = serializers.SerializerMethodField()
 
     class Meta(PublicBlogPostListSerializer.Meta):
         fields = PublicBlogPostListSerializer.Meta.fields + (
-            'content',
+            'content', 'meta_title', 'meta_description', 'meta_keywords', 
+            'canonical_url', 'og_title', 'og_description', 'og_image',
+            'updated_at'
         )
+    
+    def get_og_image(self, obj):
+        try:
+            if obj.og_image:
+                request = self.context.get('request')
+                url = obj.og_image.url
+                return request.build_absolute_uri(url) if request else url
+        except Exception:
+            pass
+        # Fallback to featured_image
+        try:
+            if obj.featured_image:
+                request = self.context.get('request')
+                url = obj.featured_image.url
+                return request.build_absolute_uri(url) if request else url
+        except Exception:
+            pass
+        return None
 
 # JWT Token'a role bilgisi eklemek için custom serializer
 class CustomTokenObtainPairSerializer(serializers.Serializer):

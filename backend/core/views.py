@@ -194,6 +194,17 @@ class CarBrandListView(generics.ListAPIView):
 @permission_classes([AllowAny])
 def public_blog_list(request):
     qs = BlogPost.objects.filter(status='published').order_by('-published_at', '-created_at')
+    
+    # Kategori slug'ına göre filtreleme
+    category_slug = request.GET.get('category')
+    if category_slug:
+        from admin_panel.models import BlogCategory
+        try:
+            category = BlogCategory.objects.get(slug=category_slug, is_active=True)
+            qs = qs.filter(category=category)
+        except BlogCategory.DoesNotExist:
+            return Response({'detail': 'Kategori bulunamadı'}, status=404)
+    
     try:
         page = int(request.GET.get('page', '1'))
     except Exception:
@@ -226,10 +237,64 @@ def public_blog_list(request):
 def public_blog_detail(request, slug: str):
     try:
         post = BlogPost.objects.get(slug=slug, status='published')
+        # View count artır
+        post.view_count = (post.view_count or 0) + 1
+        post.save(update_fields=['view_count'])
     except BlogPost.DoesNotExist:
         return Response({'detail': 'Blog bulunamadı'}, status=404)
     serializer = PublicBlogPostDetailSerializer(post, context={'request': request})
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_blog_categories(request):
+    """Blog kategorilerini listele (public) - Sadece blog yazısı olan kategoriler"""
+    from admin_panel.models import BlogCategory
+    from django.db.models import Count, Q
+    
+    # Aktif kategorileri al ve her kategorinin published blog sayısını say
+    categories = BlogCategory.objects.filter(
+        is_active=True
+    ).annotate(
+        blog_count=Count('blogpost', filter=Q(blogpost__status='published'))
+    ).filter(
+        blog_count__gt=0  # Sadece blog sayısı 0'dan büyük olanlar
+    ).order_by('name')
+    
+    return Response([{
+        'id': cat.id,
+        'name': cat.name,
+        'slug': cat.slug,
+        'description': cat.description,
+    } for cat in categories])
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_blog_related(request, slug: str):
+    """İlgili blog yazıları (aynı kategoriden veya öne çıkan yazılar)"""
+    try:
+        post = BlogPost.objects.get(slug=slug, status='published')
+        # Aynı kategoriden başka yazılar (kendisi hariç)
+        related_posts = BlogPost.objects.filter(
+            status='published'
+        ).exclude(id=post.id)
+        
+        if post.category:
+            # Önce aynı kategoriden
+            related_posts = related_posts.filter(category=post.category).order_by('-published_at', '-created_at')
+        else:
+            # Kategori yoksa öne çıkanlar
+            related_posts = related_posts.filter(is_featured=True).order_by('-published_at', '-created_at')
+        
+        # En fazla 4 ilgili yazı
+        related_posts = related_posts[:4]
+        
+        serializer = PublicBlogPostListSerializer(related_posts, many=True, context={'request': request})
+        return Response(serializer.data)
+    except BlogPost.DoesNotExist:
+        return Response({'detail': 'Blog bulunamadı'}, status=404)
 
 # Rate limiting için cache key'leri
 def get_rate_limit_key(email: str, action: str) -> str:
