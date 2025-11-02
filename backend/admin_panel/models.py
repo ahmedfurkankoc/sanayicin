@@ -173,6 +173,14 @@ class BlogPost(models.Model):
         on_delete=models.CASCADE,
         verbose_name="Yazar"
     )
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='blog_posts_created',
+        verbose_name="Oluşturan"
+    )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,

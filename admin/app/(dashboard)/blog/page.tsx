@@ -15,6 +15,7 @@ interface BlogPost {
   excerpt: string
   status: 'draft' | 'published' | 'archived'
   author_name: string
+  created_by_name?: string
   category_name?: string
   view_count: number
   published_at?: string
@@ -302,7 +303,7 @@ export default function BlogManagement() {
                         {getStatusBadge(post.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {post.author_name}
+                        {post.created_by_name || post.author_name || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {post.category_name || '-'}
