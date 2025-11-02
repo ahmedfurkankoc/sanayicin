@@ -191,10 +191,10 @@ export default function PublicBlogListPage() {
               <article key={post.id} itemScope itemType="https://schema.org/BlogPosting" className="blog-card">
                 <Link 
                   href={`/blog/${post.category_slug || 'rehber'}/${post.slug}`} 
-                  style={{ textDecoration: 'none', display: 'block' }}
+                  style={{ textDecoration: 'none', display: 'block', height: '100%' }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {post.cover_image && (
+                  {post.cover_image ? (
                     <img
                       src={resolveMediaUrl(post.cover_image)}
                       alt={post.title}
@@ -202,13 +202,10 @@ export default function PublicBlogListPage() {
                       itemProp="image"
                       loading="lazy"
                     />
+                  ) : (
+                    <div className="blog-card-img" style={{ background: 'linear-gradient(135deg, var(--black) 0%, #2a2a2a 100%)' }} />
                   )}
                   <div className="blog-card-body">
-                    {post.category_name && (
-                      <span className="blog-badge" itemProp="articleSection">
-                        {post.category_name}
-                      </span>
-                    )}
                     <h2 className="blog-card-title" itemProp="headline">
                       {post.title}
                     </h2>
@@ -217,19 +214,9 @@ export default function PublicBlogListPage() {
                         {post.excerpt}
                       </p>
                     )}
-                    {post.published_at && (
-                      <time 
-                        itemProp="datePublished" 
-                        dateTime={post.published_at}
-                        className="blog-card-date"
-                      >
-                        {new Date(post.published_at).toLocaleDateString('tr-TR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </time>
-                    )}
+                    <div className="blog-card-cta">
+                      Devamını oku <span className="blog-card-cta-icon">→</span>
+                    </div>
                   </div>
                 </Link>
               </article>
