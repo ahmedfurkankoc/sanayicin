@@ -84,12 +84,33 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
   })
 
   const backendBase = (process.env.NEXT_PUBLIC_BACKEND_URL as string) || (process.env.NEXT_PUBLIC_API_URL as string) || 'http://localhost:8000'
+  // Remove /api/admin suffix if exists to get base URL for media
+  const mediaBase = backendBase.replace(/\/api\/admin\/?$/, '').replace(/\/api\/?$/, '')
+  
   const resolveMediaUrl = (url: string | null | undefined) => {
-    if (!url) return ''
-    // Normalize common admin-proxied path to bare media path
-    const normalized = url.replace('/api/admin/media', '/media')
-    if (normalized.startsWith('http://') || normalized.startsWith('https://')) return normalized
-    if (normalized.startsWith('/media')) return `${backendBase}${normalized}`
+    if (!url || url.trim() === '') return ''
+    
+    const urlStr = url.trim()
+    
+    // Already absolute URL - return as is (but normalize /api/admin/media to /media)
+    if (urlStr.startsWith('http://') || urlStr.startsWith('https://')) {
+      return urlStr.replace('/api/admin/media', '/media')
+    }
+    
+    // Remove /api/admin/media prefix if exists
+    let normalized = urlStr.replace(/^\/api\/admin\/media/, '/media')
+    
+    // If starts with /media, make absolute
+    if (normalized.startsWith('/media')) {
+      return `${mediaBase}${normalized}`
+    }
+    
+    // If it's a relative path starting with /, add base
+    if (normalized.startsWith('/')) {
+      return `${mediaBase}${normalized}`
+    }
+    
+    // Otherwise return as is
     return normalized
   }
 
@@ -105,6 +126,16 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
   const absolutizeContentHtml = (html: string): string => {
     if (!html) return html
     return html
+      // Handle absolute URLs that might need normalization
+      .replace(/src=\"(https?:\/\/[^\"]+\/api\/admin\/media[^\"]*)\"/g, (_m, p1) => {
+        const normalized = p1.replace('/api/admin/media', '/media')
+        return `src=\"${normalized}\"`
+      })
+      .replace(/src='(https?:\/\/[^']+\/api\/admin\/media[^']*)'/g, (_m, p1) => {
+        const normalized = p1.replace('/api/admin/media', '/media')
+        return `src='${normalized}'`
+      })
+      // Handle relative paths
       .replace(/src=\"(\/api\/admin\/media[^\"]*)\"/g, (_m, p1) => `src=\"${resolveMediaUrl(p1)}\"`)
       .replace(/src=\"(\/media[^\"]*)\"/g, (_m, p1) => `src=\"${resolveMediaUrl(p1)}\"`)
       .replace(/src='(\/api\/admin\/media[^']*)'/g, (_m, p1) => `src='${resolveMediaUrl(p1)}'`)
@@ -150,6 +181,19 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     setLoading(true)
     try {
       const data = await apiGetBlogPost(Number(params?.id))
+      console.log('Blog post data:', data)
+      console.log('featured_image:', data.featured_image)
+      console.log('featured_image type:', typeof data.featured_image)
+      console.log('og_image:', data.og_image)
+      console.log('og_image type:', typeof data.og_image)
+      
+      // Handle image URLs - backend might return null or empty string
+      const featuredImage = data.featured_image && data.featured_image.trim() !== '' ? data.featured_image : ''
+      const ogImage = data.og_image && data.og_image.trim() !== '' ? data.og_image : ''
+      
+      console.log('Normalized featured_image:', featuredImage)
+      console.log('Normalized og_image:', ogImage)
+      
       setFormData({
         id: data.id,
         title: data.title,
@@ -159,14 +203,17 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         status: data.status,
         category: data.category,
         is_featured: data.is_featured,
+        featured_image: featuredImage,
         meta_title: data.meta_title || '',
         meta_description: data.meta_description || '',
         meta_keywords: data.meta_keywords || '',
         canonical_url: data.canonical_url || '',
         og_title: data.og_title || '',
         og_description: data.og_description || '',
-        og_image: data.og_image || '',
+        og_image: ogImage,
       })
+      
+      console.log('FormData after set:', { featured_image: featuredImage, og_image: ogImage })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {
@@ -208,28 +255,13 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
   const handleContentChange = (content: string) => {
     const plain = content.replace(/<[^>]*>/g, '')
     
-    // Content içindeki ilk resmi bul
-    const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i)
-    const firstImageUrl = imgMatch ? imgMatch[1] : null
-    
-    setFormData(prev => {
-      // Eğer featured_image boşsa ve content'te resim varsa, ilk resmi featured_image yap
-      const shouldSetFeatured = !prev.featured_image && firstImageUrl
-      const normalizedImageUrl = firstImageUrl 
-        ? firstImageUrl.replace(/^https?:\/\/[^\s"']+\/api\/admin\/media/gi, '/media')
-                        .replace(/^https?:\/\/[^\s"']+\/media/gi, '/media')
-                        .replace(/^\/api\/admin\/media/gi, '/media')
-        : null
-      
-      return {
-        ...prev,
-        content,
-        excerpt: autoFill.excerpt ? plain.slice(0, 500) : prev.excerpt,
-        meta_description: autoFill.metaDescription ? plain.slice(0, 160) : prev.meta_description,
-        og_description: autoFill.ogDescription ? plain.slice(0, 200) : prev.og_description,
-        featured_image: shouldSetFeatured && normalizedImageUrl ? normalizedImageUrl : prev.featured_image,
-      }
-    })
+    setFormData(prev => ({
+      ...prev,
+      content,
+      excerpt: autoFill.excerpt ? plain.slice(0, 500) : prev.excerpt,
+      meta_description: autoFill.metaDescription ? plain.slice(0, 160) : prev.meta_description,
+      og_description: autoFill.ogDescription ? plain.slice(0, 200) : prev.og_description,
+    }))
   }
 
   
@@ -239,19 +271,75 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     setError(null)
     
     try {
-      const payload = { ...formData, status, content: normalizeContentHtml(formData.content) }
+      // Remove featured_image_alt as it's not in the backend model
+      const { featured_image_alt, ...formDataWithoutAlt } = formData
+      
+      // Prepare payload - don't send featured_image if it's a URL string
+      // Backend can't accept URL strings for ImageField, only file uploads
+      // If featured_image is a URL string, only send it if we're creating a new post
+      // For updates, URL strings are ignored (existing file is kept)
+      const payload: any = { 
+        ...formDataWithoutAlt, 
+        status, 
+        content: normalizeContentHtml(formData.content) 
+      }
+      
+      // Debug: Log payload before sending
+      console.log('Saving payload:', {
+        featured_image: payload.featured_image,
+        og_image: payload.og_image,
+        featured_image_type: typeof payload.featured_image,
+        og_image_type: typeof payload.og_image,
+        featured_image_length: payload.featured_image ? payload.featured_image.length : 0,
+        og_image_length: payload.og_image ? payload.og_image.length : 0,
+        isEdit,
+        status
+      })
+      
+      // Backend can now handle URL strings - it will load files from storage
+      // So we can send URL strings for both create and update
+      // Backend will handle checking if file exists and loading it
       const data = isEdit
         ? await updateBlogPost(Number(params?.id), payload)
         : await createBlogPost(payload)
       
+      // Debug: Log response data
+      console.log('Response data:', {
+        featured_image: data.featured_image,
+        og_image: data.og_image,
+        featured_image_type: typeof data.featured_image,
+        og_image_type: typeof data.og_image,
+      })
+      
       if (!isEdit) {
         router.push(`/admin/blog/${data.id}/edit`)
       } else {
+        // Update formData with response data (especially for image URLs)
+        setFormData(prev => ({
+          ...prev,
+          featured_image: data.featured_image || prev.featured_image || '',
+          og_image: data.og_image || prev.og_image || '',
+        }))
         // Show success message
         alert(status === 'published' ? 'Blog yazısı yayınlandı!' : 'Taslak kaydedildi!')
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
+    } catch (err: any) {
+      // Show validation errors from backend
+      if (err?.response?.data) {
+        const errors = err.response.data
+        const errorMessages = Object.entries(errors)
+          .map(([field, messages]: [string, any]) => {
+            if (Array.isArray(messages)) {
+              return `${field}: ${messages.join(', ')}`
+            }
+            return `${field}: ${messages}`
+          })
+          .join('\n')
+        setError(errorMessages || 'Validation hatası')
+        console.error('Validation errors:', errors)
+      } else {
+        setError(err instanceof Error ? err.message : 'Bir hata oluştu')
+      }
     } finally {
       setSaving(false)
     }
@@ -341,14 +429,66 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
             const imgs = quill.root.querySelectorAll('img')
             imgs.forEach((img: HTMLImageElement) => {
               const src = img.getAttribute('src') || ''
-              if (src.startsWith('/media') || src.includes('/api/admin/media')) {
+              if (!src) return
+              
+              // Skip if already absolute URL (http/https) and doesn't need normalization
+              if (src.startsWith('http://') || src.startsWith('https://')) {
+                // Normalize /api/admin/media to /media in absolute URLs
+                if (src.includes('/api/admin/media')) {
+                  const normalized = src.replace('/api/admin/media', '/media')
+                  if (normalized !== src) {
+                    console.log('Normalizing absolute URL:', src, '->', normalized)
+                    img.setAttribute('src', normalized)
+                  }
+                }
+                return
+              }
+              
+              // Handle relative paths - convert to absolute
+              if (src.startsWith('/media') || src.includes('/api/admin/media') || (src.includes('/media') && !src.startsWith('http'))) {
                 const abs = resolveMediaUrl(src)
-                if (abs && abs !== src) img.setAttribute('src', abs)
+                console.log('Converting relative to absolute:', src, '->', abs)
+                if (abs && abs !== src) {
+                  img.setAttribute('src', abs)
+                }
               }
             })
           })
           observer.observe(quill.root, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] })
-        } catch {}
+          
+          // Initial pass to fix existing images
+          setTimeout(() => {
+            const imgs = quill.root.querySelectorAll('img')
+            imgs.forEach((img: HTMLImageElement) => {
+              const src = img.getAttribute('src') || ''
+              if (!src) return
+              
+              // Skip if already absolute URL (http/https) and doesn't need normalization
+              if (src.startsWith('http://') || src.startsWith('https://')) {
+                // Normalize /api/admin/media to /media in absolute URLs
+                if (src.includes('/api/admin/media')) {
+                  const normalized = src.replace('/api/admin/media', '/media')
+                  if (normalized !== src) {
+                    console.log('Initial normalization:', src, '->', normalized)
+                    img.setAttribute('src', normalized)
+                  }
+                }
+                return
+              }
+              
+              // Handle relative paths - convert to absolute
+              if (src.startsWith('/media') || src.includes('/api/admin/media')) {
+                const abs = resolveMediaUrl(src)
+                console.log('Initial conversion:', src, '->', abs)
+                if (abs && abs !== src) {
+                  img.setAttribute('src', abs)
+                }
+              }
+            })
+          }, 100)
+        } catch (e) {
+          console.error('MutationObserver error:', e)
+        }
 
         quill.on('text-change', (_delta: unknown, _oldDelta: unknown, source: string) => {
           if (!isMounted) return
@@ -807,9 +947,27 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Kapak Görseli</h3>
             <div className="space-y-3">
-              {formData.featured_image ? (
+              {formData.featured_image && formData.featured_image.trim() !== '' ? (
                 <div className="relative">
-                  <Image src={resolveMediaUrl(formData.featured_image)} alt={formData.title || 'Kapak görseli'} width={400} height={160} className="w-full h-40 object-cover rounded-lg border" />
+                  {(() => {
+                    const imageUrl = resolveMediaUrl(formData.featured_image)
+                    console.log('Featured image render - original:', formData.featured_image, 'resolved:', imageUrl)
+                    if (!imageUrl || imageUrl === '' || imageUrl.trim() === '') {
+                      return <div className="text-sm text-red-500 p-2 bg-red-50 rounded">Görsel URL'i geçersiz: {formData.featured_image}</div>
+                    }
+                    return (
+                      <img 
+                        src={imageUrl} 
+                        alt={formData.title || 'Kapak görseli'} 
+                        className="w-full h-40 object-cover rounded-lg border"
+                        onError={(e) => {
+                          console.error('Featured image load error:', imageUrl, 'Original:', formData.featured_image)
+                          e.currentTarget.outerHTML = `<div class="text-sm text-red-500 p-2 bg-red-50 rounded">Görsel yüklenemedi: ${imageUrl}</div>`
+                        }}
+                        onLoad={() => console.log('Featured image loaded successfully:', imageUrl)}
+                      />
+                    )
+                  })()}
                   <div className="mt-2 flex items-center gap-2">
                     <button
                       type="button"
@@ -1078,13 +1236,25 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                 <div className="space-y-3">
                   {formData.og_image ? (
                     <div className="relative">
-                      <Image 
-                        src={resolveMediaUrl(formData.og_image)} 
-                        alt={formData.title || 'OG görseli'} 
-                        width={400} 
-                        height={210} 
-                        className="w-full h-40 object-cover rounded-lg border" 
-                      />
+                      {(() => {
+                        const imageUrl = resolveMediaUrl(formData.og_image)
+                        console.log('OG image URL:', formData.og_image, '->', imageUrl)
+                        if (!imageUrl || imageUrl === '') {
+                          return <div className="text-sm text-gray-500">Görsel URL'i boş</div>
+                        }
+                        return (
+                          <img 
+                            src={imageUrl} 
+                            alt={formData.title || 'OG görseli'} 
+                            className="w-full h-40 object-cover rounded-lg border"
+                            onError={(e) => {
+                              console.error('OG image load error:', imageUrl)
+                              e.currentTarget.style.display = 'none'
+                            }}
+                            onLoad={() => console.log('OG image loaded:', imageUrl)}
+                          />
+                        )
+                      })()}
                       <div className="mt-2 flex items-center gap-2">
                         <button
                           type="button"

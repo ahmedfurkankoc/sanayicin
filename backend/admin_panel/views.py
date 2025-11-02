@@ -621,7 +621,7 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         except EmptyPage:
             page_obj = paginator.page(paginator.num_pages)
         
-        serializer = self.get_serializer(page_obj.object_list, many=True)
+        serializer = self.get_serializer(page_obj.object_list, many=True, context={'request': request})
         
         return Response({
             'results': serializer.data,
@@ -631,11 +631,84 @@ class BlogPostViewSet(viewsets.ModelViewSet):
             'total_pages': paginator.num_pages,
         })
     
+    @admin_permission_required('blog', 'read')
+    def retrieve(self, request, *args, **kwargs):
+        """Get single blog post with request context for absolute URLs"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, context={'request': request})
+        return Response(serializer.data)
+    
     @admin_permission_required('blog', 'write')
     def create(self, request, *args, **kwargs):
-        # Set author to current user
         data = request.data.copy()
-        data['author'] = request.user.id
+        
+        # Handle featured_image and og_image URL strings (convert to file objects)
+        for field_name in ['featured_image', 'og_image']:
+            if field_name in data:
+                field_value = data.get(field_name)
+                # If it's a string (URL path), try to load file from storage
+                if isinstance(field_value, str) and field_value.strip():
+                    try:
+                        from django.core.files.storage import default_storage
+                        from django.core.files.base import ContentFile
+                        import os
+                        
+                        # Normalize URL to file path
+                        # Handle absolute URLs (http://localhost:8000/media/...)
+                        original_url = field_value
+                        if '://' in field_value:
+                            # Extract path from absolute URL: http://localhost:8000/media/blog/images/abc.jpg
+                            # Split by :// and get path part
+                            parts = field_value.split('://', 1)[1].split('/', 1)
+                            if len(parts) > 1:
+                                # parts[1] is now: media/blog/images/abc.jpg
+                                file_path = parts[1]
+                            else:
+                                file_path = field_value
+                        else:
+                            file_path = field_value
+                        
+                        # Remove query params
+                        file_path = file_path.split('?')[0]
+                        
+                        # Remove /media/, /api/admin/media/ prefixes
+                        # Handle both /media/ and media/ formats
+                        if file_path.startswith('/media/'):
+                            file_path = file_path[7:]  # Remove '/media/'
+                        elif file_path.startswith('media/'):
+                            file_path = file_path[6:]  # Remove 'media/'
+                        elif file_path.startswith('/api/admin/media/'):
+                            file_path = file_path[17:]  # Remove '/api/admin/media/'
+                        elif file_path.startswith('api/admin/media/'):
+                            file_path = file_path[16:]  # Remove 'api/admin/media/'
+                        
+                        # Remove leading slash if exists
+                        file_path = file_path.lstrip('/')
+                        
+                        logger.info(f"{field_name} original URL: {original_url}, normalized path: {file_path}")
+                        
+                        # Check if file exists in storage
+                        if default_storage.exists(file_path):
+                            # Read file from storage
+                            file_content = default_storage.open(file_path, 'rb').read()
+                            file_name = os.path.basename(file_path)
+                            
+                            # Create ContentFile for ImageField
+                            django_file = ContentFile(file_content, name=file_name)
+                            
+                            # Set file in data
+                            data[field_name] = django_file
+                            logger.info(f"{field_name} loaded from storage path: {file_path}")
+                        else:
+                            # File doesn't exist, remove from data
+                            logger.warning(f"{field_name} URL path not found in storage: {file_path}. Removing from data.")
+                            data.pop(field_name, None)
+                    except Exception as e:
+                        logger.error(f"Error loading {field_name} from URL: {e}. Removing from data.")
+                        data.pop(field_name, None)
+                elif isinstance(field_value, str) and not field_value.strip():
+                    # Empty string - set to None
+                    data[field_name] = None
         
         # Set published_at if status is published
         if data.get('status') == 'published' and not data.get('published_at'):
@@ -643,7 +716,8 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        blog = serializer.save()
+        # Save with created_by=request.user (admin who created it)
+        blog = serializer.save(created_by=request.user)
         
         # Activity log
         from .activity_logger import log_blog_activity
@@ -679,14 +753,230 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         
         data = request.data.copy()
         
+        # Remove created_by from data - it should not be changed on update
+        if 'created_by' in data:
+            data.pop('created_by', None)
+        
+        # Handle featured_image and og_image URL strings
+        # ImageField can't accept URL strings directly, only file uploads
+        # If URL string is provided, check if it matches current file
+        # If it matches, remove from data (no change needed)
+        # If it doesn't match or file doesn't exist, remove from data (keep existing file)
+        for field_name in ['featured_image', 'og_image']:
+            if field_name in data:
+                field_value = data.get(field_name)
+                # If it's a string (URL path), handle it
+                if isinstance(field_value, str):
+                    current_file = getattr(instance, field_name, None)
+                    if current_file:
+                        # Normalize paths for comparison
+                        # Normalize incoming URL to storage path
+                        field_path_for_compare = field_value
+                        if '://' in field_value:
+                            # Extract path from absolute URL
+                            parts = field_value.split('://', 1)[1].split('/', 1)
+                            if len(parts) > 1:
+                                field_path_for_compare = parts[1]  # media/blog/images/abc.jpg
+                            else:
+                                field_path_for_compare = field_value
+                        else:
+                            field_path_for_compare = field_value
+                        
+                        # Remove query params
+                        field_path_for_compare = field_path_for_compare.split('?')[0]
+                        
+                        # Remove /media/, /api/admin/media/ prefixes
+                        if field_path_for_compare.startswith('/media/'):
+                            field_path = field_path_for_compare[7:]  # Remove '/media/'
+                        elif field_path_for_compare.startswith('media/'):
+                            field_path = field_path_for_compare[6:]  # Remove 'media/'
+                        elif field_path_for_compare.startswith('/api/admin/media/'):
+                            field_path = field_path_for_compare[17:]  # Remove '/api/admin/media/'
+                        elif field_path_for_compare.startswith('api/admin/media/'):
+                            field_path = field_path_for_compare[16:]  # Remove 'api/admin/media/'
+                        else:
+                            field_path = field_path_for_compare
+                        
+                        field_path = field_path.lstrip('/')
+                        
+                        # Normalize current file path
+                        current_path = str(current_file).replace('/media/', '').replace('/api/admin/media/', '').lstrip('/')
+                        
+                        logger.info(f"{field_name} comparison - incoming: {field_path}, current: {current_path}")
+                        
+                        if field_path == current_path or field_path == '':
+                            # File hasn't changed or is empty, remove from update data
+                            logger.info(f"{field_name} hasn't changed, keeping existing file")
+                            data.pop(field_name, None)
+                        else:
+                            # Different path - load new file from storage
+                            logger.info(f"{field_name} path changed from {current_path} to {field_path}, loading new file")
+                            try:
+                                from django.core.files.storage import default_storage
+                                from django.core.files.base import ContentFile
+                                import os
+                                
+                                # Normalize URL to file path
+                                original_url = field_value
+                                if '://' in field_value:
+                                    # Extract path from absolute URL: http://localhost:8000/media/blog/images/abc.jpg
+                                    # Split by :// and get path part
+                                    parts = field_value.split('://', 1)[1].split('/', 1)
+                                    if len(parts) > 1:
+                                        # parts[1] is now: media/blog/images/abc.jpg
+                                        file_path = parts[1]
+                                    else:
+                                        file_path = field_value
+                                else:
+                                    file_path = field_value
+                                
+                                # Remove query params
+                                file_path = file_path.split('?')[0]
+                                
+                                # Remove /media/, /api/admin/media/ prefixes
+                                # Handle both /media/ and media/ formats
+                                if file_path.startswith('/media/'):
+                                    file_path = file_path[7:]  # Remove '/media/'
+                                elif file_path.startswith('media/'):
+                                    file_path = file_path[6:]  # Remove 'media/'
+                                elif file_path.startswith('/api/admin/media/'):
+                                    file_path = file_path[17:]  # Remove '/api/admin/media/'
+                                elif file_path.startswith('api/admin/media/'):
+                                    file_path = file_path[16:]  # Remove 'api/admin/media/'
+                                
+                                # Remove leading slash if exists
+                                file_path = file_path.lstrip('/')
+                                
+                                logger.info(f"{field_name} original URL: {original_url}, normalized path: {file_path}")
+                                
+                                # Check if file exists in storage
+                                if default_storage.exists(file_path):
+                                    # Read file from storage
+                                    file_content = default_storage.open(file_path, 'rb').read()
+                                    file_name = os.path.basename(file_path)
+                                    
+                                    # Create ContentFile for ImageField
+                                    django_file = ContentFile(file_content, name=file_name)
+                                    
+                                    # Set file in data (this will replace existing file)
+                                    data[field_name] = django_file
+                                    logger.info(f"{field_name} loaded from storage path: {file_path}, file size: {len(file_content)} bytes")
+                                else:
+                                    # File doesn't exist in storage, log available files for debugging
+                                    logger.warning(f"{field_name} URL path not found in storage: {file_path}")
+                                    # Try to list files in blog/images/ directory for debugging
+                                    try:
+                                        import os
+                                        blog_images_dir = 'blog/images/'
+                                        if default_storage.exists(blog_images_dir):
+                                            listed_files = default_storage.listdir(blog_images_dir)[1]  # Get files
+                                            logger.info(f"Available files in {blog_images_dir}: {listed_files[:5]}...")  # Log first 5
+                                    except Exception as e2:
+                                        logger.error(f"Error listing files: {e2}")
+                                    logger.warning(f"{field_name} not found, keeping existing file.")
+                                    data.pop(field_name, None)
+                            except Exception as e:
+                                # Error loading file, keep existing file
+                                logger.error(f"Error loading {field_name} from URL: {e}", exc_info=True)
+                                data.pop(field_name, None)
+                    else:
+                        # No current file, but URL string provided - try to load file from URL/path
+                        if field_value.strip() == '':
+                            # Empty string - clear the field
+                            data[field_name] = None
+                            logger.info(f"{field_name} cleared (empty string)")
+                        else:
+                            # Try to load file from URL/path
+                            try:
+                                from django.core.files.storage import default_storage
+                                from django.core.files.base import ContentFile
+                                import os
+                                
+                                # Normalize URL to file path
+                                # Handle absolute URLs (http://localhost:8000/media/...)
+                                original_url = field_value
+                                if '://' in field_value:
+                                    # Extract path from absolute URL: http://localhost:8000/media/blog/images/abc.jpg
+                                    # Split by :// and get path part
+                                    parts = field_value.split('://', 1)[1].split('/', 1)
+                                    if len(parts) > 1:
+                                        # parts[1] is now: media/blog/images/abc.jpg
+                                        file_path = parts[1]
+                                    else:
+                                        file_path = field_value
+                                else:
+                                    file_path = field_value
+                                
+                                # Remove query params
+                                file_path = file_path.split('?')[0]
+                                
+                                # Remove /media/, /api/admin/media/ prefixes
+                                # Handle both /media/ and media/ formats
+                                if file_path.startswith('/media/'):
+                                    file_path = file_path[7:]  # Remove '/media/'
+                                elif file_path.startswith('media/'):
+                                    file_path = file_path[6:]  # Remove 'media/'
+                                elif file_path.startswith('/api/admin/media/'):
+                                    file_path = file_path[17:]  # Remove '/api/admin/media/'
+                                elif file_path.startswith('api/admin/media/'):
+                                    file_path = file_path[16:]  # Remove 'api/admin/media/'
+                                
+                                # Remove leading slash if exists
+                                file_path = file_path.lstrip('/')
+                                
+                                logger.info(f"{field_name} original URL: {original_url}, normalized path: {file_path}")
+                                
+                                # Check if file exists in storage
+                                if default_storage.exists(file_path):
+                                    # Read file from storage
+                                    file_content = default_storage.open(file_path, 'rb').read()
+                                    file_name = os.path.basename(file_path)
+                                    
+                                    # Create ContentFile for ImageField
+                                    django_file = ContentFile(file_content, name=file_name)
+                                    
+                                    # Set file in data (this will be saved by serializer)
+                                    data[field_name] = django_file
+                                    logger.info(f"{field_name} loaded from storage path: {file_path}, file size: {len(file_content)} bytes")
+                                else:
+                                    # File doesn't exist in storage, log for debugging
+                                    logger.warning(f"{field_name} URL path not found in storage: {file_path}")
+                                    # Try to list files in blog/images/ directory for debugging
+                                    try:
+                                        blog_images_dir = 'blog/images/'
+                                        if default_storage.exists(blog_images_dir):
+                                            listed_files = default_storage.listdir(blog_images_dir)[1]  # Get files
+                                            logger.info(f"Available files in {blog_images_dir}: {listed_files[:5]}...")  # Log first 5
+                                    except Exception as e2:
+                                        logger.error(f"Error listing files: {e2}")
+                                    logger.warning(f"{field_name} not found, removing from data.")
+                                    data.pop(field_name, None)
+                            except Exception as e:
+                                # Error loading file, remove from data
+                                logger.error(f"Error loading {field_name} from URL: {e}", exc_info=True)
+                                data.pop(field_name, None)
+                # If it's None or empty string, keep as None to clear the field
+                elif field_value is None or field_value == '':
+                    data[field_name] = None
+        
         # Set published_at if status is published and not already set
         if data.get('status') == 'published' and not instance.published_at:
             data['published_at'] = timezone.now().isoformat()
         
         serializer = self.get_serializer(instance, data=data, partial=partial)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            # Log validation errors
+            logger.error(f"Blog post update validation errors: {serializer.errors}")
+            logger.error(f"Data sent: {data}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
         self.perform_update(serializer)
         
+        # Refresh instance to get updated image fields
+        instance.refresh_from_db()
+        
+        # Return updated data with request context for absolute URLs
+        serializer = self.get_serializer(instance, context={'request': request})
         return Response(serializer.data)
     
     @admin_permission_required('blog', 'delete')

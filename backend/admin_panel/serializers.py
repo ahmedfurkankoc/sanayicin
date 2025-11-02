@@ -27,11 +27,87 @@ class BlogCategorySerializer(serializers.ModelSerializer):
 class BlogPostSerializer(serializers.ModelSerializer):
     author_name = serializers.CharField(source='author.get_full_name', read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     
     class Meta:
         model = BlogPost
         fields = '__all__'
-        read_only_fields = ['created_at', 'updated_at', 'view_count']
+        read_only_fields = ['created_at', 'updated_at', 'view_count', 'author']
+        extra_kwargs = {
+            'featured_image': {'required': False, 'allow_null': True, 'allow_empty_file': True},
+            'og_image': {'required': False, 'allow_null': True, 'allow_empty_file': True},
+        }
+    
+    def to_representation(self, instance):
+        """Override to ensure image URLs are absolute"""
+        data = super().to_representation(instance)
+        
+        # Get request from context to build absolute URLs
+        request = self.context.get('request')
+        
+        # Convert image fields to absolute URLs
+        for field_name in ['featured_image', 'og_image']:
+            # Get the ImageField from instance directly to access .url property
+            image_field = getattr(instance, field_name, None)
+            
+            if not image_field:
+                # No image, set to None
+                data[field_name] = None
+                continue
+            
+            # Get URL from ImageField - this returns relative path like '/media/blog/images/...'
+            try:
+                image_url = image_field.url if hasattr(image_field, 'url') else str(image_field)
+            except Exception:
+                # If .url fails, try to get string representation
+                image_url = str(image_field) if image_field else None
+            
+            if not image_url or image_url == '' or image_url == 'null':
+                data[field_name] = None
+                continue
+            
+            # If it's already an absolute URL, normalize it
+            if isinstance(image_url, str) and (image_url.startswith('http://') or image_url.startswith('https://')):
+                # Already absolute, just normalize /api/admin/media to /media
+                data[field_name] = image_url.replace('/api/admin/media', '/media')
+                continue
+            
+            # If it's a relative path, make it absolute
+            if isinstance(image_url, str) and image_url.strip():
+                if request:
+                    # Use request to build absolute URL
+                    # image_url is relative path like '/media/blog/images/...'
+                    absolute_url = request.build_absolute_uri(image_url)
+                    data[field_name] = absolute_url
+                else:
+                    # Fallback: prepend default backend URL if no request context
+                    from django.conf import settings
+                    base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+                    # Ensure image_url starts with / for proper URL construction
+                    if not image_url.startswith('/'):
+                        image_url = '/' + image_url
+                    data[field_name] = f"{base_url}{image_url}"
+            else:
+                data[field_name] = None
+        
+        return data
+    
+    def to_internal_value(self, data):
+        """Handle empty strings for ImageFields before validation"""
+        # Make a mutable copy
+        if isinstance(data, dict):
+            data = data.copy()
+            
+            # Convert empty strings to None for ImageFields
+            for field_name in ['featured_image', 'og_image']:
+                if field_name in data:
+                    value = data[field_name]
+                    # Convert empty strings to None
+                    if isinstance(value, str) and value.strip() == '':
+                        data[field_name] = None
+                    # URL strings are handled in the view, not here
+        
+        return super().to_internal_value(data)
 
 # ========== System Serializers ==========
 class SystemLogSerializer(serializers.ModelSerializer):

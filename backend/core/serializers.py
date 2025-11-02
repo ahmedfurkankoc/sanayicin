@@ -137,21 +137,30 @@ class VehicleSerializer(serializers.ModelSerializer):
 class PublicBlogPostListSerializer(serializers.ModelSerializer):
     cover_image = serializers.SerializerMethodField()
     category_name = serializers.SerializerMethodField()
+    author_name = serializers.SerializerMethodField()
 
     class Meta:
         model = BlogPost
         fields = (
-            'id', 'title', 'slug', 'excerpt', 'cover_image', 'category_name', 'category_slug', 'published_at'
+            'id', 'title', 'slug', 'excerpt', 'cover_image', 'category_name', 'category_slug', 'author_name', 'published_at'
         )
+    
+    def get_author_name(self, obj):
+        """Her zaman 'Sanayicin' döndür"""
+        return 'Sanayicin'
 
     def get_cover_image(self, obj):
+        """Sadece featured_image varsa döndür, content'teki görseli kullanma"""
         try:
+            # Sadece featured_image'ı kontrol et
             if obj.featured_image:
                 request = self.context.get('request')
                 url = obj.featured_image.url
                 return request.build_absolute_uri(url) if request else url
         except Exception:
             pass
+        
+        # featured_image yoksa None döndür (content'teki görseli kullanma)
         return None
 
     def get_category_name(self, obj):
