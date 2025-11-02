@@ -29,6 +29,7 @@ interface BlogPost {
   canonical_url: string
   og_title: string
   og_description: string
+  og_image?: string
   featured_image?: string
   featured_image_alt?: string
 }
@@ -57,6 +58,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     canonical_url: '',
     og_title: '',
     og_description: '',
+    og_image: '',
   })
 
   // const [previewMode] = useState(false) // Kullanılmıyor
@@ -163,6 +165,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         canonical_url: data.canonical_url || '',
         og_title: data.og_title || '',
         og_description: data.og_description || '',
+        og_image: data.og_image || '',
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
@@ -204,61 +207,32 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
 
   const handleContentChange = (content: string) => {
     const plain = content.replace(/<[^>]*>/g, '')
-    setFormData(prev => ({
-      ...prev,
-      content,
-      excerpt: autoFill.excerpt ? plain.slice(0, 500) : prev.excerpt,
-      meta_description: autoFill.metaDescription ? plain.slice(0, 160) : prev.meta_description,
-      og_description: autoFill.ogDescription ? plain.slice(0, 200) : prev.og_description,
-    }))
+    
+    // Content içindeki ilk resmi bul
+    const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i)
+    const firstImageUrl = imgMatch ? imgMatch[1] : null
+    
+    setFormData(prev => {
+      // Eğer featured_image boşsa ve content'te resim varsa, ilk resmi featured_image yap
+      const shouldSetFeatured = !prev.featured_image && firstImageUrl
+      const normalizedImageUrl = firstImageUrl 
+        ? firstImageUrl.replace(/^https?:\/\/[^\s"']+\/api\/admin\/media/gi, '/media')
+                        .replace(/^https?:\/\/[^\s"']+\/media/gi, '/media')
+                        .replace(/^\/api\/admin\/media/gi, '/media')
+        : null
+      
+      return {
+        ...prev,
+        content,
+        excerpt: autoFill.excerpt ? plain.slice(0, 500) : prev.excerpt,
+        meta_description: autoFill.metaDescription ? plain.slice(0, 160) : prev.meta_description,
+        og_description: autoFill.ogDescription ? plain.slice(0, 200) : prev.og_description,
+        featured_image: shouldSetFeatured && normalizedImageUrl ? normalizedImageUrl : prev.featured_image,
+      }
+    })
   }
 
-  // const suggestedCategories: Array<{ name: string; slug: string }> = [
-  //   { name: 'Oto Bakım ve Servis', slug: apiGenerateSlug('Oto Bakım ve Servis') },
-  //   { name: 'Periyodik Bakım', slug: apiGenerateSlug('Periyodik Bakım') },
-  //   { name: 'Yağ Değişimi', slug: apiGenerateSlug('Yağ Değişimi') },
-  //   { name: 'Fren ve Balata', slug: apiGenerateSlug('Fren ve Balata') },
-  //   { name: 'Lastik ve Jant', slug: apiGenerateSlug('Lastik ve Jant') },
-  //   { name: 'Rot Balans', slug: apiGenerateSlug('Rot Balans') },
-  //   { name: 'Elektrik ve Elektronik', slug: apiGenerateSlug('Elektrik ve Elektronik') },
-  //   { name: 'Diagnostik Arıza Tespiti', slug: apiGenerateSlug('Diagnostik Arıza Tespiti') },
-  //   { name: 'Kaporta ve Boya', slug: apiGenerateSlug('Kaporta ve Boya') },
-  //   { name: 'Klima Bakımı', slug: apiGenerateSlug('Klima Bakımı') },
-  //   { name: 'Motor Mekanik', slug: apiGenerateSlug('Motor Mekanik') },
-  //   { name: 'Şanzıman ve Debriyaj', slug: apiGenerateSlug('Şanzıman ve Debriyaj') },
-  //   { name: 'Akü ve Şarj', slug: apiGenerateSlug('Akü ve Şarj') },
-  //   { name: 'Egzoz Sistemleri', slug: apiGenerateSlug('Egzoz Sistemleri') },
-  //   { name: 'Detaylı Temizlik ve Detailing', slug: apiGenerateSlug('Detaylı Temizlik ve Detailing') },
-  //   { name: 'Yol Yardım', slug: apiGenerateSlug('Yol Yardım') },
-  //   { name: 'Yedek Parça', slug: apiGenerateSlug('Yedek Parça') },
-  //   { name: 'Muayene Hazırlık', slug: apiGenerateSlug('Muayene Hazırlık') },
-  //   { name: 'Chip Tuning ve Yazılım', slug: apiGenerateSlug('Chip Tuning ve Yazılım') },
-  //   { name: 'Aksesuar ve Modifiye', slug: apiGenerateSlug('Aksesuar ve Modifiye') },
-  // ] // Kullanılmıyor
-
-  // const createSelectedCategories = async () => {
-  //   const toCreate = suggestedCategories.filter(c => selectedCategorySlugs[c.slug])
-  //   if (toCreate.length === 0) return
-  //   setCreatingCategories(true)
-  //   setError(null)
-  //   try {
-  //     for (const c of toCreate) {
-  //       await fetch('/api/admin/blog-categories/', {
-  //         method: 'POST',
-  //         credentials: 'include',
-  //         headers: { 'Content-Type': 'application/json' },
-  //         body: JSON.stringify({ name: c.name, slug: c.slug })
-  //       })
-  //     }
-  //     await fetchCategories()
-  //     setShowCategoryManager(false)
-  //     setSelectedCategorySlugs({})
-  //   } catch (e) {
-  //     setError(e instanceof Error ? e.message : 'Kategoriler oluşturulamadı')
-  //   } finally {
-  //     setCreatingCategories(false)
-  //   }
-  // } // Kullanılmıyor
+  
 
   const handleSave = async (status: 'draft' | 'published') => {
     setSaving(true)
@@ -739,7 +713,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                       if (!imageFile) return
                       const url = await handleImageUpload(imageFile)
                       if (!url || !quillInstanceRef.current) { setShowImageModal(false); resetImageModal(); return }
-                      const quill = quillInstanceRef.current as { getSelection: (focus?: boolean) => { index: number } | null; clipboard: { dangerouslyPasteHTML: (index: number, html: string, source?: string) => void }; setSelection: (index: number) => void }
+                      const quill = quillInstanceRef.current as { getSelection: (focus?: boolean) => { index: number } | null; clipboard: { dangerouslyPasteHTML: (index: number, html: string, source?: string) => void }; setSelection: (index: number) => void; root: { innerHTML: string } }
                       const range = quill.getSelection(true)
                       const safeAlt = (imageAlt || '').replace(/\"/g, '&quot;')
                       const relativeSrc = url.replace('/api/admin/media', '/media').replace(/^https?:\/\/[^\s"']+\/media/i, '/media')
@@ -747,6 +721,11 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                       const html = `<img src=\"${displaySrc}\" alt=\"${safeAlt}\" />`
                       quill.clipboard.dangerouslyPasteHTML(range?.index || 0, html, 'user')
                       quill.setSelection(((range?.index || 0) + 1))
+                      
+                      // İçeriği güncelle ki handleContentChange tetiklensin ve featured_image ayarlansın
+                      const updatedContent = quill.root.innerHTML
+                      handleContentChange(updatedContent)
+                      
                       setShowImageModal(false)
                       resetImageModal()
                     }}
@@ -1090,6 +1069,58 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                 <p className="text-xs text-gray-500 mt-1">
                   {formData.og_description.length}/200 karakter
                 </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  OG Görsel
+                </label>
+                <div className="space-y-3">
+                  {formData.og_image ? (
+                    <div className="relative">
+                      <Image 
+                        src={resolveMediaUrl(formData.og_image)} 
+                        alt={formData.title || 'OG görseli'} 
+                        width={400} 
+                        height={210} 
+                        className="w-full h-40 object-cover rounded-lg border" 
+                      />
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                          onClick={() => setFormData(prev => ({ ...prev, og_image: '' }))}
+                        >
+                          Kaldır
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="inline-flex items-center">
+                        <span className="sr-only">OG görseli seç</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            const url = await handleImageUpload(file)
+                            if (url) setFormData(prev => ({ ...prev, og_image: url }))
+                          }}
+                          className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                          aria-label="OG görseli seç"
+                        />
+                      </label>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Öneri: 1200x630px, JPG/WEBP (sosyal medya paylaşımları için)
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Boş bırakılırsa kapak görseli kullanılır
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

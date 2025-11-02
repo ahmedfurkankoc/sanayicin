@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, Edit, Trash2, Eye } from 'lucide-react'
 // import { useAuth } from '../../contexts/AuthContext' // Kullanılmıyor
 import Pagination from '../../components/Pagination'
-import { listBlogPosts, deleteBlogPost, listBlogCategories, createBlogCategory, updateBlogCategory, deleteBlogCategory } from '../../api/admin'
+import { listBlogPosts, deleteBlogPost, listBlogCategories, createBlogCategory, updateBlogCategory, deleteBlogCategory, generateSlug as apiGenerateSlug } from '../../api/admin'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 interface BlogPost {
@@ -40,6 +40,7 @@ export default function BlogManagement() {
   const [categories, setCategories] = useState<Array<{ id: number; name: string; slug: string }>>([])
   const [catName, setCatName] = useState('')
   const [catSlug, setCatSlug] = useState('')
+  const [catAutoSlug, setCatAutoSlug] = useState(true) // Slug otomatik oluşturma flag'i
   const [catLoading, setCatLoading] = useState(false)
   const [showCatModal, setShowCatModal] = useState(false)
   const [editingCatId, setEditingCatId] = useState<number | null>(null)
@@ -86,10 +87,13 @@ export default function BlogManagement() {
     if (!catName.trim()) return
     setCatLoading(true)
     try {
-      const created = await createBlogCategory({ name: catName, slug: catSlug || undefined })
+      // Eğer autoSlug aktifse ve slug boşsa veya autoSlug değişmediyse, otomatik oluştur
+      const finalSlug = catAutoSlug ? apiGenerateSlug(catName) : (catSlug || apiGenerateSlug(catName))
+      const created = await createBlogCategory({ name: catName, slug: finalSlug })
       setCategories(prev => [...prev, created])
       setCatName('')
       setCatSlug('')
+      setCatAutoSlug(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Kategori eklenemedi')
     } finally {
@@ -433,26 +437,51 @@ export default function BlogManagement() {
                 <input
                   type="text"
                   value={catName}
-                  onChange={(e) => setCatName(e.target.value)}
+                  onChange={(e) => {
+                    const name = e.target.value
+                    setCatName(name)
+                    // Eğer otomatik slug aktifse, slug'ı güncelle
+                    if (catAutoSlug) {
+                      setCatSlug(apiGenerateSlug(name))
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Örn: Oto Bakım ve Servis"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Slug (opsiyonel)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Slug {catAutoSlug && <span className="text-xs text-gray-500 font-normal">(otomatik)</span>}
+                </label>
                 <input
                   type="text"
                   value={catSlug}
-                  onChange={(e) => setCatSlug(e.target.value)}
+                  onChange={(e) => {
+                    setCatSlug(e.target.value)
+                    // Manuel değişiklik yapıldığında otomatik modu kapat
+                    if (catAutoSlug) {
+                      setCatAutoSlug(false)
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="oto-bakim-ve-servis"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  {catAutoSlug 
+                    ? 'Slug otomatik olarak kategori adından oluşturuluyor' 
+                    : 'Slug manuel olarak düzenleniyor'}
+                </p>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setShowCatModal(false)}
+                onClick={() => {
+                  setShowCatModal(false)
+                  setCatName('')
+                  setCatSlug('')
+                  setCatAutoSlug(true)
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
               >
                 İptal
@@ -460,7 +489,13 @@ export default function BlogManagement() {
               <button
                 type="button"
                 disabled={catLoading || !catName.trim()}
-                onClick={async () => { await handleCreateCategory(); setShowCatModal(false) }}
+                onClick={async () => { 
+                  await handleCreateCategory()
+                  setShowCatModal(false)
+                  setCatName('')
+                  setCatSlug('')
+                  setCatAutoSlug(true)
+                }}
                 className="px-4 py-2 bg-[color:var(--yellow)] text-[color:var(--black)] rounded-lg hover:brightness-95 disabled:opacity-50"
               >
                 {catLoading ? 'Ekleniyor...' : 'Ekle'}
