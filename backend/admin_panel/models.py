@@ -8,12 +8,11 @@ from io import BytesIO
 from PIL import Image
 import re
 from django.core.validators import FileExtensionValidator
-from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
+from core.models import  ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
 import uuid
 
 User = get_user_model()
 
-# Admin Panel dedicated user model (separate from CustomUser)
 class AdminUser(models.Model):
     ROLE_CHOICES = [
         ('admin', 'Admin'),
@@ -173,18 +172,20 @@ class BlogPost(models.Model):
         blank=True,
         verbose_name="Kategori"
     )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name="Yazar"
+    author_admin = models.ForeignKey(
+        AdminUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Yazar (Admin)"
     )
-    created_by = models.ForeignKey(
-        User,
+    created_by_admin = models.ForeignKey(
+        AdminUser,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='blog_posts_created',
-        verbose_name="Oluşturan"
+        verbose_name="Oluşturan (Admin)"
     )
     status = models.CharField(
         max_length=20,
