@@ -106,6 +106,12 @@ export default function EsnafGirisPage() {
     <>
     <AuthHeader currentPage="login" />
     <section className="register-section">
+      {/* Mobile title */}
+      <div className="mobile-only">
+        <div className="container">
+          <h1 className="register-mobile-title">Sanayicin Esnaf Paneline Giriş Yapın</h1>
+        </div>
+      </div>
       {/* Ana Container */}
       <div className="register-wrapper">
         {/* Vektörel Karakter - Kartın Sağ Üstünde */}
