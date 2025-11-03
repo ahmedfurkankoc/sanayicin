@@ -29,7 +29,19 @@ export default function AuthHeader({ currentPage, segment = 'esnaf', theme }: Au
       </div>
       
       {/* Giriş/Kayıt Butonları */}
-      <div className="auth-buttons">
+      <div className="auth-buttons" style={{ display: 'flex', gap: 8 }}>
+        <button 
+          onClick={() => router.push('/yardim/kullanici')}
+          className="auth-btn auth-btn-register-alt"
+        >
+          Nasıl Çalışır
+        </button>
+        <button 
+          onClick={() => router.push('/yardim')}
+          className="auth-btn auth-btn-register-alt"
+        >
+          Yardım
+        </button>
         {currentPage === 'login' ? (
           <button 
             onClick={() => router.push(`${basePath}/kayit`)}

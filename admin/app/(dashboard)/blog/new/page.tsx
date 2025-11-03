@@ -98,7 +98,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     }
     
     // Remove /api/admin/media prefix if exists
-    let normalized = urlStr.replace(/^\/api\/admin\/media/, '/media')
+    const normalized = urlStr.replace(/^\/api\/admin\/media/, '/media')
     
     // If starts with /media, make absolute
     if (normalized.startsWith('/media')) {
@@ -278,13 +278,14 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     
     try {
       // Remove featured_image_alt as it's not in the backend model
-      const { featured_image_alt, ...formDataWithoutAlt } = formData
+      const { featured_image_alt: _omitFeaturedAlt, ...formDataWithoutAlt } = formData
+      void _omitFeaturedAlt
       
       // Prepare payload - don't send featured_image if it's a URL string
       // Backend can't accept URL strings for ImageField, only file uploads
       // If featured_image is a URL string, only send it if we're creating a new post
       // For updates, URL strings are ignored (existing file is kept)
-      const payload: any = { 
+      const payload: Record<string, unknown> = { 
         ...formDataWithoutAlt, 
         status, 
         content: normalizeContentHtml(formData.content) 
@@ -296,8 +297,8 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         og_image: payload.og_image,
         featured_image_type: typeof payload.featured_image,
         og_image_type: typeof payload.og_image,
-        featured_image_length: payload.featured_image ? payload.featured_image.length : 0,
-        og_image_length: payload.og_image ? payload.og_image.length : 0,
+        featured_image_length: typeof payload.featured_image === 'string' ? payload.featured_image.length : 0,
+        og_image_length: typeof payload.og_image === 'string' ? payload.og_image.length : 0,
         isEdit,
         status
       })
@@ -329,16 +330,18 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         // Show success message
         alert(status === 'published' ? 'Blog yazısı yayınlandı!' : 'Taslak kaydedildi!')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Show validation errors from backend
-      if (err?.response?.data) {
-        const errors = err.response.data
+      type ApiError = { response?: { data?: Record<string, unknown> } }
+      const apiErr = err as ApiError
+      if (apiErr.response?.data) {
+        const errors = apiErr.response.data as Record<string, unknown>
         const errorMessages = Object.entries(errors)
-          .map(([field, messages]: [string, any]) => {
+          .map(([field, messages]: [string, unknown]) => {
             if (Array.isArray(messages)) {
               return `${field}: ${messages.join(', ')}`
             }
-            return `${field}: ${messages}`
+            return `${field}: ${String(messages)}`
           })
           .join('\n')
         setError(errorMessages || 'Validation hatası')
@@ -960,7 +963,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                     const imageUrl = resolveMediaUrl(formData.featured_image)
                     console.log('Featured image render - original:', formData.featured_image, 'resolved:', imageUrl)
                     if (!imageUrl || imageUrl === '' || imageUrl.trim() === '') {
-                      return <div className="text-sm text-red-500 p-2 bg-red-50 rounded">Görsel URL'i geçersiz: {formData.featured_image}</div>
+                      return <div className="text-sm text-red-500 p-2 bg-red-50 rounded">Görsel URL&#39;i geçersiz: {formData.featured_image}</div>
                     }
                     return (
                       <img 
@@ -1256,7 +1259,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                         const imageUrl = resolveMediaUrl(formData.og_image)
                         console.log('OG image URL:', formData.og_image, '->', imageUrl)
                         if (!imageUrl || imageUrl === '') {
-                          return <div className="text-sm text-gray-500">Görsel URL'i boş</div>
+                          return <div className="text-sm text-gray-500">Görsel URL&#39;i boş</div>
                         }
                         return (
                           <img 
