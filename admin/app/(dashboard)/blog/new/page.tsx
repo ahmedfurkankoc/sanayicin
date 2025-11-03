@@ -217,6 +217,13 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         og_description: data.og_description || '',
         og_image: ogImage,
       })
+      // If editing an existing post with explicit SEO fields, stop auto-filling them from content
+      setAutoFill(prev => ({
+        ...prev,
+        excerpt: !(data.excerpt && data.excerpt.trim() !== ''),
+        metaDescription: !(data.meta_description && data.meta_description.trim() !== ''),
+        ogDescription: !(data.og_description && data.og_description.trim() !== ''),
+      }))
       
       console.log('FormData after set:', { featured_image: featuredImage, og_image: ogImage })
     } catch (err) {
