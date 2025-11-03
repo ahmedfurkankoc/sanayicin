@@ -157,13 +157,18 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     setImagePreview(null)
   }
 
-  const getAutoCanonical = (slug: string) => {
-    try {
-      const base = typeof window !== 'undefined' ? window.location.origin : 'https://sanayicin.com'
-      return `${base}/blog/${slug}`
-    } catch {
-      return `https://sanayicin.com/blog/${slug}`
-    }
+  const getSelectedCategorySlug = (categoryId?: number) => {
+    if (!categoryId) return ''
+    const cat = categories.find(c => c.id === categoryId)
+    return cat?.slug || ''
+  }
+
+  const getAutoCanonical = (slug: string, categorySlug?: string) => {
+    const base = 'https://sanayicin.com'
+    const cat = (categorySlug || '').trim()
+    if (slug && cat) return `${base}/blog/${cat}/${slug}`
+    if (slug) return `${base}/blog/${slug}`
+    return `${base}/blog`
   }
 
   const fetchCategories = async () => {
@@ -240,14 +245,15 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
   const handleTitleChange = (title: string) => {
     setFormData(prev => {
       const nextSlug = autoFill.slug ? apiGenerateSlug(title) : (prev.slug || '')
-      const isCanonicalAuto = autoFill.canonical && (!prev.canonical_url || prev.canonical_url === getAutoCanonical(prev.slug))
+      const currentCatSlug = getSelectedCategorySlug(prev.category)
+      const isCanonicalAuto = autoFill.canonical && (!prev.canonical_url || prev.canonical_url === getAutoCanonical(prev.slug, currentCatSlug))
       return {
       ...prev,
       title,
         slug: nextSlug,
         meta_title: autoFill.metaTitle ? title.slice(0, 60) : prev.meta_title,
         og_title: autoFill.ogTitle ? title.slice(0, 100) : prev.og_title,
-        canonical_url: isCanonicalAuto && nextSlug ? getAutoCanonical(nextSlug) : prev.canonical_url,
+        canonical_url: isCanonicalAuto && nextSlug ? getAutoCanonical(nextSlug, currentCatSlug) : prev.canonical_url,
       }
     })
   }
@@ -642,19 +648,20 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                   value={formData.slug}
                   onChange={(e) => setFormData(prev => {
                     const newSlug = apiGenerateSlug(e.target.value)
-                    const isCanonicalAuto = autoFill.canonical && (!prev.canonical_url || prev.canonical_url === getAutoCanonical(prev.slug))
+                    const currentCatSlug = getSelectedCategorySlug(prev.category)
+                    const isCanonicalAuto = autoFill.canonical && (!prev.canonical_url || prev.canonical_url === getAutoCanonical(prev.slug, currentCatSlug))
                     if (autoFill.slug) setAutoFill(flags => ({ ...flags, slug: false }))
                     return {
                       ...prev,
                       slug: newSlug,
-                      canonical_url: isCanonicalAuto && newSlug ? getAutoCanonical(newSlug) : prev.canonical_url,
+                      canonical_url: isCanonicalAuto && newSlug ? getAutoCanonical(newSlug, currentCatSlug) : prev.canonical_url,
                     }
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="url-friendly-slug"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  URL: /blog/{formData.slug}
+                  URL: /blog/{getSelectedCategorySlug(formData.category) ? `${getSelectedCategorySlug(formData.category)}/` : ''}{formData.slug}
                 </p>
               </div>
               
@@ -1036,7 +1043,16 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                 </label>
                 <select
                   value={formData.category || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value ? Number(e.target.value) : undefined }))}
+                  onChange={(e) => setFormData(prev => {
+                    const nextCategory = e.target.value ? Number(e.target.value) : undefined
+                    const catSlug = getSelectedCategorySlug(nextCategory)
+                    const wasAutoCanonical = autoFill.canonical && (!!prev.slug) && (!prev.canonical_url || prev.canonical_url === getAutoCanonical(prev.slug, getSelectedCategorySlug(prev.category)))
+                    return {
+                      ...prev,
+                      category: nextCategory,
+                      canonical_url: wasAutoCanonical ? getAutoCanonical(prev.slug, catSlug) : prev.canonical_url,
+                    }
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Kategori Seçin</option>
