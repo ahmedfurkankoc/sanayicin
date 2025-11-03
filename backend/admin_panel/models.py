@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from io import BytesIO
+from PIL import Image
+import re
 from django.core.validators import FileExtensionValidator
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
 import uuid
@@ -220,6 +225,123 @@ class BlogPost(models.Model):
     def save(self, *args, **kwargs):
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
+
+        def _process_imagefield_to_1200x630(image_field: models.ImageField) -> None:
+            if not image_field:
+                return
+            try:
+                image_field.open('rb')
+                img = Image.open(image_field)
+                # Normalize mode
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'RGBA':
+                        background.paste(img, mask=img.split()[3])
+                    else:
+                        background.paste(img)
+                    img = background
+                elif img.mode != 'RGB':
+                    img = img.convert('RGB')
+
+                target_width, target_height = 1200, 630
+                target_aspect = target_width / target_height
+                original_width, original_height = img.size
+                original_aspect = (original_width / original_height) if original_height else target_aspect
+
+                # Skip if already exact size
+                if original_width == target_width and original_height == target_height:
+                    return
+
+                # Center-crop to target aspect
+                if original_aspect > target_aspect:
+                    # Wider: crop width
+                    new_width = int(original_height * target_aspect)
+                    left = (original_width - new_width) // 2
+                    img = img.crop((left, 0, left + new_width, original_height))
+                elif original_aspect < target_aspect:
+                    # Taller: crop height
+                    new_height = int(original_width / target_aspect)
+                    top = (original_height - new_height) // 2
+                    img = img.crop((0, top, original_width, top + new_height))
+
+                # Resize to 1200x630
+                img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+
+                buffer = BytesIO()
+                img.save(buffer, format='JPEG', quality=85, optimize=True)
+                buffer.seek(0)
+
+                # Overwrite the existing file path to keep references
+                image_field.save(image_field.name, ContentFile(buffer.read()), save=False)
+            except Exception:
+                # In case of any processing error, leave the original file intact
+                return
+
+        # Process cover and og images if present
+        if getattr(self, 'featured_image', None):
+            _process_imagefield_to_1200x630(self.featured_image)
+        if getattr(self, 'og_image', None):
+            _process_imagefield_to_1200x630(self.og_image)
+
+        # Process images inside HTML content (only media under blog/ paths)
+        if getattr(self, 'content', None):
+            try:
+                content_updated = False
+                # Find /media/... or /api/admin/media/... src values
+                paths = set()
+                for m in re.findall(r"src=[\"'](?:/api/admin)?/media/([^\"']+)[\"']", self.content or ''):
+                    # Only process blog-related uploads
+                    if m.startswith('blog/'):
+                        paths.add(m)
+
+                for rel_path in paths:
+                    try:
+                        # Normalize storage relative path
+                        storage_path = rel_path
+                        if default_storage.exists(storage_path):
+                            with default_storage.open(storage_path, 'rb') as f:
+                                img = Image.open(f)
+                                if img.mode in ('RGBA', 'LA', 'P'):
+                                    bg = Image.new('RGB', img.size, (255, 255, 255))
+                                    if img.mode == 'RGBA':
+                                        bg.paste(img, mask=img.split()[3])
+                                    else:
+                                        bg.paste(img)
+                                    img = bg
+                                elif img.mode != 'RGB':
+                                    img = img.convert('RGB')
+
+                                target_width, target_height = 1200, 630
+                                target_aspect = target_width / target_height
+                                w, h = img.size
+                                if not (w == target_width and h == target_height):
+                                    aspect = (w / h) if h else target_aspect
+                                    if aspect > target_aspect:
+                                        new_w = int(h * target_aspect)
+                                        left = (w - new_w) // 2
+                                        img = img.crop((left, 0, left + new_w, h))
+                                    elif aspect < target_aspect:
+                                        new_h = int(w / target_aspect)
+                                        top = (h - new_h) // 2
+                                        img = img.crop((0, top, w, top + new_h))
+                                    img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+
+                                    buf = BytesIO()
+                                    img.save(buf, format='JPEG', quality=85, optimize=True)
+                                    buf.seek(0)
+                                    # Overwrite existing file to keep URLs unchanged
+                                    default_storage.delete(storage_path)
+                                    default_storage.save(storage_path, ContentFile(buf.read()))
+                                    content_updated = True
+                    except Exception:
+                        continue
+
+                # If we changed any files, no need to alter HTML since paths are unchanged
+                if content_updated:
+                    pass
+            except Exception:
+                pass
+
         super().save(*args, **kwargs)
 
 class SystemLog(models.Model):
