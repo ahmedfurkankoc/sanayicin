@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -104,6 +104,20 @@ const steps = [
 
 export default function EsnafKayitPage() {
   const [step, setStep] = useState(1);
+  // Register card'a scroll etmek için ref
+  const registerCardRef = useRef<HTMLDivElement | null>(null);
+
+  // Adım değiştiğinde kartın tepesine yumuşak kaydır
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const el = registerCardRef.current;
+    if (!el) return;
+    try {
+      const headerOffset = 100; // sticky auth header (~86px) + biraz boşluk
+      const y = el.getBoundingClientRect().top + window.scrollY - headerOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    } catch {}
+  }, [step]);
   const [selectedType, setSelectedType] = useState("");
   const [serviceAreas, setServiceAreas] = useState<any[]>([]);
   const [selectedService, setSelectedService] = useState("");
@@ -626,6 +640,12 @@ export default function EsnafKayitPage() {
     <>
     <EsnafAuthHeader currentPage="register" />
     <section className="register-section">
+      {/* Mobile title */}
+      <div className="mobile-only">
+        <div className="container">
+          <h1 className="register-mobile-title">Sanayicin Esnaf Kaydınızı Hızlıca Oluşturun</h1>
+        </div>
+      </div>
       {/* Ana Container */}
       <div className="register-wrapper">
         {/* Vektörel Karakter - Kartın Sağ Üstünde */}
@@ -637,7 +657,7 @@ export default function EsnafKayitPage() {
         </div>
         
         {/* Kart */}
-        <div className="register-card">
+        <div className="register-card" ref={registerCardRef}>
           {/* Progress Indicator */}
           <div className="register-progress">
             {steps.map((stepItem, index) => (

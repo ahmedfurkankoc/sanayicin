@@ -1964,6 +1964,17 @@ footer {
     padding-left: 16px;
     padding-right: 16px;
   }
+  /* Register page mobile adjustments */
+  .register-section { padding-top: 0 !important; }
+  .register-mobile-title { 
+    font-size: 1.5rem; 
+    font-weight: 800; 
+    color: var(--black); 
+    margin: 12px auto; 
+    padding: 40px 0;
+    text-align: center;
+    width: 75%;
+  }
   .sanayicin-logo-section {
     justify-content: start;
     align-items: center;
@@ -6751,6 +6762,7 @@ footer {
 .auth-buttons {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .auth-btn {
@@ -6801,7 +6813,20 @@ footer {
     padding: 0 12px; /* Slightly tighter on very small screens */
   }
   .auth-logo img {
-    width: 140px;
+    width: 120px;
+  }
+  .auth-buttons {
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    max-width: 70vw;
+  }
+  .auth-buttons::-webkit-scrollbar { display: none; }
+  .auth-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 }
 
