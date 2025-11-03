@@ -225,19 +225,19 @@ export default function CategoryBlogDetailPage() {
 
         {/* Related Posts */}
         {relatedPosts.length > 0 && (
-          <aside className="blog-related-posts mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">İlgili Yazılar</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedPosts.map((related) => (
+          <aside className="blog-related-posts blog-detail-container mt-12">
+            <h2 className="related-title">İlgili Yazılar</h2>
+            <div className="grid related-grid">
+              {relatedPosts.slice(0, 4).map((related) => (
                 <article
                   key={related.id}
                   itemScope
                   itemType="https://schema.org/BlogPosting"
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                  className="related-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
                 >
                   <Link href={`/blog/${related.category_slug || 'genel'}/${related.slug}`}>
                     {related.cover_image && (
-                      <div className="relative h-40 w-full overflow-hidden">
+                      <div className="relative related-image h-40 w-full overflow-hidden">
                         <img
                           src={resolveMediaUrl(related.cover_image)}
                           alt={related.title}
@@ -247,17 +247,17 @@ export default function CategoryBlogDetailPage() {
                         />
                       </div>
                     )}
-                    <div className="p-4">
+                    <div className="related-body p-4">
                       {related.category_name && (
                         <span className="inline-block px-2 py-1 bg-[color:var(--yellow)] text-[color:var(--black)] rounded text-xs font-medium mb-2">
                           {related.category_name}
                         </span>
                       )}
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2" itemProp="headline">
+                      <h3 className="related-card-title text-lg font-semibold text-gray-900 mb-2 line-clamp-2" itemProp="headline">
                         {related.title}
                       </h3>
                       {related.excerpt && (
-                        <p className="text-sm text-gray-600 line-clamp-2 mb-2" itemProp="description">
+                        <p className="related-card-excerpt text-sm text-gray-600 line-clamp-2 mb-2" itemProp="description">
                           {related.excerpt}
                         </p>
                       )}
@@ -265,7 +265,7 @@ export default function CategoryBlogDetailPage() {
                         <time
                           itemProp="datePublished"
                           dateTime={related.published_at}
-                          className="text-xs text-gray-500"
+                          className="related-card-date text-xs text-gray-500"
                         >
                           {new Date(related.published_at).toLocaleDateString('tr-TR')}
                         </time>
