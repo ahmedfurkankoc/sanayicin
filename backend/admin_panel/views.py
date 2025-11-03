@@ -601,8 +601,8 @@ class BlogPostViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(
                 Q(title__icontains=search) |
                 Q(content__icontains=search) |
-                Q(author__first_name__icontains=search) |
-                Q(author__last_name__icontains=search)
+                Q(author_admin__first_name__icontains=search) |
+                Q(author_admin__last_name__icontains=search)
             )
         
         if status:
@@ -716,8 +716,8 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
-        # Save with created_by=request.user (admin who created it)
-        blog = serializer.save(created_by=request.user)
+        # Save with AdminUser relations
+        blog = serializer.save(created_by_admin=request.user, author_admin=request.user)
         
         # Activity log
         from .activity_logger import log_blog_activity

@@ -326,7 +326,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
       })
       
       if (!isEdit) {
-        router.push(`/admin/blog/${data.id}/edit`)
+        router.push(`/blog/${data.id}/edit`)
       } else {
         // Update formData with response data (especially for image URLs)
         setFormData(prev => ({
