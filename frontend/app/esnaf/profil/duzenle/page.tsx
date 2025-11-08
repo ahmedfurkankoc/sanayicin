@@ -9,6 +9,7 @@ import { api } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import LocationPicker from "@/app/components/LocationPicker";
+import { Check, ChevronDown, ChevronUp, Clock } from "lucide-react";
 
 
 export default function EsnafProfilDuzenlePage() {
@@ -25,6 +26,7 @@ export default function EsnafProfilDuzenlePage() {
   const [carBrandsDropdownOpen, setCarBrandsDropdownOpen] = useState(false);
   const [carBrandSearch, setCarBrandSearch] = useState("");
   const [location, setLocation] = useState<{ latitude?: number; longitude?: number }>({});
+  const [expandedServiceAreas, setExpandedServiceAreas] = useState<Set<number>>(new Set());
 
   // Turkey data (city/district/neighbourhood)
   const { cities, loadTurkeyData, getDistricts, getNeighbourhoods } = useTurkeyData();
@@ -44,9 +46,9 @@ export default function EsnafProfilDuzenlePage() {
         setServiceAreas(areasRes.data);
         setCategories(categoriesRes.data);
         setCarBrands(carBrandsRes.data);
-      } catch (error) {
-        console.error("Veri yüklenirken hata:", error);
-      } finally {
+        } catch (error) {
+          // Veri yükleme hatası, sessizce devam et
+        } finally {
         setDataLoading(false);
       }
     };
@@ -61,7 +63,7 @@ export default function EsnafProfilDuzenlePage() {
             longitude: response.data.longitude
           });
         } catch (error) {
-          console.log('Konum bilgisi bulunamadı:', error);
+          // Konum bilgisi bulunamadı, sessizce devam et
         }
       }
     };
@@ -194,7 +196,6 @@ export default function EsnafProfilDuzenlePage() {
           await refreshUser();
         }
       } catch (error: any) {
-        console.error('Avatar yükleme hatası:', error);
         toast.error('Avatar yüklenirken hata oluştu!');
       }
     }
@@ -233,27 +234,21 @@ export default function EsnafProfilDuzenlePage() {
       if (profile.service_areas && profile.service_areas.length > 0) {
         profile.service_areas.forEach((area: any) => {
           const areaId = typeof area === 'object' ? area.id : area;
-          formData.append("service_areas", areaId.toString());
+          formData.append("service_areas_ids", areaId.toString());
         });
       }
       
-      // Kategorileri gönder
-      console.log("Gönderilecek kategoriler:", profile.categories);
       if (profile.categories && profile.categories.length > 0) {
         profile.categories.forEach((category: any) => {
           const categoryId = typeof category === 'object' ? category.id : category;
           formData.append("categories_ids", categoryId.toString());
-          console.log("Kategori ID eklendi:", categoryId);
         });
       }
       
-      // Araba markalarını gönder
-      console.log("Gönderilecek araba markaları:", profile.car_brands);
       if (profile.car_brands && profile.car_brands.length > 0) {
         profile.car_brands.forEach((brand: any) => {
           const brandId = typeof brand === 'object' ? brand.id : brand;
           formData.append("car_brands_ids", brandId.toString());
-          console.log("Araba markası ID eklendi:", brandId);
         });
       }
       
@@ -278,7 +273,6 @@ export default function EsnafProfilDuzenlePage() {
             longitude: location.longitude
           });
         } catch (error) {
-          console.error('Konum güncellenirken hata:', error);
           toast.error('Konum güncellenirken hata oluştu!');
         }
       }
@@ -317,6 +311,17 @@ export default function EsnafProfilDuzenlePage() {
   const filteredCarBrands = carBrands.filter(brand => 
     brand.name.toLowerCase().includes(carBrandSearch.toLowerCase())
   );
+
+  const toggleServiceArea = (id: number) => {
+    setExpandedServiceAreas(prev => {
+      const newSet = new Set(prev);
+      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const getCategoriesByServiceArea = (serviceAreaId: number): any[] => 
+    categories.filter(cat => cat.service_area === serviceAreaId);
 
   // Dropdown dışına tıklandığında kapat
   useEffect(() => {
@@ -417,62 +422,202 @@ export default function EsnafProfilDuzenlePage() {
                 <h2 className="esnaf-section-title">Hizmet Bilgileri</h2>
                 
                 <div className="esnaf-form-group">
-                  <label>Hizmet Alanı</label>
-                  <select
-                    value={selectedServiceArea}
-                    onChange={(e) => setSelectedServiceArea(e.target.value)}
-                    className="esnaf-select"
-                    disabled
-                  >
-                    <option value="">Hizmet alanı seçin</option>
-                    {serviceAreas.map((area) => (
-                      <option key={area.id} value={area.id}>
-                        {area.name}
-                      </option>
-                    ))}
-                  </select>
-                  <small className="esnaf-help-text">
-                    Hizmet alanı kayıt sırasında belirlenir ve değiştirilemez.
-                  </small>
-                </div>
-
-                <div className="esnaf-form-group">
                   <label>Hizmet Kategorileri</label>
-                  <div className="esnaf-categories-grid">
-                    {availableCategories.map((category) => (
-                      <label key={category.id} className="esnaf-checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={profile.categories && profile.categories.some((cat: any) => {
-                            const catId = typeof cat === 'object' ? cat.id : cat;
-                            return catId === category.id;
-                          })}
-                          onChange={(e) => {
-                            const currentCategories = profile.categories || [];
-                            if (e.target.checked) {
-                              // Yeni kategori ekle
-                              const newCategories = [...currentCategories, category.id];
-                              handleInputChange("categories", newCategories);
-                            } else {
-                              // Kategoriyi çıkar
-                              const newCategories = currentCategories.filter((cat: any) => {
-                                const catId = typeof cat === 'object' ? cat.id : cat;
-                                return catId !== category.id;
-                              });
-                              handleInputChange("categories", newCategories);
-                            }
+                  <p style={{ 
+                    color: '#666', 
+                    fontSize: 14, 
+                    marginBottom: 16 
+                  }}>
+                    Hangi hizmet kategorilerinde hizmet veriyorsunuz? Hizmet alanına tıklayarak alt kategorileri görüntüleyin.
+                  </p>
+
+                  {/* Hizmet Alanları Accordion */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {serviceAreas.map((serviceArea) => {
+                      const isExpanded = expandedServiceAreas.has(serviceArea.id);
+                      const areaCategories = getCategoriesByServiceArea(serviceArea.id);
+                      // Seçili kategori sayısını hesapla
+                      const selectedCount = areaCategories.filter(category => {
+                        if (!profile.categories || !Array.isArray(profile.categories)) return false;
+                        return profile.categories.some((cat: any) => {
+                          const catId = typeof cat === 'object' && cat !== null ? cat.id : cat;
+                          return Number(catId) === Number(category.id);
+                        });
+                      }).length;
+
+                      return (
+                        <div
+                          key={serviceArea.id}
+                          style={{
+                            border: '1px solid #ddd',
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                            background: '#fff'
                           }}
-                          className="esnaf-checkbox"
-                        />
-                        {category.name}
-                      </label>
-                    ))}
+                        >
+                          {/* Hizmet Alanı Header */}
+                          <button
+                            type="button"
+                            onClick={() => toggleServiceArea(serviceArea.id)}
+                            style={{
+                              width: '100%',
+                              padding: '16px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              textAlign: 'left',
+                              transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#f9f9f9';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent';
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                              <div style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: 4,
+                                border: '2px solid #ddd',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                              }}>
+                                {isExpanded ? (
+                                  <ChevronUp size={16} color="#666" />
+                                ) : (
+                                  <ChevronDown size={16} color="#666" />
+                                )}
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ 
+                                  fontWeight: 600, 
+                                  color: '#111', 
+                                  fontSize: 14,
+                                  marginBottom: 2
+                                }}>
+                                  {serviceArea.name}
+                                </div>
+                                {serviceArea.description && (
+                                  <div style={{ 
+                                    color: '#666', 
+                                    fontSize: 12 
+                                  }}>
+                                    {serviceArea.description}
+                                  </div>
+                                )}
+                              </div>
+                              {selectedCount > 0 && (
+                                <div style={{
+                                  padding: '4px 12px',
+                                  background: 'var(--yellow)',
+                                  borderRadius: 12,
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  color: '#111'
+                                }}>
+                                  {selectedCount} seçili
+                                </div>
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Kategoriler (Expandable) */}
+                          {isExpanded && (
+                            <div style={{
+                              padding: '16px',
+                              borderTop: '1px solid #eee',
+                              background: '#fafafa'
+                            }}>
+                              {areaCategories.length > 0 ? (
+                                <div className="esnaf-categories-grid">
+                                  {areaCategories.map((category) => {
+                                    // Kategori seçili mi kontrol et
+                                    const isSelected = profile.categories && Array.isArray(profile.categories) && profile.categories.some((cat: any) => {
+                                      const catId = typeof cat === 'object' && cat !== null ? cat.id : cat;
+                                      return Number(catId) === Number(category.id);
+                                    });
+                                    
+                                    return (
+                                      <label key={category.id} className="esnaf-checkbox-label">
+                                        <input
+                                          type="checkbox"
+                                          checked={isSelected || false}
+                                          onChange={(e) => {
+                                            const currentCategories = profile.categories || [];
+                                            const currentServiceAreas = profile.service_areas || [];
+                                            
+                                            // Mevcut kategorileri ID array'ine normalize et
+                                            const normalizedCategories = currentCategories.map((cat: any) => {
+                                              return typeof cat === 'object' && cat !== null ? cat.id : cat;
+                                            });
+                                            
+                                            // Mevcut service areas'ı ID array'ine normalize et
+                                            const normalizedServiceAreas = currentServiceAreas.map((sa: any) => {
+                                              return typeof sa === 'object' && sa !== null ? sa.id : sa;
+                                            });
+                                            
+                                            if (e.target.checked) {
+                                              // Yeni kategori ekle (eğer yoksa)
+                                              if (!normalizedCategories.includes(category.id)) {
+                                                const newCategories = [...normalizedCategories, category.id];
+                                                handleInputChange("categories", newCategories);
+                                                
+                                                // Service area'yı da ekle (eğer yoksa)
+                                                const serviceAreaId = Number(category.service_area);
+                                                if (!normalizedServiceAreas.some((saId: any) => Number(saId) === serviceAreaId)) {
+                                                  const newServiceAreas = [...normalizedServiceAreas, serviceAreaId];
+                                                  handleInputChange("service_areas", newServiceAreas);
+                                                }
+                                              }
+                                            } else {
+                                              // Kategoriyi çıkar
+                                              const newCategories = normalizedCategories.filter((catId: any) => {
+                                                return Number(catId) !== Number(category.id);
+                                              });
+                                              handleInputChange("categories", newCategories);
+                                              
+                                              // Eğer bu service_area'ya ait başka seçili kategori yoksa service_area'yı da kaldır
+                                              const serviceAreaId = Number(category.service_area);
+                                              const hasOtherCategories = newCategories.some((catId: any) => {
+                                                const cat = categories.find(c => c.id === catId);
+                                                return cat && Number(cat.service_area) === serviceAreaId;
+                                              });
+                                              
+                                              if (!hasOtherCategories && normalizedServiceAreas.some((saId: any) => Number(saId) === serviceAreaId)) {
+                                                const newServiceAreas = normalizedServiceAreas.filter((saId: any) => Number(saId) !== serviceAreaId);
+                                                handleInputChange("service_areas", newServiceAreas);
+                                              }
+                                            }
+                                          }}
+                                          className="esnaf-checkbox"
+                                        />
+                                        {category.name}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div style={{ 
+                                  padding: 24, 
+                                  textAlign: 'center', 
+                                  color: '#999' 
+                                }}>
+                                  Bu hizmet alanı için kategori bulunmamaktadır.
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  {availableCategories.length === 0 && (
-                    <p className="esnaf-help-text">
-                      Önce hizmet alanı seçiniz.
-                    </p>
-                  )}
                 </div>
 
                 <div className="esnaf-form-group">
@@ -747,78 +892,100 @@ export default function EsnafProfilDuzenlePage() {
               <div className="esnaf-profile-section">
                 <h2 className="esnaf-section-title">Çalışma Saatleri</h2>
                 <p className="esnaf-help-text">
-                  Çalışma saatlerinizi belirleyin. Açık olmayan günler için checkbox'ı işaretlemeyin.
+                  Müşterilerin randevu alabilmesi için çalışma saatlerinizi belirleyin
                 </p>
                 
-                {Object.entries(profile.working_hours || {}).map(([day, hours]: [string, any]) => (
-                  <div key={day} className="esnaf-working-day">
-                    <div className="esnaf-day-header">
-                      <label className="esnaf-checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={!hours.closed}
-                          onChange={(e) => handleWorkingHoursChange(day, "closed", !e.target.checked)}
-                          className="esnaf-checkbox"
-                        />
-                        <span className="esnaf-day-label">
-                        {day === 'monday' && 'Pazartesi'}
-                        {day === 'tuesday' && 'Salı'}
-                        {day === 'wednesday' && 'Çarşamba'}
-                        {day === 'thursday' && 'Perşembe'}
-                        {day === 'friday' && 'Cuma'}
-                        {day === 'saturday' && 'Cumartesi'}
-                        {day === 'sunday' && 'Pazar'}
-                        </span>
-                      </label>
-                    </div>
-                    
-                    {!hours.closed && (
-                      <div className="esnaf-time-inputs">
-                        <label className="esnaf-time-label">Açılış:</label>
-                        <select
-                          className="esnaf-select"
-                          value={(hours.open || "09:00").split(":")[0]}
-                          onChange={(e) => handleWorkingHoursChange(day, "open", `${e.target.value}:00`)}
-                        >
-                          {Array.from({ length: 24 }).map((_, h) => (
-                            <option key={`open-${h}`} value={String(h).padStart(2, '0')}>
-                              {String(h).padStart(2, '0')}:00
-                            </option>
-                          ))}
-                        </select>
-                        <label className="esnaf-time-label">Kapanış:</label>
-                        <select
-                          className="esnaf-select"
-                          value={(hours.close || "18:00").split(":")[0]}
-                          onChange={(e) => handleWorkingHoursChange(day, "close", `${e.target.value}:00`)}
-                        >
-                          {Array.from({ length: 24 }).map((_, h) => (
-                            <option key={`close-${h}`} value={String(h).padStart(2, '0')}>
-                              {String(h).padStart(2, '0')}:00
-                            </option>
-                          ))}
-                        </select>
+                <div className="esnaf-working-hours-grid">
+                  {Object.entries(profile.working_hours || {}).map(([day, hours]: [string, any]) => {
+                    const dayNames: { [key: string]: string } = {
+                      monday: 'Pazartesi',
+                      tuesday: 'Salı',
+                      wednesday: 'Çarşamba',
+                      thursday: 'Perşembe',
+                      friday: 'Cuma',
+                      saturday: 'Cumartesi',
+                      sunday: 'Pazar'
+                    };
+                    const dayName = dayNames[day] || day;
+                    const isClosed = hours.closed;
+
+                    return (
+                      <div key={day} className={`esnaf-working-day-card ${isClosed ? 'closed' : ''}`}>
+                        <div className="esnaf-working-day-header">
+                          <div className="esnaf-working-day-name">
+                            <Clock size={18} />
+                            <span>{dayName}</span>
+                          </div>
+                          <label className="esnaf-toggle-switch">
+                            <input
+                              type="checkbox"
+                              checked={!isClosed}
+                              onChange={(e) => handleWorkingHoursChange(day, "closed", !e.target.checked)}
+                            />
+                            <span className="esnaf-toggle-slider"></span>
+                          </label>
+                        </div>
+
+                        {!isClosed && (
+                          <div className="esnaf-working-day-times">
+                            <div className="esnaf-time-selector">
+                              <label>Açılış</label>
+                              <select
+                                value={(hours.open || "09:00").split(":")[0]}
+                                onChange={(e) => handleWorkingHoursChange(day, "open", `${e.target.value.padStart(2, '0')}:00`)}
+                                className="esnaf-time-select"
+                              >
+                                {Array.from({ length: 24 }).map((_, h) => (
+                                  <option key={h} value={String(h).padStart(2, '0')}>
+                                    {String(h).padStart(2, '0')}:00
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="esnaf-time-separator">-</div>
+                            <div className="esnaf-time-selector">
+                              <label>Kapanış</label>
+                              <select
+                                value={(hours.close || "18:00").split(":")[0]}
+                                onChange={(e) => handleWorkingHoursChange(day, "close", `${e.target.value.padStart(2, '0')}:00`)}
+                                className="esnaf-time-select"
+                              >
+                                {Array.from({ length: 24 }).map((_, h) => (
+                                  <option key={h} value={String(h).padStart(2, '0')}>
+                                    {String(h).padStart(2, '0')}:00
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
+
+                        {isClosed && (
+                          <div className="esnaf-working-day-closed">
+                            <span>Kapalı</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Kaydet Butonu */}
               <div className="esnaf-form-actions">
                 <button
-                  type="submit"
-                  disabled={saving}
-                  className="esnaf-save-btn"
-                >
-                  {saving ? "Kaydediliyor..." : "Profili Kaydet"}
-                </button>
-                <button
                   type="button"
                   onClick={() => router.push("/esnaf/profil")}
-                  className="esnaf-cancel-btn"
+                  className="esnaf-btn-secondary"
                 >
                   İptal
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="esnaf-btn-primary"
+                >
+                  {saving ? "Kaydediliyor..." : "Profili Kaydet"}
                 </button>
               </div>
             </form>

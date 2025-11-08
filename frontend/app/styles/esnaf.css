@@ -1756,94 +1756,417 @@
 
 
 
-.esnaf-working-day {
+/* ========== Çalışma Saatleri Sayfası - Modern Tasarım ========== */
+.esnaf-working-hours-section {
+  margin-bottom: 32px;
+}
+
+.esnaf-working-hours-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.esnaf-working-day-card {
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.esnaf-working-day-card:hover {
+  border-color: var(--yellow);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.esnaf-working-day-card.closed {
+  opacity: 0.6;
+  background: #f9fafb;
+}
+
+.esnaf-working-day-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  border: 1px solid #e9ecef;
+  margin-bottom: 16px;
 }
 
-.esnaf-day-header {
+.esnaf-working-day-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #111;
+}
+
+.esnaf-working-day-name svg {
+  color: var(--yellow);
+}
+
+/* Toggle Switch */
+.esnaf-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.esnaf-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.esnaf-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.esnaf-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.esnaf-toggle-switch input:checked + .esnaf-toggle-slider {
+  background-color: var(--yellow);
+}
+
+.esnaf-toggle-switch input:checked + .esnaf-toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.esnaf-working-day-times {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.esnaf-time-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
 }
 
-.esnaf-time-inputs {
+.esnaf-time-selector label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.esnaf-time-select {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.esnaf-time-select:hover {
+  border-color: var(--yellow);
+}
+
+.esnaf-time-select:focus {
+  outline: none;
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.esnaf-time-separator {
+  font-size: 18px;
+  font-weight: 600;
+  color: #999;
+  margin-top: 20px;
+}
+
+.esnaf-working-day-closed {
+  text-align: center;
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: 8px;
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Tatil Günleri Bölümü */
+.esnaf-unavailable-dates-section {
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.esnaf-section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.esnaf-section-header-icon {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.esnaf-time-input {
-  padding: 8px 12px;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  box-sizing: border-box;
-  max-width: 100%;
-  font-family: 'Courier New', monospace;
-}
-
-/* Force 24-hour format for time inputs */
-.esnaf-time-input::-webkit-datetime-edit-ampm-field {
-  display: none;
-}
-
-.esnaf-time-input::-webkit-datetime-edit-hour-field,
-.esnaf-time-input::-webkit-datetime-edit-minute-field {
-  font-family: 'Courier New', monospace;
-}
-
-.esnaf-form-actions {
-  display: flex;
-  gap: 1rem;
   justify-content: center;
-  margin-top: 2rem;
+  width: 40px;
+  height: 40px;
+  background: #fef2f2;
+  border-radius: 10px;
+  color: #dc2626;
+  flex-shrink: 0;
 }
 
-.esnaf-save-btn {
-  padding: 12px 32px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #1a1a1a;
+.esnaf-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 4px 0;
+}
+
+.esnaf-section-description {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.esnaf-unavailable-dates-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.esnaf-date-picker-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.esnaf-date-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.esnaf-date-input:hover {
+  border-color: var(--yellow);
+}
+
+.esnaf-date-input:focus {
+  outline: none;
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+}
+
+.esnaf-btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--yellow);
+  color: #111;
   border: none;
-  border-radius: 25px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.esnaf-save-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+.esnaf-btn-primary:hover:not(:disabled) {
+  background: #ffd700;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
 }
 
-.esnaf-save-btn:disabled {
+.esnaf-btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
-.esnaf-cancel-btn {
-  padding: 12px 32px;
-  background: #6c757d;
-  color: white;
+.esnaf-unavailable-dates-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.esnaf-unavailable-date-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.esnaf-unavailable-date-tag svg {
+  flex-shrink: 0;
+}
+
+.esnaf-unavailable-date-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
   border: none;
-  border-radius: 25px;
-  font-size: 1rem;
+  color: #dc2626;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.esnaf-unavailable-date-remove:hover {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.esnaf-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: #999;
+}
+
+.esnaf-empty-state svg {
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.esnaf-empty-state p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.esnaf-empty-state-hint {
+  font-size: 12px !important;
+  color: #bbb !important;
+}
+
+/* Bilgi Kutusu */
+.esnaf-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px;
+  background: #f0f9ff;
+  border: 2px solid #b3d9ff;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.esnaf-info-box svg {
+  flex-shrink: 0;
+  color: #0066cc;
+  margin-top: 2px;
+}
+
+.esnaf-info-box-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0066cc;
+  margin: 0 0 8px 0;
+}
+
+.esnaf-info-box-text {
+  font-size: 14px;
+  color: #0066cc;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Form Actions */
+.esnaf-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.esnaf-btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #fff;
+  color: #666;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.esnaf-cancel-btn:hover {
-  background: #5a6268;
-  transform: translateY(-2px);
+.esnaf-btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
 }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .esnaf-working-hours-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .esnaf-date-picker-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .esnaf-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .esnaf-btn-primary,
+  .esnaf-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 
 /* Responsive Profile Edit - Used in düzenle page */
 @media (max-width: 768px) {
@@ -1865,34 +2188,6 @@
     grid-template-columns: 1fr;
   }
   
-  .esnaf-working-day {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 0.75rem;
-  }
-  
-  .esnaf-time-inputs {
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-  }
-  
-  .esnaf-time-input {
-    width: 100%;
-    max-width: 200px;
-  }
-  
-  .esnaf-form-actions {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .esnaf-save-btn,
-  .esnaf-cancel-btn {
-    width: 100%;
-    padding: 14px 24px;
-  }
 }
 
 /* Ayarlar Sayfası Stilleri */
@@ -2041,20 +2336,7 @@
 }
 
 
-/* Çalışma saatleri için ek stiller */
-.esnaf-day-label {
-  font-weight: 500;
-  color: var(--black);
-  margin-left: 8px;
-}
-
-.esnaf-time-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--black);
-  min-width: 60px;
-}
-
+/* Çalışma saatleri için ek stiller - eski stiller kaldırıldı, modern stiller yukarıda tanımlı */
 .esnaf-help-text {
   color: #666;
   font-size: 14px;
@@ -2067,108 +2349,6 @@
   font-style: italic;
   text-align: center;
   padding: 20px;
-}
-
-.esnaf-time-inputs {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.esnaf-time-input {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  min-width: 100px;
-}
-
-/* Responsive çalışma saatleri */
-@media (max-width: 768px) {
-  .esnaf-working-day {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
-  }
-  
-  .esnaf-day-header {
-    min-width: auto;
-    width: 100%;
-  }
-  
-  .esnaf-time-inputs {
-    width: 100%;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  
-  .esnaf-time-label {
-    min-width: 50px;
-    font-size: 13px;
-  }
-  
-  .esnaf-time-input {
-    min-width: 80px;
-    flex: 1;
-  }
-  
-  .esnaf-day-label {
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .esnaf-working-day {
-    padding: 12px;
-  }
-  
-  .esnaf-time-inputs {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  
-
-  
-  .esnaf-time-label {
-    min-width: auto;
-    text-align: center;
-    margin-bottom: 4px;
-  }
-  
-  .esnaf-day-label {
-    font-size: 14px;
-  }
-  
-  .esnaf-help-text {
-    font-size: 13px;
-    margin-bottom: 12px;
-  }
-}
-
-@media (max-width: 360px) {
-  .esnaf-working-day {
-    padding: 10px;
-  }
-  
-  .esnaf-day-header {
-    margin-bottom: 8px;
-  }
-  
-  .esnaf-time-inputs {
-    gap: 6px;
-  }
-  
-  .esnaf-time-input {
-    padding: 6px 8px;
-    font-size: 13px;
-  }
-  
-  .esnaf-day-label {
-    font-size: 13px;
-  }
 }
 
 /* Email Verification Styles */

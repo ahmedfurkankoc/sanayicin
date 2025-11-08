@@ -215,6 +215,13 @@ class VendorProfileSerializer(serializers.ModelSerializer):
     service_areas = ServiceAreaDetailSerializer(many=True, read_only=True)
     categories = CategoryDetailSerializer(many=True, read_only=True)
     car_brands = CarBrandDetailSerializer(many=True, read_only=True)
+    service_areas_ids = serializers.PrimaryKeyRelatedField(
+        source='service_areas',
+        queryset=ServiceArea.objects.all(),
+        many=True,
+        required=False,
+        write_only=True
+    )
     categories_ids = serializers.PrimaryKeyRelatedField(
         source='categories',
         queryset=Category.objects.all(),
@@ -237,7 +244,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = VendorProfile
         fields = (
-            'id', 'slug', 'user', 'vendor_profile', 'business_type', 'service_areas', 'categories', 'categories_ids', 
+            'id', 'slug', 'user', 'vendor_profile', 'business_type', 'service_areas', 'service_areas_ids', 'categories', 'categories_ids', 
             'car_brands', 'car_brands_ids', 'company_title', 'tax_office', 'tax_no',
             'display_name', 'about', 'business_phone', 'city', 'district', 'subdistrict', 'address',
             'latitude', 'longitude',
