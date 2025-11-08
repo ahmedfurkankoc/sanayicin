@@ -30,12 +30,20 @@ export default async function Head({ params }: Params) {
   const excerpt = post?.excerpt || stripHtmlAndTruncate(post?.content || '', 160)
   const description = post?.meta_description || excerpt || 'Sanayicin, sanayiye ihtiyacınız olan her yerde!'
 
-  const cover = post?.og_image || post?.cover_image || ''
-  const imageUrl = cover
-    ? (typeof cover === 'string' && cover.startsWith('http')
-        ? cover
-        : `${mediaBaseUrl}${(cover || '').toString().startsWith('/') ? '' : '/'}${cover}`)
-    : `${siteUrl}/opengraph-image.jpg`
+  // Robust media URL resolver: accepts absolute URL, '/media/...' or storage path like 'blog/og/...'
+  const resolveOg = (val?: string | null): string | null => {
+    if (!val) return null
+    const v = String(val).trim()
+    if (!v) return null
+    if (v.startsWith('http://') || v.startsWith('https://')) return v
+    if (v.startsWith('/media/')) return `${mediaBaseUrl}${v}`
+    // storage relative path (e.g., 'blog/og/..' or 'media/...')
+    const rel = v.startsWith('media/') ? v.slice(5) : v
+    return `${mediaBaseUrl}/media/${rel}`
+  }
+
+  const preferred = resolveOg(post?.og_image) || resolveOg(post?.cover_image)
+  const imageUrl = preferred || `${siteUrl}/opengraph-image.jpg`
 
   const canonical = `${siteUrl}/blog/${post?.category_slug || params.category}/${params.slug}`
   const keywords: string | undefined = post?.meta_keywords

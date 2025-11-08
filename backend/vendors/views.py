@@ -237,6 +237,57 @@ class VendorDashboardSummaryView(APIView):
         ).count()
         favorites_total_all_time = favorites_qs.count()
 
+        # Build last 12 months series (oldest -> newest)
+        def month_series_counts():
+            series = {
+                'profile_views': [],
+                'calls': [],
+                'messages': [],
+                'appointments': [],
+                'favorites': [],
+            }
+            # Walk 11 months ago .. this month
+            for i in range(11, -1, -1):
+                ref = (month_start - timedelta(days=30*i))
+                start = ref.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                nxt = (start + timedelta(days=32)).replace(day=1)
+
+                # month_bucket string for models that store it
+                mb = start.strftime('%Y-%m')
+
+                # Views & calls via bucket field
+                pv = VendorView.objects.filter(vendor=vendor, month_bucket=mb).count()
+                cl = VendorCall.objects.filter(vendor=vendor, month_bucket=mb).count()
+
+                # messages in month
+                msg = Message.objects.filter(
+                    conversation_id__in=conv_ids,
+                    created_at__gte=start,
+                    created_at__lt=nxt
+                ).count()
+
+                # appointments scheduled in month
+                appt = vendor.appointments.filter(
+                    appointment_date__gte=start.date(),
+                    appointment_date__lt=nxt.date()
+                ).count()
+
+                # favorites created in month
+                fav = Favorite.objects.filter(
+                    vendor=vendor,
+                    created_at__gte=start,
+                    created_at__lt=nxt
+                ).count()
+
+                series['profile_views'].append(pv)
+                series['calls'].append(cl)
+                series['messages'].append(msg)
+                series['appointments'].append(appt)
+                series['favorites'].append(fav)
+            return series
+
+        monthly_series = month_series_counts()
+
         data = {
             "profile_views_month": profile_views_month,
             "calls_month": calls_month,
@@ -250,7 +301,8 @@ class VendorDashboardSummaryView(APIView):
             "favorites_month": favorites_month,
             "favorites_total": favorites_total_all_time,
             "reviews_total": reviews_month,
-            "average_rating": round(float(average_rating), 1)
+            "average_rating": round(float(average_rating), 1),
+            "monthly": monthly_series,
         }
         return Response(data)
 

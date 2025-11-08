@@ -32,6 +32,7 @@ interface BlogPost {
   og_image?: string
   featured_image?: string
   featured_image_alt?: string
+  og_alt?: string
 }
 
 export default function BlogEditor({ params }: { params: { id?: string } }) {
@@ -59,6 +60,8 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     og_title: '',
     og_description: '',
     og_image: '',
+    featured_image_alt: '',
+    og_alt: '',
   })
 
   // const [previewMode] = useState(false) // Kullanılmıyor
@@ -209,6 +212,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         category: data.category,
         is_featured: data.is_featured,
         featured_image: featuredImage,
+        featured_image_alt: data.featured_image_alt || (data.title ? `${data.title} | Kapak Görseli` : ''),
         meta_title: data.meta_title || '',
         meta_description: data.meta_description || '',
         meta_keywords: data.meta_keywords || '',
@@ -216,6 +220,7 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         og_title: data.og_title || '',
         og_description: data.og_description || '',
         og_image: ogImage,
+        og_alt: data.og_alt || (data.title ? `${data.title} | Open Graph Görseli` : ''),
       })
       // If editing an existing post with explicit SEO fields, stop auto-filling them from content
       setAutoFill(prev => ({
@@ -261,6 +266,9 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         meta_title: autoFill.metaTitle ? title.slice(0, 60) : prev.meta_title,
         og_title: autoFill.ogTitle ? title.slice(0, 100) : prev.og_title,
         canonical_url: isCanonicalAuto && nextSlug ? getAutoCanonical(nextSlug, currentCatSlug) : prev.canonical_url,
+        // alt metinleri başlıktan türet (boşsa)
+        featured_image_alt: (prev.featured_image_alt && prev.featured_image_alt.trim() !== '') ? prev.featured_image_alt : `${title} | Kapak Görseli`,
+        og_alt: (prev.og_alt && prev.og_alt.trim() !== '') ? prev.og_alt : `${title} | Open Graph Görseli`,
       }
     })
   }
@@ -284,16 +292,12 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
     setError(null)
     
     try {
-      // Remove featured_image_alt as it's not in the backend model
-      const { featured_image_alt: _omitFeaturedAlt, ...formDataWithoutAlt } = formData
-      void _omitFeaturedAlt
-      
       // Prepare payload - don't send featured_image if it's a URL string
       // Backend can't accept URL strings for ImageField, only file uploads
       // If featured_image is a URL string, only send it if we're creating a new post
       // For updates, URL strings are ignored (existing file is kept)
       const payload: Record<string, unknown> = { 
-        ...formDataWithoutAlt, 
+        ...formData, 
         status, 
         content: normalizeContentHtml(formData.content) 
       }
@@ -1316,6 +1320,16 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                       </p>
                     </div>
                   )}
+                  <div className="mt-2">
+                    <label className="block text-xs text-gray-600 mb-1">OG Alt Metin</label>
+                    <input
+                      type="text"
+                      value={formData.og_alt || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, og_alt: e.target.value }))}
+                      placeholder="OG görsel alternatif metni"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

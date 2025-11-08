@@ -11,6 +11,7 @@ export default function AboutPage() {
         description="Sanayicin olarak misyonumuz ve vizyonumuz hakkında bilgi edinin."
         backgroundColor="var(--black)"
         textColor="var(--white)"
+        backgroundImageUrl="/images/banner/hakkimizda.jpg"
       />
       <section className="about-section" style={{backgroundColor: 'var(--white)'}}>
         <div className="container">

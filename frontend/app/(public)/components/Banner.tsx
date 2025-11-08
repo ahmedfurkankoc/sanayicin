@@ -7,6 +7,8 @@ interface BannerProps {
   textColor?: string;
   className?: string;
   breadcrumb?: React.ReactNode;
+  backgroundImageUrl?: string;
+  backgroundOverlayOpacity?: number; // 0.0 - 1.0
 }
 
 const Banner = ({
@@ -16,14 +18,28 @@ const Banner = ({
   textColor = "var(--black)", // Default yazı rengi
   className = "",
   breadcrumb,
+  backgroundImageUrl,
+  backgroundOverlayOpacity = 0.5,
 }: BannerProps) => {
+  const overlay = `rgba(0,0,0,${backgroundOverlayOpacity})`;
   return (
     <section
       className={`hero-section ${className}`}
-      style={{
-        backgroundColor,
-        color: textColor,
-      }}
+      style={
+        backgroundImageUrl
+          ? {
+              backgroundColor,
+              color: textColor,
+              backgroundImage: `linear-gradient(${overlay}, ${overlay}), url(${backgroundImageUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }
+          : {
+              backgroundColor,
+              color: textColor,
+            }
+      }
     >
       <div className="container">
         <div className="hero-content">

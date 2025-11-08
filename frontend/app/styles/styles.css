@@ -716,6 +716,7 @@ section[aria-label="Notifications alt+T"] {
   flex-shrink: 0;
   overflow: hidden;
   margin-bottom: 10px;
+  position: relative;
 }
 
 .vendorAvatarImg {
@@ -724,6 +725,9 @@ section[aria-label="Notifications alt+T"] {
   object-fit: cover;
   border-radius: 50%;
   display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* Ensure avatar text inside vendorAvatar matches musteri avatar look */
@@ -732,6 +736,13 @@ section[aria-label="Notifications alt+T"] {
   font-weight: 600;
   color: var(--dark);
   text-shadow: none;
+  position: relative;
+  z-index: 1;
+}
+
+/* Hidden utility class */
+.hidden {
+  display: none !important;
 }
 .vendorInfo {
   text-align: center;
@@ -1195,6 +1206,31 @@ section[aria-label="Notifications alt+T"] {
 /* Service image responsive heights */
 @media (max-width: 768px) { .serviceImgContainer { height: 100px; } }
 @media (max-width: 480px) { .serviceImgContainer { height: 90px; } }
+
+/* Service Icon Badge (Hizmet Kartı İkon Rozeti) */
+.serviceIconBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--yellow);
+  color: var(--black);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+@media (max-width: 768px) {
+  .serviceIconBadge { width: 32px; height: 32px; top: 6px; right: 6px; }
+}
+
+@media (max-width: 480px) {
+  .serviceIconBadge { width: 30px; height: 30px; top: 6px; right: 6px; }
+}
 
 /* Vendor Rating Styles */
 .vendorRating {
@@ -5397,6 +5433,11 @@ footer {
 .help-card-title { font-weight: 800; font-size: 1.4rem; }
 .help-card-desc { color: #444; font-size: 1.05rem; line-height: 1.6; }
 
+.help-cta-section {
+  padding: 40px 0 70px 0;
+  background: #fafafa;
+}
+
 .help-cta { 
   background: var(--black); 
   color: var(--white); 
@@ -5406,6 +5447,7 @@ footer {
   display: flex; 
   align-items: flex-start; 
   gap: 16px;
+  border-radius: 16px;
 }
 .help-cta-icon { 
   color: var(--black); 
@@ -5422,8 +5464,18 @@ footer {
 .help-cta-content { 
   flex: 1; 
 }
-.help-cta h3 { margin: 0 0 6px 0; }
-.help-cta p { margin: 0; }
+.help-cta h3 { 
+  margin: 0 0 6px 0; 
+  font-size: 20px; 
+  font-weight: 800; 
+  color: var(--white); 
+}
+.help-cta p { 
+  margin: 0; 
+  font-size: 15px; 
+  color: rgba(255,255,255,0.9); 
+  line-height: 1.6; 
+}
 
 /* CTA Responsive */
 @media (max-width: 768px) {
@@ -5467,7 +5519,10 @@ footer {
 }
 
 /* FAQ Bölümü Stilleri */
-.help-faq-section { margin: 40px 0; }
+.help-faq-section { 
+  margin: 40px 0; 
+  padding: 24px 0 60px 0;
+}
 .faq-header { text-align: center; margin-bottom: 32px; margin-top: 96px;}
 .faq-main-title { 
   font-size: 2rem; 
@@ -6744,6 +6799,462 @@ footer {
   
   .faq-item-compact {
     padding: 12px 16px;
+  }
+}
+
+/* ========== Nasıl Çalışır Page Styles ========== */
+.nasil-calisir-page {
+  background: #fff;
+}
+
+/* How It Works Cards Section */
+.nasil-calisir-cards-section {
+  padding: 50px 0 70px 0;
+  background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow) 50%, #ffffff 50%);
+}
+
+.nasil-calisir-cards-container {
+  position: relative;
+}
+
+.nasil-calisir-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.nasil-calisir-card-wrapper {
+  position: relative;
+}
+
+.nasil-calisir-card-badge {
+  position: absolute;
+  left: 50%;
+  top: -28px;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  color: var(--yellow);
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  border: 4px solid var(--yellow);
+}
+
+.nasil-calisir-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.08);
+  padding: 16px;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+
+.nasil-calisir-card-img {
+  width: 100%;
+  height: 120px;
+  object-fit: contain;
+  display: block;
+  margin-top: 12px;
+}
+
+.nasil-calisir-card-content {
+  margin-top: auto;
+}
+
+.nasil-calisir-card-title {
+  text-align: center;
+  margin: 12px 0 6px 0;
+  font-weight: 800;
+  color: #111;
+}
+
+.nasil-calisir-card-desc {
+  text-align: center;
+  margin: 0;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* Interactive How It Works Section */
+.nasil-calisir-accordion-section {
+  padding: 80px 0;
+  background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+}
+
+.nasil-calisir-accordion-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.nasil-calisir-accordion-header {
+  margin-bottom: 48px;
+}
+
+.nasil-calisir-accordion-label {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--yellow);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.nasil-calisir-accordion-title {
+  margin: 0 0 8px 0;
+  font-size: 42px;
+  font-weight: 900;
+  color: #111;
+  line-height: 1.2;
+}
+
+.nasil-calisir-accordion-subtitle {
+  margin: 0;
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.nasil-calisir-accordion-steps {
+  position: relative;
+  padding-left: 56px;
+}
+
+.nasil-calisir-accordion-line {
+  position: absolute;
+  left: 28px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--yellow) 0%, rgba(255, 220, 0, 0.3) 50%, transparent 100%);
+  border-radius: 2px;
+}
+
+.nasil-calisir-step-item {
+  position: relative;
+  margin-bottom: 40px;
+  transition: all 0.3s ease;
+}
+
+.nasil-calisir-step-item:hover:not(.active) {
+  transform: translateX(8px);
+}
+
+.nasil-calisir-step-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.nasil-calisir-step-badge {
+  position: relative;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 3px solid #e5e7eb;
+  display: grid;
+  place-items: center;
+  color: #9ca3af;
+  font-weight: 800;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.nasil-calisir-step-badge.active {
+  background: linear-gradient(135deg, var(--yellow) 0%, #e6c200 100%);
+  border: none;
+  color: #111;
+  box-shadow: 0 8px 24px rgba(255, 220, 0, 0.3);
+}
+
+.nasil-calisir-step-content {
+  flex: 1;
+  padding-top: 4px;
+}
+
+.nasil-calisir-step-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 8px 0;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.nasil-calisir-step-button:hover {
+  opacity: 0.8;
+}
+
+.nasil-calisir-step-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: #374151;
+  transition: color 0.3s ease;
+}
+
+.nasil-calisir-step-item.active .nasil-calisir-step-title {
+  color: #111;
+}
+
+.nasil-calisir-step-arrow {
+  font-size: 20px;
+  color: #9ca3af;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  transform: rotate(0deg);
+}
+
+.nasil-calisir-step-item.active .nasil-calisir-step-arrow {
+  color: var(--yellow);
+  transform: rotate(180deg);
+}
+
+.nasil-calisir-step-details {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+
+.nasil-calisir-step-item.active .nasil-calisir-step-details {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.nasil-calisir-step-details-inner {
+  margin-top: 20px;
+  padding-left: 0;
+}
+
+.nasil-calisir-step-details-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.nasil-calisir-step-detail-item {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border-left: 3px solid var(--yellow);
+  transition: all 0.2s ease;
+}
+
+.nasil-calisir-step-detail-item:hover {
+  background: #f3f4f6;
+  transform: translateX(4px);
+}
+
+.nasil-calisir-step-detail-check {
+  color: var(--yellow);
+  font-size: 20px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.nasil-calisir-step-detail-text {
+  color: #4b5563;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* Right Column - Visual Content */
+.nasil-calisir-visual-column {
+  position: sticky;
+  top: 120px;
+}
+
+.nasil-calisir-visual-wrapper {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.15);
+  background: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.nasil-calisir-visual-wrapper:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 32px 80px rgba(0,0,0,.2);
+}
+
+.nasil-calisir-visual-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,220,0,0.05) 0%, transparent 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.nasil-calisir-visual-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  position: relative;
+  z-index: 0;
+}
+
+/* Video Walkthrough Section */
+.nasil-calisir-video-section {
+  padding: 20px 0 40px 0;
+  background: #fff;
+}
+
+.nasil-calisir-video-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.nasil-calisir-video-title {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #111;
+}
+
+.nasil-calisir-video-desc {
+  margin: 0;
+  color: #555;
+  line-height: 1.7;
+}
+
+.nasil-calisir-video-wrapper {
+  border: 1px solid #eee;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0,0,0,.08);
+}
+
+.nasil-calisir-video {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #000;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .nasil-calisir-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .nasil-calisir-accordion-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .nasil-calisir-visual-column {
+    position: static;
+  }
+  
+  .nasil-calisir-video-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .nasil-calisir-cards-section {
+    padding: 40px 0 50px 0;
+  }
+  
+  .nasil-calisir-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .nasil-calisir-card {
+    min-height: 200px;
+  }
+  
+  .nasil-calisir-accordion-section {
+    padding: 60px 0;
+  }
+  
+  .nasil-calisir-accordion-title {
+    font-size: 32px;
+  }
+  
+  .nasil-calisir-accordion-steps {
+    padding-left: 48px;
+  }
+  
+  .nasil-calisir-accordion-line {
+    left: 24px;
+  }
+  
+  .nasil-calisir-step-badge {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+  
+  .nasil-calisir-step-title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nasil-calisir-cards-section {
+    padding: 30px 0 40px 0;
+  }
+  
+  .nasil-calisir-card-badge {
+    width: 48px;
+    height: 48px;
+    top: -24px;
+    font-size: 18px;
+  }
+  
+  .nasil-calisir-accordion-title {
+    font-size: 28px;
+  }
+  
+  .nasil-calisir-accordion-steps {
+    padding-left: 40px;
+  }
+  
+  .nasil-calisir-accordion-line {
+    left: 20px;
+  }
+  
+  .nasil-calisir-step-badge {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .nasil-calisir-step-title {
+    font-size: 16px;
+  }
+  
+  .nasil-calisir-video-title {
+    font-size: 24px;
   }
 }
 
