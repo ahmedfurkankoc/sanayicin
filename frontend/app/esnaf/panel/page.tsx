@@ -7,6 +7,7 @@ import { useEsnaf } from "../context/EsnafContext";
 import { api } from "@/app/utils/api";
 import { BarChart } from "@mui/x-charts/BarChart";
 
+
 export default function EsnafPanelPage() {
   const { isAdmin, user } = useEsnaf();
   const [dashboardStats, setDashboardStats] = useState({

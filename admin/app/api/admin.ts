@@ -370,7 +370,9 @@ export interface BlogPost {
   og_title?: string
   og_description?: string
   og_image?: string
+  og_alt?: string
   featured_image?: string
+  featured_image_alt?: string
 }
 
 export interface BlogPostListResponse {
