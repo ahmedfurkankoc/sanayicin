@@ -65,7 +65,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Application definition
 INSTALLED_APPS = [
-    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -281,4 +280,53 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', str(BASE_DIR.parent / 'media')))
 
 # Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField' 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Admin Panel Settings
+ADMIN_PANEL_TOKEN_EXPIRY_HOURS = 24
+ADMIN_PANEL_CACHE_TIMEOUT = 300  # 5 minutes
+
+# Chat Settings
+CHAT_MESSAGE_LIMIT = 100
+CHAT_MESSAGE_RETENTION_DAYS = 30
+
+# Vendor Settings
+VENDOR_APPROVAL_REQUIRED = True
+VENDOR_VERIFICATION_REQUIRED = True
+
+# Support Settings
+SUPPORT_TICKET_PRIORITY_CHOICES = [
+    ('low', 'Düşük'),
+    ('medium', 'Orta'),
+    ('high', 'Yüksek'),
+    ('urgent', 'Acil'),
+]
+
+SUPPORT_TICKET_STATUS_CHOICES = [
+    ('open', 'Açık'),
+    ('in_progress', 'İşlemde'),
+    ('resolved', 'Çözüldü'),
+    ('closed', 'Kapalı'),
+]
+
+# Blog Settings
+BLOG_POSTS_PER_PAGE = 10
+BLOG_FEATURED_POSTS_COUNT = 3
+
+# Analytics Settings
+ANALYTICS_RETENTION_DAYS = 90
+ANALYTICS_BATCH_SIZE = 1000
+
+# File Upload Settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Session Settings
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+
+# CSRF Settings
+CSRF_COOKIE_AGE = 86400  # 24 hours
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax' 
