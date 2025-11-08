@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "../../styles/esnaf.css";
 import EsnafPanelLayout from "../components/EsnafPanelLayout";
 import { useEsnaf } from "../context/EsnafContext";
 import { api } from "@/app/utils/api";
+import { BarChart } from "@mui/x-charts/BarChart";
 
 export default function EsnafPanelPage() {
   const { isAdmin, user } = useEsnaf();
@@ -23,6 +24,16 @@ export default function EsnafPanelPage() {
     callsChangePercent: 0,
     totalEarnings: 0
   });
+
+  // Son 12 ay veri dizileri (opsiyonel: backend sağlıyorsa doldurulacak)
+  const [monthlyStats, setMonthlyStats] = useState<{
+    profileViews: number[];
+    messages: number[];
+    appointments: number[];
+    favorites: number[];
+    calls: number[];
+  }>({ profileViews: [], messages: [], appointments: [], favorites: [], calls: [] });
+  const [metric] = useState<'profileViews' | 'messages' | 'calls' | 'favorites' | 'appointments'>('profileViews');
 
   // Canlı veriler: paralel çağrılar
   useEffect(() => {
@@ -44,6 +55,23 @@ export default function EsnafPanelPage() {
           averageRating: s.average_rating ?? prev.averageRating,
           calls: s.calls_month ?? prev.calls,
         }));
+
+        // Aylık veriler: backend döndürürse kullan, yoksa mevcut ayı sona koyup geri kalanı 0 ile doldur
+        const ensure12 = (arr: any, fallbackLast: number): number[] => {
+          const safe = Array.isArray(arr) ? arr.map((v) => (typeof v === 'number' ? v : 0)) : [];
+          if (safe.length >= 12) return safe.slice(-12);
+          const needed = 11 - safe.length; // son slotu current ile dolduracağız
+          const zeros = Array(Math.max(0, needed)).fill(0);
+          return [...zeros, ...safe, fallbackLast];
+        };
+
+        setMonthlyStats({
+          profileViews: ensure12(s.monthly?.profile_views, s.profile_views_month ?? 0),
+          messages: ensure12(s.monthly?.messages, (s.messages_month ?? s.messages_total ?? 0)),
+          appointments: ensure12(s.monthly?.appointments, s.appointments_total ?? 0),
+          favorites: ensure12(s.monthly?.favorites, (s.favorites_month ?? s.favorites_total ?? 0)),
+          calls: ensure12(s.monthly?.calls, s.calls_month ?? 0),
+        });
       } catch (e) {
         // ignore
       }
@@ -165,6 +193,32 @@ export default function EsnafPanelPage() {
             </div>
           </div>
         </div>
+
+      {/* 12 Aylık İstatistikler (MUI X Charts) */}
+      <div style={{ margin: '24px 32px 0 32px' }}>
+        <h3 style={{ margin: '0 0 12px 0', color: '#111', fontSize: 18, fontWeight: 800 }}>Mağaza Ziyaretleri – Son 12 Ay</h3>
+        <BarChart
+          height={320}
+          xAxis={[{ scaleType: 'band', data: getCalendarMonthsTR() }]}
+          series={[{ data: getCalendarValues(monthlyStats.profileViews), label: 'Ziyaret', color: 'var(--yellow)' }]}
+          grid={{ horizontal: true }}
+        />
+      </div>
     </EsnafPanelLayout>
   );
 } 
+// Helpers for MUI chart
+function getCalendarMonthsTR(): string[] {
+  return ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+}
+
+function getCalendarValues(data?: number[]): number[] {
+  const last12 = Array.isArray(data) && data.length > 0 ? data.slice(-12) : Array(12).fill(0);
+  const vals = Array(12).fill(0);
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+    vals[d.getMonth()] = last12[i] || 0;
+  }
+  return vals;
+}

@@ -39,26 +39,45 @@ const VendorCard = ({
   // Avatar gösterimi - resim yoksa şirket adının ilk harfi
   const renderAvatar = () => {
     const firstLetter = displayName.charAt(0).toUpperCase();
-    const src = resolveMediaUrl(img);
+    // img prop'u null, undefined veya boş string olabilir
+    const hasImg = img && typeof img === 'string' && img.trim().length > 0;
+    const resolvedImg = hasImg ? resolveMediaUrl(img) : null;
+    // Resolved img default değilse ve geçerli bir URL ise göster
+    const hasValidImage = resolvedImg && 
+                          resolvedImg !== '/images/vendor-default.jpg' && 
+                          !resolvedImg.includes('vendor-default') &&
+                          hasImg;
+    
     return (
       <div className="vendorAvatar">
-        {src && src !== '/images/vendor-default.jpg' ? (
-          <>
-            <img
-              src={src}
-              alt={displayName}
-              className="vendorAvatarImg"
-              loading="lazy"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                (e.currentTarget.nextElementSibling as HTMLElement | null)?.classList.remove('hidden');
-              }}
-            />
-            <span className="avatarText hidden">{firstLetter}</span>
-          </>
-        ) : (
-          <span className="avatarText">{firstLetter}</span>
+        {hasValidImage && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={resolvedImg}
+            alt={displayName}
+            className="vendorAvatarImg"
+            loading="lazy"
+            onError={(e) => {
+              // Resim yüklenemezse gizle ve baş harfi göster
+              const imgElement = e.currentTarget;
+              const avatarDiv = imgElement.parentElement;
+              const textElement = avatarDiv?.querySelector('.avatarText') as HTMLElement | null;
+              if (imgElement) {
+                imgElement.style.display = 'none';
+              }
+              if (textElement) {
+                textElement.classList.remove('hidden');
+                textElement.style.display = 'flex';
+              }
+            }}
+          />
         )}
+        <span 
+          className={`avatarText ${hasValidImage ? 'hidden' : ''}`}
+          style={hasValidImage ? { display: 'none' } : {}}
+        >
+          {firstLetter}
+        </span>
       </div>
     );
   };

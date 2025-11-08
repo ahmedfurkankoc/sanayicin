@@ -42,9 +42,9 @@ const STATIC_SERVICE_AREAS: ServiceArea[] = [
   },
   {
     id: 3,
-    name: "Kaporta ve Boya",
+  name: "Kaporta ve Boya",
     description: "Hasar onarımı, boyama, döşeme ve estetik işlemler",
-    icon: "palette"
+  icon: "paintbrush"
   },
   {
     id: 4,
@@ -197,13 +197,11 @@ export default function HizmetlerPage() {
   ];
   // Bu ay en çok yorum alanlara göre sırala (varsa aylık sayaç alanları)
   const displayVendors = vendors.length > 0 ? vendors : mockVendors;
-  const topVendors = (displayVendors as any[])
+  const topVendors = displayVendors
     .slice()
     .sort((a: any, b: any) => {
       const getMonthly = (v: any) =>
-        ('monthly_review_count' in v && typeof v.monthly_review_count === 'number') ? v.monthly_review_count :
-        ('reviews_this_month' in v && typeof v.reviews_this_month === 'number') ? v.reviews_this_month :
-        ('review_count' in v && typeof v.review_count === 'number') ? v.review_count : 0;
+        v.monthly_review_count ?? v.reviews_this_month ?? v.review_count ?? 0;
       return getMonthly(b) - getMonthly(a);
     })
     .slice(0, 6);
@@ -243,15 +241,12 @@ export default function HizmetlerPage() {
     return grouped;
   }, [categories]);
 
-  // Hizmet alanına göre kategorileri getir (memoized)
-  const getCategoriesByService = useCallback((serviceId: number) => {
-    return categoriesByService[serviceId] || [];
-  }, [categoriesByService]);
-
   // Hizmet alanına tıklandığında (memoized)
   const handleServiceClick = useCallback((serviceId: number) => {
-    router.push(`/musteri/esnaflar?service=${serviceId}`);
-  }, [router]);
+    const svc = serviceAreas.find(s => s.id === serviceId);
+    const name = svc?.name || String(serviceId);
+    router.push(`/musteri/esnaflar?service=${encodeURIComponent(name)}`);
+  }, [router, serviceAreas]);
 
   return (
     <div className="musteri-page-container">
@@ -320,20 +315,22 @@ export default function HizmetlerPage() {
               ))
             ) : (
               topVendors.map((vendor: any, index: number) => {
+                // Backend'de avatar user.avatar olarak geliyor
+                const avatarField = vendor.user?.avatar || null;
                 const vendorData = {
-                  name: 'display_name' in vendor ? (vendor.display_name || vendor.company_title || 'Esnaf') : vendor.name,
+                  name: vendor.display_name || vendor.company_title || vendor.name || 'Esnaf',
                   experience: `${Math.floor(Math.random() * 10) + 1}+ yıl deneyim`,
-                  type: 'service_areas' in vendor ? (vendor.service_areas?.[0]?.name || 'Hizmet') : vendor.type,
-                  city: 'city' in vendor ? vendor.city : (vendor as any).city,
-                  img: 'avatar' in vendor ? ((vendor as any).avatar || '/images/vendor-default.jpg') : (vendor as any).img,
-                  slug: 'slug' in vendor ? vendor.slug : undefined,
-                  rating: 'rating' in vendor ? (vendor.rating || 0) : 0,
-                  reviewCount: 'monthly_review_count' in vendor ? (vendor.monthly_review_count || 0) : ('reviews_this_month' in vendor ? (vendor.reviews_this_month || 0) : ('review_count' in vendor ? (vendor.review_count || 0) : 0)),
-                  about: 'about' in vendor ? vendor.about : undefined,
-                  serviceAreas: 'service_areas' in vendor ? vendor.service_areas : undefined,
-                  categories: 'categories' in vendor ? vendor.categories : undefined
-                } as any;
-                const key = 'id' in vendor ? (vendor as any).id : index;
+                  type: vendor.service_areas?.[0]?.name || vendor.type || 'Hizmet',
+                  city: vendor.city || '',
+                  img: avatarField,
+                  slug: vendor.slug,
+                  rating: vendor.rating || 0,
+                  reviewCount: vendor.monthly_review_count || vendor.reviews_this_month || vendor.review_count || 0,
+                  about: vendor.about,
+                  serviceAreas: vendor.service_areas,
+                  categories: vendor.categories
+                };
+                const key = vendor.id || index;
                 return <VendorCard key={key} {...vendorData} />;
               })
             )}
@@ -348,7 +345,7 @@ export default function HizmetlerPage() {
           <h2>Hizmet Alanları</h2>
           <div className="musteri-services-grid">
             {serviceAreas.map((service) => {
-              const serviceCategories = getCategoriesByService(service.id);
+              const serviceCategories = categoriesByService[service.id] || [];
               const displayCategories = serviceCategories.slice(0, 3);
               const remainingCount = serviceCategories.length - 3;
               

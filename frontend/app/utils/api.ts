@@ -17,8 +17,13 @@ export const resolveMediaUrl = (path?: string | null): string => {
     return '/images/vendor-default.jpg';
   }
   const p = path.trim();
+  // Absolute URL ise olduğu gibi döndür
   if (/^https?:\/\//i.test(p)) return p;
+  // /media/ ile başlıyorsa Next.js rewrite kullan (relative path bırak)
+  if (p.startsWith('/media/')) return p;
+  // Diğer / ile başlayan path'ler için mediaBaseUrl ekle
   if (p.startsWith('/')) return `${mediaBaseUrl}${p}`;
+  // Relative path için mediaBaseUrl ekle
   return `${mediaBaseUrl}/${p}`;
 };
 

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useServices } from "@/app/hooks/useServices";
+import { iconMapping } from "@/app/utils/iconMapping";
 
 // Görseller için mapping - API'den gelen verilerle eşleştir
 const getServiceImage = (serviceId: number): string => {
@@ -23,6 +24,41 @@ const getServiceImage = (serviceId: number): string => {
   return imageMap[serviceId] || "/images/sanayicin-services/default-service.jpg";
 };
 
+// Hizmet adı/ID -> ikon anahtarı eşlemesi (başlıkla uyumlu olacak şekilde)
+const getServiceIconKey = (serviceId: number, serviceName?: string): keyof typeof iconMapping => {
+  const name = (serviceName || '').toLowerCase();
+  // İsim bazlı güçlü eşleme
+  if (name.includes('mekanik')) return 'wrench';
+  if (name.includes('elektrik') || name.includes('elektronik')) return 'zap';
+  if (name.includes('kaporta') || name.includes('boya')) return 'paintbrush';
+  if (name.includes('lastik') || name.includes('jant')) return 'car';
+  if (name.includes('temizlik') || name.includes('bakım') || name.includes('bakim')) return 'sparkles';
+  if (name.includes('cam') || name.includes('anahtar') || name.includes('güvenlik') || name.includes('guvenlik')) return 'shield';
+  if (name.includes('klima') || name.includes('ısıtma') || name.includes('isitma')) return 'snowflake';
+  if (name.includes('multimedya') || name.includes('donanım') || name.includes('donanim')) return 'smartphone';
+  if (name.includes('yedek parça') || name.includes('yedek parca') || name.includes('aksesuar')) return 'cog';
+  if (name.includes('ticari')) return 'truck';
+  if (name.includes('kaplama') || name.includes('görsel') || name.includes('gorsel') || name.includes('film')) return 'palette';
+  if (name.includes('yol yardım') || name.includes('çekici') || name.includes('cekici') || name.includes('kurtarma')) return 'truck';
+
+  // ID bazlı geri dönüş (API ID sıralaması değişirse en azından makul görünür)
+  const iconMap: { [key: number]: keyof typeof iconMapping } = {
+    1: 'wrench',
+    2: 'zap',
+    3: 'paintbrush',
+    4: 'car',
+    5: 'sparkles',
+    6: 'shield',
+    7: 'snowflake',
+    8: 'smartphone',
+    9: 'cog',
+    10: 'truck',
+    11: 'palette',
+    12: 'truck',
+  };
+  return iconMap[serviceId] || 'wrench';
+};
+
 const ServicesSection = () => {
   const { services, loading, error } = useServices();
 
@@ -31,7 +67,8 @@ const ServicesSection = () => {
     return services.map(service => ({
       id: service.id,
       name: service.name,
-      image: getServiceImage(service.id)
+      image: getServiceImage(service.id),
+      iconKey: getServiceIconKey(service.id, service.name)
     }));
   }, [services]);
 
@@ -94,6 +131,15 @@ const ServicesSection = () => {
           {serviceAreasWithImages.map((serviceArea, index) => (
             <div key={serviceArea.id} className="serviceCard">
               <div className="serviceImgContainer">
+                {/* Sağ üst ikon rozeti */}
+                {(() => {
+                  const Icon = iconMapping[serviceArea.iconKey as keyof typeof iconMapping] as any;
+                  return (
+                    <div className="serviceIconBadge" aria-hidden="true">
+                      {Icon ? <Icon size={20} color="#111" /> : null}
+                    </div>
+                  );
+                })()}
                 <img 
                   src={serviceArea.image} 
                   alt={serviceArea.name}

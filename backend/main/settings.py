@@ -280,7 +280,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR.parent / 'media'
+# Allow overriding MEDIA_ROOT via env in prod; fallback to project media folder
+# BASE_DIR is backend/, but media folder is at project root, so go up one level
+MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', str(BASE_DIR.parent / 'media')))
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

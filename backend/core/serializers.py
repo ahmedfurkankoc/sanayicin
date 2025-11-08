@@ -136,13 +136,14 @@ class VehicleSerializer(serializers.ModelSerializer):
 # ===== Public Blog Serializers =====
 class PublicBlogPostListSerializer(serializers.ModelSerializer):
     cover_image = serializers.SerializerMethodField()
+    cover_image_alt = serializers.SerializerMethodField()
     category_name = serializers.SerializerMethodField()
     author_name = serializers.SerializerMethodField()
 
     class Meta:
         model = BlogPost
         fields = (
-            'id', 'title', 'slug', 'excerpt', 'cover_image', 'category_name', 'category_slug', 'author_name', 'published_at'
+            'id', 'title', 'slug', 'excerpt', 'cover_image', 'cover_image_alt', 'category_name', 'category_slug', 'author_name', 'published_at'
         )
     
     def get_author_name(self, obj):
@@ -162,6 +163,12 @@ class PublicBlogPostListSerializer(serializers.ModelSerializer):
         
         # featured_image yoksa None döndür (content'teki görseli kullanma)
         return None
+
+    def get_cover_image_alt(self, obj):
+        try:
+            return (obj.featured_image_alt or (obj.title + ' | Kapak Görseli')) if obj.title else (obj.featured_image_alt or 'Sanayicin Kapak Görseli')
+        except Exception:
+            return 'Sanayicin Kapak Görseli'
 
     def get_category_name(self, obj):
         try:
@@ -187,11 +194,12 @@ class PublicBlogPostDetailSerializer(PublicBlogPostListSerializer):
     og_title = serializers.CharField(read_only=True)
     og_description = serializers.CharField(read_only=True)
     og_image = serializers.SerializerMethodField()
+    og_alt = serializers.SerializerMethodField()
 
     class Meta(PublicBlogPostListSerializer.Meta):
         fields = PublicBlogPostListSerializer.Meta.fields + (
             'content', 'meta_title', 'meta_description', 'meta_keywords', 
-            'canonical_url', 'og_title', 'og_description', 'og_image',
+            'canonical_url', 'og_title', 'og_description', 'og_image', 'og_alt',
             'updated_at'
         )
     
@@ -212,6 +220,15 @@ class PublicBlogPostDetailSerializer(PublicBlogPostListSerializer):
         except Exception:
             pass
         return None
+
+    def get_og_alt(self, obj):
+        try:
+            if (obj.og_alt or '').strip():
+                return obj.og_alt
+            base = (obj.title or 'Sanayicin')
+            return f"{base} | Open Graph Görseli"
+        except Exception:
+            return 'Sanayicin Open Graph Görseli'
 
 # JWT Token'a role bilgisi eklemek için custom serializer
 class CustomTokenObtainPairSerializer(serializers.Serializer):

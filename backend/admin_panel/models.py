@@ -165,6 +165,7 @@ class BlogPost(models.Model):
         null=True,
         verbose_name="Öne Çıkan Görsel"
     )
+    featured_image_alt = models.CharField(max_length=150, blank=True, verbose_name="Öne Çıkan Görsel Alt Metin")
     category = models.ForeignKey(
         BlogCategory,
         on_delete=models.SET_NULL,
@@ -207,6 +208,7 @@ class BlogPost(models.Model):
     og_title = models.CharField(max_length=100, blank=True, verbose_name="OG Başlık")
     og_description = models.TextField(max_length=200, blank=True, verbose_name="OG Açıklama")
     og_image = models.ImageField(upload_to='blog/og/', blank=True, null=True, verbose_name="OG Görsel")
+    og_alt = models.CharField(max_length=150, blank=True, verbose_name="OG Görsel Alt Metin")
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturulma Tarihi")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Güncellenme Tarihi")
@@ -226,6 +228,14 @@ class BlogPost(models.Model):
     def save(self, *args, **kwargs):
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
+
+        # Ensure alt texts
+        if not (self.featured_image_alt or '').strip():
+            base = (self.title or 'Sanayicin').strip()
+            self.featured_image_alt = f"{base} | Kapak Görseli"
+        if not (self.og_alt or '').strip():
+            base = (self.title or 'Sanayicin').strip()
+            self.og_alt = f"{base} | Open Graph Görseli"
 
         def _process_imagefield_to_1200x630(image_field: models.ImageField) -> None:
             if not image_field:
