@@ -70,14 +70,14 @@ export default function EsnafAyarlarPage() {
                   <div className="esnaf-ayarlar-item-arrow">→</div>
                 </div>
 
-                <div className="esnaf-ayarlar-item">
+                <div className="esnaf-ayarlar-item" onClick={() => router.push("/esnaf/ayarlar/hizmetlerim")}>
                   <div className="esnaf-ayarlar-item-icon">
                     <Icon name="building" />
                   </div>
                   <div className="esnaf-ayarlar-item-content">
                     <h3 className="esnaf-ayarlar-item-title">Hizmetlerim</h3>
                     <p className="esnaf-ayarlar-item-description">
-                      Hizmet profillerini yönet ve görüntüle
+                      Hizmet alanlarını ve hizmet verdiğiniz araba markalarını seçin
                     </p>
                   </div>
                   <div className="esnaf-ayarlar-item-arrow">→</div>

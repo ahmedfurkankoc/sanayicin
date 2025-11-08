@@ -201,6 +201,10 @@ export default function EsnafPanelPage() {
         <BarChart
           height={320}
           xAxis={[{ scaleType: 'band', data: getCalendarMonthsTR() }]}
+          yAxis={[{
+            valueFormatter: (value: number) => Math.round(value).toString(),
+            tickMinStep: 1,
+          }]}
           series={[{ data: getCalendarValues(monthlyStats.profileViews), label: 'Ziyaret', color: 'var(--yellow)' }]}
           grid={{ horizontal: true }}
         />
