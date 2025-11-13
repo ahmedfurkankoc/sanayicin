@@ -40,8 +40,8 @@ const Icon: React.FC<IconProps> = ({
   className = '',
   onClick 
 }) => {
-  // Özel X ikonu için kontrol
-  if (name === 'x-social') {
+  // Özel X (Twitter-X) ikonu için kontrol
+  if (name === 'twitter-x' || name === 'x-social') {
     const iconSize = typeof size === 'string' ? iconSizes[size] : size;
     const iconColor = typeof color === 'string' && iconColors[color as keyof typeof iconColors] 
       ? iconColors[color as keyof typeof iconColors] 

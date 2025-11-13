@@ -1028,62 +1028,23 @@ class ImageUploadView(APIView):
             return Response({'error': 'Dosya boyutu 5MB\'dan büyük olamaz'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            from PIL import Image
-            from io import BytesIO
+            from core.utils.image_processing import process_image_to_jpeg
             from django.core.files.base import ContentFile
             import uuid
             
-            # Resmi aç
-            img = Image.open(image_file)
-            
-            # RGBA'yı RGB'ye çevir (JPEG için)
-            if img.mode in ('RGBA', 'LA', 'P'):
-                # Transparent arka plan için beyaz arka plan oluştur
-                background = Image.new('RGB', img.size, (255, 255, 255))
-                if img.mode == 'RGBA':
-                    background.paste(img, mask=img.split()[3])  # Alpha channel'ı mask olarak kullan
-                else:
-                    background.paste(img)
-                img = background
-            elif img.mode != 'RGB':
-                img = img.convert('RGB')
-            
-            # 1200x630px boyutunda resize et (aspect ratio korunarak crop yapılacak)
-            target_width = 1200
-            target_height = 630
-            target_aspect = target_width / target_height
-            
-            # Orijinal boyutları al
-            original_width, original_height = img.size
-            original_aspect = original_width / original_height
-            
-            # Resmi hedef boyutlara göre crop ve resize et
-            if original_aspect > target_aspect:
-                # Resim daha geniş, yükseklikten crop yap
-                new_height = original_height
-                new_width = int(original_height * target_aspect)
-                left = (original_width - new_width) // 2
-                img = img.crop((left, 0, left + new_width, new_height))
-            else:
-                # Resim daha yüksek, genişlikten crop yap
-                new_width = original_width
-                new_height = int(original_width / target_aspect)
-                top = (original_height - new_height) // 2
-                img = img.crop((0, top, new_width, top + new_height))
-            
-            # Resmi 1200x630px'e resize et
-            img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-            
-            # BytesIO'ya kaydet (JPEG formatında, optimize edilmiş)
-            buffer = BytesIO()
-            img.save(buffer, format='JPEG', quality=85, optimize=True)
-            buffer.seek(0)
+            # Merkezi görsel işleme utility'sini kullan
+            processed_file = process_image_to_jpeg(
+                image_file,
+                target_size=(1200, 630),
+                quality=85,
+                crop_to_aspect=(1200, 630)
+            )
             
             # Dosya adını oluştur
             unique_filename = f"{uuid.uuid4()}_1200x630.jpg"
             
             # Django ContentFile objesi oluştur
-            django_file = ContentFile(buffer.read(), name=unique_filename)
+            django_file = ContentFile(processed_file.read(), name=unique_filename)
             
             # Save file
             from django.core.files.storage import default_storage

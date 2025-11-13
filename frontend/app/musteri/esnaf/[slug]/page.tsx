@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { api, getAuthToken } from '@/app/utils/api';
+import { api, getAuthToken, resolveMediaUrl } from '@/app/utils/api';
 import { iconMapping } from '@/app/utils/iconMapping';
 import { useMusteri } from '../../context/MusteriContext';
 import { toast } from "sonner";
@@ -10,6 +10,16 @@ import ReviewModal from '../../components/ReviewModal';
 import QuoteRequestModal from '@/app/musteri/components/QuoteRequestModal';
 import Reviews from '../../components/Reviews';
 import VendorLocationMap from '@/app/components/VendorLocationMap';
+
+interface VendorImage {
+  id: number;
+  image: string;
+  image_url: string;
+  description: string;
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
 
 interface Vendor {
   id: number;
@@ -36,10 +46,21 @@ interface Vendor {
   avatar?: string;
   service_areas?: any[];
   categories?: any[];
+  car_brands?: Array<{
+    id: number;
+    name: string;
+    logo?: string;
+    logo_url?: string;
+    description?: string;
+    is_active: boolean;
+  }>;
+  gallery_images?: VendorImage[];
   social_media?: {
     instagram?: string;
     facebook?: string;
     twitter?: string;
+    youtube?: string;
+    tiktok?: string;
     website?: string;
   };
   working_hours?: {
@@ -72,6 +93,17 @@ function VendorDetailContent() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
+
+  // currentImageIndex sınırlarını kontrol et
+  useEffect(() => {
+    if (vendor?.gallery_images && vendor.gallery_images.length > 0) {
+      if (currentImageIndex >= vendor.gallery_images.length) {
+        setCurrentImageIndex(0);
+      }
+    }
+  }, [vendor?.gallery_images, currentImageIndex]);
 
   // Hizmet alanlarını ve kategorileri çek
   useEffect(() => {
@@ -150,6 +182,7 @@ function VendorDetailContent() {
     setShowQuoteModal(true);
   };
 
+
   const handleMessage = async () => {
     if (!vendor || creatingChat) return;
     try {
@@ -227,10 +260,11 @@ function VendorDetailContent() {
 
   return (
     <div className="m-vendor-page">
-      <div className="m-vendor-card">
-        {/* Header */}
-        <div className="m-vendor-header">
-          {/* Logo / Avatar */}
+      <div className="m-vendor-modern-profile">
+        {/* Modern Header */}
+        <div className="m-vendor-hero">
+          <div className="m-vendor-hero-content">
+            <div className="m-vendor-avatar-section">
           <div className="m-vendor-logo-wrap">
             <div className="m-vendor-logo">
               {logoUrl ? (
@@ -240,15 +274,85 @@ function VendorDetailContent() {
                   alt={vendor.display_name}
                 />
               ) : (
-                <span style={{ fontSize: '48px', fontWeight: 'bold', color: '#666' }}>
+                    <span>
                   {vendor.display_name ? vendor.display_name.charAt(0).toUpperCase() :
                    vendor.company_title ? vendor.company_title.charAt(0).toUpperCase() : 'E'}
                 </span>
               )}
             </div>
+                {/* Social Media Links - Desktop'ta avatar altında küçük */}
+                {vendor.social_media && (
+                  vendor.social_media.instagram || 
+                  vendor.social_media.facebook || 
+                  vendor.social_media.twitter || 
+                  vendor.social_media.youtube ||
+                  vendor.social_media.tiktok ||
+                  vendor.social_media.website
+                ) && (
+                  <div className="m-vendor-social-links m-vendor-social-links-small m-vendor-social-desktop">
+                    {vendor.social_media.instagram && (
+                      <a 
+                        href={vendor.social_media.instagram.startsWith('http') ? vendor.social_media.instagram : `https://instagram.com/${vendor.social_media.instagram}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="m-vendor-social-link instagram"
+                      >
+                        {React.createElement(iconMapping.instagram, { size: 16, color: 'white' })}
+                      </a>
+                    )}
+                    {vendor.social_media.facebook && (
+                      <a 
+                        href={vendor.social_media.facebook.startsWith('http') ? vendor.social_media.facebook : `https://facebook.com/${vendor.social_media.facebook}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="m-vendor-social-link facebook"
+                      >
+                        {React.createElement(iconMapping.facebook, { size: 16, color: 'white' })}
+                      </a>
+                    )}
+                    {vendor.social_media.twitter && (
+                      <a 
+                        href={vendor.social_media.twitter.startsWith('http') ? vendor.social_media.twitter : `https://x.com/${vendor.social_media.twitter.replace('https://twitter.com/', '').replace('twitter.com/', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="m-vendor-social-link twitter"
+                      >
+                        {React.createElement(iconMapping['twitter-x'], { size: 16, color: 'white' })}
+                      </a>
+                    )}
+                    {vendor.social_media.youtube && (
+                      <a 
+                        href={vendor.social_media.youtube.startsWith('http') ? vendor.social_media.youtube : `https://youtube.com/${vendor.social_media.youtube}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="m-vendor-social-link youtube"
+                      >
+                        {React.createElement(iconMapping.youtube, { size: 16, color: 'white' })}
+                      </a>
+                    )}
+                    {vendor.social_media.tiktok && (
+                      <a 
+                        href={vendor.social_media.tiktok.startsWith('http') ? vendor.social_media.tiktok : `https://tiktok.com/@${vendor.social_media.tiktok.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="m-vendor-social-link tiktok"
+                      >
+                        {React.createElement(iconMapping.tiktok, { size: 16, color: 'white' })}
+                      </a>
+                    )}
+                    {vendor.social_media.website && (
+                      <a 
+                        href={vendor.social_media.website.startsWith('http') ? vendor.social_media.website : `https://${vendor.social_media.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="m-vendor-social-link website"
+                      >
+                        {React.createElement(iconMapping.globe, { size: 16, color: 'white' })}
+                      </a>
+                    )}
+                  </div>
+                )}
           </div>
-
-          {/* Vendor Bilgileri */}
           <div className="m-vendor-body">
             <div className="m-vendor-title-row">
               <h1 className="m-vendor-title">
@@ -261,18 +365,99 @@ function VendorDetailContent() {
                 </div>
               )}
             </div>
-            <p className="m-vendor-subtitle">
-              {vendor.company_title}
-            </p>
-
-            {/* Aksiyonlar - Kendi profilinde gösterilmez */}
+                <div className="m-vendor-location">
+                  {React.createElement(iconMapping['map-pin'], { size: 16 })}
+                  <span>
+                    {vendor.district && vendor.city 
+                      ? `${vendor.district}, ${vendor.city}` 
+                      : vendor.city || "Konum belirtilmemiş"
+                    }
+                  </span>
+                </div>
+              </div>
+              {/* Social Media Links - Mobilde body'nin altında */}
+              {vendor.social_media && (
+                vendor.social_media.instagram || 
+                vendor.social_media.facebook || 
+                vendor.social_media.twitter || 
+                vendor.social_media.youtube ||
+                vendor.social_media.tiktok ||
+                vendor.social_media.website
+              ) && (
+                <div className="m-vendor-social-links m-vendor-social-links-small m-vendor-social-mobile">
+                  {vendor.social_media.instagram && (
+                    <a 
+                      href={vendor.social_media.instagram.startsWith('http') ? vendor.social_media.instagram : `https://instagram.com/${vendor.social_media.instagram}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="m-vendor-social-link instagram"
+                    >
+                      {React.createElement(iconMapping.instagram, { size: 16, color: 'white' })}
+                    </a>
+                  )}
+                  {vendor.social_media.facebook && (
+                    <a 
+                      href={vendor.social_media.facebook.startsWith('http') ? vendor.social_media.facebook : `https://facebook.com/${vendor.social_media.facebook}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="m-vendor-social-link facebook"
+                    >
+                      {React.createElement(iconMapping.facebook, { size: 16, color: 'white' })}
+                    </a>
+                  )}
+                  {vendor.social_media.twitter && (
+                    <a 
+                      href={vendor.social_media.twitter.startsWith('http') ? vendor.social_media.twitter : `https://x.com/${vendor.social_media.twitter.replace('https://twitter.com/', '').replace('twitter.com/', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="m-vendor-social-link twitter"
+                    >
+                      {React.createElement(iconMapping['twitter-x'], { size: 16, color: 'white' })}
+                    </a>
+                  )}
+                  {vendor.social_media.youtube && (
+                    <a 
+                      href={vendor.social_media.youtube.startsWith('http') ? vendor.social_media.youtube : `https://youtube.com/${vendor.social_media.youtube}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="m-vendor-social-link youtube"
+                    >
+                      {React.createElement(iconMapping.youtube, { size: 16, color: 'white' })}
+                    </a>
+                  )}
+                  {vendor.social_media.tiktok && (
+                    <a 
+                      href={vendor.social_media.tiktok.startsWith('http') ? vendor.social_media.tiktok : `https://tiktok.com/@${vendor.social_media.tiktok.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="m-vendor-social-link tiktok"
+                    >
+                      {React.createElement(iconMapping.tiktok, { size: 16, color: 'white' })}
+                    </a>
+                  )}
+                  {vendor.social_media.website && (
+                    <a 
+                      href={vendor.social_media.website.startsWith('http') ? vendor.social_media.website : `https://${vendor.social_media.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="m-vendor-social-link website"
+                    >
+                      {React.createElement(iconMapping.globe, { size: 16, color: 'white' })}
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Sağ Taraf: Aksiyonlar */}
             {!isOwnProfile && (
+              <div className="m-vendor-right-section">
               <div className="m-vendor-actions">
                 <button
                   onClick={handlePhoneButton}
                   className={`m-btn m-btn-phone ${showPhone ? 'active' : ''}`}
                 >
-                  {React.createElement(iconMapping.phone, { size: 18, color: showPhone ? '#ffffff' : undefined })}
+                    {React.createElement(iconMapping.phone, { size: 18 })}
                   {showPhone ? (vendor.business_phone || 'Telefon') : 'Telefonu Göster'}
                 </button>
                 <button
@@ -298,28 +483,18 @@ function VendorDetailContent() {
                   {React.createElement(iconMapping.message, { size: 18 })}
                   {creatingChat ? 'İşleniyor...' : 'Mesaj Gönder'}
                 </button>
+                </div>
               </div>
             )}
-
           </div>
         </div>
-        {/* Detaylı Bilgiler */}
-        <div className="m-vendor-sections">
-          {/* Hakkında */}
-          {vendor.about && (
-            <div className="m-vendor-section">
-              <h3 className="m-vendor-section-title">
-                Hakkında
-              </h3>
-              <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#666', margin: 0 }}>
-                {vendor.about}
-              </p>
-            </div>
-          )}
 
+        {/* Main Content Grid */}
+        <div className="m-vendor-main">
+          <div className="m-vendor-sidebar">
           {/* Hizmet Alanları */}
           {vendor.service_areas && vendor.service_areas.length > 0 && (
-            <div className="m-vendor-section">
+              <div className="m-vendor-card">
               <h3 className="m-vendor-section-title">
                 Hizmet Alanları
               </h3>
@@ -335,7 +510,7 @@ function VendorDetailContent() {
 
           {/* Kategoriler */}
           {vendor.categories && vendor.categories.length > 0 && (
-            <div className="m-vendor-section">
+              <div className="m-vendor-card">
               <h3 className="m-vendor-section-title">
                 Kategoriler
               </h3>
@@ -349,107 +524,204 @@ function VendorDetailContent() {
             </div>
           )}
 
-          {/* Sosyal Medya */}
-          {vendor.social_media && (
-            vendor.social_media.instagram || 
-            vendor.social_media.facebook || 
-            vendor.social_media.twitter || 
-            vendor.social_media.website
-          ) && (
-            <div className="m-vendor-section">
+            {/* Araba Markaları */}
+            {vendor.car_brands && vendor.car_brands.length > 0 && (
+              <div className="m-vendor-card">
               <h3 className="m-vendor-section-title">
-                Sosyal Medya
+                  Araba Markaları
               </h3>
-              <div className="m-social-box">
-                {vendor.social_media.instagram && (
-                  <div className="m-social-row">
-                    {React.createElement(iconMapping.instagram, { 
-                      size: 20, 
-                      color: '#E4405F',
-                      style: { flexShrink: 0 }
-                    })}
-                    <span className="m-social-label">
-                      Instagram:
-                    </span>
-                    <a 
-                      href={vendor.social_media.instagram.startsWith('http') ? vendor.social_media.instagram : `https://instagram.com/${vendor.social_media.instagram}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="m-link"
-                    >
-                      {vendor.social_media.instagram}
-                    </a>
+                <div className="m-car-brands-grid">
+                  {vendor.car_brands.map((brand: any) => (
+                    <div key={brand.id} className="m-car-brand-item">
+                      {(brand.logo || brand.logo_url) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img 
+                          src={brand.logo_url || resolveMediaUrl(brand.logo)}
+                          alt={brand.name}
+                          className="m-car-brand-logo"
+                          onError={(e) => {
+                            // Logo yüklenemezse sadece ismi göster
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              parent.classList.add('no-logo');
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <span className="m-car-brand-name">{brand.name}</span>
+                    </div>
+                  ))}
+                </div>
                   </div>
                 )}
                 
-                {vendor.social_media.facebook && (
-                  <div className="m-social-row">
-                    {React.createElement(iconMapping.facebook, { 
-                      size: 20, 
-                      color: '#1877F2',
-                      style: { flexShrink: 0 }
-                    })}
-                    <span className="m-social-label">
-                      Facebook:
-                    </span>
-                    <a 
-                      href={vendor.social_media.facebook.startsWith('http') ? vendor.social_media.facebook : `https://facebook.com/${vendor.social_media.facebook}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="m-link"
-                    >
-                      {vendor.social_media.facebook}
-                    </a>
+            {/* Galeri Görselleri */}
+            {vendor.gallery_images && vendor.gallery_images.length > 0 && (
+              <div className="m-vendor-card">
+                <h3 className="m-vendor-section-title">
+                  İşletme Görselleri
+                </h3>
+                <div style={{ position: 'relative' }}>
+                  {/* Slider Container */}
+                  <div style={{
+                    position: 'relative',
+                    overflow: 'hidden',
+                    borderRadius: '8px',
+                    marginBottom: '12px',
+                    width: '100%',
+                    aspectRatio: '1'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      transform: `translateX(-${currentImageIndex * 100}%)`,
+                      transition: 'transform 0.3s ease',
+                      height: '100%'
+                    }}>
+                      {vendor.gallery_images.map((img, index) => (
+                        <div
+                          key={img.id}
+                          style={{
+                            minWidth: '100%',
+                            width: '100%',
+                            height: '100%',
+                            position: 'relative',
+                            flexShrink: 0,
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => {
+                            setCurrentImageIndex(index);
+                            setShowLightbox(true);
+                          }}
+                        >
+                          <img
+                            src={img.image_url || img.image}
+                            alt={img.description || 'Galeri görseli'}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              display: 'block'
+                            }}
+                            onError={(e) => {
+                              console.error('Görsel yüklenemedi:', img);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ))}
+                  </div>
+
+                    {/* Navigation Buttons */}
+                    {vendor.gallery_images.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => 
+                              prev === 0 ? vendor.gallery_images!.length - 1 : prev - 1
+                            );
+                          }}
+                          style={{
+                            position: 'absolute',
+                            left: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            zIndex: 2
+                          }}
+                        >
+                          {React.createElement(iconMapping['chevron-left'], { size: 16 })}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => 
+                              prev === vendor.gallery_images!.length - 1 ? 0 : prev + 1
+                            );
+                          }}
+                          style={{
+                            position: 'absolute',
+                            right: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            zIndex: 2
+                          }}
+                        >
+                          {React.createElement(iconMapping['chevron-right'], { size: 16 })}
+                        </button>
+                      </>
+                    )}
+
+                    {/* Dots Indicator */}
+                    {vendor.gallery_images.length > 1 && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        marginTop: '12px'
+                      }}>
+                        {vendor.gallery_images.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              border: 'none',
+                              backgroundColor: index === currentImageIndex ? 'var(--yellow)' : '#ddd',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                              padding: 0
+                            }}
+                            aria-label={`Görsel ${index + 1}`}
+                          />
+                        ))}
                   </div>
                 )}
-                
-                {vendor.social_media.twitter && (
-                  <div className="m-social-row">
-                    {React.createElement(iconMapping.twitter, { 
-                      size: 20, 
-                      color: '#1DA1F2',
-                      style: { flexShrink: 0 }
-                    })}
-                    <span className="m-social-label">
-                      Twitter:
-                    </span>
-                    <a 
-                      href={vendor.social_media.twitter.startsWith('http') ? vendor.social_media.twitter : `https://twitter.com/${vendor.social_media.twitter}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="m-link"
-                    >
-                      {vendor.social_media.twitter}
-                    </a>
                   </div>
-                )}
-                
-                {vendor.social_media.website && (
-                  <div className="m-social-row">
-                    {React.createElement(iconMapping.globe, { 
-                      size: 20, 
-                      color: '#0066cc',
-                      style: { flexShrink: 0 }
-                    })}
-                    <span className="m-social-label">
-                      Web Sitesi:
-                    </span>
-                    <a 
-                      href={vendor.social_media.website.startsWith('http') ? vendor.social_media.website : `https://${vendor.social_media.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="m-link"
-                    >
-                      {vendor.social_media.website}
-                    </a>
-                  </div>
-                )}
+                </div>
               </div>
+            )}
+          </div>
+
+          <div className="m-vendor-content">
+            {/* Detaylı Bilgiler */}
+            <div className="m-vendor-sections">
+              {/* Hakkında */}
+              {vendor.about && (
+                <div className="m-vendor-card">
+                  <h3 className="m-vendor-section-title">
+                    Hakkında
+                  </h3>
+                  <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#4a5568', margin: 0 }}>
+                    {vendor.about}
+                  </p>
             </div>
           )}
 
           {/* Konum */}
-          <div className="m-vendor-section">
+              <div className="m-vendor-card">
             <h3 className="m-vendor-section-title">
               Konum
             </h3>
@@ -499,8 +771,12 @@ function VendorDetailContent() {
               showNearbyVendors={true}
             />
           </div>
+            </div>
+          </div>
+          </div>
 
-          {/* Değerlendirmeler */}
+        {/* Değerlendirmeler - Sayfanın En Altında */}
+        <div className="m-vendor-card m-reviews-section">
           <Reviews
             reviews={reviews}
             averageRating={averageRating}
@@ -530,7 +806,6 @@ function VendorDetailContent() {
             }}
             showReviewButton={!isOwnProfile && isAuthenticated} // Sadece kendi profili değilse ve giriş yapmışsa göster
           />
-
         </div>
       </div>
       
@@ -548,6 +823,157 @@ function VendorDetailContent() {
         vendorSlug={vendor.slug}
         services={vendor.categories || []}
       />
+
+      {/* Lightbox Modal */}
+      {showLightbox && vendor.gallery_images && vendor.gallery_images.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            cursor: 'pointer'
+          }}
+          onClick={() => setShowLightbox(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setShowLightbox(false);
+            if (e.key === 'ArrowLeft') {
+              setCurrentImageIndex((prev) => 
+                prev === 0 ? vendor.gallery_images!.length - 1 : prev - 1
+              );
+            }
+            if (e.key === 'ArrowRight') {
+              setCurrentImageIndex((prev) => 
+                prev === vendor.gallery_images!.length - 1 ? 0 : prev + 1
+              );
+            }
+          }}
+          tabIndex={0}
+        >
+          <div
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={vendor.gallery_images[currentImageIndex]?.image_url || vendor.gallery_images[currentImageIndex]?.image}
+              alt={vendor.gallery_images[currentImageIndex]?.description || 'Galeri görseli'}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                borderRadius: '8px'
+              }}
+            />
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setShowLightbox(false)}
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '0',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                color: 'var(--black)',
+                fontWeight: 'bold'
+              }}
+            >
+              ×
+            </button>
+
+            {/* Navigation in Lightbox */}
+            {vendor.gallery_images.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => 
+                      prev === 0 ? vendor.gallery_images!.length - 1 : prev - 1
+                    );
+                  }}
+                  style={{
+                    position: 'absolute',
+                    left: '-50px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  {React.createElement(iconMapping['chevron-left'], { size: 24 })}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => 
+                      prev === vendor.gallery_images!.length - 1 ? 0 : prev + 1
+                    );
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '-50px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  {React.createElement(iconMapping['chevron-right'], { size: 24 })}
+                </button>
+                
+                {/* Image Counter */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-40px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  color: 'white',
+                  fontSize: '14px'
+                }}>
+                  {currentImageIndex + 1} / {vendor.gallery_images.length}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

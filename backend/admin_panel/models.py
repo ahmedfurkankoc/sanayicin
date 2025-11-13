@@ -241,49 +241,19 @@ class BlogPost(models.Model):
             if not image_field:
                 return
             try:
+                from core.utils.image_processing import process_image_to_jpeg
+                
                 image_field.open('rb')
-                img = Image.open(image_field)
-                # Normalize mode
-                if img.mode in ('RGBA', 'LA', 'P'):
-                    background = Image.new('RGB', img.size, (255, 255, 255))
-                    if img.mode == 'RGBA':
-                        background.paste(img, mask=img.split()[3])
-                    else:
-                        background.paste(img)
-                    img = background
-                elif img.mode != 'RGB':
-                    img = img.convert('RGB')
-
-                target_width, target_height = 1200, 630
-                target_aspect = target_width / target_height
-                original_width, original_height = img.size
-                original_aspect = (original_width / original_height) if original_height else target_aspect
-
-                # Skip if already exact size
-                if original_width == target_width and original_height == target_height:
-                    return
-
-                # Center-crop to target aspect
-                if original_aspect > target_aspect:
-                    # Wider: crop width
-                    new_width = int(original_height * target_aspect)
-                    left = (original_width - new_width) // 2
-                    img = img.crop((left, 0, left + new_width, original_height))
-                elif original_aspect < target_aspect:
-                    # Taller: crop height
-                    new_height = int(original_width / target_aspect)
-                    top = (original_height - new_height) // 2
-                    img = img.crop((0, top, original_width, top + new_height))
-
-                # Resize to 1200x630
-                img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-
-                buffer = BytesIO()
-                img.save(buffer, format='JPEG', quality=85, optimize=True)
-                buffer.seek(0)
-
+                # Merkezi görsel işleme utility'sini kullan
+                processed_file = process_image_to_jpeg(
+                    image_field,
+                    target_size=(1200, 630),
+                    quality=85,
+                    crop_to_aspect=(1200, 630)
+                )
+                
                 # Overwrite the existing file path to keep references
-                image_field.save(image_field.name, ContentFile(buffer.read()), save=False)
+                image_field.save(image_field.name, processed_file, save=False)
             except Exception:
                 # In case of any processing error, leave the original file intact
                 return
@@ -311,39 +281,21 @@ class BlogPost(models.Model):
                         storage_path = rel_path
                         if default_storage.exists(storage_path):
                             with default_storage.open(storage_path, 'rb') as f:
-                                img = Image.open(f)
-                                if img.mode in ('RGBA', 'LA', 'P'):
-                                    bg = Image.new('RGB', img.size, (255, 255, 255))
-                                    if img.mode == 'RGBA':
-                                        bg.paste(img, mask=img.split()[3])
-                                    else:
-                                        bg.paste(img)
-                                    img = bg
-                                elif img.mode != 'RGB':
-                                    img = img.convert('RGB')
-
-                                target_width, target_height = 1200, 630
-                                target_aspect = target_width / target_height
-                                w, h = img.size
-                                if not (w == target_width and h == target_height):
-                                    aspect = (w / h) if h else target_aspect
-                                    if aspect > target_aspect:
-                                        new_w = int(h * target_aspect)
-                                        left = (w - new_w) // 2
-                                        img = img.crop((left, 0, left + new_w, h))
-                                    elif aspect < target_aspect:
-                                        new_h = int(w / target_aspect)
-                                        top = (h - new_h) // 2
-                                        img = img.crop((0, top, w, top + new_h))
-                                    img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-
-                                    buf = BytesIO()
-                                    img.save(buf, format='JPEG', quality=85, optimize=True)
-                                    buf.seek(0)
-                                    # Overwrite existing file to keep URLs unchanged
-                                    default_storage.delete(storage_path)
-                                    default_storage.save(storage_path, ContentFile(buf.read()))
-                                    content_updated = True
+                                from core.utils.image_processing import process_image_to_jpeg
+                                from io import BytesIO
+                                
+                                # Merkezi görsel işleme utility'sini kullan
+                                processed_file = process_image_to_jpeg(
+                                    f,
+                                    target_size=(1200, 630),
+                                    quality=85,
+                                    crop_to_aspect=(1200, 630)
+                                )
+                                
+                                # Overwrite existing file to keep URLs unchanged
+                                default_storage.delete(storage_path)
+                                default_storage.save(storage_path, processed_file)
+                                content_updated = True
                     except Exception:
                         continue
 

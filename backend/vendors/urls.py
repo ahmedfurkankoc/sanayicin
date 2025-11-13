@@ -9,6 +9,8 @@ router.register(r'reviews', ReviewViewSet, basename='review')
 
 urlpatterns = [
     path('profile/', VendorProfileView.as_view(), name='vendor-profile'),
+    path('profile/images/', VendorImageListView.as_view(), name='vendor-images-list'),
+    path('profile/images/<int:pk>/', VendorImageDetailView.as_view(), name='vendor-image-detail'),
     path('register/', VendorRegisterView.as_view(), name='vendor-register'),
     path('set-password/', SetVendorPasswordView.as_view(), name='vendor-set-password'),
     path('search/', VendorSearchView.as_view(), name='vendor-search'),

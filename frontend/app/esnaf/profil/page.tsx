@@ -10,10 +10,23 @@ import { api } from "@/app/utils/api";
 import Icon from "@/app/components/ui/Icon";
 import VendorLocationMap from "@/app/components/VendorLocationMap";
 
+interface VendorImage {
+  id: number;
+  image: string;
+  image_url: string;
+  description: string;
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function EsnafProfilPage() {
   const router = useRouter();
   const { user } = useEsnaf();
   const [location, setLocation] = useState<{ latitude?: number; longitude?: number }>({});
+  const [galleryImages, setGalleryImages] = useState<VendorImage[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showLightbox, setShowLightbox] = useState(false);
 
   // Konum bilgilerini yükle
   useEffect(() => {
@@ -33,6 +46,46 @@ export default function EsnafProfilPage() {
 
     loadLocation();
   }, [user?.slug]);
+
+  // Görselleri yükle (sadece görüntüleme için)
+  useEffect(() => {
+    if (!user) return;
+    
+    // Önce user objesinden kontrol et (daha hızlı, API çağrısı yok)
+    if (user.gallery_images && Array.isArray(user.gallery_images) && user.gallery_images.length > 0) {
+      setGalleryImages(user.gallery_images);
+      setCurrentImageIndex(0); // Reset index when images change
+      return;
+    }
+    
+    // User objesinde yoksa API'den yükle
+    const loadImages = async () => {
+      try {
+        const response = await api.getVendorImages();
+        const responseData = response.data;
+        const images: VendorImage[] = Array.isArray(responseData) 
+          ? responseData 
+          : (Array.isArray(responseData?.results) ? responseData.results : []);
+        setGalleryImages(images);
+        setCurrentImageIndex(0); // Reset index when images change
+      } catch (error) {
+        // Fallback: user objesinden al veya boş array
+        setGalleryImages(user?.gallery_images && Array.isArray(user.gallery_images) 
+          ? user.gallery_images 
+          : []);
+        setCurrentImageIndex(0);
+      }
+    };
+
+    loadImages();
+  }, [user]);
+
+  // currentImageIndex sınırlarını kontrol et
+  useEffect(() => {
+    if (galleryImages.length > 0 && currentImageIndex >= galleryImages.length) {
+      setCurrentImageIndex(0);
+    }
+  }, [galleryImages.length, currentImageIndex]);
 
   // İşletme türünü Türkçe'ye çevir
   const getBusinessTypeName = (businessType: string) => {
@@ -57,6 +110,7 @@ export default function EsnafProfilPage() {
     };
     return dayNames[day] || day;
   };
+
 
   if (!user) {
     return (
@@ -142,7 +196,17 @@ export default function EsnafProfilPage() {
             )}
             {user.social_media?.twitter && (
               <a href={user.social_media.twitter} target="_blank" rel="noopener noreferrer" className="esnaf-social-link twitter">
-                <Icon name="twitter" size="md" color="white" />
+                <Icon name="twitter-x" size="md" color="white" />
+              </a>
+            )}
+            {user.social_media?.youtube && (
+              <a href={user.social_media.youtube} target="_blank" rel="noopener noreferrer" className="esnaf-social-link youtube">
+                <Icon name="youtube" size="md" color="white" />
+              </a>
+            )}
+            {user.social_media?.tiktok && (
+              <a href={user.social_media.tiktok} target="_blank" rel="noopener noreferrer" className="esnaf-social-link tiktok">
+                <Icon name="tiktok" size="md" color="white" />
               </a>
             )}
             {user.social_media?.website && (
@@ -202,6 +266,163 @@ export default function EsnafProfilPage() {
                   <span className="esnaf-no-skills">Marka belirtilmemiş</span>
                 )}
               </div>
+            </div>
+
+            {/* Gallery Section */}
+            <div className="esnaf-profile-card">
+              <h3 className="esnaf-card-title">İşletme Görselleri</h3>
+              
+              {galleryImages.length > 0 ? (
+                <div style={{ position: 'relative' }}>
+                  {/* Slider Container */}
+                  <div style={{
+                    position: 'relative',
+                    overflow: 'hidden',
+                    borderRadius: '8px',
+                    marginBottom: '12px',
+                    width: '100%',
+                    aspectRatio: '1'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      transform: `translateX(-${currentImageIndex * 100}%)`,
+                      transition: 'transform 0.3s ease',
+                      height: '100%'
+                    }}>
+                      {galleryImages.map((img, index) => (
+                        <div
+                          key={img.id}
+                          style={{
+                            minWidth: '100%',
+                            width: '100%',
+                            height: '100%',
+                            position: 'relative',
+                            flexShrink: 0,
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => {
+                            setCurrentImageIndex(index);
+                            setShowLightbox(true);
+                          }}
+                        >
+                          <img
+                            src={img.image_url || img.image}
+                            alt={img.description || 'Galeri görseli'}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              display: 'block'
+                            }}
+                            onError={(e) => {
+                              console.error('Görsel yüklenemedi:', img);
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Navigation Buttons */}
+                    {galleryImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => 
+                              prev === 0 ? galleryImages.length - 1 : prev - 1
+                            );
+                          }}
+                          style={{
+                            position: 'absolute',
+                            left: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            zIndex: 2
+                          }}
+                        >
+                          <Icon name="chevron-left" size="sm" color="var(--black)" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentImageIndex((prev) => 
+                              prev === galleryImages.length - 1 ? 0 : prev + 1
+                            );
+                          }}
+                          style={{
+                            position: 'absolute',
+                            right: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            zIndex: 2
+                          }}
+                        >
+                          <Icon name="chevron-right" size="sm" color="var(--black)" />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Dots Indicator */}
+                    {galleryImages.length > 1 && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        marginTop: '12px'
+                      }}>
+                        {galleryImages.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              border: 'none',
+                              backgroundColor: index === currentImageIndex ? 'var(--primary)' : '#ddd',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                              padding: 0
+                            }}
+                            aria-label={`Görsel ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '20px',
+                  color: 'var(--gray)',
+                  fontSize: '14px'
+                }}>
+                  <Icon name="image" size="md" color="var(--gray)" />
+                  <p style={{ marginTop: '8px', fontSize: '12px' }}>Henüz görsel yok</p>
+                </div>
+              )}
             </div>
 
             {/* Verification Status */}
@@ -333,6 +554,158 @@ export default function EsnafProfilPage() {
           </div>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      {showLightbox && galleryImages.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            cursor: 'pointer'
+          }}
+          onClick={() => setShowLightbox(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setShowLightbox(false);
+            if (e.key === 'ArrowLeft') {
+              setCurrentImageIndex((prev) => 
+                prev === 0 ? galleryImages.length - 1 : prev - 1
+              );
+            }
+            if (e.key === 'ArrowRight') {
+              setCurrentImageIndex((prev) => 
+                prev === galleryImages.length - 1 ? 0 : prev + 1
+              );
+            }
+          }}
+          tabIndex={0}
+        >
+          <div
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={galleryImages[currentImageIndex]?.image_url || galleryImages[currentImageIndex]?.image}
+              alt={galleryImages[currentImageIndex]?.description || 'Galeri görseli'}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                borderRadius: '8px'
+              }}
+            />
+            
+            {/* Close Button */}
+            <button
+              onClick={() => setShowLightbox(false)}
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '0',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px',
+                color: 'var(--black)',
+                fontWeight: 'bold'
+              }}
+            >
+              ×
+            </button>
+
+            {/* Navigation in Lightbox */}
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => 
+                      prev === 0 ? galleryImages.length - 1 : prev - 1
+                    );
+                  }}
+                  style={{
+                    position: 'absolute',
+                    left: '-50px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  <Icon name="chevron-left" size="md" color="var(--black)" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentImageIndex((prev) => 
+                      prev === galleryImages.length - 1 ? 0 : prev + 1
+                    );
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '-50px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  <Icon name="chevron-right" size="md" color="var(--black)" />
+                </button>
+                
+                {/* Image Counter */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '-40px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  color: 'white',
+                  fontSize: '14px'
+                }}>
+                  {currentImageIndex + 1} / {galleryImages.length}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
     </EsnafPanelLayout>
   );
 } 

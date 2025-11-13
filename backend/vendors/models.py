@@ -8,6 +8,13 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from django.contrib.auth import get_user_model
 
+
+def vendor_gallery_upload_path(instance, filename):
+	"""Vendor galeri görselleri için upload path oluştur - WebP formatında"""
+	file_uuid = str(uuid.uuid4())
+	# Tüm görseller WebP formatında kaydedilecek
+	return f'vendor_gallery/{instance.vendor.slug}/{file_uuid}.webp'
+
 class VendorProfile(models.Model):
 	BUSINESS_TYPE_CHOICES = [
 		("sahis", "Şahıs Şirketi"),
@@ -80,6 +87,24 @@ class VendorProfile(models.Model):
 			base_slug = re.sub(r'[^a-z0-9-]', '', base_slug)
 			self.slug = base_slug
 		super().save(*args, **kwargs)
+
+
+class VendorImage(models.Model):
+	"""Esnaf mağaza/işletme/iş örnekleri görselleri"""
+	vendor = models.ForeignKey(VendorProfile, on_delete=models.CASCADE, related_name='gallery_images')
+	image = models.ImageField(upload_to=vendor_gallery_upload_path)
+	description = models.CharField(max_length=255, blank=True, help_text="Görsel açıklaması (opsiyonel)")
+	order = models.IntegerField(default=0, help_text="Sıralama için kullanılır")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ['order', '-created_at']
+		verbose_name = "Esnaf Görseli"
+		verbose_name_plural = "Esnaf Görselleri"
+
+	def __str__(self):
+		return f"{self.vendor.display_name} - Görsel {self.id}"
 
 
 class Appointment(models.Model):
@@ -219,6 +244,7 @@ class ServiceRequest(models.Model):
 		('cancelled', 'İptal Edildi'),
 		('closed', 'Kapatıldı'),  # legacy/support
 	])
+	cancellation_reason = models.TextField(blank=True, verbose_name="İptal Nedeni")
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 

@@ -195,9 +195,9 @@ export default function CategoryBlogDetailPage() {
                 {(() => { const Icon = iconMapping.facebook; return <Icon size={20} color="#fff"/> })()}
               </button>
               <button className="share-btn" aria-label="X" onClick={() => {
-                const u = encodeURIComponent(window.location.href); const t = encodeURIComponent(post.title || ''); window.open(`https://twitter.com/intent/tweet?url=${u}&text=${t}`,'_blank');
+                const u = encodeURIComponent(window.location.href); const t = encodeURIComponent(post.title || ''); window.open(`https://x.com/intent/tweet?url=${u}&text=${t}`,'_blank');
               }}>
-                {(() => { const Icon = iconMapping['x-social']; return <Icon size={20} color="#fff"/> })()}
+                {(() => { const Icon = iconMapping['twitter-x']; return <Icon size={20} color="#fff"/> })()}
               </button>
               <button className="share-btn" aria-label="LinkedIn" onClick={() => {
                 const u = encodeURIComponent(window.location.href); const t = encodeURIComponent(post.title || ''); const s = encodeURIComponent(post.excerpt || ''); window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${u}&title=${t}&summary=${s}`,'_blank');

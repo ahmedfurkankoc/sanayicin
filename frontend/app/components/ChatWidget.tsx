@@ -90,14 +90,23 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isAtTop, setIsAtTop] = useState(false);
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [showSkeleton, setShowSkeleton] = useState(false);
 
   // Scroll to bottom fonksiyonu
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    setIsAtBottom(true);
-    setNewMessageCount(0);
+    try {
+      if (messagesContainerRef.current) {
+        // Sadece mesaj container'ına scroll yap, sayfaya değil
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        setIsAtBottom(true);
+        setIsAtTop(false);
+        setNewMessageCount(0);
+        // Scroll pozisyonunu kontrol et
+        checkScrollPosition();
+      }
+    } catch (e) {}
   };
 
   // Scroll pozisyonunu kontrol et
@@ -106,8 +115,10 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     
     const container = messagesContainerRef.current;
     const isAtBottomNow = container.scrollTop + container.clientHeight >= container.scrollHeight - 10; // 10px tolerance
+    const isAtTopNow = container.scrollTop <= 10; // 10px tolerance
     
     setIsAtBottom(isAtBottomNow);
+    setIsAtTop(isAtTopNow);
   };
 
   // Scroll event handler
@@ -360,15 +371,23 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     
     // Yeni conversation'a geçildiğinde scroll pozisyonunu sıfırla
     setIsAtBottom(true);
+    setIsAtTop(false);
     setNewMessageCount(0);
     
     // Önce cache'den kontrol et
     if (messagesCache[activeId]) {
       setMessages(messagesCache[activeId]);
-      // Cache'den yüklendiğinde akıllı scroll yap
+      // Cache'den yüklendiğinde scroll pozisyonunu en alta ayarla
       setTimeout(() => {
-        if (isAtBottom) {
-          scrollToBottom();
+        if (messagesContainerRef.current) {
+          requestAnimationFrame(() => {
+            if (messagesContainerRef.current) {
+              messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+              setIsAtBottom(true);
+              setIsAtTop(false);
+              checkScrollPosition();
+            }
+          });
         }
       }, 100);
       return;
@@ -392,11 +411,23 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
         setNextOffset(res.data?.next_offset ?? null);
         setLoadingMoreMessages(false);
         
-        // Skeleton'ı kaldır ve en son mesaja scroll yap
+        // Skeleton'ı kaldır
         setTimeout(() => {
           setShowSkeleton(false);
-          // Skeleton kaldırıldıktan sonra en son mesaja scroll yap
-          setTimeout(() => scrollToBottom(), 200);
+          // İlk yüklemede scroll pozisyonunu en alta ayarla (smooth olmadan, direkt)
+          // Mesajlar zaten son mesajlar olarak yükleniyor, sadece scroll pozisyonunu ayarla
+          if (messagesContainerRef.current) {
+            // DOM güncellemesi için küçük bir gecikme
+            requestAnimationFrame(() => {
+              if (messagesContainerRef.current) {
+                messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+                setIsAtBottom(true);
+                setIsAtTop(false);
+                // Scroll pozisyonunu kontrol et
+                checkScrollPosition();
+              }
+            });
+          }
         }, 300);
         
         // Mesajlar yüklendiğinde hemen okundu olarak işaretle
@@ -447,6 +478,12 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     
     try {
       setLoadingMoreMessages(true);
+      
+      // Mevcut scroll pozisyonunu ve yüksekliği kaydet
+      const container = messagesContainerRef.current;
+      const previousScrollHeight = container?.scrollHeight || 0;
+      const previousScrollTop = container?.scrollTop || 0;
+      
       const res = await api.chatGetMessages(activeId, { limit: 20, offset: nextOffset });
       const list = res.data?.results ?? [];
       
@@ -454,6 +491,17 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
       setMessages((prev) => [...list.reverse(), ...prev]);
       setHasMoreMessages(res.data?.has_more ?? false);
       setNextOffset(res.data?.next_offset ?? null);
+      
+      // Scroll pozisyonunu koru (yeni mesajlar yüklendikten sonra)
+      setTimeout(() => {
+        if (container) {
+          const newScrollHeight = container.scrollHeight;
+          const scrollDifference = newScrollHeight - previousScrollHeight;
+          container.scrollTop = previousScrollTop + scrollDifference;
+          // Scroll pozisyonunu kontrol et
+          checkScrollPosition();
+        }
+      }, 50);
     } catch (error) {
       console.error('Daha fazla mesaj yüklenemedi:', error);
     } finally {
@@ -505,13 +553,7 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
               // Cache'i de güncelle
               setMessagesCache(cache => ({ ...cache, [activeId]: newList }));
               
-              // Yeni mesaj geldiğinde akıllı scroll yap
-              if (isAtBottom) {
-                setTimeout(() => scrollToBottom(), 100);
-              } else {
-                // Kullanıcı yukarıda scroll yapmışsa yeni mesaj sayısını artır
-                setNewMessageCount(prev => prev + 1);
-              }
+              // Scroll işlemi aşağıda yapılacak
               return newList;
             }
             
@@ -519,6 +561,28 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
             setMessagesCache(cache => ({ ...cache, [activeId]: updated }));
             return updated;
           });
+          
+          // Yeni mesaj geldiğinde scroll pozisyonunu kontrol et
+          setTimeout(() => {
+            if (messagesContainerRef.current) {
+              const container = messagesContainerRef.current;
+              const isAtBottomNow = container.scrollTop + container.clientHeight >= container.scrollHeight - 10;
+              
+              if (isAtBottomNow) {
+                // Kullanıcı en alttaysa scroll yap
+                container.scrollTop = container.scrollHeight;
+                setIsAtBottom(true);
+                setIsAtTop(false);
+                setNewMessageCount(0);
+              } else {
+                // Kullanıcı yukarıdaysa yeni mesaj sayısını artır
+                setIsAtBottom(false);
+                setNewMessageCount(prev => prev + 1);
+              }
+              // Scroll pozisyonunu kontrol et
+              checkScrollPosition();
+            }
+          }, 50);
           
           // Aktif değilse ve karşı taraftan geldiyse unread ++
           const cid = evt.data?.conversation;
@@ -598,17 +662,8 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     };
   }, [isWidgetOpen, activeId, mappedRole, isAuthenticated, onUnreadCountUpdate]);
 
-  // Mesajlar yüklendiğinde akıllı scroll
-  useEffect(() => {
-    if (!showSkeleton && messages.length > 0) {
-      if (isAtBottom) {
-        setTimeout(() => scrollToBottom(), 100);
-      } else {
-        // Kullanıcı yukarıda scroll yapmışsa yeni mesaj sayısını artır
-        setNewMessageCount(prev => prev + 1);
-      }
-    }
-  }, [messages.length, isAtBottom, showSkeleton]);
+  // Yeni mesaj geldiğinde akıllı scroll (sadece kullanıcı en alttaysa)
+  // Bu useEffect'i kaldırdık - yeni mesaj mantığı direkt mesaj geldiğinde kontrol edilecek
 
   const send = async () => {
     const text = msg.trim();
@@ -633,8 +688,18 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
     });
     setMsg('');
     
-    // Yeni mesaj gönderildiğinde her zaman en alta scroll yap
-    setTimeout(() => scrollToBottom(), 100);
+    // Kendi mesajını gönderdiğinde her zaman en alta scroll yap
+    setIsAtBottom(true);
+    setIsAtTop(false);
+    setNewMessageCount(0); // Kendi mesajını gönderdiğinde yeni mesaj sayısını sıfırla
+    
+    // Scroll yap
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        checkScrollPosition();
+      }
+    }, 50);
     
     // Typing'i durdur
     sendTypingEvent(false);
@@ -840,32 +905,34 @@ export default function ChatWidget({ role, isOpen, onClose, user, onUnreadCountU
                 padding: 12, 
                 background: mappedRole === 'vendor' ? 'var(--chat-vendor-bg-secondary)' : 'var(--chat-client-bg-secondary)',
                 wordWrap: 'break-word',
-                position: 'relative'
+                position: 'relative',
+                /* Scroll sadece bu container'da kalacak, sayfayı etkilemeyecek */
+                overscrollBehavior: 'contain'
               }}
             >
-              {/* Daha fazla mesaj yükle butonu - en üstte */}
-              {hasMoreMessages && (
+              {/* Daha fazla mesaj yükle butonu - sadece en yukarı gidince ve içerik varsa göster */}
+              {hasMoreMessages && isAtTop && (
                 <div style={{ 
-                  textAlign: 'center', 
-                  padding: '10px 0', 
-                  marginBottom: '10px',
-                  borderBottom: '1px solid #e9ecef'
+                  display: 'flex',
+                  justifyContent: 'center',
+                  marginBottom: '16px'
                 }}>
                   <button
                     onClick={loadMoreMessages}
                     disabled={loadingMoreMessages}
                     style={{
                       background: 'transparent',
-                      border: `1px solid ${palette.primary}`,
+                      border: 'none',
                       color: palette.primary,
-                      padding: '6px 12px',
-                      borderRadius: 6,
-                      fontSize: 12,
+                      padding: '8px 16px',
                       cursor: loadingMoreMessages ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      textDecoration: 'underline',
                       opacity: loadingMoreMessages ? 0.6 : 1
                     }}
                   >
-                    {loadingMoreMessages ? 'Yükleniyor...' : 'Daha Fazla Mesaj Yükle'}
+                    {loadingMoreMessages ? 'Yükleniyor...' : '↑ Önceki Mesajları Yükle'}
                   </button>
                 </div>
               )}
