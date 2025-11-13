@@ -9,7 +9,7 @@ import { api } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import LocationPicker from "@/app/components/LocationPicker";
-import { Check, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Clock, X, Plus } from "lucide-react";
 
 
 export default function EsnafProfilDuzenlePage() {
@@ -27,6 +27,9 @@ export default function EsnafProfilDuzenlePage() {
   const [carBrandSearch, setCarBrandSearch] = useState("");
   const [location, setLocation] = useState<{ latitude?: number; longitude?: number }>({});
   const [expandedServiceAreas, setExpandedServiceAreas] = useState<Set<number>>(new Set());
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [previewImages, setPreviewImages] = useState<Array<{ file: File; preview: string; id: string }>>([]);
 
   // Turkey data (city/district/neighbourhood)
   const { cities, loadTurkeyData, getDistricts, getNeighbourhoods } = useTurkeyData();
@@ -89,13 +92,46 @@ export default function EsnafProfilDuzenlePage() {
       });
       loadData();
       loadLocation();
+      
+      // Görselleri yükle - önce user objesinden kontrol et
+      const loadImages = async () => {
+        // Önce user objesinden kontrol et (daha hızlı)
+        if (user.gallery_images && Array.isArray(user.gallery_images) && user.gallery_images.length > 0) {
+          setGalleryImages(user.gallery_images);
+          return;
+        }
+        
+        // User objesinde yoksa API'den yükle
+        try {
+          const response = await api.getVendorImages();
+          const responseData = response.data;
+          const images = Array.isArray(responseData) 
+            ? responseData 
+            : (Array.isArray(responseData?.results) ? responseData.results : []);
+          setGalleryImages(images);
+        } catch (error) {
+          console.error('Görseller yüklenemedi:', error);
+          // Fallback: user objesinden al
+          if (user?.gallery_images && Array.isArray(user.gallery_images)) {
+            setGalleryImages(user.gallery_images);
+          }
+        }
+      };
+      loadImages();
     }
-  }, [loading, user]);
+  }, [loading, user, user?.gallery_images]);
 
   // Load TR data on mount
   useEffect(() => {
     loadTurkeyData();
   }, [loadTurkeyData]);
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      previewImages.forEach(p => URL.revokeObjectURL(p.preview));
+    };
+  }, [previewImages]);
 
   // When profile.city changes, populate districts
   useEffect(() => {
@@ -198,6 +234,131 @@ export default function EsnafProfilDuzenlePage() {
       } catch (error: any) {
         toast.error('Avatar yüklenirken hata oluştu!');
       }
+    }
+  };
+
+  const handleGalleryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+    const newPreviews: Array<{ file: File; preview: string; id: string }> = [];
+
+    // Tüm dosyaları kontrol et ve preview oluştur
+    Array.from(files).forEach((file) => {
+      // Dosya tipi kontrolü
+      if (!file.type.startsWith('image/')) {
+        invalidFiles.push(`${file.name}: Geçersiz dosya tipi`);
+        return;
+      }
+
+      // Dosya boyutu kontrolü (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        invalidFiles.push(`${file.name}: Dosya boyutu 5MB'dan büyük`);
+        return;
+      }
+
+      validFiles.push(file);
+      // Anında preview oluştur
+      const preview = URL.createObjectURL(file);
+      newPreviews.push({
+        file,
+        preview,
+        id: `preview-${Date.now()}-${Math.random()}`
+      });
+    });
+
+    // Hatalı dosyalar varsa göster
+    if (invalidFiles.length > 0) {
+      toast.error(`Bazı dosyalar yüklenemedi:\n${invalidFiles.join('\n')}`);
+    }
+
+    if (validFiles.length === 0) {
+      e.target.value = '';
+      return;
+    }
+
+    // Anında preview göster
+    setPreviewImages(prev => [...prev, ...newPreviews]);
+    setUploadingImage(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    // Dosyaları sırayla yükle
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      const previewId = newPreviews[i].id;
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        await api.uploadVendorImage(formData);
+        successCount++;
+      } catch (error: any) {
+        failCount++;
+        // Hata olan preview'ı kaldır
+        setPreviewImages(prev => prev.filter(p => p.id !== previewId));
+        console.error(`Görsel yükleme hatası (${file.name}):`, error);
+      }
+    }
+
+    // Sonuç mesajı
+    if (successCount > 0) {
+      toast.success(`${successCount} görsel başarıyla yüklendi${failCount > 0 ? `, ${failCount} görsel yüklenemedi` : ''}`);
+    } else {
+      toast.error('Görseller yüklenirken hata oluştu');
+    }
+
+    // Görselleri yeniden yükle
+    try {
+      const response = await api.getVendorImages();
+      const responseData = response.data;
+      const images = Array.isArray(responseData) 
+        ? responseData 
+        : (Array.isArray(responseData?.results) ? responseData.results : []);
+      setGalleryImages(images);
+      // Preview'ları temizle (artık gerçek görseller var)
+      setPreviewImages([]);
+      // Preview URL'lerini temizle (memory leak önleme)
+      newPreviews.forEach(p => URL.revokeObjectURL(p.preview));
+      // User context'ini güncelle ki profil sayfasında da görseller görünsün
+      await refreshUser();
+    } catch (error) {
+      console.error('Görseller yüklenemedi:', error);
+      // Hata durumunda preview'ları temizle
+      newPreviews.forEach(p => URL.revokeObjectURL(p.preview));
+      setPreviewImages([]);
+    }
+
+    setUploadingImage(false);
+    e.target.value = '';
+  };
+
+  const handleDeleteGalleryImage = async (id: number) => {
+    if (!confirm('Bu görseli silmek istediğinize emin misiniz?')) {
+      return;
+    }
+
+    try {
+      await api.deleteVendorImage(id);
+      toast.success('Görsel başarıyla silindi');
+      
+      // Görselleri yeniden yükle
+      try {
+        const response = await api.getVendorImages();
+        const responseData = response.data;
+        const images = Array.isArray(responseData) 
+          ? responseData 
+          : (Array.isArray(responseData?.results) ? responseData.results : []);
+        setGalleryImages(images);
+        // User context'ini güncelle ki profil sayfasında da görseller görünsün
+        await refreshUser();
+      } catch (error) {
+        console.error('Görseller yüklenemedi:', error);
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || 'Görsel silinirken hata oluştu');
     }
   };
 
@@ -739,6 +900,221 @@ export default function EsnafProfilDuzenlePage() {
                 </div>
               </div>
 
+              {/* İşletme Görselleri */}
+              <div className="esnaf-profile-section">
+                <h2 className="esnaf-section-title">İşletme Görselleri</h2>
+                <p className="esnaf-help-text" style={{ marginBottom: '20px' }}>
+                  Mağaza, işletme veya iş örneklerinizin görsellerini ekleyin. Müşteriler bu görselleri profilinizde görebilecek.
+                </p>
+
+                {/* Görsel Yükleme */}
+                <div className="esnaf-form-group">
+                  <label>Yeni Görsel Ekle</label>
+                  <div style={{
+                    border: '2px dashed #ddd',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    backgroundColor: '#fafafa',
+                    cursor: uploadingImage ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!uploadingImage) {
+                      e.currentTarget.style.borderColor = 'var(--primary)';
+                      e.currentTarget.style.backgroundColor = '#fffef5';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#ddd';
+                    e.currentTarget.style.backgroundColor = '#fafafa';
+                  }}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryImageUpload}
+                      disabled={uploadingImage}
+                      style={{
+                        display: 'none'
+                      }}
+                      id="gallery-image-upload"
+                    />
+                    <label
+                      htmlFor="gallery-image-upload"
+                      style={{
+                        cursor: uploadingImage ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}
+                    >
+                      {uploadingImage ? (
+                        <>
+                          <div className="esnaf-spinner" style={{ width: '24px', height: '24px' }}></div>
+                          <span style={{ color: '#666', fontSize: '14px' }}>Yükleniyor...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={32} color="var(--primary)" />
+                          <span style={{ color: '#666', fontSize: '14px' }}>
+                            Görsel seçmek için tıklayın (Birden fazla seçebilirsiniz)
+                          </span>
+                          <span style={{ color: '#999', fontSize: '12px' }}>
+                            Maksimum 5MB, JPG, PNG, WEBP
+                          </span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                </div>
+
+                {/* Mevcut Görseller ve Preview'lar */}
+                <div className="esnaf-form-group">
+                  <label>
+                    {previewImages.length > 0 ? 'Yükleniyor...' : 'Mevcut Görseller'} 
+                    ({galleryImages.length + previewImages.length})
+                  </label>
+                  {galleryImages.length === 0 && previewImages.length === 0 ? (
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '40px 20px',
+                      color: '#999',
+                      fontSize: '14px',
+                      marginTop: '16px'
+                    }}>
+                      <p>Henüz görsel eklenmemiş</p>
+                    </div>
+                  ) : (
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                      gap: '16px',
+                      marginTop: '16px'
+                    }}>
+                      {/* Preview görselleri (yükleniyor) */}
+                      {previewImages.map((preview) => (
+                        <div
+                          key={preview.id}
+                          style={{
+                            position: 'relative',
+                            aspectRatio: '1',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            backgroundColor: '#f5f5f5',
+                            border: '2px dashed var(--primary)',
+                            opacity: 0.7
+                          }}
+                        >
+                          <img
+                            src={preview.preview}
+                            alt="Yükleniyor..."
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                          }}>
+                            Yükleniyor...
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Mevcut görseller */}
+                      {galleryImages.map((img) => (
+                        <div
+                          key={img.id}
+                          style={{
+                            position: 'relative',
+                            aspectRatio: '1',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            backgroundColor: '#f5f5f5',
+                            border: '1px solid #eee'
+                          }}
+                        >
+                          <img
+                            src={img.image_url || img.image}
+                            alt={img.description || 'Galeri görseli'}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGalleryImage(img.id)}
+                            style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              backgroundColor: 'rgba(255, 0, 0, 0.8)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '32px',
+                              height: '32px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '20px',
+                              fontWeight: 'bold',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(255, 0, 0, 1)';
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                            title="Görseli Sil"
+                          >
+                            <X size={18} />
+                          </button>
+                          {img.description && (
+                            <div style={{
+                              position: 'absolute',
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                              color: 'white',
+                              padding: '8px',
+                              fontSize: '11px',
+                              maxHeight: '40px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {img.description}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Adres Bilgileri */}
               <div className="esnaf-profile-section">
                 <h2 className="esnaf-section-title">Adres Bilgileri</h2>
@@ -866,12 +1242,34 @@ export default function EsnafProfilDuzenlePage() {
                 </div>
 
                 <div className="esnaf-form-group">
-                  <label>Twitter</label>
+                  <label>X (Twitter)</label>
                   <input
                     type="url"
                     value={profile.social_media?.twitter || ""}
                     onChange={(e) => handleSocialMediaChange("twitter", e.target.value)}
-                    placeholder="https://twitter.com/kullaniciadi"
+                    placeholder="https://x.com/kullaniciadi"
+                    className="esnaf-input"
+                  />
+                </div>
+
+                <div className="esnaf-form-group">
+                  <label>YouTube</label>
+                  <input
+                    type="url"
+                    value={profile.social_media?.youtube || ""}
+                    onChange={(e) => handleSocialMediaChange("youtube", e.target.value)}
+                    placeholder="https://youtube.com/@kanaladi"
+                    className="esnaf-input"
+                  />
+                </div>
+
+                <div className="esnaf-form-group">
+                  <label>TikTok</label>
+                  <input
+                    type="url"
+                    value={profile.social_media?.tiktok || ""}
+                    onChange={(e) => handleSocialMediaChange("tiktok", e.target.value)}
+                    placeholder="https://tiktok.com/@kullaniciadi"
                     className="esnaf-input"
                   />
                 </div>

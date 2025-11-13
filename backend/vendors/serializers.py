@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import VendorProfile, Appointment, Review, ServiceRequest
+from .models import VendorProfile, Appointment, Review, ServiceRequest, VendorImage
 from core.models import ServiceArea, Category, CarBrand
 from core.utils.password_validator import validate_strong_password
 
@@ -17,9 +17,21 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
 
 
 class CarBrandDetailSerializer(serializers.ModelSerializer):
+    logo_url = serializers.SerializerMethodField()
+    
     class Meta:
         model = CarBrand
-        fields = ('id', 'name', 'logo', 'description', 'is_active')
+        fields = ('id', 'name', 'logo', 'logo_url', 'description', 'is_active')
+    
+    def get_logo_url(self, obj):
+        """Logo URL'ini absolute URL olarak döndür"""
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            # Fallback: relative URL
+            return obj.logo.url
+        return None
 
 
 class VendorRegisterSerializer(serializers.ModelSerializer):
@@ -211,10 +223,30 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
         return profile
 
 
+class VendorImageSerializer(serializers.ModelSerializer):
+    """Vendor görsel serializer'ı"""
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = VendorImage
+        fields = ('id', 'image', 'image_url', 'description', 'order', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_at', 'updated_at')
+    
+    def get_image_url(self, obj):
+        """Görsel URL'ini döndür"""
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
+
 class VendorProfileSerializer(serializers.ModelSerializer):
     service_areas = ServiceAreaDetailSerializer(many=True, read_only=True)
     categories = CategoryDetailSerializer(many=True, read_only=True)
     car_brands = CarBrandDetailSerializer(many=True, read_only=True)
+    gallery_images = VendorImageSerializer(many=True, read_only=True)
     service_areas_ids = serializers.PrimaryKeyRelatedField(
         source='service_areas',
         queryset=ServiceArea.objects.all(),
@@ -249,7 +281,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'display_name', 'about', 'business_phone', 'city', 'district', 'subdistrict', 'address',
             'latitude', 'longitude',
             'social_media', 'working_hours', 'unavailable_dates', 'manager_birthdate', 'manager_tc',
-            'rating', 'review_count'
+            'rating', 'review_count', 'gallery_images'
         )
         read_only_fields = ('id', 'slug')
 
@@ -432,7 +464,7 @@ class ServiceRequestSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'vendor', 'vendor_info', 'user', 'service', 'service_name',
             'request_type', 'vehicle_info', 'title', 'description', 'client_phone',
-            'attachments', 'messages', 'last_offered_price', 'last_offered_days', 'unread_for_vendor', 'status', 'created_at', 'updated_at'
+            'attachments', 'messages', 'last_offered_price', 'last_offered_days', 'unread_for_vendor', 'status', 'cancellation_reason', 'created_at', 'updated_at'
         ]
         read_only_fields = ['vendor', 'user', 'messages', 'unread_for_vendor', 'status', 'created_at', 'updated_at']
 

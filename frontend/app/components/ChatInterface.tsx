@@ -71,12 +71,22 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [showSkeleton, setShowSkeleton] = useState(false);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isAtTop, setIsAtTop] = useState(false);
 
   const scrollToBottom = () => {
     try {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      setIsAtBottom(true);
-      setNewMessageCount(0);
+      if (messagesContainerRef.current) {
+        // Sadece mesaj container'ına scroll yap, sayfaya değil
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        setIsAtBottom(true);
+        setIsAtTop(false);
+        setNewMessageCount(0);
+        // Scroll pozisyonunu kontrol et
+        checkScrollPosition();
+      }
     } catch (e) {}
   };
 
@@ -86,8 +96,10 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
     
     const container = messagesContainerRef.current;
     const isAtBottomNow = container.scrollTop + container.clientHeight >= container.scrollHeight - 10; // 10px tolerance
+    const isAtTopNow = container.scrollTop <= 10; // 10px tolerance
     
     setIsAtBottom(isAtBottomNow);
+    setIsAtTop(isAtTopNow);
   };
 
   // Scroll event handler
@@ -166,28 +178,43 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
     }
   };
 
-  // Conversation bilgilerini yükle
+  // Konuşma listesini yükle
   useEffect(() => {
-    const loadConversation = async () => {
+    const loadConversations = async () => {
       try {
+        setLoadingConversations(true);
         const res = await api.chatListConversations();
-        const conversations = res.data ?? res;
-        const currentConv = conversations.find((c: any) => c.id === conversationId);
+        const convs = res.data ?? res;
+        setConversations(convs);
+        
+        // Mevcut konuşmayı bul
+        const currentConv = convs.find((c: any) => c.id === conversationId);
         setConversation(currentConv);
       } catch (error) {
-        console.error('Konuşma bilgileri yüklenemedi:', error);
+        console.error('Konuşmalar yüklenemedi:', error);
+      } finally {
+        setLoadingConversations(false);
       }
     };
 
-    if (conversationId) {
-      loadConversation();
-    }
+    loadConversations();
   }, [conversationId]);
+
+  // Conversation bilgilerini güncelle (conversations listesi değiştiğinde)
+  useEffect(() => {
+    if (conversations.length > 0 && conversationId) {
+      const currentConv = conversations.find((c: any) => c.id === conversationId);
+      if (currentConv) {
+        setConversation(currentConv);
+      }
+    }
+  }, [conversations, conversationId]);
 
   // İlk mesajları yükle (son 20 mesaj)
   useEffect(() => {
     // Yeni conversation'a geçildiğinde scroll pozisyonunu sıfırla
     setIsAtBottom(true);
+    setIsAtTop(false);
     setNewMessageCount(0);
     
     const loadMessages = async () => {
@@ -209,6 +236,7 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
             // Conversation list'i yeniden yükle ve güncelle
             const convRes = await api.chatListConversations();
             const conversations = convRes.data ?? convRes;
+            setConversations(conversations);
             onUnreadCountUpdate(conversations);
           }
         }
@@ -216,11 +244,23 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
         console.error('Mesajlar yüklenemedi:', error);
       } finally {
         setLoading(false);
-        // Skeleton'ı kaldır ve en son mesaja scroll yap
+        // Skeleton'ı kaldır
         setTimeout(() => {
           setShowSkeleton(false);
-          // Skeleton kaldırıldıktan sonra en son mesaja scroll yap
-          setTimeout(() => scrollToBottom(), 100);
+          // İlk yüklemede scroll pozisyonunu en alta ayarla (smooth olmadan, direkt)
+          // Mesajlar zaten son mesajlar olarak yükleniyor, sadece scroll pozisyonunu ayarla
+          if (messagesContainerRef.current) {
+            // DOM güncellemesi için küçük bir gecikme
+            requestAnimationFrame(() => {
+              if (messagesContainerRef.current) {
+                messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+                setIsAtBottom(true);
+                setIsAtTop(false);
+                // Scroll pozisyonunu kontrol et
+                checkScrollPosition();
+              }
+            });
+          }
         }, 300);
       }
     };
@@ -228,25 +268,8 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
     loadMessages();
   }, [conversationId, onUnreadCountUpdate]);
 
-  // İlk açılışta ve messages güncellendiğinde akıllı scroll
-  useEffect(() => {
-    if (!loading && !showSkeleton && messages.length > 0) {
-      // İlk yüklemede her zaman en alta scroll
-      setTimeout(() => scrollToBottom(), 100);
-    }
-  }, [loading, showSkeleton, messages.length]);
-
-  useEffect(() => {
-    // Yeni mesaj eklendiğinde akıllı scroll (sadece skeleton olmadığında)
-    if (!showSkeleton && messages.length > 0) {
-      if (isAtBottom) {
-        setTimeout(() => scrollToBottom(), 100);
-      } else {
-        // Kullanıcı yukarıda scroll yapmışsa yeni mesaj sayısını artır
-        setNewMessageCount(prev => prev + 1);
-      }
-    }
-  }, [messages.length, isAtBottom, showSkeleton]);
+  // Yeni mesaj geldiğinde akıllı scroll (sadece kullanıcı en alttaysa)
+  // Bu useEffect'i kaldırdık - yeni mesaj mantığı direkt mesaj geldiğinde kontrol edilecek
 
   // Daha fazla mesaj yükle
   const loadMoreMessages = async () => {
@@ -254,6 +277,12 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
     
     try {
       setLoadingMore(true);
+      
+      // Mevcut scroll pozisyonunu ve yüksekliği kaydet
+      const container = messagesContainerRef.current;
+      const previousScrollHeight = container?.scrollHeight || 0;
+      const previousScrollTop = container?.scrollTop || 0;
+      
       const res = await api.chatGetMessages(conversationId, { limit: 20, offset: nextOffset });
       const list = res.data?.results ?? [];
       
@@ -261,6 +290,17 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
       setMessages((prev) => [...list.reverse(), ...prev]);
       setHasMore(res.data?.has_more ?? false);
       setNextOffset(res.data?.next_offset ?? null);
+      
+      // Scroll pozisyonunu koru (yeni mesajlar yüklendikten sonra)
+      setTimeout(() => {
+        if (container) {
+          const newScrollHeight = container.scrollHeight;
+          const scrollDifference = newScrollHeight - previousScrollHeight;
+          container.scrollTop = previousScrollTop + scrollDifference;
+          // Scroll pozisyonunu kontrol et
+          checkScrollPosition();
+        }
+      }, 50);
     } catch (error) {
       console.error('Daha fazla mesaj yüklenemedi:', error);
     } finally {
@@ -311,18 +351,33 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
             
             // Eğer bu mesaj zaten yoksa ekle
             if (!updated.find(m => m.id === newMessage.id)) {
-              // Yeni mesaj geldiğinde akıllı scroll
-              if (isAtBottom) {
-                setTimeout(() => scrollToBottom(), 100);
-              } else {
-                // Kullanıcı yukarıda scroll yapmışsa yeni mesaj sayısını artır
-                setNewMessageCount(prev => prev + 1);
-              }
               return [...updated, newMessage];
             }
             
             return updated;
           });
+          
+          // Yeni mesaj geldiğinde scroll pozisyonunu kontrol et
+          setTimeout(() => {
+            if (messagesContainerRef.current) {
+              const container = messagesContainerRef.current;
+              const isAtBottomNow = container.scrollTop + container.clientHeight >= container.scrollHeight - 10;
+              
+              if (isAtBottomNow) {
+                // Kullanıcı en alttaysa scroll yap
+                container.scrollTop = container.scrollHeight;
+                setIsAtBottom(true);
+                setIsAtTop(false);
+                setNewMessageCount(0);
+              } else {
+                // Kullanıcı yukarıdaysa yeni mesaj sayısını artır
+                setIsAtBottom(false);
+                setNewMessageCount(prev => prev + 1);
+              }
+              // Scroll pozisyonunu kontrol et
+              checkScrollPosition();
+            }
+          }, 50);
           
           // Yeni mesaj geldiğinde okundu olarak işaretle
           await api.chatMarkRead(conversationId);
@@ -330,6 +385,7 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
           if (onUnreadCountUpdate) {
             const convRes = await api.chatListConversations();
             const conversations = convRes.data ?? convRes;
+            setConversations(conversations);
             onUnreadCountUpdate(conversations);
           }
         }
@@ -362,7 +418,15 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
     setInput(''); // Input'u temizle
     
     // Kendi mesajını gönderdiğinde her zaman en alta scroll yap
-    setTimeout(() => scrollToBottom(), 100);
+    setIsAtBottom(true);
+    setNewMessageCount(0); // Kendi mesajını gönderdiğinde yeni mesaj sayısını sıfırla
+    
+    // Scroll yap
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }, 50);
     
     // Typing'i durdur
     sendTypingEvent(false);
@@ -385,55 +449,213 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
     }
   };
 
+  // Son mesaj önizlemesini al
+  const getLastMessagePreview = (conv: any) => {
+    if (!conv.last_message_text) return 'Henüz mesaj yok';
+    try {
+      // OFFER_CARD formatını kontrol et
+      if (conv.last_message_text.startsWith('OFFER_CARD::')) {
+        return '📋 Teklif gönderildi';
+      }
+      // Talep mention formatını kontrol et
+      if (conv.last_message_text.includes('📋 Talep #')) {
+        const lines = conv.last_message_text.split('\n');
+        const messageLines = lines.slice(1).filter((line: string) => line.trim());
+        if (messageLines.length > 0) {
+          return messageLines[0].substring(0, 50) + (messageLines[0].length > 50 ? '...' : '');
+        }
+        return '📋 Talep bahsedildi';
+      }
+      return conv.last_message_text.substring(0, 50) + (conv.last_message_text.length > 50 ? '...' : '');
+    } catch (_) {}
+    return conv.last_message_text.substring(0, 50) + (conv.last_message_text.length > 50 ? '...' : '');
+  };
+
+  // Zaman formatla
+  const formatTime = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'Şimdi';
+      if (diffMins < 60) return `${diffMins} dk`;
+      if (diffHours < 24) return `${diffHours} sa`;
+      if (diffDays < 7) return `${diffDays} gün`;
+      return date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
+    } catch (_) {
+      return '';
+    }
+  };
+
+  // Konuşmaya tıklandığında
+  const handleConversationClick = (convId: number) => {
+    const href = variant === 'esnaf' 
+      ? `/esnaf/panel/mesajlar/${convId}`
+      : `/musteri/mesajlar/${convId}`;
+    try { 
+      router.push(href); 
+    } catch (e) { 
+      try { 
+        window.location.href = href; 
+      } catch (_) {} 
+    }
+  };
+
   if (loading) return <div className={`${variant}-loading`}>Yükleniyor...</div>;
 
   return (
-    <div className={`chat-interface ${variant}-chat-interface`}>
-      {/* Header - Konuşma bilgileri */}
-      {conversation && (
-        <div className={`${variant}-chat-header`}>
-          <div className={`${variant}-chat-header-content`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <h2 className={`${variant}-chat-title`}>
-              {conversation.other_user?.first_name || 
-               conversation.other_user?.email || 'Sohbet'}
-            </h2>
-            <button
-              onClick={() => {
-                const href = variant === 'esnaf' ? '/esnaf/panel/mesajlar' : '/musteri/mesajlar';
-                try { router.push(href); } catch (e) { try { window.location.href = href; } catch (_) {} }
-              }}
-              className={`${variant}-chat-back-button`}
-              aria-label="Geri Dön"
-              style={{
-                background: 'var(--black)',
-                color: 'var(--yellow)',
-                border: 'none',
-                padding: '8px 12px',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              ← Geri
-            </button>
-          </div>
+    <div className={`chat-interface-wrapper ${variant}-chat-interface-wrapper`}>
+      {/* Sidebar - Konuşma Listesi */}
+      <div className={`${variant}-chat-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+        <div className={`${variant}-chat-sidebar-header`}>
+          <h3 className={`${variant}-chat-sidebar-title`}>Mesajlar</h3>
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`${variant}-chat-sidebar-toggle`}
+            aria-label={sidebarOpen ? 'Sidebar\'ı Kapat' : 'Sidebar\'ı Aç'}
+          >
+            {sidebarOpen ? '←' : '→'}
+          </button>
         </div>
-      )}
+        
+        {loadingConversations ? (
+          <div className={`${variant}-chat-sidebar-loading`}>Yükleniyor...</div>
+        ) : conversations.length === 0 ? (
+          <div className={`${variant}-chat-sidebar-empty`}>Henüz konuşma yok</div>
+        ) : (
+          <div className={`${variant}-chat-sidebar-list`}>
+            {conversations.map((conv: any) => {
+              const isActive = conv.id === conversationId;
+              const unreadCount = conv.unread_count_for_current_user || 0;
+              const otherUser = conv.other_user;
+              
+              return (
+                <div
+                  key={conv.id}
+                  className={`${variant}-chat-sidebar-item ${isActive ? 'active' : ''}`}
+                  onClick={() => handleConversationClick(conv.id)}
+                >
+                  <div className={`${variant}-chat-sidebar-item-avatar`}>
+                    {getAvatar(otherUser, variant === 'esnaf' ? false : true)}
+                  </div>
+                  <div className={`${variant}-chat-sidebar-item-content`}>
+                    <div className={`${variant}-chat-sidebar-item-header`}>
+                      <span className={`${variant}-chat-sidebar-item-name`}>
+                        {otherUser?.first_name || 
+                         otherUser?.display_name || 
+                         otherUser?.username || 
+                         otherUser?.email || 
+                         'Bilinmeyen'}
+                      </span>
+                      {conv.last_message_at && (
+                        <span className={`${variant}-chat-sidebar-item-time`}>
+                          {formatTime(conv.last_message_at)}
+                        </span>
+                      )}
+                    </div>
+                    <div className={`${variant}-chat-sidebar-item-preview`}>
+                      <span className={`${variant}-chat-sidebar-item-text`}>
+                        {getLastMessagePreview(conv)}
+                      </span>
+                      {unreadCount > 0 && (
+                        <span className={`${variant}-chat-sidebar-item-badge`}>
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Ana Chat Alanı */}
+      <div className={`chat-interface ${variant}-chat-interface ${!sidebarOpen ? 'sidebar-closed' : ''}`}>
+        {/* Header - Konuşma bilgileri */}
+        {conversation && (
+          <div className={`${variant}-chat-header`}>
+            <div className={`${variant}-chat-header-content`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {!sidebarOpen && (
+                  <button
+                    onClick={() => setSidebarOpen(true)}
+                    className={`${variant}-chat-sidebar-toggle-mobile`}
+                    aria-label="Sidebar'ı Aç"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      fontSize: '20px',
+                      cursor: 'pointer',
+                      padding: '4px 8px'
+                    }}
+                  >
+                    ☰
+                  </button>
+                )}
+                <h2 className={`${variant}-chat-title`}>
+                  {conversation.other_user?.first_name || 
+                   conversation.other_user?.email || 'Sohbet'}
+                </h2>
+              </div>
+              <button
+                onClick={() => {
+                  const href = variant === 'esnaf' ? '/esnaf/panel/mesajlar' : '/musteri/mesajlar';
+                  try { router.push(href); } catch (e) { try { window.location.href = href; } catch (_) {} }
+                }}
+                className={`${variant}-chat-back-button`}
+                aria-label="Geri Dön"
+                style={{
+                  background: 'var(--black)',
+                  color: 'var(--yellow)',
+                  border: 'none',
+                  padding: '8px 12px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ← Geri
+              </button>
+            </div>
+          </div>
+        )}
 
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
         className={`${variant}-chat-messages-container`}
-        style={{ position: 'relative' }}
+        style={{ position: 'relative', overflowY: 'auto' }}
       >
-        {/* Daha fazla mesaj yükle butonu */}
-        {hasMore && (
-          <div className={`${variant}-load-more-container`}>
+        {/* Daha fazla mesaj yükle butonu - sadece en yukarı gidince ve içerik varsa göster */}
+        {hasMore && isAtTop && (
+          <div className={`${variant}-load-more-container`} style={{ 
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: '16px'
+          }}>
             <button
               onClick={loadMoreMessages}
               disabled={loadingMore}
               className={`${variant}-load-more-button`}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: variant === 'esnaf' ? 'var(--black)' : 'var(--primary-500)',
+                padding: '8px 16px',
+                cursor: loadingMore ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 600,
+                textDecoration: 'underline',
+                opacity: loadingMore ? 0.6 : 1
+              }}
             >
-              {loadingMore ? 'Yükleniyor...' : 'Daha Fazla Mesaj Yükle'}
+              {loadingMore ? 'Yükleniyor...' : '↑ Önceki Mesajları Yükle'}
             </button>
           </div>
         )}
@@ -660,6 +882,7 @@ export default function ChatInterface({ conversationId, variant, onUnreadCountUp
         >
           Gönder
         </button>
+      </div>
       </div>
 
       {/* Teklif Detay Modal */}

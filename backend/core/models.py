@@ -134,35 +134,18 @@ class CustomUser(AbstractUser):
                 if os.path.exists(self.avatar.path):
                     os.remove(self.avatar.path)
             
-            # Resmi aç ve işle
-            img = Image.open(image_file)
+            # Merkezi görsel işleme utility'sini kullan
+            from core.utils.image_processing import process_avatar_image
             
-            # RGBA'yı RGB'ye çevir (JPEG için)
-            if img.mode in ('RGBA', 'LA', 'P'):
-                img = img.convert('RGB')
-            
-            # 200x200 boyutunda resize et (aspect ratio korunarak)
-            img.thumbnail((200, 200), Image.Resampling.LANCZOS)
-            
-            # Yeni canvas oluştur (200x200)
-            new_img = Image.new('RGB', (200, 200), (255, 255, 255))
-            
-            # Resmi ortala
-            x = (200 - img.width) // 2
-            y = (200 - img.height) // 2
-            new_img.paste(img, (x, y))
-            
-            # BytesIO'ya kaydet
-            buffer = BytesIO()
-            new_img.save(buffer, format='JPEG', quality=85, optimize=True)
-            buffer.seek(0)
+            # Avatar görselini işle
+            processed_file = process_avatar_image(image_file, size=(200, 200), quality=85)
             
             # Dosya adını oluştur
             file_uuid = str(uuid.uuid4())
             filename = f'{file_uuid}_200x200.jpg'
             
             # Django File objesi oluştur
-            django_file = File(buffer, name=filename)
+            django_file = File(processed_file, name=filename)
             
             # Avatar field'ına kaydet
             self.avatar.save(filename, django_file, save=False)

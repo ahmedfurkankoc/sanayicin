@@ -5,10 +5,11 @@ from rest_framework.permissions import AllowAny
 from django.db.models import Q
 from .serializers import *
 from core.models import CustomUser
-from .models import VendorProfile, Appointment, Review, ServiceRequest, VendorView, VendorCall
+from .models import VendorProfile, Appointment, Review, ServiceRequest, VendorView, VendorCall, VendorImage
 from chat.models import Conversation, Message
 from core.utils.password_validator import validate_strong_password_simple
 import hashlib
+import os
 from core.models import ServiceArea, CarBrand
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -167,13 +168,13 @@ class VendorSearchView(generics.ListAPIView):
 class VendorDetailView(generics.RetrieveAPIView):
     serializer_class = VendorProfileSerializer
     permission_classes = [AllowAny]
-    queryset = VendorProfile.objects.filter(user__is_verified=True, user__is_active=True)
+    queryset = VendorProfile.objects.filter(user__is_verified=True, user__is_active=True).prefetch_related('gallery_images')
     lookup_field = 'slug'
     
     def get_object(self):
         slug = self.kwargs.get('slug')
         try:
-            return VendorProfile.objects.get(
+            return VendorProfile.objects.prefetch_related('gallery_images').get(
                 slug=slug,
                 user__is_verified=True,
                 user__is_active=True
@@ -181,6 +182,11 @@ class VendorDetailView(generics.RetrieveAPIView):
         except VendorProfile.DoesNotExist:
             from rest_framework.exceptions import NotFound
             raise NotFound("Vendor bulunamadı")
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 
 class VendorDashboardSummaryView(APIView):
@@ -323,7 +329,14 @@ class VendorAnalyticsViewEvent(APIView):
         ip_hash = hashlib.sha256(ip.encode()).hexdigest() if ip else ''
         ua_hash = hashlib.sha256(ua.encode()).hexdigest() if ua else ''
         month_bucket = timezone.now().strftime('%Y-%m')
-        VendorView.objects.create(vendor=vendor, viewer=viewer, ip_hash=ip_hash, ua_hash=ua_hash, month_bucket=month_bucket)
+        # get_or_create kullanarak duplicate kayıtları önle
+        VendorView.objects.get_or_create(
+            vendor=vendor,
+            ip_hash=ip_hash,
+            ua_hash=ua_hash,
+            month_bucket=month_bucket,
+            defaults={'viewer': viewer}
+        )
         return Response({"status": "ok"})
 
 
@@ -340,7 +353,13 @@ class VendorAnalyticsCallEvent(APIView):
         phone = request.data.get('phone', '')
         ip_hash = hashlib.sha256(ip.encode()).hexdigest() if ip else ''
         month_bucket = timezone.now().strftime('%Y-%m')
-        VendorCall.objects.create(vendor=vendor, viewer=viewer, phone=phone, ip_hash=ip_hash, month_bucket=month_bucket)
+        # get_or_create kullanarak duplicate kayıtları önle
+        VendorCall.objects.get_or_create(
+            vendor=vendor,
+            ip_hash=ip_hash,
+            month_bucket=month_bucket,
+            defaults={'viewer': viewer, 'phone': phone}
+        )
         return Response({"status": "ok"})
 
 class VendorProfileView(generics.RetrieveUpdateAPIView):
@@ -350,12 +369,17 @@ class VendorProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         # VendorProfile'ı döndür, CustomUser'ı değil
         try:
-            return VendorProfile.objects.get(user=self.request.user)
+            return VendorProfile.objects.prefetch_related('gallery_images').get(user=self.request.user)
         except VendorProfile.DoesNotExist:
             # Vendor role'üne sahip kullanıcının VendorProfile'ı yok - bu bir hata durumu
             logger.error(f"Vendor user {self.request.user.email} has no VendorProfile. Role should be fixed.")
             from rest_framework.exceptions import NotFound
             raise NotFound("Vendor profili bulunamadı. Bu bir sistem hatası, lütfen destek ile iletişime geçin.")
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
     def get(self, request, *args, **kwargs):
         try:
@@ -1016,8 +1040,19 @@ class VendorServiceRequestUpdateStatusView(APIView):
         new_status = request.data.get('status')
         if new_status not in ['pending', 'responded', 'completed', 'cancelled']:
             return Response({"detail": "Geçersiz durum"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # İptal durumunda iptal nedeni zorunlu
+        if new_status == 'cancelled':
+            cancellation_reason = request.data.get('cancellation_reason', '').strip()
+            if not cancellation_reason:
+                return Response({"detail": "İptal nedeni zorunludur"}, status=status.HTTP_400_BAD_REQUEST)
+            sr.cancellation_reason = cancellation_reason
+        
         sr.status = new_status
-        sr.save(update_fields=['status'])
+        update_fields = ['status']
+        if new_status == 'cancelled':
+            update_fields.append('cancellation_reason')
+        sr.save(update_fields=update_fields)
         return Response(ServiceRequestSerializer(sr).data)
 
 
@@ -1225,3 +1260,172 @@ class NearbyVendorsView(APIView):
             },
             "radius": radius_float
         }, status=status.HTTP_200_OK)
+
+
+class VendorImageListView(generics.ListCreateAPIView):
+    """Vendor görsellerini listele ve yeni görsel ekle"""
+    serializer_class = VendorImageSerializer
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def get_queryset(self):
+        """Sadece kendi görsellerini göster"""
+        try:
+            vendor = self.request.user.vendor_profile
+            return VendorImage.objects.filter(vendor=vendor)
+        except VendorProfile.DoesNotExist:
+            return VendorImage.objects.none()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def perform_create(self, serializer):
+        """Yeni görsel oluştur - WebP formatına dönüştür ve optimize et"""
+        try:
+            vendor = self.request.user.vendor_profile
+            
+            # Görseli al ve optimize et
+            if 'image' in self.request.FILES:
+                from core.utils.image_processing import optimize_image_to_webp
+                from django.core.files.uploadedfile import InMemoryUploadedFile
+                
+                original_file = self.request.FILES['image']
+                
+                # Görseli WebP'ye dönüştür ve optimize et
+                optimized_file = optimize_image_to_webp(
+                    original_file,
+                    max_size=(1920, 1920),  # Maksimum 1920x1920 (Full HD+)
+                    quality=85  # Kalite/boyut dengesi
+                )
+                
+                # Optimize edilmiş dosyayı serializer'a ver
+                # ContentFile'ı InMemoryUploadedFile'a çevir
+                from django.core.files.uploadedfile import InMemoryUploadedFile
+                from django.core.files.base import ContentFile
+                
+                # Dosya adını WebP olarak ayarla
+                original_name = original_file.name
+                base_name = os.path.splitext(original_name)[0]
+                webp_name = f"{base_name}.webp"
+                
+                # InMemoryUploadedFile oluştur
+                optimized_upload = InMemoryUploadedFile(
+                    optimized_file,
+                    None,
+                    webp_name,
+                    'image/webp',
+                    optimized_file.size,
+                    None
+                )
+                
+                # Serializer'a optimize edilmiş dosyayı ver
+                serializer.save(vendor=vendor, image=optimized_upload)
+            else:
+                serializer.save(vendor=vendor)
+                
+        except VendorProfile.DoesNotExist:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Vendor profili bulunamadı.")
+        except ValueError as e:
+            # Görsel işleme hatası - orijinal dosyayı kaydet (fallback)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Görsel optimize edilemedi, orijinal format kaydediliyor: {str(e)}")
+            try:
+                vendor = self.request.user.vendor_profile
+                # Orijinal dosyayı tekrar yükle
+                original_file = self.request.FILES.get('image')
+                if original_file:
+                    original_file.seek(0)  # Reset file pointer
+                serializer.save(vendor=vendor)
+            except Exception as fallback_error:
+                logger.error(f"Fallback görsel kaydetme hatası: {str(fallback_error)}")
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("Görsel yüklenirken hata oluştu.")
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Beklenmeyen görsel yükleme hatası: {str(e)}")
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Görsel yüklenirken hata oluştu.")
+
+
+class VendorImageDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Vendor görselini getir, güncelle veya sil"""
+    serializer_class = VendorImageSerializer
+    permission_classes = [IsAuthenticated, IsVendor]
+
+    def get_queryset(self):
+        """Sadece kendi görsellerini göster"""
+        try:
+            vendor = self.request.user.vendor_profile
+            return VendorImage.objects.filter(vendor=vendor)
+        except VendorProfile.DoesNotExist:
+            return VendorImage.objects.none()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def perform_update(self, serializer):
+        """Görsel güncelle - WebP formatına dönüştür ve optimize et"""
+        try:
+            # Görsel güncelleniyorsa optimize et
+            if 'image' in self.request.FILES:
+                from core.utils.image_processing import optimize_image_to_webp
+                from django.core.files.uploadedfile import InMemoryUploadedFile
+                
+                original_file = self.request.FILES['image']
+                
+                # Görseli WebP'ye dönüştür ve optimize et
+                optimized_file = optimize_image_to_webp(
+                    original_file,
+                    max_size=(1920, 1920),
+                    quality=85
+                )
+                
+                # Dosya adını WebP olarak ayarla
+                original_name = original_file.name
+                base_name = os.path.splitext(original_name)[0]
+                webp_name = f"{base_name}.webp"
+                
+                # InMemoryUploadedFile oluştur
+                optimized_upload = InMemoryUploadedFile(
+                    optimized_file,
+                    None,
+                    webp_name,
+                    'image/webp',
+                    optimized_file.size,
+                    None
+                )
+                
+                # Eski görseli sil
+                instance = self.get_object()
+                if instance.image:
+                    try:
+                        instance.image.delete(save=False)
+                    except Exception:
+                        pass
+                
+                serializer.save(image=optimized_upload)
+            else:
+                serializer.save()
+                
+        except ValueError as e:
+            # Görsel işleme hatası - orijinal dosyayı kaydet (fallback)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Görsel optimize edilemedi, orijinal format kaydediliyor: {str(e)}")
+            # Orijinal dosyayı tekrar yükle
+            original_file = self.request.FILES.get('image')
+            if original_file:
+                original_file.seek(0)  # Reset file pointer
+            serializer.save()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Beklenmeyen görsel güncelleme hatası: {str(e)}")
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Görsel güncellenirken hata oluştu.")

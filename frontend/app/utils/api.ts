@@ -359,6 +359,19 @@ export const api = {
       headers: { "Content-Type": "multipart/form-data" }
     }),
   
+  // Vendor görsel yönetimi
+  getVendorImages: () => apiClient.get('/vendors/profile/images/'),
+  uploadVendorImage: (data: FormData) => 
+    apiClient.post('/vendors/profile/images/', data, {
+      headers: { "Content-Type": "multipart/form-data" }
+    }),
+  updateVendorImage: (id: number, data: FormData) => 
+    apiClient.patch(`/vendors/profile/images/${id}/`, data, {
+      headers: { "Content-Type": "multipart/form-data" }
+    }),
+  deleteVendorImage: (id: number) => 
+    apiClient.delete(`/vendors/profile/images/${id}/`),
+  
   // Auth işlemleri - Tek endpoint kullan
   login: (data: { email: string; password: string }) => 
     apiClient.post('/auth/login/', data),
@@ -529,8 +542,13 @@ export const api = {
     apiClient.post(`/vendors/service-requests/${id}/reply/`, data),
   vendorMarkServiceRequestRead: (id: number) =>
     apiClient.post(`/vendors/service-requests/${id}/mark_read/`, {}),
-  vendorUpdateServiceRequestStatus: (id: number, status: 'pending' | 'responded' | 'completed' | 'cancelled') =>
-    apiClient.post(`/vendors/service-requests/${id}/status/`, { status }),
+  vendorUpdateServiceRequestStatus: (id: number, status: 'pending' | 'responded' | 'completed' | 'cancelled', cancellationReason?: string) => {
+    const payload: any = { status };
+    if (status === 'cancelled' && cancellationReason) {
+      payload.cancellation_reason = cancellationReason;
+    }
+    return apiClient.post(`/vendors/service-requests/${id}/status/`, payload);
+  },
   // Client-side requests
   listClientServiceRequests: (params?: { status?: 'pending' | 'responded' | 'completed' | 'cancelled' | 'closed'; last_days?: number }) =>
     apiClient.get('/vendors/client/service-requests/', { params }),

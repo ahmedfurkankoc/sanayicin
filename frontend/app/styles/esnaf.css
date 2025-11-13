@@ -1498,6 +1498,15 @@
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   animation: modalSlideIn 0.3s ease-out;
+  position: relative;
+}
+
+.esnaf-modal-popup-medium {
+  max-width: 600px;
+}
+
+.esnaf-modal-popup-large {
+  max-width: 640px;
 }
 
 @keyframes modalFadeIn {
@@ -3228,67 +3237,139 @@
 }
 
 .esnaf-appointments-filters {
-  padding: 20px 0;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 40px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .esnaf-appointments-filters-inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
   gap: 16px;
   align-items: center;
+}
+
+.esnaf-appointments-filters-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   flex-wrap: wrap;
-  justify-content: space-between;
+}
+
+.esnaf-appointments-toggle span {
+  display: inline-block;
 }
 
 .esnaf-appointments-search-container {
   position: relative;
-  flex: 1;
-  max-width: 400px;
-  min-width: 250px;
+  width: 100%;
 }
 
 .esnaf-appointments-search-input {
   width: 100%;
-  padding: 12px 16px 12px 40px;
-  border: 1px solid #e0e0e0;
+  padding: 12px 16px 12px 44px;
+  border: 2px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
-  background: white;
+  background: #f9fafb;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.esnaf-appointments-search-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
 }
 
 .esnaf-appointments-search-input:focus {
   outline: none;
   border-color: #ffd600;
+  background: white;
   box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.1);
 }
 
 .esnaf-appointments-search-icon {
   position: absolute;
-  left: 12px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #666;
+  color: #6b7280;
+  pointer-events: none;
 }
 
 .esnaf-appointments-status-filter {
   padding: 12px 16px;
-  border: 1px solid #e0e0e0;
+  border: 2px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
-  background: white;
+  background: #f9fafb;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 150px;
+  min-width: 160px;
   flex-shrink: 0;
   box-sizing: border-box;
+  font-weight: 500;
+  color: #1f2937;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
 }
 
 .esnaf-appointments-status-filter:focus {
   outline: none;
   border-color: #ffd600;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.1);
+}
+
+.esnaf-appointments-status-filter:hover {
+  border-color: #d1d5db;
+  background: white;
+}
+
+.esnaf-appointments-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.esnaf-appointments-toggle:hover {
+  border-color: #d1d5db;
+  background: white;
+}
+
+.esnaf-appointments-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #ffd600;
+  flex-shrink: 0;
+}
+
+.esnaf-appointments-toggle input[type="checkbox"]:checked + span,
+.esnaf-appointments-toggle:has(input[type="checkbox"]:checked) {
+  border-color: #ffd600;
+  background: #fffbeb;
+  color: #1f2937;
 }
 
 .esnaf-appointments-list {
@@ -3520,14 +3601,12 @@
   }
   
   .esnaf-appointments-filters {
-    padding: 16px 24px;
+    padding: 16px;
   }
   
   .esnaf-appointments-filters-inner {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr;
     gap: 12px;
-    justify-content: flex-start;
   }
   
   .esnaf-appointments-search-container {
@@ -3535,8 +3614,20 @@
     min-width: auto;
   }
   
+  .esnaf-appointments-filters-group {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
   .esnaf-appointments-status-filter {
     min-width: auto;
+    width: 100%;
+  }
+  
+  .esnaf-appointments-toggle {
+    width: 100%;
+    justify-content: flex-start;
   }
   
   .esnaf-appointments-list {
@@ -3562,22 +3653,25 @@
   }
   
   .esnaf-appointments-filters {
-    padding: 12px 20px;
+    padding: 16px;
+    border-radius: 8px;
   }
   
   .esnaf-appointments-filters-inner {
-    flex-direction: row;
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
   
   .esnaf-appointments-search-container {
-    flex: 0.6;
-    min-width: 0;
+    width: 100%;
   }
   
   .esnaf-appointments-status-filter {
-    flex: 0.4;
-    min-width: 0;
+    width: 100%;
+  }
+  
+  .esnaf-appointments-toggle {
+    width: 100%;
   }
   
   .esnaf-appointments-list {
@@ -4350,12 +4444,177 @@
 }
 
 /* Chat Interface Styles - Esnaf Paneli */
+.chat-interface-wrapper {
+  display: flex;
+  gap: 0;
+  height: 100%;
+  min-height: 60vh;
+}
+
+.esnaf-chat-interface-wrapper {
+  display: flex;
+  gap: 0;
+  height: 100%;
+  min-height: 60vh;
+}
+
+/* Sidebar Styles */
+.esnaf-chat-sidebar {
+  width: 320px;
+  background: #fff;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.esnaf-chat-sidebar.closed {
+  width: 0;
+  overflow: hidden;
+  border-right: none;
+}
+
+.esnaf-chat-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--yellow);
+  border-bottom: 1px solid #e9ecef;
+}
+
+.esnaf-chat-sidebar-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--black);
+}
+
+.esnaf-chat-sidebar-toggle {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--black);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.esnaf-chat-sidebar-toggle:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.esnaf-chat-sidebar-loading,
+.esnaf-chat-sidebar-empty {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.esnaf-chat-sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.esnaf-chat-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.esnaf-chat-sidebar-item:hover {
+  background: #f8f9fa;
+}
+
+.esnaf-chat-sidebar-item.active {
+  background: rgba(255, 214, 0, 0.15);
+  border-left: 3px solid var(--yellow);
+}
+
+.esnaf-chat-sidebar-item-avatar {
+  flex-shrink: 0;
+}
+
+.esnaf-chat-sidebar-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.esnaf-chat-sidebar-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.esnaf-chat-sidebar-item-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--black);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.esnaf-chat-sidebar-item-time {
+  font-size: 12px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.esnaf-chat-sidebar-item-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.esnaf-chat-sidebar-item-text {
+  font-size: 13px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.esnaf-chat-sidebar-item-badge {
+  background: var(--yellow);
+  color: var(--black);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  min-width: 18px;
+  text-align: center;
+}
+
 .esnaf-chat-interface {
   background: #fff;
   border-radius: 8px;
   border: 1px solid #e9ecef;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.esnaf-chat-interface.sidebar-closed {
+  border-radius: 8px;
 }
 
 .esnaf-chat-header {
@@ -4374,14 +4633,19 @@
 .esnaf-chat-messages-container {
   height: 60vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
   background: #f8f9fa;
+  /* Scroll sadece bu container'da kalacak, sayfayı etkilemeyecek */
+  overscroll-behavior: contain;
 }
 
 .esnaf-load-more-container {
   display: flex;
   justify-content: center;
   margin-bottom: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .esnaf-load-more-button {
@@ -4504,6 +4768,28 @@
 
 /* Mobile full-screen chat (modal-like) while keeping top and bottom navs visible */
 @media (max-width: 900px) {
+  .esnaf-chat-interface-wrapper {
+    flex-direction: column;
+  }
+
+  .esnaf-chat-sidebar {
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .esnaf-chat-sidebar.open {
+    max-height: 50vh;
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .esnaf-chat-sidebar.closed {
+    width: 100%;
+    max-height: 0;
+  }
+
   .esnaf-chat-interface {
     position: fixed;
     left: 0;
@@ -4754,7 +5040,15 @@
 }
 
 .esnaf-social-link.twitter {
-  background: #1da1f2;
+  background: #000000;
+}
+
+.esnaf-social-link.youtube {
+  background: #ff0000;
+}
+
+.esnaf-social-link.tiktok {
+  background: #000000;
 }
 
 .esnaf-social-link.website {
@@ -5157,115 +5451,279 @@
   font-size: 14px;
 }
 
-.esnaf-requests-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  margin-top: 20px;
-}
-
-.esnaf-request-card {
-  background-color: white;
+/* Modern Requests Table Styles */
+.esnaf-requests-table-wrapper {
+  background: white;
   border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 2px solid #e5e7eb;
+  overflow-x: auto;
+  overflow-y: visible;
+  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  -webkit-overflow-scrolling: touch;
+}
+
+.esnaf-requests-table {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+.esnaf-requests-table thead {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 3px solid #d1d5db;
+}
+
+.esnaf-requests-table th {
+  padding: 18px 16px;
+  text-align: left;
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  border-right: 1px solid #e5e7eb;
+}
+
+.esnaf-requests-table th:last-child {
+  border-right: none;
+}
+
+.esnaf-requests-table tbody tr {
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
   transition: all 0.2s ease;
+  background: white;
 }
 
-.esnaf-request-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+.esnaf-requests-table tbody tr:hover {
+  background: #f8fafc;
+  box-shadow: inset 0 0 0 2px #ffd600;
 }
 
-.esnaf-request-client-name {
-  font-size: 16px;
+.esnaf-requests-table tbody tr.esnaf-table-row {
+  cursor: pointer;
+}
+
+.esnaf-requests-table tbody tr.esnaf-table-row-unread {
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  position: relative;
+}
+
+.esnaf-requests-table tbody tr.esnaf-table-row-unread:hover {
+  background: #fde68a;
+  box-shadow: inset 0 0 0 2px #f59e0b;
+}
+
+.esnaf-requests-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.esnaf-requests-table td {
+  padding: 18px 16px;
+  vertical-align: middle;
+  border-right: 1px solid #f0f0f0;
+}
+
+.esnaf-requests-table td:last-child {
+  border-right: none;
+}
+
+/* Table Column Styles */
+.esnaf-table-col-id {
+  width: 60px;
+  text-align: center;
+}
+
+.esnaf-table-col-client {
+  min-width: 180px;
+}
+
+.esnaf-table-col-type {
+  width: 140px;
+}
+
+.esnaf-table-col-service {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.esnaf-table-col-vehicle {
+  min-width: 150px;
+}
+
+.esnaf-table-col-date {
+  width: 140px;
+}
+
+.esnaf-table-col-status {
+  width: 120px;
+}
+
+.esnaf-table-col-actions {
+  width: 200px;
+  text-align: right;
+}
+
+/* Table Cell Content */
+.esnaf-table-id {
   font-weight: 600;
-  margin: 0 0 4px 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.esnaf-table-client {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.esnaf-table-client-name {
+  font-weight: 600;
   color: #111111;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.esnaf-table-client-phone {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .esnaf-unread-dot {
-  margin-left: 8px;
   display: inline-block;
   width: 8px;
   height: 8px;
   background: #ef4444;
   border-radius: 9999px;
+  flex-shrink: 0;
 }
 
-.esnaf-request-subinfo {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
+.esnaf-table-type {
+  font-size: 13px;
+  color: #374151;
+  white-space: nowrap;
 }
 
-.esnaf-request-header-right {
+.esnaf-table-service {
   display: flex;
-  gap: 8px;
-  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.esnaf-table-service-name {
+  font-weight: 600;
+  color: #111111;
+  font-size: 14px;
+}
+
+.esnaf-table-service-desc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.esnaf-table-vehicle {
+  font-size: 13px;
+  color: #374151;
+}
+
+.esnaf-table-date {
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
 }
 
 .esnaf-status-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
+  display: inline-block;
+  white-space: nowrap;
 }
+
 .esnaf-status-badge.pending { background-color: rgba(245, 158, 11, 0.125); color: #f59e0b; }
 .esnaf-status-badge.responded { background-color: rgba(16, 185, 129, 0.125); color: #10b981; }
 .esnaf-status-badge.completed { background-color: rgba(59, 130, 246, 0.125); color: #3b82f6; }
 .esnaf-status-badge.cancelled { background-color: rgba(239, 68, 68, 0.125); color: #ef4444; }
 .esnaf-status-badge.closed { background-color: rgba(107, 114, 128, 0.125); color: #6b7280; }
 
-.esnaf-request-desc {
-  font-size: 14px;
-  color: #444;
-  margin: 0 0 16px 0;
-  line-height: 1.5;
-}
-
-.esnaf-request-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.esnaf-request-detail {
+.esnaf-table-actions {
   display: flex;
+  gap: 6px;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #666;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
-.esnaf-attachments {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-
-.esnaf-attachment-link {
+.esnaf-btn-sm {
+  padding: 6px 10px;
   font-size: 12px;
-  color: #0066cc;
-}
-
-.esnaf-offer-actions {
-  display: flex;
-  justify-content: space-between;
+  display: inline-flex;
   align-items: center;
-  margin-top: 8px;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.esnaf-quick-actions { display: flex; gap: 8px; margin-top: 16px; }
+.esnaf-btn-sm .esnaf-btn-text {
+  display: inline;
+}
 
-.esnaf-btn { border: none; border-radius: 6px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+@media (max-width: 968px) {
+  .esnaf-btn-sm .esnaf-btn-text {
+    display: none;
+  }
+  
+  .esnaf-btn-sm {
+    padding: 6px 8px;
+    min-width: 32px;
+  }
+}
+
+.esnaf-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .esnaf-btn-primary { background: #111; color: #ffd600; }
-.esnaf-btn-primary:hover { filter: brightness(1.05); }
+.esnaf-btn-primary:hover { 
+  filter: brightness(1.05); 
+  color: #000;
+}
+.esnaf-btn-primary:hover .esnaf-btn-text {
+  color: #000;
+}
 .esnaf-btn-secondary { background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; }
 .esnaf-btn-secondary:hover { background: #e9eef5; }
 .esnaf-btn-outline { background: #fff; color: #475569; border: 1px solid #e2e8f0; }
@@ -5275,27 +5733,494 @@
 .esnaf-btn-red { background: #ef4444; color: #fff; }
 .esnaf-btn-red:hover { background: #dc2626; }
 
+.esnaf-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.esnaf-btn-outline.active {
+  background: #111;
+  color: #ffd600;
+  border-color: #111;
+}
+
+/* Pagination Styles */
+.esnaf-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+
+.esnaf-pagination-info {
+  color: #666;
+  font-size: 14px;
+}
+
+.esnaf-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.esnaf-pagination-page {
+  min-width: 36px;
+  text-align: center;
+}
+
+.esnaf-pagination-size-select {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.esnaf-pagination-size-select:focus {
+  outline: none;
+  border-color: #ffd600;
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.1);
+}
+
 /* Offer modal specific fields */
-.esnaf-modal-close { position: absolute; right: 12px; top: 12px; background: none; border: none; font-size: 22px; color: #666; cursor: pointer; }
-.esnaf-offer-message { margin-bottom: 12px; position: relative; }
-.esnaf-offer-label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
-.esnaf-offer-textarea { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; min-height: 160px; resize: vertical; }
-.esnaf-offer-counter { position: absolute; right: 8px; bottom: 8px; font-size: 12px; color: #64748b; }
-.esnaf-offer-fields { display: grid; gap: 12px; grid-template-columns: 140px 120px 1fr; }
-.esnaf-offer-input { padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
-.esnaf-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.esnaf-modal-close { 
+  position: absolute; 
+  right: 16px; 
+  top: 16px; 
+  background: #f3f4f6; 
+  border: none; 
+  font-size: 24px; 
+  color: #6b7280; 
+  cursor: pointer; 
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.esnaf-modal-close:hover {
+  background: #e5e7eb;
+  color: #111;
+}
+
+.esnaf-offer-message { 
+  margin-bottom: 20px; 
+  position: relative; 
+}
+
+.esnaf-offer-label { 
+  display: block; 
+  margin-bottom: 10px; 
+  font-weight: 600; 
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.esnaf-offer-textarea { 
+  width: 100%; 
+  padding: 14px; 
+  border: 2px solid #e5e7eb; 
+  border-radius: 8px; 
+  font-size: 14px; 
+  min-height: 180px; 
+  resize: vertical; 
+  font-family: inherit;
+  transition: border-color 0.2s;
+  line-height: 1.6;
+}
+
+.esnaf-offer-textarea:focus {
+  outline: none;
+  border-color: #ffd600;
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.1);
+}
+
+.esnaf-offer-textarea-medium {
+  min-height: 140px;
+}
+
+.esnaf-offer-counter { 
+  position: absolute; 
+  right: 12px; 
+  bottom: 12px; 
+  font-size: 12px; 
+  color: #9ca3af; 
+  background: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.esnaf-offer-fields { 
+  display: grid; 
+  gap: 16px; 
+  grid-template-columns: 1fr 1fr 1fr; 
+  margin-bottom: 24px;
+}
+
+.esnaf-offer-input { 
+  padding: 12px 14px; 
+  border: 2px solid #e5e7eb; 
+  border-radius: 8px; 
+  font-size: 14px;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.esnaf-offer-input:focus {
+  outline: none;
+  border-color: #ffd600;
+  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.1);
+}
+
+.esnaf-offer-input::placeholder {
+  color: #9ca3af;
+}
+
+.esnaf-modal-actions { 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 8px; 
+  margin-top: 12px; 
+}
+
+/* Message Modal Styles */
+.esnaf-message-request-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.esnaf-message-request-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.esnaf-message-request-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.esnaf-message-request-client {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.esnaf-message-request-desc {
+  font-size: 13px;
+  color: #888;
+  line-height: 1.4;
+}
+
+.esnaf-message-tip {
+  background: #e3f2fd;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #1565c0;
+}
+
+.esnaf-cancel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Request Detail Modal Styles */
+.esnaf-request-detail-content {
+  margin-bottom: 24px;
+}
+
+.esnaf-request-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.esnaf-request-detail-header {
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.esnaf-request-detail-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+}
+
+.esnaf-request-detail-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.esnaf-request-detail-type {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.esnaf-request-detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.esnaf-request-detail-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.esnaf-request-detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.esnaf-request-detail-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.esnaf-request-detail-description {
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.esnaf-request-detail-desc-text {
+  margin: 12px 0 0 0;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.esnaf-request-detail-attachments {
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.esnaf-request-detail-attachment-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.esnaf-request-detail-attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #3b82f6;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.esnaf-request-detail-attachment-link:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
 
 /* View Offer modal */
-.esnaf-view-offer-body { display: grid; gap: 10px; }
-.esnaf-view-offer-row { font-size: 14px; color: #334155; }
-.esnaf-view-offer-label { font-weight: 600; }
-.esnaf-view-offer-message { white-space: pre-wrap; margin-top: 6px; }
-.esnaf-view-offer-grid { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
-.esnaf-view-offer-field { font-size: 14px; color: #334155; }
+.esnaf-view-offer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.esnaf-view-offer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.esnaf-view-offer-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.esnaf-view-offer-message-box {
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 80px;
+}
+
+.esnaf-view-offer-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.esnaf-view-offer-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.esnaf-view-offer-info-item-full {
+  grid-column: 1 / -1;
+}
+
+.esnaf-view-offer-info-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.esnaf-view-offer-info-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Responsive Table Styles */
+@media (max-width: 1200px) {
+  .esnaf-table-col-vehicle {
+    display: none;
+  }
+}
+
+@media (max-width: 968px) {
+  .esnaf-requests-table {
+    min-width: 900px;
+  }
+  
+  .esnaf-table-col-type {
+    display: none;
+  }
+  
+  .esnaf-table-actions {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  .esnaf-btn-sm .esnaf-btn-text {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .esnaf-requests-table {
+    min-width: 800px;
+  }
+  
+  .esnaf-table-col-service {
+    min-width: 150px;
+    max-width: 200px;
+  }
+  
+  .esnaf-table-col-date {
+    display: none;
+  }
+  
+  .esnaf-table-col-client {
+    min-width: 140px;
+  }
+  
+  .esnaf-requests-table th,
+  .esnaf-requests-table td {
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+  
+  .esnaf-table-service-desc {
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+}
 
 @media (max-width: 600px) {
-  .esnaf-requests-grid { grid-template-columns: 1fr; }
-  .esnaf-offer-fields { grid-template-columns: 1fr; }
+  .esnaf-offer-fields { 
+    grid-template-columns: 1fr; 
+  }
+  
+  .esnaf-requests-table {
+    min-width: 700px;
+  }
+  
+  .esnaf-table-col-id {
+    display: none;
+  }
+  
+  .esnaf-table-service-desc {
+    display: none;
+  }
+  
+  .esnaf-pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .esnaf-pagination-info {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  
+  .esnaf-pagination-controls {
+    justify-content: center;
+  }
+  
+  .esnaf-request-detail-info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ===== LOCATION MAP STYLES ===== */

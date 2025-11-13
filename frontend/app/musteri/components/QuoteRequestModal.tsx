@@ -1,8 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '@/app/utils/api';
 import { toast } from 'sonner';
+
+interface Vehicle {
+  id: number;
+  brand?: string;
+  brand_name?: string;
+  model: string;
+  year?: number;
+  engine_type?: string;
+}
 
 interface Props {
   isOpen: boolean;
@@ -12,12 +22,92 @@ interface Props {
 }
 
 const QuoteRequestModal: React.FC<Props> = ({ isOpen, onClose, vendorSlug, services }) => {
+  const router = useRouter();
   const [selectedService, setSelectedService] = useState<string>('');
   const [requestType, setRequestType] = useState<'appointment' | 'quote' | 'emergency' | 'part'>('quote');
   const [vehicleInfo, setVehicleInfo] = useState<string>('');
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
+  const [vehicleInputMode, setVehicleInputMode] = useState<'select' | 'manual'>('select');
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Modal açıldığında state'leri sıfırla ve araçları yükle
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedService('');
+      setRequestType('quote');
+      setVehicleInfo('');
+      setSelectedVehicleId('');
+      setTitle('');
+      setDescription('');
+      
+      // Araçları yükle
+      const loadVehicles = async () => {
+        try {
+          setLoadingVehicles(true);
+          const response = await api.listVehicles();
+          
+          // Debug: Response'u logla
+          console.log('Araçlar API Response:', response);
+          
+          // Response formatını normalize et (aracim sayfasındaki gibi)
+          const data = response?.data ?? response;
+          const items = Array.isArray(data)
+            ? data
+            : (Array.isArray(data?.results) ? data.results : []);
+          
+          const vehiclesData = Array.isArray(items) ? items : [];
+          console.log('Normalize edilmiş araçlar:', vehiclesData);
+          
+          setVehicles(vehiclesData);
+          
+          // Eğer araç varsa select modunda başla, yoksa manual
+          if (vehiclesData.length > 0) {
+            setVehicleInputMode('select');
+          } else {
+            setVehicleInputMode('manual');
+          }
+        } catch (error: any) {
+          // Hata durumunda manual moda geç
+          console.error('Araçlar yüklenirken hata:', error);
+          console.error('Hata detayı:', error?.response?.data || error?.message);
+          setVehicleInputMode('manual');
+          setVehicles([]);
+        } finally {
+          setLoadingVehicles(false);
+        }
+      };
+      
+      loadVehicles();
+    } else {
+      // Modal kapandığında state'leri temizle
+      setVehicleInfo('');
+      setSelectedVehicleId('');
+      setVehicleInputMode('select');
+    }
+  }, [isOpen]);
+
+  // Seçilen araç değiştiğinde vehicleInfo'yu güncelle
+  useEffect(() => {
+    if (selectedVehicleId && vehicleInputMode === 'select') {
+      const selectedVehicle = vehicles.find(v => v.id === parseInt(selectedVehicleId));
+      if (selectedVehicle) {
+        const brandName = selectedVehicle.brand_name || selectedVehicle.brand || '';
+        const year = selectedVehicle.year ? ` ${selectedVehicle.year}` : '';
+        const engineType = selectedVehicle.engine_type ? ` ${selectedVehicle.engine_type}` : '';
+        setVehicleInfo(`${brandName} ${selectedVehicle.model}${year}${engineType}`.trim());
+      }
+    } else if (vehicleInputMode === 'manual') {
+      // Manuel modda vehicleInfo'yu temizle
+      if (selectedVehicleId) {
+        setVehicleInfo('');
+        setSelectedVehicleId('');
+      }
+    }
+  }, [selectedVehicleId, vehicleInputMode, vehicles]);
 
   if (!isOpen) return null;
 
@@ -54,20 +144,21 @@ const QuoteRequestModal: React.FC<Props> = ({ isOpen, onClose, vendorSlug, servi
   };
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px'
-    }}>
-      <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', width: '100%', maxWidth: '620px', position: 'relative' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#666' }}>×</button>
+    <div className="m-quote-modal-overlay">
+      <div className="m-quote-modal">
+        <button onClick={onClose} className="m-quote-modal-close">×</button>
 
-        <h2 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 16px 0', color: '#111' }}>Teklif Talebi Oluştur</h2>
+        <h2 className="m-quote-modal-title">Teklif Talebi Oluştur</h2>
 
         <form onSubmit={handleSubmit}>
           {/* Talep Türü */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Talep türü</label>
-            <select value={requestType} onChange={(e) => setRequestType(e.target.value as any)} style={{ width: '100%', padding: '12px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 14 }}>
+          <div className="m-quote-form-group">
+            <label className="m-quote-form-label">Talep türü</label>
+            <select 
+              value={requestType} 
+              onChange={(e) => setRequestType(e.target.value as any)} 
+              className="m-quote-form-select"
+            >
               <option value="quote">Fiyat Teklifi</option>
               <option value="appointment">Randevu</option>
               <option value="emergency">Acil Yardım</option>
@@ -75,12 +166,12 @@ const QuoteRequestModal: React.FC<Props> = ({ isOpen, onClose, vendorSlug, servi
             </select>
           </div>
           {/* Hizmet */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Hangi hizmete ihtiyacınız var?</label>
+          <div className="m-quote-form-group">
+            <label className="m-quote-form-label">Hangi hizmete ihtiyacınız var?</label>
             <select
               value={selectedService}
               onChange={(e) => setSelectedService(e.target.value)}
-              style={{ width: '100%', padding: '12px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 14 }}
+              className="m-quote-form-select"
             >
               <option value="">Hizmet seçin (opsiyonel)</option>
               {services?.map((s) => (
@@ -89,49 +180,126 @@ const QuoteRequestModal: React.FC<Props> = ({ isOpen, onClose, vendorSlug, servi
             </select>
           </div>
 
-          {/* Başlık */}
           {/* Araç Bilgisi */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Araç bilgisi (opsiyonel)</label>
-            <input
-              value={vehicleInfo}
-              onChange={(e) => setVehicleInfo(e.target.value)}
-              placeholder="Örn: 2016 Ford Focus 1.6 TDCi"
-              style={{ width: '100%', padding: '12px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 14 }}
-            />
+          <div className="m-quote-form-group">
+            <div className="m-quote-form-header">
+              <label className="m-quote-form-label">Araç bilgisi (opsiyonel)</label>
+              {vehicles.length > 0 && (
+                <div className="m-quote-vehicle-mode-toggle">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVehicleInputMode('select');
+                      setSelectedVehicleId('');
+                      setVehicleInfo('');
+                    }}
+                    className={`m-quote-vehicle-mode-btn ${vehicleInputMode === 'select' ? 'active' : ''}`}
+                  >
+                    Kayıtlı Araç
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVehicleInputMode('manual');
+                      setSelectedVehicleId('');
+                    }}
+                    className={`m-quote-vehicle-mode-btn ${vehicleInputMode === 'manual' ? 'active' : ''}`}
+                  >
+                    Manuel Giriş
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {loadingVehicles ? (
+              <div className="m-quote-loading">
+                Araçlar yükleniyor...
+              </div>
+            ) : vehicleInputMode === 'select' && vehicles.length > 0 ? (
+              <div className="m-quote-vehicle-actions">
+                <select
+                  value={selectedVehicleId}
+                  onChange={(e) => setSelectedVehicleId(e.target.value)}
+                  className="m-quote-form-select"
+                >
+                  <option value="">Araç seçin (opsiyonel)</option>
+                  {vehicles.map((vehicle) => {
+                    const brandName = vehicle.brand_name || vehicle.brand || '';
+                    const year = vehicle.year ? ` ${vehicle.year}` : '';
+                    const displayName = `${brandName} ${vehicle.model}${year}`.trim();
+                    return (
+                      <option key={vehicle.id} value={vehicle.id}>
+                        {displayName}
+                      </option>
+                    );
+                  })}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    router.push('/musteri/aracim');
+                  }}
+                  className="m-quote-vehicle-add-btn"
+                >
+                  + Yeni Araç Ekle
+                </button>
+              </div>
+            ) : (
+              <div className="m-quote-vehicle-actions">
+                <input
+                  value={vehicleInfo}
+                  onChange={(e) => setVehicleInfo(e.target.value)}
+                  placeholder="Örn: 2016 Ford Focus 1.6 TDCi"
+                  className="m-quote-form-input"
+                />
+                {vehicles.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      router.push('/musteri/aracim');
+                    }}
+                    className="m-quote-vehicle-add-btn"
+                  >
+                    + Yeni Araç Ekle
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Talep başlığı</label>
+          <div className="m-quote-form-group">
+            <label className="m-quote-form-label">Talep başlığı</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Örn: Triger seti değişimi için teklif"
-              style={{ width: '100%', padding: '12px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 14 }}
+              className="m-quote-form-input"
               required
             />
           </div>
 
           {/* Talep */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Talebiniz</label>
+          <div className="m-quote-form-group">
+            <label className="m-quote-form-label">Talebiniz</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="İhtiyacınızı detaylıca yazın. Örn: 2016 model Ford Focus için ..."
-              style={{ width: '100%', padding: '12px', border: '1px solid #e0e0e0', borderRadius: 8, fontSize: 14, minHeight: 120, resize: 'vertical' }}
+              className="m-quote-form-textarea"
               required
             />
           </div>
 
           {/* Bilgilendirme */}
-          <div style={{ background: '#f8fafc', border: '1px solid #e5e7eb', color: '#334155', padding: 12, borderRadius: 8, fontSize: 14, marginBottom: 16 }}>
+          <div className="m-quote-info-box">
             Talebinize gelen yanıtları e‑posta adresinizden ve Taleplerim sayfanızdan takip edebilirsiniz.
           </div>
 
           {/* Butonlar */}
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '10px 18px', border: '1px solid #e5e7eb', borderRadius: 8, background: 'white', color: '#475569', fontWeight: 600, cursor: 'pointer' }}>Vazgeç</button>
-            <button type="submit" disabled={submitting} style={{ padding: '10px 18px', border: 'none', borderRadius: 8, background: '#111111', color: '#ffd600', fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.8 : 1 }}>
+          <div className="m-quote-form-actions">
+            <button type="button" onClick={onClose} className="m-quote-btn m-quote-btn-secondary">Vazgeç</button>
+            <button type="submit" disabled={submitting} className="m-quote-btn m-quote-btn-primary">
               {submitting ? 'Gönderiliyor...' : 'Talep Gönder'}
             </button>
           </div>
