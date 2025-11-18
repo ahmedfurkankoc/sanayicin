@@ -159,11 +159,20 @@ class VendorSearchView(generics.ListAPIView):
                 pass
         
         # Rating'e göre sırala (yüksek rating önce), sonra en yeni
-        from django.db.models import Avg, Count
+        from django.db.models import Avg, Count, Q
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Bu ayın başlangıcı ve bitişi
+        now = timezone.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        next_month = (month_start + timedelta(days=32)).replace(day=1)
+        
         return queryset.annotate(
             avg_rating=Avg('reviews__rating'),
-            review_count=Count('reviews')
-        ).order_by('-avg_rating', '-review_count', '-id')
+            review_count=Count('reviews'),
+            monthly_review_count=Count('reviews', filter=Q(reviews__created_at__gte=month_start, reviews__created_at__lt=next_month))
+        ).order_by('-monthly_review_count', '-avg_rating', '-review_count', '-id')
 
 class VendorDetailView(generics.RetrieveAPIView):
     serializer_class = VendorProfileSerializer
@@ -1429,3 +1438,14 @@ class VendorImageDetailView(generics.RetrieveUpdateDestroyAPIView):
             logger.error(f"Beklenmeyen görsel güncelleme hatası: {str(e)}")
             from rest_framework.exceptions import ValidationError
             raise ValidationError("Görsel güncellenirken hata oluştu.")
+    
+    def perform_destroy(self, instance):
+        """Görsel silindiğinde dosyayı da sil"""
+        if instance.image:
+            try:
+                instance.image.delete(save=False)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Görsel dosyası silinirken hata: {str(e)}")
+        instance.delete()

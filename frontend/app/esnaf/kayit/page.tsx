@@ -330,12 +330,17 @@ export default function EsnafKayitPage() {
   const handleCompanyInput = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'phone') {
-      const digits = value.replace(/\D/g, '').slice(0, 10);
-      let masked = digits;
-      if (digits.length > 3) masked = `${digits.slice(0,3)} ${digits.slice(3)}`;
-      if (digits.length > 6) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`;
-      if (digits.length > 8) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,8)} ${digits.slice(8)}`;
-      setCompanyInfo((prev) => ({ ...prev, phone: masked }));
+      // Sadece rakamları al
+      let digits = value.replace(/\D/g, '');
+      // Başında 0 varsa kaldır
+      if (digits.startsWith('0')) {
+        digits = digits.substring(1);
+      }
+      // Maksimum 10 haneli
+      if (digits.length > 10) {
+        digits = digits.substring(0, 10);
+      }
+      setCompanyInfo((prev) => ({ ...prev, phone: digits }));
       return;
     }
     setCompanyInfo((prev) => ({ ...prev, [name]: value }));
@@ -378,7 +383,11 @@ export default function EsnafKayitPage() {
     
     const businessPhoneDigits = phone.replace(/\D/g, '');
     if (!validatePhone(businessPhoneDigits)) {
-      setCompanyError("Geçersiz telefon numarası (10 hane olmalı).");
+      setCompanyError("Geçersiz telefon numarası (10 hane olmalı, başında 0 olmadan).");
+      return;
+    }
+    if (businessPhoneDigits.startsWith('0')) {
+      setCompanyError("Telefon numarası 0 ile başlamamalı (örn: 5552223333).");
       return;
     }
     
@@ -411,12 +420,17 @@ export default function EsnafKayitPage() {
   const handleManagerInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     if (name === 'phone') {
-      const digits = value.replace(/\D/g, '').slice(0, 10);
-      let masked = digits;
-      if (digits.length > 3) masked = `${digits.slice(0,3)} ${digits.slice(3)}`;
-      if (digits.length > 6) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`;
-      if (digits.length > 8) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,8)} ${digits.slice(8)}`;
-      setManagerInfo((prev) => ({ ...prev, phone: masked }));
+      // Sadece rakamları al
+      let digits = value.replace(/\D/g, '');
+      // Başında 0 varsa kaldır
+      if (digits.startsWith('0')) {
+        digits = digits.substring(1);
+      }
+      // Maksimum 10 haneli
+      if (digits.length > 10) {
+        digits = digits.substring(0, 10);
+      }
+      setManagerInfo((prev) => ({ ...prev, phone: digits }));
       return;
     }
     setManagerInfo((prev) => ({
@@ -493,8 +507,13 @@ export default function EsnafKayitPage() {
       return;
     }
     
-    if (!validatePhone(phone)) {
-      setManagerError("Geçerli bir telefon numarası girin.");
+    const managerPhoneDigits = phone.replace(/\D/g, '');
+    if (!validatePhone(managerPhoneDigits)) {
+      setManagerError("Geçerli bir telefon numarası girin (10 hane olmalı, başında 0 olmadan).");
+      return;
+    }
+    if (managerPhoneDigits.startsWith('0')) {
+      setManagerError("Telefon numarası 0 ile başlamamalı (örn: 5552223333).");
       return;
     }
     
@@ -584,7 +603,8 @@ export default function EsnafKayitPage() {
       formData.append('last_name', lastName);
       formData.append('manager_birthdate', managerInfo.birthdate);
       formData.append('manager_tc', tc);
-      formData.append('phone_number', phone);
+      const managerPhoneDigits = phone.replace(/\D/g, '');
+      formData.append('phone_number', `+90${managerPhoneDigits}`);
 
       const res = await api.register(formData);
       const data = res.data;
@@ -857,21 +877,34 @@ export default function EsnafKayitPage() {
               <div className="register-photo-name">Seçilen dosya: {companyInfo.photoName}</div>
             )}
             <label className="register-label">İşyeri Telefon Numarası *</label>
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0 12px', background: '#fff' }}>
-              <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8 }}>+90</span>
+            <div style={{ 
+              width: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              border: '1px solid #e2e8f0', 
+              borderRadius: 8, 
+              padding: '0 12px', 
+              background: '#fff',
+              transition: 'border-color 0.2s'
+            }}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+            >
+              <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8, userSelect: 'none' }}>+90</span>
               <input
                 type="tel"
                 name="phone"
                 className="register-input"
                 value={companyInfo.phone}
                 onChange={handleCompanyInput}
-                placeholder="555 555 55 55"
+                placeholder="5552223333"
                 required
                 style={{ flex: 1, border: 'none', outline: 'none', padding: '12px 0', background: 'transparent' }}
+                maxLength={10}
               />
             </div>
             <small className="register-help">
-              Bu telefon numarası müşterileriniz tarafından görülecek ve iletişim kurulacak numaradır.
+              Bu telefon numarası müşterileriniz tarafından görülecek ve iletişim kurulacak numaradır. Başında 0 olmadan, boşluksuz 10 haneli numara girin (örn: 5552223333)
             </small>
             <label className="register-label">İşyeri İli</label>
             <select
@@ -1021,19 +1054,35 @@ export default function EsnafKayitPage() {
               required
             />
             <label className="register-label">Cep Telefonu</label>
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0 12px', background: '#fff' }}>
-              <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8 }}>+90</span>
+            <div style={{ 
+              width: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              border: '1px solid #e2e8f0', 
+              borderRadius: 8, 
+              padding: '0 12px', 
+              background: '#fff',
+              transition: 'border-color 0.2s'
+            }}
+            onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+            onBlur={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+            >
+              <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8, userSelect: 'none' }}>+90</span>
               <input
                 type="tel"
                 name="phone"
                 className="register-input"
                 value={managerInfo.phone}
                 onChange={handleManagerInput}
-                placeholder="555 555 55 55"
+                placeholder="5552223333"
                 required
                 style={{ flex: 1, border: 'none', outline: 'none', padding: '12px 0', background: 'transparent' }}
+                maxLength={10}
               />
             </div>
+            <small className="register-help" style={{ marginTop: '4px', display: 'block' }}>
+              Başında 0 olmadan, boşluksuz 10 haneli numara girin (örn: 5552223333)
+            </small>
             <label className="register-label">E-posta</label>
             <input
               type="email"

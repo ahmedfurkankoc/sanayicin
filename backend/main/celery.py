@@ -1,5 +1,9 @@
 import os
+from dotenv import load_dotenv
 from celery import Celery
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Django settings modülünü ayarla
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'main.settings')
@@ -12,10 +16,13 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Task'ları otomatik keşfet
 app.autodiscover_tasks()
 
-# Redis broker
+# Redis broker - .env'den al
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+
 app.conf.update(
-    broker_url='redis://localhost:6379/0',
-    result_backend='redis://localhost:6379/0',
+    broker_url=CELERY_BROKER_URL,
+    result_backend=CELERY_RESULT_BACKEND,
     task_serializer='json',
     accept_content=['json'],
     result_serializer='json',
@@ -42,6 +49,12 @@ app.conf.update(
         },
         'core.utils.email_service.send_cancellation_notification_async': {
             'rate_limit': '10/m',
+        },
+        'core.tasks.send_otp_sms_async': {
+            'rate_limit': '100/m',  # Dakikada max 100 OTP SMS (İletiMerkezi limit'ine göre ayarlanabilir)
+        },
+        'core.tasks.send_verification_code_sms': {
+            'rate_limit': '100/m',
         },
     }
 )

@@ -6,8 +6,14 @@ from django.template.loader import render_to_string
 from typing import List, Dict, Any
 import logging
 from core.tasks import (
-    send_appointment_email, send_confirmation_email, send_rejection_email, send_cancellation_email,
-    send_verification_email, send_welcome_email, send_password_reset_email, send_message_notification_email
+    send_appointment_email,
+    send_confirmation_email,
+    send_rejection_email,
+    send_cancellation_email,
+    send_verification_email,
+    send_welcome_email,
+    send_password_reset_email,
+    send_message_notification_email
 )
 
 # SSL context for development

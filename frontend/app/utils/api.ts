@@ -327,10 +327,16 @@ export const api = {
   getProfile: (role: 'vendor' | 'client' = 'vendor') => 
     apiClient.get(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/'),
   
-  updateProfile: (data: FormData, role: 'vendor' | 'client' = 'vendor') => 
-    apiClient.patch(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/', data, {
+  updateProfile: (data: FormData, role: 'vendor' | 'client' = 'vendor', encryptedToken?: string, smsCode?: string) => {
+    // OTP ile güncelleme için token ve sms_code ekle (backend'de token field'ı bekleniyor)
+    if (encryptedToken && smsCode) {
+      data.append('token', encryptedToken);
+      data.append('sms_code', smsCode);
+    }
+    return apiClient.patch(role === 'vendor' ? '/vendors/profile/' : '/clients/profile/', data, {
       headers: { "Content-Type": "multipart/form-data" }
-    }),
+    });
+  },
   
   // Hizmet alanları ve kategoriler (ortak)
   getServiceAreas: () => apiClient.get('/services/'),
@@ -423,8 +429,6 @@ export const api = {
     return apiClient.post(endpoint, sanitizedData);
   },
   
-  setPassword: (data: { email: string; password: string; password2: string }, role: 'vendor' | 'client' = 'vendor') => 
-    apiClient.post(role === 'vendor' ? '/vendors/set-password/' : '/clients/set-password/', data),
   
   // Email verification işlemleri (ortak)
   sendVerificationEmail: (data: { email: string }) => 
@@ -446,12 +450,20 @@ export const api = {
   checkVerificationStatus: () => 
     apiClient.get('/auth/check-verification-status/'),
 
+  // Kayıt OTP doğrulama
+  verifyRegistrationOTP: (data: { token: string; sms_code: string }) => 
+    apiClient.post('/clients/verify-registration-otp/', data),
+
   // Şifre sıfırlama işlemleri
   forgotPassword: (data: { email: string }) => 
     apiClient.post('/auth/forgot-password/', data),
   
-  resetPassword: (data: { uidb64: string; token: string; new_password: string }) => 
+  resetPassword: (data: { uidb64?: string; token?: string; new_password: string; encrypted_token?: string; sms_code?: string }) => 
     apiClient.post('/auth/reset-password/', data),
+  
+  // Şifre belirleme/değiştirme (OTP ile)
+  setPassword: (data: { email: string; password: string; password2: string; encrypted_token?: string; sms_code?: string }, role: 'vendor' | 'client' = 'vendor') => 
+    apiClient.post(role === 'vendor' ? '/vendors/set-password/' : '/clients/set-password/', data),
 
   // Appointment işlemleri
   getVendorAppointments: () => 

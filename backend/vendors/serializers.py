@@ -272,6 +272,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
     vendor_profile = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
     review_count = serializers.SerializerMethodField()
+    monthly_review_count = serializers.SerializerMethodField()
     
     class Meta:
         model = VendorProfile
@@ -281,7 +282,7 @@ class VendorProfileSerializer(serializers.ModelSerializer):
             'display_name', 'about', 'business_phone', 'city', 'district', 'subdistrict', 'address',
             'latitude', 'longitude',
             'social_media', 'working_hours', 'unavailable_dates', 'manager_birthdate', 'manager_tc',
-            'rating', 'review_count', 'gallery_images'
+            'rating', 'review_count', 'monthly_review_count', 'gallery_images'
         )
         read_only_fields = ('id', 'slug')
 
@@ -329,6 +330,15 @@ class VendorProfileSerializer(serializers.ModelSerializer):
     def get_review_count(self, obj):
         """Vendor'ın toplam değerlendirme sayısını döndür"""
         return obj.reviews.count()
+    
+    def get_monthly_review_count(self, obj):
+        """Vendor'ın bu ayki değerlendirme sayısını döndür"""
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        next_month = (month_start + timedelta(days=32)).replace(day=1)
+        return obj.reviews.filter(created_at__gte=month_start, created_at__lt=next_month).count()
 
     def validate_business_type(self, value):
         # Business type whitelist kontrolü

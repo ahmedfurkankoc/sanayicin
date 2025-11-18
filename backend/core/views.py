@@ -1,19 +1,30 @@
-# Ortak view'lar burada tutulabilir. Şu an vendor/client view'lar ilgili app'lere taşındı.
 from rest_framework import generics, permissions, status, serializers
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.core.cache import cache
+from django.core.paginator import Paginator, EmptyPage
 from django.utils import timezone
+from django.db.models import Count, Q
 from datetime import timedelta
-from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, SMSVerification, VendorUpgradeRequest, Favorite, SupportTicket, SupportMessage, Vehicle
+from .models import CustomUser, ServiceArea, Category, CarBrand, EmailVerification, VendorUpgradeRequest, Favorite, SupportTicket, SupportMessage, Vehicle
 from .serializers import CustomUserSerializer, FavoriteSerializer, FavoriteCreateSerializer, SupportTicketSerializer, SupportMessageSerializer, SupportTicketDetailSerializer, VehicleSerializer, PublicBlogPostListSerializer, PublicBlogPostDetailSerializer
 from admin_panel.models import BlogPost
 from .utils.email_service import EmailService
 from .utils.sms_service import IletiMerkeziSMS
+from .utils.otp_service import OTPService
 from .utils.password_validator import validate_strong_password_simple
+from .utils.crypto import encrypt_text, decrypt_text
+from core.tasks import send_otp_sms_async
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.settings import api_settings as sj_settings
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+from vendors.models import VendorProfile
+from admin_panel.models import BlogCategory
+from admin_panel.activity_logger import log_support_activity, log_user_activity
 import logging
 import secrets
+import json
 from django.urls import reverse
 import os
 from django.contrib.auth.tokens import default_token_generator
@@ -47,7 +58,6 @@ def create_support_ticket(request):
         ticket = serializer.save(user=request.user)
         
         # Activity log
-        from admin_panel.activity_logger import log_support_activity
         log_support_activity(
             f'Yeni destek talebi: {ticket.subject[:50]}...',
             {
@@ -198,7 +208,6 @@ def public_blog_list(request):
     # Kategori slug'ına göre filtreleme
     category_slug = request.GET.get('category')
     if category_slug:
-        from admin_panel.models import BlogCategory
         try:
             category = BlogCategory.objects.get(slug=category_slug, is_active=True)
             qs = qs.filter(category=category)
@@ -215,7 +224,6 @@ def public_blog_list(request):
         page_size = 9
     page = max(1, page)
     page_size = max(1, min(page_size, 50))
-    from django.core.paginator import Paginator, EmptyPage
     paginator = Paginator(qs, page_size)
     try:
         page_obj = paginator.page(page)
@@ -250,8 +258,6 @@ def public_blog_detail(request, slug: str):
 @permission_classes([AllowAny])
 def public_blog_categories(request):
     """Blog kategorilerini listele (public) - Sadece blog yazısı olan kategoriler"""
-    from admin_panel.models import BlogCategory
-    from django.db.models import Count, Q
     
     # Aktif kategorileri al ve her kategorinin published blog sayısını say
     categories = BlogCategory.objects.filter(
@@ -358,7 +364,6 @@ def login(request):
             )
         
         # JWT token oluştur
-        from rest_framework_simplejwt.tokens import RefreshToken
         
         # Custom token oluştur - role bilgisini ekle
         refresh = RefreshToken.for_user(user)
@@ -382,7 +387,6 @@ def login(request):
         if user.role == 'vendor':
             # VendorProfile var mı kontrol et
             try:
-                from vendors.models import VendorProfile
                 VendorProfile.objects.get(user=user)
                 has_vendor_profile = True
             except VendorProfile.DoesNotExist:
@@ -435,7 +439,6 @@ def login(request):
 def refresh_access_token(request):
     """HttpOnly refresh cookie'den yeni access token üretir ve refresh cookie'yi döndürür."""
     try:
-        from rest_framework_simplejwt.tokens import RefreshToken
         refresh_cookie = request.COOKIES.get('refresh_token')
         if not refresh_cookie:
             return Response({'error': 'Refresh token bulunamadı'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -464,16 +467,13 @@ def refresh_access_token(request):
         try:
             # .rotate() yok, for_user alternatifi yerine jti yenilemek için yeni RefreshToken oluşturulamaz
             # simplejwt, RefreshToken(refresh).blacklist() + new RefreshToken.for_user ile yapılabilir.
-            from rest_framework_simplejwt.settings import api_settings as sj_settings
             if getattr(sj_settings, 'ROTATE_REFRESH_TOKENS', False):
                 # Eski refresh'i blacklist'e al (opsiyonel, blacklist yüklü ise)
                 try:
-                    from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
                     BlacklistedToken.objects.get_or_create(token=refresh)
                 except Exception:
                     pass
                 # Kullanıcıyı bulup yeni refresh üret
-                from core.models import CustomUser
                 user = CustomUser.objects.get(id=user_id)
                 new_refresh = RefreshToken.for_user(user)
                 # Custom claim'leri yeni refresh'e de yaz
@@ -659,7 +659,6 @@ def verify_email(request):
     """Email doğrulama token'ını kontrol et"""
     try:
         # Önce süresi dolmuş token'ları temizle
-        from datetime import timedelta
         EmailVerification.objects.filter(expires_at__lt=timezone.now()).delete()
         
         token = request.data.get('token')
@@ -734,7 +733,6 @@ def verify_email(request):
                 # Hata olsa bile email verification başarılı
         
         # Doğrulama sonrası otomatik login için JWT üret
-        from rest_framework_simplejwt.tokens import RefreshToken
         refresh = RefreshToken.for_user(user)
         # Custom claims
         refresh['role'] = user.role
@@ -885,8 +883,26 @@ def send_sms_verification(request):
         user.phone_number = formatted_phone
         user.save()
         
-        # SMS gönder
-        sms_sent = user.send_sms_verification()
+        # Redis OTP servisi kullan
+        otp_service = OTPService()
+        otp_service.clear_all_otps(formatted_phone)
+        
+        success, code, error_message = otp_service.send_otp(
+            phone_number=formatted_phone,
+            purpose='verification',
+            user_id=user.id
+        )
+        
+        if not success:
+            return Response(
+                {'error': error_message or 'OTP oluşturulamadı. Lütfen tekrar deneyin.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # SMS gönder (async - Celery)
+        send_otp_sms_async.delay(formatted_phone, code, 'verification')
+        # Async gönderim, başarı durumunu kontrol etmeden devam et
+        sms_sent = True  # Celery queue'ya eklendi, başarılı kabul et
         
         if sms_sent:
             return Response({
@@ -894,6 +910,7 @@ def send_sms_verification(request):
                 'phone_number': formatted_phone
             })
         else:
+            otp_service.delete_otp(formatted_phone, 'verification')
             return Response(
                 {'error': 'SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -929,8 +946,18 @@ def verify_sms_code(request):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # SMS kodunu doğrula
-        is_valid = user.verify_sms_code(code)
+        # Telefon numarasını formatla
+        sms_service = IletiMerkeziSMS()
+        formatted_phone = sms_service.format_phone_number(user.phone_number)
+        
+        # Redis OTP servisi ile doğrula
+        otp_service = OTPService()
+        is_valid, error_message = otp_service.verify_otp(
+            phone_number=formatted_phone,
+            code=code,
+            purpose='verification',
+            mark_used=True
+        )
         
         if is_valid:
             # Otomatik vendor upgrade - client is_verified olduğunda
@@ -1029,18 +1056,50 @@ def get_profile(request):
 @api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
-    """Kullanıcı profil bilgilerini güncelle"""
+    """Kullanıcı profil bilgilerini güncelle (OTP desteği ile)"""
     try:
         user = request.user
-        data = request.data
         
-        # Güncellenebilir alanlar
-        if 'first_name' in data:
-            user.first_name = data['first_name']
-        if 'last_name' in data:
-            user.last_name = data['last_name']
-        if 'phone_number' in data:
-            user.phone_number = data['phone_number']
+        # Eğer OTP doğrulama gerekiyorsa (token ve sms_code varsa)
+        if 'token' in request.data and 'sms_code' in request.data:
+            return _verify_and_update_profile(request, user)
+        
+        # OTP gerektiren alanlar kontrolü
+        requires_otp = False
+        update_type = None
+        
+        if 'phone_number' in request.data:
+            new_phone = request.data['phone_number']
+            sms_service = IletiMerkeziSMS()
+            formatted_phone = sms_service.format_phone_number(new_phone)
+            
+            if formatted_phone != user.phone_number:
+                requires_otp = True
+                update_type = 'phone_update'
+        
+        if 'email' in request.data:
+            new_email = (request.data.get('email') or '').strip()
+            if new_email.lower() != (user.email or '').lower():
+                requires_otp = True
+                update_type = 'email_update'
+        
+        if 'password' in request.data or 'new_password' in request.data:
+            requires_otp = True
+            update_type = 'password_update'
+        
+        if ('first_name' in request.data or 'last_name' in request.data) and not requires_otp:
+            requires_otp = True
+            update_type = 'profile_update'
+        
+        # OTP gerekiyorsa SMS gönder
+        if requires_otp and update_type:
+            return _send_update_otp(request, user, update_type)
+        
+        # OTP gerektirmeyen güncellemeler
+        if 'about' in request.data:
+            user.about = request.data['about']
+        if 'avatar' in request.FILES:
+            user.avatar = request.FILES['avatar']
         
         user.save()
         
@@ -1061,7 +1120,7 @@ def update_profile(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def forgot_password(request):
-    """Şifre sıfırlama emaili gönder"""
+    """Şifre sıfırlama emaili gönder - Telefon varsa OTP de gönder"""
     try:
         email = request.data.get('email')
         
@@ -1100,11 +1159,63 @@ def forgot_password(request):
         EmailService.send_password_reset_email(email, user.first_name or user.email, reset_url)
         email_sent = True  # Asenkron gönderim, her zaman True döndür
         
+        # Telefon numarası varsa OTP de gönder
+        otp_sent = False
+        encrypted_token = None
+        phone_last_4 = None
+        
+        if user.phone_number:
+            try:
+                sms_service = IletiMerkeziSMS()
+                formatted_phone = sms_service.format_phone_number(user.phone_number)
+                
+                # OTP gönder
+                otp_service = OTPService()
+                otp_service.clear_all_otps(formatted_phone)
+                
+                success, code, error_message = otp_service.send_otp(
+                    phone_number=formatted_phone,
+                    purpose='password_reset',
+                    user_id=user.id
+                )
+                
+                if success:
+                    # SMS gönder (async - Celery)
+                    send_otp_sms_async.delay(formatted_phone, code, 'password_reset')
+                    sms_sent = True  # Celery queue'ya eklendi
+                    if sms_sent:
+                        otp_sent = True
+                        phone_last_4 = formatted_phone[-4:]
+                        
+                        # Token'ı şifrele (OTP doğrulaması için)
+                        token_data = json.dumps({
+                            'user_id': user.id,
+                            'token': token,
+                            'uidb64': str(user.pk),
+                            'timestamp': timezone.now().timestamp()
+                        })
+                        encrypted_token = encrypt_text(token_data)
+                    else:
+                        otp_service.delete_otp(formatted_phone, 'password_reset')
+            except Exception as e:
+                logger.error(f"OTP sending error in forgot_password: {e}")
+                # OTP gönderilemese bile email gönderildi, devam et
+        
         if email_sent:
-            return Response({
+            response_data = {
                 'message': 'Şifre sıfırlama emaili gönderildi',
                 'email': email
-            })
+            }
+            
+            if otp_sent and encrypted_token:
+                response_data.update({
+                    'message': 'Şifre sıfırlama emaili ve SMS kodu gönderildi',
+                    'requires_sms_verification': True,
+                    'token': encrypted_token,
+                    'phone_last_4': phone_last_4
+                })
+            
+            return Response(response_data)
         else:
             return Response(
                 {'error': 'Email gönderilemedi. Lütfen daha sonra tekrar deneyin.'}, 
@@ -1121,8 +1232,103 @@ def forgot_password(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def reset_password(request):
-    """Şifre sıfırlama token'ını kontrol et ve şifreyi güncelle"""
+    """Şifre sıfırlama token'ını kontrol et ve şifreyi güncelle - OTP doğrulaması ile"""
     try:
+        # OTP doğrulama akışı (encrypted_token ve sms_code varsa)
+        if 'encrypted_token' in request.data and 'sms_code' in request.data:
+            encrypted_token = request.data.get('encrypted_token')
+            sms_code = request.data.get('sms_code')
+            new_password = request.data.get('new_password')
+            
+            if not encrypted_token or not sms_code or not new_password:
+                return Response(
+                    {'error': 'Token, SMS kodu ve yeni şifre gerekli'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Token'ı çöz
+            token_data_str = decrypt_text(encrypted_token)
+            if not token_data_str:
+                return Response(
+                    {'error': 'Geçersiz token'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                token_data = json.loads(token_data_str)
+            except json.JSONDecodeError:
+                return Response(
+                    {'error': 'Geçersiz token formatı'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user_id = token_data.get('user_id')
+            token = token_data.get('token')
+            uidb64 = token_data.get('uidb64')
+            
+            if not user_id or not token or not uidb64:
+                return Response(
+                    {'error': 'Geçersiz token verisi'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Kullanıcıyı bul
+            try:
+                user = CustomUser.objects.get(pk=user_id)
+            except CustomUser.DoesNotExist:
+                return Response(
+                    {'error': 'Geçersiz kullanıcı'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Token'ı kontrol et
+            if not default_token_generator.check_token(user, token):
+                return Response(
+                    {'error': 'Geçersiz veya süresi dolmuş token'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # OTP doğrula
+            if not user.phone_number:
+                return Response(
+                    {'error': 'Telefon numarası bulunamadı'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            sms_service = IletiMerkeziSMS()
+            formatted_phone = sms_service.format_phone_number(user.phone_number)
+            
+            otp_service = OTPService()
+            is_valid, error_message = otp_service.verify_otp(
+                phone_number=formatted_phone,
+                code=sms_code,
+                purpose='password_reset',
+                mark_used=True
+            )
+            
+            if not is_valid:
+                return Response(
+                    {'error': error_message or 'Geçersiz SMS kodu'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Şifre validasyonu
+            password_error = validate_strong_password_simple(new_password)
+            if password_error:
+                return Response(
+                    {'error': password_error}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Şifreyi güncelle
+            user.set_password(new_password)
+            user.save()
+            
+            return Response({
+                'message': 'Şifre başarıyla güncellendi'
+            })
+        
+        # Eski akış (sadece token ile - backward compatibility)
         uidb64 = request.data.get('uidb64')
         token = request.data.get('token')
         new_password = request.data.get('new_password')
@@ -1149,6 +1355,21 @@ def reset_password(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Telefon numarası varsa OTP zorunlu
+        if user.phone_number:
+            return Response(
+                {'error': 'Bu hesap için SMS doğrulaması gereklidir. Lütfen OTP kodu ile devam edin.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Şifre validasyonu
+        password_error = validate_strong_password_simple(new_password)
+        if password_error:
+            return Response(
+                {'error': password_error}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         # Şifreyi güncelle
         user.set_password(new_password)
         user.save()
@@ -1164,12 +1385,178 @@ def reset_password(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+# Login OTP kaldırıldı - maliyet nedeniyle normal email/şifre girişi kullanılıyor
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_password_reset_otp(request):
+    """Şifre sıfırlama için OTP kodu gönder"""
+    try:
+        phone_number = request.data.get('phone_number')
+        
+        if not phone_number:
+            return Response(
+                {'error': 'Telefon numarası gerekli'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Rate limiting kontrolü
+        if not check_sms_rate_limit(phone_number, 'send_password_reset_otp', 3, 10):
+            return Response(
+                {'error': 'Çok fazla deneme. 10 dakika sonra tekrar deneyin.'}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
+        
+        # Telefon numarasını formatla
+        sms_service = IletiMerkeziSMS()
+        formatted_phone = sms_service.format_phone_number(phone_number)
+        
+        if not sms_service.validate_phone_number(formatted_phone):
+            return Response(
+                {'error': 'Geçersiz telefon numarası'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Kullanıcıyı bul
+        try:
+            user = CustomUser.objects.get(phone_number=formatted_phone)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Bu telefon numarası ile kayıtlı kullanıcı bulunamadı'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Redis OTP servisi kullan
+        otp_service = OTPService()
+        
+        # Eski OTP'leri temizle
+        otp_service.clear_all_otps(formatted_phone)
+        
+        # OTP kodu oluştur ve Redis'e kaydet
+        success, code, error_message = otp_service.send_otp(
+            phone_number=formatted_phone,
+            purpose='password_reset',
+            user_id=user.id
+        )
+        
+        if not success:
+            return Response(
+                {'error': error_message or 'OTP oluşturulamadı. Lütfen tekrar deneyin.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # SMS gönder (async - Celery)
+        send_otp_sms_async.delay(formatted_phone, code, 'password_reset')
+        sms_sent = True  # Celery queue'ya eklendi
+        
+        if sms_sent:
+            return Response({
+                'message': 'Şifre sıfırlama OTP kodu gönderildi',
+                'phone_number': formatted_phone
+            })
+        else:
+            # OTP kodunu sil (gönderilemediyse)
+            otp_service.delete_otp(formatted_phone, 'password_reset')
+            return Response(
+                {'error': 'OTP kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    except Exception as e:
+        logger.error(f"Send password reset OTP error: {e}")
+        return Response(
+            {'error': 'OTP kodu gönderilirken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_password_reset_otp(request):
+    """Şifre sıfırlama OTP kodunu doğrula ve şifreyi güncelle"""
+    try:
+        phone_number = request.data.get('phone_number')
+        code = request.data.get('code')
+        new_password = request.data.get('new_password')
+        
+        if not phone_number or not code or not new_password:
+            return Response(
+                {'error': 'Telefon numarası, OTP kodu ve yeni şifre gerekli'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Şifre validasyonu
+        password_error = validate_strong_password_simple(new_password)
+        if password_error:
+            return Response(
+                {'error': password_error}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Telefon numarasını formatla
+        sms_service = IletiMerkeziSMS()
+        formatted_phone = sms_service.format_phone_number(phone_number)
+        
+        # Redis OTP servisi ile doğrula
+        otp_service = OTPService()
+        
+        # Önce OTP bilgilerini al (user_id için)
+        otp_info = otp_service.get_otp_info(formatted_phone, 'password_reset')
+        if not otp_info:
+            return Response(
+                {'error': 'OTP kodu bulunamadı veya süresi dolmuş'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # OTP kodunu doğrula
+        is_valid, error_message = otp_service.verify_otp(
+            phone_number=formatted_phone,
+            code=code,
+            purpose='password_reset',
+            mark_used=True
+        )
+        
+        if not is_valid:
+            return Response(
+                {'error': error_message or 'Geçersiz veya süresi dolmuş OTP kodu'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Kullanıcıyı bul
+        user_id = otp_info.get('user_id')
+        if not user_id:
+            return Response(
+                {'error': 'Kullanıcı bilgisi bulunamadı'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'error': 'Kullanıcı bulunamadı'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Şifreyi güncelle
+        user.set_password(new_password)
+        user.save()
+        
+        return Response({
+            'message': 'Şifre başarıyla güncellendi'
+        })
+        
+    except Exception as e:
+        logger.error(f"Verify password reset OTP error: {e}")
+        return Response(
+            {'error': 'Şifre güncellenirken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def request_vendor_upgrade(request):
     """Client'tan vendor'a yükseltme talebi"""
     try:
-        from .models import VendorUpgradeRequest
         
         # Kullanıcı sadece client olabilir
         if request.user.role != 'client':
@@ -1347,7 +1734,7 @@ class VehicleDetailView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def client_register(request):
-    """Client kayıt (ClientProfile olmadan, sadece CustomUser)"""
+    """Client kayıt - 2 aşamalı: Bilgileri al → SMS OTP gönder"""
     try:
         data = request.data
         
@@ -1361,28 +1748,42 @@ def client_register(request):
         
         if not all([email, password, password2, phone_number]):
             return Response({
-                'detail': 'Email, şifre, şifre tekrarı ve telefon numarası gerekli'
+                'error': 'Email, şifre, şifre tekrarı ve telefon numarası gerekli'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         if password != password2:
             return Response({
-                'detail': 'Şifreler eşleşmiyor'
+                'error': 'Şifreler eşleşmiyor'
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Güçlü şifre doğrulaması
         password_errors = validate_strong_password_simple(password)
         if password_errors:
             return Response({
-                'detail': ' '.join(password_errors)
+                'error': ' '.join(password_errors)
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Email zaten var mı kontrol et
         if CustomUser.objects.filter(email=email).exists():
             return Response({
-                'detail': 'Bu email ile zaten bir hesap mevcut'
+                'error': 'Bu email ile zaten bir hesap mevcut'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Kullanıcı oluştur
+        # Telefon numarası zaten kullanılıyor mu?
+        sms_service = IletiMerkeziSMS()
+        formatted_phone = sms_service.format_phone_number(phone_number)
+        
+        if not sms_service.validate_phone_number(formatted_phone):
+            return Response({
+                'error': 'Geçersiz telefon numarası'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if CustomUser.objects.filter(phone_number=formatted_phone).exists():
+            return Response({
+                'error': 'Bu telefon numarası ile zaten bir hesap mevcut'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Kullanıcıyı oluştur (henüz aktif değil, OTP doğrulanınca aktif olacak)
         user = CustomUser.objects.create_user(
             username=email,
             email=email,
@@ -1392,19 +1793,8 @@ def client_register(request):
             last_name=last_name,
             about=data.get('about', ''),
             is_verified=False,
-            phone_number=phone_number
-        )
-        
-        # Activity log
-        from admin_panel.activity_logger import log_user_activity
-        log_user_activity(
-            f'Yeni müşteri kaydoldu: {email}',
-            {
-                'user_id': user.id,
-                'email': email,
-                'role': 'client',
-                'is_verified': False
-            }
+            is_active=False,  # OTP doğrulanınca aktif olacak
+            phone_number=formatted_phone
         )
         
         # Avatar varsa kaydet
@@ -1412,24 +1802,159 @@ def client_register(request):
             user.avatar = request.FILES['avatar']
             user.save()
         
-        # Email verification gönder
-        email_sent = user.send_verification_email()
-        if not email_sent:
+        # SMS OTP gönder
+        otp_service = OTPService()
+        otp_service.clear_all_otps(formatted_phone)
+        
+        success, code, error_message = otp_service.send_otp(
+            phone_number=formatted_phone,
+            purpose='registration',
+            user_id=user.id
+        )
+        
+        if not success:
             user.delete()
             return Response({
-                'detail': 'Email doğrulama kodu gönderilemedi'
+                'error': error_message or 'OTP kodu gönderilemedi. Lütfen tekrar deneyin.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+        # SMS gönder (async - Celery)
+        send_otp_sms_async.delay(formatted_phone, code, 'registration')
+        sms_sent = True  # Celery queue'ya eklendi
+        
+        if not sms_sent:
+            otp_service.delete_otp(formatted_phone, 'registration')
+            user.delete()
+            return Response({
+                'error': 'SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Şifrelenmiş token oluştur (email, password, phone için)
+        token_data = f"{email}##{password}##{formatted_phone}##{timezone.now().timestamp()}"
+        encrypted_token = encrypt_text(token_data)
+        
         return Response({
-            'detail': 'Hesabınız başarıyla oluşturuldu. Email doğrulama kodu gönderildi.',
-            'email': user.email,
-            'requires_verification': True
-        }, status=status.HTTP_201_CREATED)
+            'message': 'Kayıt bilgileri alındı. SMS doğrulama kodu gönderildi.',
+            'token': encrypted_token,
+            'phone_last_4': formatted_phone[-4:],
+            'requires_sms_verification': True
+        }, status=status.HTTP_200_OK)
         
     except Exception as e:
         logger.error(f"Client registration error: {e}")
         return Response({
-            'detail': 'Kayıt sırasında hata oluştu'
+            'error': 'Kayıt sırasında hata oluştu'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_registration_otp(request):
+    """Kayıt OTP kodunu doğrula ve hesabı aktif et"""
+    try:
+        token = request.data.get('token')
+        sms_code = request.data.get('sms_code')
+        
+        if not token or not sms_code:
+            return Response({
+                'error': 'Token ve SMS kodu gerekli'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Token'ı çöz
+        token_data = decrypt_text(token)
+        if not token_data:
+            return Response({
+                'error': 'Geçersiz token'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Token'dan bilgileri al
+        parts = token_data.split('##')
+        if len(parts) < 3:
+            return Response({
+                'error': 'Geçersiz token formatı'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        email = parts[0]
+        password = parts[1]
+        phone_number = parts[2]
+        
+        # Kullanıcıyı bul
+        try:
+            user = CustomUser.objects.get(email=email, phone_number=phone_number, is_active=False)
+        except CustomUser.DoesNotExist:
+            return Response({
+                'error': 'Kayıt bulunamadı veya zaten doğrulanmış'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # OTP doğrula
+        otp_service = OTPService()
+        is_valid, error_message = otp_service.verify_otp(
+            phone_number=phone_number,
+            code=sms_code,
+            purpose='registration',
+            mark_used=True
+        )
+        
+        if not is_valid:
+            return Response({
+                'error': error_message or 'Geçersiz SMS kodu'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Şifreyi tekrar kontrol et
+        if not user.check_password(password):
+            return Response({
+                'error': 'Geçersiz kimlik bilgileri'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Hesabı aktif et ve doğrula
+        user.is_active = True
+        user.is_verified = True
+        user.verification_method = 'sms'
+        user.save()
+        
+        # Activity log
+        log_user_activity(
+            f'Yeni müşteri kaydoldu ve doğrulandı: {email}',
+            {
+                'user_id': user.id,
+                'email': email,
+                'role': 'client',
+                'is_verified': True
+            }
+        )
+        
+        # JWT token oluştur
+        refresh = RefreshToken.for_user(user)
+        refresh['role'] = user.role
+        refresh['email'] = user.email
+        refresh['is_verified'] = user.is_verified
+        refresh['user_id'] = user.id
+        
+        access_token = refresh.access_token
+        access_token['role'] = user.role
+        access_token['email'] = user.email
+        access_token['is_verified'] = user.is_verified
+        access_token['user_id'] = user.id
+        
+        return Response({
+            'message': 'Hesabınız başarıyla doğrulandı ve aktif edildi.',
+            'user': {
+                'id': user.id,
+            'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'phone_number': user.phone_number,
+                'is_verified': user.is_verified
+            },
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(access_token)
+            }
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Verify registration OTP error: {e}")
+        return Response({
+            'error': 'Doğrulama sırasında hata oluştu'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -1455,41 +1980,48 @@ def client_profile(request):
     
     elif request.method == 'PATCH':
         try:
-            # Güncellenebilir alanlar
-            if 'first_name' in request.data:
-                user.first_name = request.data['first_name']
-            if 'last_name' in request.data:
-                user.last_name = request.data['last_name']
+            # Eğer OTP doğrulama gerekiyorsa (token ve sms_code varsa)
+            if 'token' in request.data and 'sms_code' in request.data:
+                return _verify_and_update_profile(request, user)
+            
+            # OTP gerektiren alanlar kontrolü
+            requires_otp = False
+            update_type = None
+            
             if 'phone_number' in request.data:
-                user.phone_number = request.data['phone_number']
+                new_phone = request.data['phone_number']
+                sms_service = IletiMerkeziSMS()
+                formatted_phone = sms_service.format_phone_number(new_phone)
+                
+                if formatted_phone != user.phone_number:
+                    requires_otp = True
+                    update_type = 'phone_update'
+            
+            if 'email' in request.data:
+                new_email = (request.data.get('email') or '').strip()
+                if new_email.lower() != (user.email or '').lower():
+                    requires_otp = True
+                    update_type = 'email_update'
+            
+            if 'password' in request.data or 'new_password' in request.data:
+                requires_otp = True
+                update_type = 'password_update'
+            
+            if ('first_name' in request.data or 'last_name' in request.data) and not requires_otp:
+                # Ad-soyad değişikliği için de OTP iste (opsiyonel, ama güvenlik için)
+                requires_otp = True
+                update_type = 'profile_update'
+            
+            # OTP gerekiyorsa SMS gönder
+            if requires_otp and update_type:
+                return _send_update_otp(request, user, update_type)
+            
+            # OTP gerektirmeyen güncellemeler (about, avatar)
             if 'about' in request.data:
                 user.about = request.data['about']
             if 'avatar' in request.FILES:
                 user.avatar = request.FILES['avatar']
 
-            # E-posta güncelleme (unique + structured error responses)
-            if 'email' in request.data:
-                new_email = (request.data.get('email') or '').strip()
-                if not new_email:
-                    return Response({
-                        'code': 'email_required',
-                        'message': 'E-posta adresi gerekli'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-                # Aynı mı?
-                if new_email.lower() != (user.email or '').lower():
-                    from .models import CustomUser
-                    exists = CustomUser.objects.filter(email__iexact=new_email).exclude(id=user.id).exists()
-                    if exists:
-                        return Response({
-                            'code': 'email_exists',
-                            'message': 'Bu e-posta adresi başka bir hesapta kayıtlı.'
-                        }, status=status.HTTP_409_CONFLICT)
-                    # E-posta değiştir: doğrulama tekrar gereksinimi işaretle
-                    user.email = new_email
-                    if hasattr(user, 'is_verified'):
-                        user.is_verified = False
-            
             user.save()
             
             return Response({
@@ -1512,48 +2044,344 @@ def client_profile(request):
                 'error': 'Profil güncellenirken hata oluştu'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+def _send_update_otp(request, user, update_type):
+    """Profil güncelleme için OTP gönder"""
+    try:
+        sms_service = IletiMerkeziSMS()
+        
+        # Telefon numarası güncellemesi için yeni telefonu kullan, diğerleri için mevcut telefonu
+        if update_type == 'phone_update':
+            new_phone = request.data.get('phone_number')
+            formatted_phone = sms_service.format_phone_number(new_phone)
+            
+            if not sms_service.validate_phone_number(formatted_phone):
+                return Response({
+                    'error': 'Geçersiz telefon numarası'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            if CustomUser.objects.filter(phone_number=formatted_phone).exclude(id=user.id).exists():
+                        return Response({
+                    'error': 'Bu telefon numarası başka bir hesapta kullanılıyor'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            if not user.phone_number:
+                return Response({
+                    'error': 'Telefon numaranız kayıtlı değil. Lütfen önce telefon numaranızı ekleyin.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            formatted_phone = sms_service.format_phone_number(user.phone_number)
+        
+        # OTP gönder
+        otp_service = OTPService()
+        otp_service.clear_all_otps(formatted_phone)
+        
+        success, code, error_message = otp_service.send_otp(
+            phone_number=formatted_phone,
+            purpose=update_type,
+            user_id=user.id
+        )
+        
+        if not success:
+            return Response({
+                'error': error_message or 'OTP kodu gönderilemedi. Lütfen tekrar deneyin.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # SMS gönder (async - Celery)
+        send_otp_sms_async.delay(formatted_phone, code, update_type)
+        sms_sent = True  # Celery queue'ya eklendi
+        
+        if not sms_sent:
+            otp_service.delete_otp(formatted_phone, update_type)
+            return Response({
+                'error': 'SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Güncelleme verilerini şifrele
+        update_data = {
+            'update_type': update_type,
+            'user_id': user.id,
+            'timestamp': timezone.now().timestamp()
+        }
+        
+        # Güncellenecek verileri ekle
+        if update_type == 'phone_update':
+            update_data['phone_number'] = formatted_phone
+        elif update_type == 'email_update':
+            update_data['email'] = request.data.get('email')
+        elif update_type == 'password_update':
+            update_data['new_password'] = request.data.get('new_password') or request.data.get('password')
+        elif update_type == 'profile_update':
+            update_data['first_name'] = request.data.get('first_name', user.first_name)
+            update_data['last_name'] = request.data.get('last_name', user.last_name)
+        
+        token_data = json.dumps(update_data)
+        encrypted_token = encrypt_text(token_data)
+        
+        phone_to_show = formatted_phone[-4:] if update_type == 'phone_update' else (user.phone_number[-4:] if user.phone_number else '')
+        
+        return Response({
+            'message': f'{update_type.replace("_", " ").title()} için SMS doğrulama kodu gönderildi.',
+            'token': encrypted_token,
+            'phone_last_4': phone_to_show,
+            'update_type': update_type,
+            'requires_sms_verification': True
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Send update OTP error: {e}")
+        return Response({
+            'error': 'OTP gönderilirken hata oluştu'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def _verify_and_update_profile(request, user):
+    """OTP doğrula ve profili güncelle"""
+    try:
+        token = request.data.get('token')
+        sms_code = request.data.get('sms_code')
+        
+        if not token or not sms_code:
+            return Response({
+                'error': 'Token ve SMS kodu gerekli'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Token'ı çöz
+        token_data = decrypt_text(token)
+        if not token_data:
+            return Response({
+                'error': 'Geçersiz token'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        update_data = json.loads(token_data)
+        update_type = update_data.get('update_type')
+        user_id = update_data.get('user_id')
+        
+        if user_id != user.id:
+            return Response({
+                'error': 'Geçersiz kullanıcı'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Telefon numarasını belirle (güncelleme tipine göre)
+        sms_service = IletiMerkeziSMS()
+        if update_type == 'phone_update':
+            phone_to_verify = sms_service.format_phone_number(update_data.get('phone_number'))
+        else:
+            phone_to_verify = sms_service.format_phone_number(user.phone_number)
+        
+        # OTP doğrula
+        otp_service = OTPService()
+        is_valid, error_message = otp_service.verify_otp(
+            phone_number=phone_to_verify,
+            code=sms_code,
+            purpose=update_type,
+            mark_used=True
+        )
+        
+        if not is_valid:
+            return Response({
+                'error': error_message or 'Geçersiz SMS kodu'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Profili güncelle
+        if update_type == 'phone_update':
+            user.phone_number = update_data.get('phone_number')
+        elif update_type == 'email_update':
+            new_email = update_data.get('email')
+            if CustomUser.objects.filter(email=new_email).exclude(id=user.id).exists():
+                return Response({
+                    'error': 'Bu e-posta adresi başka bir hesapta kullanılıyor'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            user.email = new_email
+            user.is_verified = False  # Email değişti, tekrar doğrulama gerekli
+        elif update_type == 'password_update':
+            new_password = update_data.get('new_password')
+            if new_password:
+                password_errors = validate_strong_password_simple(new_password)
+                if password_errors:
+                    return Response({
+                        'error': ' '.join(password_errors)
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                user.set_password(new_password)
+        elif update_type == 'profile_update':
+            if 'first_name' in update_data:
+                user.first_name = update_data['first_name']
+            if 'last_name' in update_data:
+                user.last_name = update_data['last_name']
+        
+        # Tüm güncellemeleri kaydet
+            user.save()
+            
+            return Response({
+                'message': 'Profil başarıyla güncellendi',
+                'profile': {
+                    'id': user.id,
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'phone_number': user.phone_number,
+                'is_verified': user.is_verified,
+                }
+        }, status=status.HTTP_200_OK)
+            
+    except Exception as e:
+        logger.error(f"Verify and update profile error: {e}")
+        return Response({
+            'error': 'Profil güncellenirken hata oluştu'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def client_set_password(request):
-    """Client şifre belirleme"""
+    """Client şifre belirleme - OTP doğrulaması ile"""
     try:
-        email = request.data.get('email')
-        password = request.data.get('password')
-        password2 = request.data.get('password2')
-        
-        if not all([email, password, password2]):
-            return Response({
-                'detail': 'Email, şifre ve şifre tekrarı gerekli'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        if password != password2:
-            return Response({
-                'detail': 'Şifreler eşleşmiyor'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
+        # OTP doğrulama akışı (encrypted_token ve sms_code varsa)
+        if 'encrypted_token' in request.data and 'sms_code' in request.data:
+            encrypted_token = request.data.get('encrypted_token')
+            sms_code = request.data.get('sms_code')
+            password = request.data.get('password')
+            password2 = request.data.get('password2')
+            
+            if not all([encrypted_token, sms_code, password, password2]):
+                return Response({
+                    'detail': 'Token, SMS kodu, şifre ve şifre tekrarı gerekli'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if password != password2:
+                return Response({
+                    'detail': 'Şifreler eşleşmiyor'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Token'ı çöz
+            token_data_str = decrypt_text(encrypted_token)
+            if not token_data_str:
+                return Response({
+                    'detail': 'Geçersiz token'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                token_data = json.loads(token_data_str)
+            except json.JSONDecodeError:
+                return Response({
+                    'detail': 'Geçersiz token formatı'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            user_id = token_data.get('user_id')
+            email = token_data.get('email')
+            
+            if not user_id or not email:
+                return Response({
+                    'detail': 'Geçersiz token verisi'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Kullanıcıyı bul
+            try:
+                user = CustomUser.objects.get(pk=user_id, email=email, role='client')
+            except CustomUser.DoesNotExist:
+                return Response({
+                    'detail': 'Bu email ile kayıtlı müşteri bulunamadı'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # OTP doğrula
+            if not user.phone_number:
+                return Response({
+                    'detail': 'Telefon numarası bulunamadı'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            sms_service = IletiMerkeziSMS()
+            formatted_phone = sms_service.format_phone_number(user.phone_number)
+            
+            otp_service = OTPService()
+            is_valid, error_message = otp_service.verify_otp(
+                phone_number=formatted_phone,
+                code=sms_code,
+                purpose='password_update',
+                mark_used=True
+            )
+            
+            if not is_valid:
+                return Response({
+                    'detail': error_message or 'Geçersiz SMS kodu'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
         # Güçlü şifre doğrulaması
         password_errors = validate_strong_password_simple(password)
         if password_errors:
             return Response({
                 'detail': ' '.join(password_errors)
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Kullanıcıyı bul
-        try:
-            user = CustomUser.objects.get(email=email, role='client')
-        except CustomUser.DoesNotExist:
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Şifreyi güncelle
+            user.set_password(password)
+            user.save()
+            
             return Response({
-                'detail': 'Bu email ile kayıtlı müşteri bulunamadı'
-            }, status=status.HTTP_404_NOT_FOUND)
+                'detail': 'Şifre başarıyla güncellendi'
+            }, status=status.HTTP_200_OK)
         
-        # Şifreyi güncelle
-        user.set_password(password)
-        user.save()
-        
-        return Response({
-            'detail': 'Şifre başarıyla güncellendi'
-        }, status=status.HTTP_200_OK)
+        else:
+            # İlk adım: OTP gönder
+            email = request.data.get('email')
+            
+            if not email:
+                return Response({
+                    'detail': 'Email adresi gerekli'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Kullanıcıyı bul
+            try:
+                user = CustomUser.objects.get(email=email, role='client')
+            except CustomUser.DoesNotExist:
+                return Response({
+                    'detail': 'Bu email ile kayıtlı müşteri bulunamadı'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Telefon numarası kontrolü
+            if not user.phone_number:
+                return Response({
+                    'detail': 'Telefon numaranız kayıtlı değil. Lütfen önce telefon numaranızı ekleyin.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # OTP gönder
+            sms_service = IletiMerkeziSMS()
+            formatted_phone = sms_service.format_phone_number(user.phone_number)
+            
+            otp_service = OTPService()
+            otp_service.clear_all_otps(formatted_phone)
+            
+            success, code, error_message = otp_service.send_otp(
+                phone_number=formatted_phone,
+                purpose='password_update',
+                user_id=user.id
+            )
+            
+            if not success:
+                return Response({
+                    'detail': error_message or 'OTP kodu gönderilemedi. Lütfen tekrar deneyin.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # SMS gönder (async - Celery)
+            send_otp_sms_async.delay(formatted_phone, code, 'password_update')
+            sms_sent = True  # Celery queue'ya eklendi
+            
+            if not sms_sent:
+                otp_service.delete_otp(formatted_phone, 'password_update')
+                return Response({
+                    'detail': 'SMS gönderilemedi. Lütfen daha sonra tekrar deneyin.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Token oluştur
+            token_data = json.dumps({
+                'user_id': user.id,
+                'email': user.email,
+                'timestamp': timezone.now().timestamp()
+            })
+            encrypted_token = encrypt_text(token_data)
+            
+            return Response({
+                'detail': 'SMS doğrulama kodu gönderildi',
+                'requires_sms_verification': True,
+                'token': encrypted_token,
+                'phone_last_4': formatted_phone[-4:]
+            }, status=status.HTTP_200_OK)
         
     except Exception as e:
         logger.error(f"Client set password error: {e}")

@@ -58,16 +58,11 @@ export const apiClient = axios.create({
   timeout: 30000, // 30 saniye timeout
 })
 
-// Request interceptor - localStorage'dan token al ve Authorization header'a ekle
+// Request interceptor - HttpOnly cookie otomatik gönderiliyor, Authorization header gerekmez
 apiClient.interceptors.request.use(
   (config) => {
-    // localStorage'dan admin token'ı al
-    const adminToken = localStorage.getItem('admin_token')
-    if (adminToken) {
-      config.headers.Authorization = `Bearer ${adminToken}`
-    } else {
-    }
-    
+    // HttpOnly cookie otomatik olarak withCredentials: true ile gönderiliyor
+    // Authorization header'a gerek yok
     return config
   },
   (error) => {
@@ -95,9 +90,6 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
-      localStorage.removeItem('admin_token')
-      localStorage.removeItem('admin_logged_in')
-      localStorage.removeItem('admin_user')
       // Clear cache
       apiCache.clear()
       // Redirect to login

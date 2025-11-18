@@ -8,8 +8,10 @@ User = get_user_model()
 
 # ========== Admin Authentication Serializers ==========
 class AdminLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField()
+    email = serializers.EmailField(required=False)
+    password = serializers.CharField(required=False)
+    token = serializers.CharField(required=False)  # Şifrelenmiş token (SMS doğrulama için)
+    sms_code = serializers.CharField(required=False, max_length=6)  # SMS kodu
 
 class AdminUserSerializer(serializers.ModelSerializer):
     """Admin kullanıcı serializer'ı (AdminUser)"""

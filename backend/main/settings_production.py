@@ -56,9 +56,9 @@ HOSTINGER_API_KEY = os.environ.get('HOSTINGER_API_KEY')
 
 # Resend Email Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
-RESEND_SMTP_PORT = 465
-RESEND_SMTP_USERNAME = 'resend'
-RESEND_SMTP_HOST = 'smtp.resend.com'
+RESEND_SMTP_PORT = int(os.environ.get('RESEND_SMTP_PORT', '465'))
+RESEND_SMTP_USERNAME = os.environ.get('RESEND_SMTP_USERNAME', 'resend')
+RESEND_SMTP_HOST = os.environ.get('RESEND_SMTP_HOST', 'smtp.resend.com')
 
 # Email Backend - Production
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -155,11 +155,14 @@ DATABASES = {
 }
 
 # Cache Configuration - Production (Redis)
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
+# Yüksek trafik için Redis connection pool ayarları
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': REDIS_URL,
+        # Django'nun native Redis backend'i connection pooling'i otomatik yönetir
+        # Yüksek trafik için Redis server'da maxclients ayarını artırın
     }
 }
 
@@ -169,7 +172,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')],
+            'hosts': [os.environ.get('REDIS_URL', 'redis://localhost:6379/0')],
         },
     },
 }
@@ -178,6 +181,21 @@ CHANNEL_LAYERS = {
 EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = int(os.environ.get('EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES', '15'))
 EMAIL_VERIFICATION_MAX_ATTEMPTS = int(os.environ.get('EMAIL_VERIFICATION_MAX_ATTEMPTS', '3'))
 EMAIL_VERIFICATION_MAX_VERIFY_ATTEMPTS = int(os.environ.get('EMAIL_VERIFICATION_MAX_VERIFY_ATTEMPTS', '5'))
+
+# SMS/OTP Settings - İletiMerkezi
+ILETIMERKEZI_API_NAME = os.environ.get('ILETIMERKEZI_API_NAME', 'sanayicin')
+ILETIMERKEZI_API_KEY = os.environ.get('ILETIMERKEZI_API_KEY')
+ILETIMERKEZI_API_HASH = os.environ.get('ILETIMERKEZI_API_HASH')
+ILETIMERKEZI_SENDER = os.environ.get('ILETIMERKEZI_SENDER', 'APITEST')
+
+# SMS Verification Settings
+SMS_VERIFICATION_CODE_EXPIRY_MINUTES = int(os.environ.get('SMS_VERIFICATION_CODE_EXPIRY_MINUTES', '5'))
+SMS_VERIFICATION_MAX_ATTEMPTS = int(os.environ.get('SMS_VERIFICATION_MAX_ATTEMPTS', '3'))
+SMS_VERIFICATION_MAX_VERIFY_ATTEMPTS = int(os.environ.get('SMS_VERIFICATION_MAX_VERIFY_ATTEMPTS', '5'))
+
+# OTP Settings
+OTP_CODE_EXPIRY_MINUTES = int(os.environ.get('OTP_CODE_EXPIRY_MINUTES', '5'))
+OTP_MAX_ATTEMPTS = int(os.environ.get('OTP_MAX_ATTEMPTS', '3'))
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -240,7 +258,11 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': f"{os.environ.get('RATE_LIMIT_ANON', '100')}/hour",
         'user': f"{os.environ.get('RATE_LIMIT_USER', '1000')}/hour"
-    }
+    },
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 } 
 
 # Logging - Production (file)

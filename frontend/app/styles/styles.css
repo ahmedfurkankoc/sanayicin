@@ -1983,7 +1983,7 @@ footer {
 }
 .sticky-navbar .sanayicin-navbar-inner {
   color: var(--black);
-  max-width: 1200px;
+  max-width: 1250px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -2031,7 +2031,6 @@ footer {
     justify-content: start;
     align-items: center;
     width: 100%;
-    padding-left: 16px;
   }
   .sanayicin-menu-links li {
     width: 100%;

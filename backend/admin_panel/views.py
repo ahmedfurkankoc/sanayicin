@@ -14,6 +14,7 @@ from django.utils.decorators import method_decorator
 import hashlib
 import secrets
 import logging
+import functools
 from datetime import datetime, timedelta
 from django.utils import timezone
 from core.models import CustomUser
@@ -23,7 +24,10 @@ from .services import HostingerAPIService
 from .models import *
 from .serializers import *
 from core.models import CustomUser, ServiceArea, Category, CarBrand, SupportTicket, SupportMessage
-from vendors.models import VendorProfile, Review
+from core.utils.crypto import encrypt_text, decrypt_text
+from core.utils.sms_service import IletiMerkeziSMS
+from core.utils.otp_service import OTPService
+from vendors.models import VendorProfile, Review, ServiceRequest, Appointment
 
 # Helper function for admin logging
 def create_admin_log(level, message, module, request, admin_user=None):
@@ -61,8 +65,19 @@ class AdminLoginView(APIView):
             )
             return Response({'error': 'Geçersiz veri'}, status=status.HTTP_400_BAD_REQUEST)
         
-        email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
+        token = serializer.validated_data.get('token')
+        sms_code = serializer.validated_data.get('sms_code')
+        
+        # Eğer token ve SMS kodu varsa, SMS doğrulaması yap
+        if token and sms_code:
+            return self._verify_sms_and_login(request, token, sms_code)
+        
+        # Token yoksa, email/password kontrolü yap ve SMS gönder
+        email = serializer.validated_data.get('email')
+        password = serializer.validated_data.get('password')
+        
+        if not email or not password:
+            return Response({'error': 'Email ve şifre gerekli'}, status=status.HTTP_400_BAD_REQUEST)
         
         # AdminUser ile doğrulama
         try:
@@ -94,63 +109,272 @@ class AdminLoginView(APIView):
                 level='warning',
                 message=f"Admin login failed: no admin access (email={admin_user.email})",
                 module='admin_auth',
-                # SystemLog.user FK is CustomUser; avoid mismatched FK for admin
                 ip_address=request.META.get('REMOTE_ADDR'),
                 user_agent=request.META.get('HTTP_USER_AGENT', '')
             )
             return Response({'error': 'Admin paneline erişim yetkiniz yok'}, status=status.HTTP_403_FORBIDDEN)
         
-        # Token oluştur
-        token = self._generate_admin_token(admin_user)
-        logger.info(f'Generated admin token for user {admin_user.email}: {token[:10]}...')
-        
-        # Kullanıcı bilgilerini hazırla
-        user_data = {
-            'id': admin_user.id,
-            'email': admin_user.email,
-            'first_name': admin_user.first_name,
-            'last_name': admin_user.last_name,
-            'role': admin_user.role,
-            'is_superuser': admin_user.is_superuser,
-            'permissions': AdminPermission.get_user_permissions(admin_user)
-        }
-        
-        # HttpOnly admin cookie ayarla ve başarılı giriş logla
-        SystemLog.objects.create(
-            level='info',
-            message=f"Admin login success (email={admin_user.email} user_id={admin_user.id})",
-            module='admin_auth',
-            # SystemLog.user is CustomUser; don't attach AdminUser here
-            ip_address=request.META.get('REMOTE_ADDR'),
-            user_agent=request.META.get('HTTP_USER_AGENT', '')
-        )
-        response = Response({
-            'user': user_data,
-            'token': token,
-            'message': 'Giriş başarılı'
-        }, status=status.HTTP_200_OK)
-
-        # Cookie özellikleri (lokalde Secure kapalı, SameSite=Lax; prod'da Secure+None)
+        # Local'de OTP bypass - direkt login yap
         is_debug = getattr(settings, 'DEBUG', False)
-        secure_cookie = False if is_debug else True
-        samesite_policy = 'Lax' if is_debug else 'None'
-        # Cookie domain'ini None yap (subdomain sorunu için)
-        cookie_domain = None
-        cookie_path = '/'
-        max_age_seconds = 60 * 60 * 24  # 24 saat
+        if is_debug:
+            logger.info(f'Local environment detected - bypassing OTP for admin login: {email}')
+            # Direkt login yap
+            token = self._generate_admin_token(admin_user)
+            user_data = {
+                'id': admin_user.id,
+                'email': admin_user.email,
+                'first_name': admin_user.first_name,
+                'last_name': admin_user.last_name,
+                'role': admin_user.role,
+                'is_superuser': admin_user.is_superuser,
+                'permissions': AdminPermission.get_user_permissions(admin_user)
+            }
+            
+            SystemLog.objects.create(
+                level='info',
+                message=f"Admin login success (local bypass) (email={admin_user.email} user_id={admin_user.id})",
+                module='admin_auth',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            response = Response({
+                'user': user_data,
+                'token': token,
+                'message': 'Giriş başarılı (Local - OTP bypass)'
+            }, status=status.HTTP_200_OK)
+            
+            # Cookie özellikleri
+            secure_cookie = False
+            samesite_policy = 'Lax'
+            cookie_domain = None
+            cookie_path = '/'
+            max_age_seconds = 60 * 60 * 12  # 12 saat
+            
+            response.set_cookie(
+                key='admin_token',
+                value=token,
+                httponly=True,
+                secure=secure_cookie,
+                samesite=samesite_policy,
+                domain=cookie_domain,
+                path=cookie_path,
+                max_age=max_age_seconds
+            )
+            
+            return response
+        
+        # Production'da telefon numarası kontrolü
+        if not admin_user.phone_number:
+            return Response({
+                'error': 'Telefon numaranız kayıtlı değil. Lütfen sistem yöneticisi ile iletişime geçin.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # SMS OTP gönder (sadece production'da)
+        return self._send_sms_otp(request, admin_user, email, password)
+    
+    def _send_sms_otp(self, request, admin_user, email, password):
+        """SMS OTP kodu gönder ve şifrelenmiş token döndür"""
+        try:
+            # Telefon numarasını formatla
+            sms_service = IletiMerkeziSMS()
+            formatted_phone = sms_service.format_phone_number(admin_user.phone_number)
+            
+            if not sms_service.validate_phone_number(formatted_phone):
+                return Response({
+                    'error': 'Geçersiz telefon numarası'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Redis OTP servisi kullan
+            otp_service = OTPService()
+            
+            # Eski OTP'leri temizle
+            otp_service.clear_all_otps(formatted_phone)
+            
+            # OTP kodu oluştur ve Redis'e kaydet
+            success, code, error_message = otp_service.send_otp(
+                phone_number=formatted_phone,
+                purpose='two_factor',
+                user_id=None  # AdminUser için user_id yok
+            )
+            
+            if not success:
+                logger.warning(f"OTP generation failed for {formatted_phone}: {error_message}")
+                return Response({
+                    'error': error_message or 'OTP oluşturulamadı. Lütfen tekrar deneyin.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # SMS gönder
+            try:
+                sms_sent = sms_service.send_otp_code(formatted_phone, code, 'two_factor')
+            except Exception as sms_error:
+                logger.error(f"SMS sending exception: {sms_error}")
+                otp_service.delete_otp(formatted_phone, 'two_factor')
+                return Response({
+                    'error': 'SMS gönderilirken teknik bir hata oluştu. Lütfen sistem yöneticisi ile iletişime geçin.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if not sms_sent:
+                otp_service.delete_otp(formatted_phone, 'two_factor')
+                logger.warning(f"SMS could not be sent to {formatted_phone} for admin user {email}")
+                return Response({
+                    'error': 'SMS gönderilemedi. Lütfen İletiMerkezi panelinde:\n1. API kullanım izninin aktif olduğundan\n2. SMS başlığının (sender) onaylandığından\n3. Başlık adının doğru yazıldığından emin olun.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Şifrelenmiş token oluştur: email##password##sms_code##timestamp
+            token_data = f"{email}##{password}##{code}##{timezone.now().timestamp()}"
+            encrypted_token = encrypt_text(token_data)
+            
+            # Telefon numarasının son 4 hanesini göster
+            phone_last_4 = formatted_phone[-4:]
+            
+            SystemLog.objects.create(
+                level='info',
+                message=f'Admin login SMS OTP sent (email={email})',
+                module='admin_auth',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                'message': 'SMS doğrulama kodu gönderildi',
+                'token': encrypted_token,
+                'phone_last_4': phone_last_4,
+                'requires_sms_verification': True
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Send SMS OTP error: {e}")
+            return Response({
+                'error': 'SMS gönderilirken hata oluştu'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _verify_sms_and_login(self, request, encrypted_token, sms_code):
+        """SMS kodunu doğrula ve login tamamla"""
+        try:
+            # Token'ı çöz
+            token_data = decrypt_text(encrypted_token)
+            if not token_data:
+                return Response({
+                    'error': 'Geçersiz token'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Token'dan bilgileri al
+            parts = token_data.split('##')
+            if len(parts) < 3:
+                return Response({
+                    'error': 'Geçersiz token formatı'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            email = parts[0]
+            password = parts[1]
+            expected_code = parts[2]
+            
+            # AdminUser'ı bul
+            try:
+                admin_user = AdminUser.objects.get(email=email, is_active=True)
+            except AdminUser.DoesNotExist:
+                return Response({
+                    'error': 'Kullanıcı bulunamadı'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # SMS kodunu kontrol et
+            formatted_phone = IletiMerkeziSMS().format_phone_number(admin_user.phone_number)
+            otp_service = OTPService()
+            
+            # Önce token'daki kodu kontrol et (fallback)
+            if sms_code == expected_code:
+                # Token'daki kod doğru, Redis'teki OTP'yi de temizle
+                otp_service.delete_otp(formatted_phone, 'two_factor')
+            else:
+                # Redis'ten OTP doğrula
+                is_valid, error_message = otp_service.verify_otp(
+                    phone_number=formatted_phone,
+                    code=sms_code,
+                    purpose='two_factor',
+                    mark_used=True
+                )
+                
+                if not is_valid:
+                    SystemLog.objects.create(
+                        level='warning',
+                        message=f'Admin login failed: invalid SMS code (email={email})',
+                        module='admin_auth',
+                        ip_address=request.META.get('REMOTE_ADDR'),
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')
+                    )
+                    return Response({
+                        'error': error_message or 'Geçersiz SMS kodu'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Şifreyi tekrar kontrol et (güvenlik için)
+            if not admin_user.check_password(password):
+                return Response({
+                    'error': 'Geçersiz kimlik bilgileri'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Admin erişim kontrolü
+            if not self._can_access_admin(admin_user):
+                return Response({
+                    'error': 'Admin paneline erişim yetkiniz yok'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Token oluştur ve login tamamla
+            token = self._generate_admin_token(admin_user)
+            logger.info(f'Generated admin token for user {admin_user.email}: {token[:10]}...')
+            
+            # Kullanıcı bilgilerini hazırla
+            user_data = {
+                'id': admin_user.id,
+                'email': admin_user.email,
+                'first_name': admin_user.first_name,
+                'last_name': admin_user.last_name,
+                'role': admin_user.role,
+                'is_superuser': admin_user.is_superuser,
+                'permissions': AdminPermission.get_user_permissions(admin_user)
+            }
+            
+            # Başarılı giriş logla
+            SystemLog.objects.create(
+                level='info',
+                message=f"Admin login success (email={admin_user.email} user_id={admin_user.id})",
+                module='admin_auth',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+                    
+            response = Response({
+                'user': user_data,
+                'token': token,
+                'message': 'Giriş başarılı'
+            }, status=status.HTTP_200_OK)
 
-        response.set_cookie(
-            key='admin_token',
-            value=token,
-            httponly=True,
-            secure=secure_cookie,
-            samesite=samesite_policy,
-            domain=cookie_domain,
-            path=cookie_path,
-            max_age=max_age_seconds
-        )
+            # Cookie özellikleri
+            is_debug = getattr(settings, 'DEBUG', False)
+            secure_cookie = False if is_debug else True
+            samesite_policy = 'Lax' if is_debug else 'None'
+            cookie_domain = None
+            cookie_path = '/'
+            max_age_seconds = 60 * 60 * 12  # 12 saat
 
-        return response
+            response.set_cookie(
+                key='admin_token',
+                value=token,
+                httponly=True,
+                secure=secure_cookie,
+                samesite=samesite_policy,
+                domain=cookie_domain,
+                path=cookie_path,
+                max_age=max_age_seconds
+            )
+
+            return response
+            
+        except Exception as e:
+            logger.error(f"Verify SMS and login error: {e}")
+            return Response({
+                'error': 'Giriş yapılırken hata oluştu'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def get(self, request):
         print(f"=== ADMIN LOGIN VIEW REACHED (GET) ===")
@@ -183,10 +407,10 @@ class AdminLoginView(APIView):
             'email': user.email,
             'role': user.role,
             'is_superuser': user.is_superuser,
-            'expires_at': datetime.utcnow() + timedelta(hours=24),
+            'expires_at': datetime.utcnow() + timedelta(hours=12),
             'type': 'admin'
         }
-        cache.set(cache_key, token_data, timeout=3600 * 24 * 30)  # 30 gün
+        cache.set(cache_key, token_data, timeout=3600 * 12)  # 12 saat
         logger.info(f'Generated admin token for user {user.email}: {token_hash[:10]}...')
         
         return token_hash
@@ -244,6 +468,7 @@ class AdminUserInfoView(APIView):
 def admin_permission_required(permission_name, action_type='read'):
     """Admin permission decorator"""
     def decorator(view_func):
+        @functools.wraps(view_func)
         def wrapper(self, request, *args, **kwargs):
             user = request.user
             
@@ -413,25 +638,70 @@ class AdminAuthLogsView(APIView):
 # ViewSets
 class UserViewSet(viewsets.ModelViewSet):
     """Kullanıcı yönetimi"""
-    queryset = CustomUser.objects.all()  # Tüm kullanıcıları getir (client ve vendor)
+    queryset = CustomUser.objects.exclude(role='vendor')  # Vendor'ları hariç tut, sadece client'ları getir
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
     
     @admin_permission_required('users', 'read')
     def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+        # Vendor'lar zaten queryset'te exclude edilmiş
+        queryset = self.get_queryset()
+        
+        # Search functionality
+        search = request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                models.Q(email__icontains=search) |
+                models.Q(first_name__icontains=search) |
+                models.Q(last_name__icontains=search) |
+                models.Q(phone_number__icontains=search)
+            )
+        
+        # Order by creation date (newest first)
+        queryset = queryset.order_by('-date_joined')
+        
+        # Pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @admin_permission_required('users', 'read')
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Vendor kontrolü
+        if instance.role == 'vendor':
+            return Response({'error': 'Vendor kullanıcıları bu endpoint üzerinden erişilemez'}, status=status.HTTP_404_NOT_FOUND)
+        return super().retrieve(request, *args, **kwargs)
     
     @admin_permission_required('users', 'write')
     def create(self, request, *args, **kwargs):
+        # Vendor oluşturmayı engelle
+        if request.data.get('role') == 'vendor':
+            return Response({'error': 'Vendor kullanıcıları bu endpoint üzerinden oluşturulamaz'}, status=status.HTTP_400_BAD_REQUEST)
         return super().create(request, *args, **kwargs)
     
     @admin_permission_required('users', 'write')
     def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Vendor kontrolü
+        if instance.role == 'vendor':
+            return Response({'error': 'Vendor kullanıcıları bu endpoint üzerinden güncellenemez'}, status=status.HTTP_404_NOT_FOUND)
+        # Vendor role'üne değiştirmeyi engelle
+        if request.data.get('role') == 'vendor':
+            return Response({'error': 'Kullanıcı vendor role\'üne değiştirilemez'}, status=status.HTTP_400_BAD_REQUEST)
         return super().update(request, *args, **kwargs)
     
     @admin_permission_required('users', 'delete')
     def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Vendor kontrolü
+        if instance.role == 'vendor':
+            return Response({'error': 'Vendor kullanıcıları bu endpoint üzerinden silinemez'}, status=status.HTTP_404_NOT_FOUND)
         return super().destroy(request, *args, **kwargs)
 
 class VendorProfileViewSet(viewsets.ModelViewSet):
@@ -553,6 +823,148 @@ class VendorProfileViewSet(viewsets.ModelViewSet):
         cache.set(cache_key, response_data, 300)
         
         return Response(response_data)
+
+    @action(detail=True, methods=['get'], url_path='detailed-stats')
+    @admin_permission_required('vendors', 'read')
+    def detailed_stats(self, request, pk=None):
+        """Vendor detaylı istatistikleri ve tüm verileri getir"""
+        vendor = self.get_object()
+        
+        from django.db.models import Count, Q, Avg
+        
+        # İstatistikler
+        total_requests = ServiceRequest.objects.filter(vendor=vendor).count()
+        pending_requests = ServiceRequest.objects.filter(vendor=vendor, status='pending').count()
+        responded_requests = ServiceRequest.objects.filter(vendor=vendor, status='responded').count()
+        completed_requests = ServiceRequest.objects.filter(vendor=vendor, status='completed').count()
+        cancelled_requests = ServiceRequest.objects.filter(vendor=vendor, status='cancelled').count()
+        quotes = ServiceRequest.objects.filter(vendor=vendor, request_type='quote').count()
+        
+        total_appointments = Appointment.objects.filter(vendor=vendor).count()
+        pending_appointments = Appointment.objects.filter(vendor=vendor, status='pending').count()
+        confirmed_appointments = Appointment.objects.filter(vendor=vendor, status='confirmed').count()
+        completed_appointments = Appointment.objects.filter(vendor=vendor, status='completed').count()
+        cancelled_appointments = Appointment.objects.filter(vendor=vendor, status__in=['cancelled', 'rejected']).count()
+        
+        total_reviews = Review.objects.filter(vendor=vendor).count()
+        average_rating = Review.objects.filter(vendor=vendor).aggregate(avg=Avg('rating'))['avg'] or 0
+        
+        # Talepler
+        service_requests = ServiceRequest.objects.filter(vendor=vendor).order_by('-created_at')
+        service_requests_data = []
+        for req in service_requests:
+            service_requests_data.append({
+                'id': req.id,
+                'title': req.title,
+                'description': req.description,
+                'request_type': req.get_request_type_display(),
+                'status': req.get_status_display(),
+                'status_code': req.status,
+                'client_name': req.user.get_full_name() or req.user.email,
+                'client_email': req.user.email,
+                'client_phone': req.client_phone,
+                'service': req.service.name if req.service else None,
+                'vehicle_info': req.vehicle_info,
+                'last_offered_price': float(req.last_offered_price) if req.last_offered_price else None,
+                'last_offered_days': req.last_offered_days,
+                'cancellation_reason': req.cancellation_reason,
+                'created_at': req.created_at.isoformat(),
+                'updated_at': req.updated_at.isoformat(),
+            })
+        
+        # Randevular
+        appointments = Appointment.objects.filter(vendor=vendor).order_by('-created_at')
+        appointments_data = []
+        for apt in appointments:
+            appointments_data.append({
+                'id': apt.id,
+                'client_name': apt.client_name,
+                'client_phone': apt.client_phone,
+                'client_email': apt.client_email,
+                'service_description': apt.service_description,
+                'appointment_date': apt.appointment_date.isoformat(),
+                'appointment_time': apt.appointment_time.strftime('%H:%M'),
+                'status': apt.get_status_display(),
+                'status_code': apt.status,
+                'notes': apt.notes,
+                'created_at': apt.created_at.isoformat(),
+                'updated_at': apt.updated_at.isoformat(),
+            })
+        
+        # Yorumlar
+        reviews = Review.objects.filter(vendor=vendor).order_by('-created_at')
+        reviews_data = []
+        for review in reviews:
+            reviews_data.append({
+                'id': review.id,
+                'user_name': review.user.get_full_name() or review.user.email,
+                'user_email': review.user.email,
+                'service': review.service.name if review.service else None,
+                'rating': review.rating,
+                'comment': review.comment,
+                'service_date': review.service_date.isoformat() if review.service_date else None,
+                'is_read': review.is_read,
+                'created_at': review.created_at.isoformat(),
+            })
+        
+        # İptal edilen talepler
+        cancelled_service_requests = ServiceRequest.objects.filter(vendor=vendor, status='cancelled').order_by('-created_at')
+        cancelled_requests_data = []
+        for req in cancelled_service_requests:
+            cancelled_requests_data.append({
+                'id': req.id,
+                'title': req.title,
+                'description': req.description,
+                'request_type': req.get_request_type_display(),
+                'client_name': req.user.get_full_name() or req.user.email,
+                'client_email': req.user.email,
+                'cancellation_reason': req.cancellation_reason,
+                'created_at': req.created_at.isoformat(),
+                'cancelled_at': req.updated_at.isoformat(),
+            })
+        
+        # Teklifler
+        quote_requests = ServiceRequest.objects.filter(vendor=vendor, request_type='quote').order_by('-created_at')
+        quotes_data = []
+        for req in quote_requests:
+            quotes_data.append({
+                'id': req.id,
+                'title': req.title,
+                'description': req.description,
+                'status': req.get_status_display(),
+                'status_code': req.status,
+                'client_name': req.user.get_full_name() or req.user.email,
+                'client_email': req.user.email,
+                'service': req.service.name if req.service else None,
+                'last_offered_price': float(req.last_offered_price) if req.last_offered_price else None,
+                'last_offered_days': req.last_offered_days,
+                'created_at': req.created_at.isoformat(),
+                'updated_at': req.updated_at.isoformat(),
+            })
+        
+        return Response({
+            'vendor': self.get_serializer(vendor).data,
+            'statistics': {
+                'total_requests': total_requests,
+                'pending_requests': pending_requests,
+                'responded_requests': responded_requests,
+                'completed_requests': completed_requests,
+                'cancelled_requests': cancelled_requests,
+                'quotes': quotes,
+                'total_appointments': total_appointments,
+                'pending_appointments': pending_appointments,
+                'confirmed_appointments': confirmed_appointments,
+                'completed_appointments': completed_appointments,
+                'cancelled_appointments': cancelled_appointments,
+                'total_reviews': total_reviews,
+                'average_rating': round(float(average_rating), 1),
+            },
+            'service_requests': service_requests_data,
+            'appointments': appointments_data,
+            'reviews': reviews_data,
+            'cancelled_requests': cancelled_requests_data,
+            'quotes': quotes_data,
+        })
 
 class BlogCategoryViewSet(viewsets.ModelViewSet):
     """Blog kategori yönetimi"""

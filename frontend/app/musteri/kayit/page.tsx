@@ -3,8 +3,10 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { api, setAuthEmail } from "@/app/utils/api";
+import { toast } from "sonner";
+import { api, setAuthEmail, setAuthToken } from "@/app/utils/api";
 import { iconMapping } from "@/app/utils/iconMapping";
+import OTPModal from "@/app/components/OTPModal";
 import MusteriHeader from "../components/MusteriHeader";
 
 // Güçlü şifre doğrulama fonksiyonu
@@ -63,6 +65,11 @@ export default function MusteriKayitPage() {
   const [verificationError, setVerificationError] = useState("");
   const [verificationEmail, setVerificationEmail] = useState("");
   
+  // OTP state
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [registrationToken, setRegistrationToken] = useState<string | null>(null);
+  const [phoneLast4, setPhoneLast4] = useState<string>('');
+  
   const [error, setError] = useState<string | string[]>("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -72,14 +79,19 @@ export default function MusteriKayitPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    // Telefon için maskeleme: 555 555 55 55
+    // Telefon için formatlama: başında 0 olmadan, boşluksuz 10 haneli
     if (name === 'phone_number') {
-      const digits = value.replace(/\D/g, '').slice(0, 10); // sadece 10 rakam
-      let masked = digits;
-      if (digits.length > 3) masked = `${digits.slice(0,3)} ${digits.slice(3)}`;
-      if (digits.length > 6) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`;
-      if (digits.length > 8) masked = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6,8)} ${digits.slice(8)}`;
-      setFormData(prev => ({ ...prev, phone_number: masked }));
+      // Sadece rakamları al
+      let digits = value.replace(/\D/g, '');
+      // Başında 0 varsa kaldır
+      if (digits.startsWith('0')) {
+        digits = digits.substring(1);
+      }
+      // Maksimum 10 haneli
+      if (digits.length > 10) {
+        digits = digits.substring(0, 10);
+      }
+      setFormData(prev => ({ ...prev, phone_number: digits }));
       return;
     }
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -173,10 +185,14 @@ export default function MusteriKayitPage() {
       return;
     }
     
-    // Telefon numarası zorunlu ve 10 hane olmalı (555 555 55 55)
+    // Telefon numarası zorunlu ve 10 hane olmalı (başında 0 olmadan)
     const phoneDigits = formData.phone_number.replace(/\D/g, '');
     if (phoneDigits.length !== 10) {
-      setError("Telefon numarası 10 haneli olmalı (örn. 555 555 55 55)");
+      setError("Telefon numarası 10 haneli olmalı (örn: 5552223333)");
+      return;
+    }
+    if (phoneDigits.startsWith('0')) {
+      setError("Telefon numarası 0 ile başlamamalı (örn: 5552223333)");
       return;
     }
     
@@ -187,6 +203,16 @@ export default function MusteriKayitPage() {
       const payload = { ...formData, phone_number: `+90${phoneDigits}` };
       const response = await api.register(payload, 'client');
       
+      // OTP gerekiyorsa modal aç
+      if (response.data?.requires_sms_verification && response.data?.token) {
+        setRegistrationToken(response.data.token);
+        setPhoneLast4(response.data.phone_last_4 || '');
+        setOtpModalOpen(true);
+        toast.success('Doğrulama kodu telefon numaranıza gönderildi');
+        return;
+      }
+      
+      // Eski akış (email doğrulama) - artık kullanılmıyor ama backward compatibility için
       if (response.status === 201) {
         // Email bilgisini localStorage'a kaydet
         if (typeof window !== "undefined") {
@@ -206,6 +232,7 @@ export default function MusteriKayitPage() {
                           err.response?.data?.error || 
                           "Kayıt sırasında bir hata oluştu.";
       setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -347,19 +374,40 @@ export default function MusteriKayitPage() {
                   <label htmlFor="phone_number" className="musteri-form-label">
                     Telefon Numarası *
                   </label>
-                  <div style={{ width: '100%', display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0 12px', background: '#fff' }}>
-                    <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8 }}>+90</span>
+                  <div style={{ 
+                    width: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    border: '1px solid #e2e8f0', 
+                    borderRadius: 8, 
+                    padding: '0 12px', 
+                    background: '#fff',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                  >
+                    <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8, userSelect: 'none' }}>+90</span>
                     <input
                       type="tel"
                       id="phone_number"
                       name="phone_number"
                       value={formData.phone_number}
                       onChange={handleInputChange}
-                      placeholder="555 555 55 55"
+                      placeholder="5552223333"
                       required
                       style={{ flex: 1, border: 'none', outline: 'none', padding: '12px 0', background: 'transparent' }}
+                      maxLength={10}
                     />
                   </div>
+                  <small style={{ 
+                    display: 'block', 
+                    marginTop: '4px', 
+                    color: '#64748b', 
+                    fontSize: '12px' 
+                  }}>
+                    Başında 0 olmadan, boşluksuz 10 haneli numara girin (örn: 5552223333)
+                  </small>
                 </div>
 
                 {/* İl/İlçe alanları kaldırıldı */}
@@ -598,6 +646,73 @@ export default function MusteriKayitPage() {
           </div>
         </div>
       </main>
+
+      {/* OTP Modal */}
+      <OTPModal
+        isOpen={otpModalOpen}
+        onClose={() => {
+          setOtpModalOpen(false);
+          setRegistrationToken(null);
+          setPhoneLast4('');
+        }}
+        onVerify={async (code: string) => {
+          if (!registrationToken) {
+            throw new Error('Doğrulama bilgileri eksik');
+          }
+
+          try {
+            const response = await api.verifyRegistrationOTP({
+              token: registrationToken,
+              sms_code: code,
+            });
+
+            if (response.status === 200 && response.data?.tokens?.access) {
+              // Token'ı kaydet
+              setAuthToken('client', response.data.tokens.access);
+              setAuthEmail('client', formData.email);
+              
+              toast.success('Hesabınız başarıyla oluşturuldu!');
+              setSuccess(true);
+              
+              // Kısa gecikme ile müşteri paneline yönlendir
+              setTimeout(() => {
+                router.push('/musteri');
+              }, 1500);
+            } else {
+              throw new Error('Kayıt doğrulama başarısız');
+            }
+          } catch (error: any) {
+            const errorMsg = error.response?.data?.error || error.response?.data?.detail || 'Doğrulama kodu hatalı';
+            throw new Error(errorMsg);
+          }
+        }}
+        onResend={async () => {
+          if (!formData.email || !formData.phone_number) {
+            throw new Error('Yeniden gönderme bilgileri eksik');
+          }
+
+          try {
+            // Kayıt isteğini tekrar gönder (OTP tekrar gönderilir)
+            const phoneDigits = formData.phone_number.replace(/\D/g, '');
+            const payload = { ...formData, phone_number: `+90${phoneDigits}` };
+            const response = await api.register(payload, 'client');
+            
+            if (response.data?.requires_sms_verification && response.data?.token) {
+              setRegistrationToken(response.data.token);
+              setPhoneLast4(response.data.phone_last_4 || '');
+              toast.success('Doğrulama kodu tekrar gönderildi');
+            } else {
+              throw new Error('OTP gönderilemedi');
+            }
+          } catch (error: any) {
+            const errorMsg = error.response?.data?.error || error.response?.data?.detail || 'Kod gönderilemedi';
+            throw new Error(errorMsg);
+          }
+        }}
+        phoneNumber={phoneLast4 ? `****${phoneLast4}` : undefined}
+        title="Kayıt Doğrulama"
+        subtitle="Telefon numaranıza gönderilen 6 haneli doğrulama kodunu girin"
+      />
     </>
   );
 }

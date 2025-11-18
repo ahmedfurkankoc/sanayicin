@@ -86,15 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.user)
         setPermissions(response.user.permissions || null)
         setIsAuthenticated(true)
-        // Login flag'ini localStorage'a kaydet (cross-domain cookie sorunu için)
-        localStorage.setItem('admin_logged_in', 'true')
-        // User bilgilerini de localStorage'a kaydet
-        localStorage.setItem('admin_user', JSON.stringify(response.user))
-        // Token'ı localStorage'a kaydet (API çağrıları için)
-        if (response.token) {
-          localStorage.setItem('admin_token', response.token)
-        }
-        // refreshUser çağırma - zaten user bilgileri var
+        // HttpOnly cookie kullanılıyor, localStorage'a gerek yok
         return true
       }
       
@@ -117,10 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       setPermissions(null)
       setIsAuthenticated(false)
-      // localStorage'ı temizle
-      localStorage.removeItem('admin_logged_in')
-      localStorage.removeItem('admin_user')
-      localStorage.removeItem('admin_token')
+      // HttpOnly cookie backend tarafından siliniyor
       
       // Redirect to login
       if (typeof window !== 'undefined') {
@@ -151,38 +140,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
-      
-      // Cookie okuma fonksiyonu (frontend'deki gibi)
-      const getCookieValue = (name: string): string | null => {
-        if (typeof document === 'undefined') return null;
-        const value = document.cookie
-          .split('; ')
-          .find(row => row.startsWith(`${name}=`))
-          ?.split('=')[1];
-        return value || null;
-      };
-      
-      // Admin token cookie'sini kontrol et
-      const adminToken = getCookieValue('admin_token')
-      
-      // localStorage login flag'ini kontrol et (cross-domain cookie sorunu için)
-      const isLoggedIn = localStorage.getItem('admin_logged_in') === 'true'
-      
-      if (adminToken || isLoggedIn) {
+      // HttpOnly cookie JavaScript'ten okunamaz, direkt API çağrısı yap
+      // Eğer cookie geçerliyse API başarılı olur, değilse 401 döner
+      try {
+        const response = await api.get('/auth/user/')
+        if (response.data) {
+          setUser(response.data)
+          setPermissions(response.data.permissions || null)
         setIsAuthenticated(true)
-        
-        // User bilgilerini localStorage'dan al
-        const savedUser = localStorage.getItem('admin_user')
-        if (savedUser) {
-          try {
-            const userData = JSON.parse(savedUser)
-            setUser(userData)
-            setPermissions(userData.permissions || null)
-          } catch (e) {
-            console.error('❌ Failed to parse saved user data:', e)
-          }
+        } else {
+          setIsAuthenticated(false)
         }
-      } else {
+      } catch {
+        // Token geçersiz, süresi dolmuş veya cookie yok
         setIsAuthenticated(false)
       }
       setIsLoading(false)

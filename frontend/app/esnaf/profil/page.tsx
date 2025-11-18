@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import "@/app/styles/esnaf.css";
 import EsnafPanelLayout from "../components/EsnafPanelLayout";
 import { useEsnaf } from "../context/EsnafContext";
-import { api } from "@/app/utils/api";
+import { api, resolveMediaUrl } from "@/app/utils/api";
 import Icon from "@/app/components/ui/Icon";
 import VendorLocationMap from "@/app/components/VendorLocationMap";
 
@@ -306,7 +306,7 @@ export default function EsnafProfilPage() {
                           }}
                         >
                           <img
-                            src={img.image_url || img.image}
+                            src={resolveMediaUrl(img.image_url || img.image)}
                             alt={img.description || 'Galeri görseli'}
                             style={{
                               width: '100%',
@@ -599,7 +599,7 @@ export default function EsnafProfilPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={galleryImages[currentImageIndex]?.image_url || galleryImages[currentImageIndex]?.image}
+              src={resolveMediaUrl(galleryImages[currentImageIndex]?.image_url || galleryImages[currentImageIndex]?.image)}
               alt={galleryImages[currentImageIndex]?.description || 'Galeri görseli'}
               style={{
                 maxWidth: '100%',

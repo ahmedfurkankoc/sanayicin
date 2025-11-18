@@ -182,27 +182,17 @@ export default function HizmetlerPage() {
   const [userName, setUserName] = useState<string>('Misafir');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // Auth guard artık middleware'de yapılıyor, burada gerek yok
-
   // Statik veri kullan
   const serviceAreas = STATIC_SERVICE_AREAS;
   const categories = STATIC_CATEGORIES;
   
-  // Fallback mock data (public homepage ile uyumlu)
-  const mockVendors = [
-    { name: "Usta Otomotiv", experience: "10+ yıl deneyim", type: "Renair Servisi", city: "İstanbul", img: "/images/vendor-1.jpg" },
-    { name: "Yılmaz Elektrik", experience: "7 yıl deneyim", type: "Elektrik Servisi", city: "Ankara", img: "/images/vendor-2.jpg" },
-    { name: "Kaporta Ustası", experience: "12 yıl deneyim", type: "Kaporta", city: "İzmir", img: "/images/vendor-3.jpg" },
-    { name: "Boya Merkezi", experience: "9 yıl deneyim", type: "Boya", city: "Bursa", img: "/images/vendor-4.jpg" },
-  ];
-  // Bu ay en çok yorum alanlara göre sırala (varsa aylık sayaç alanları)
-  const displayVendors = vendors.length > 0 ? vendors : mockVendors;
-  const topVendors = displayVendors
+  // Bu ay en çok yorum alan esnafları sırala
+  const topVendors = vendors
     .slice()
+    .filter((v: any) => (v.monthly_review_count ?? 0) > 0) // Sadece bu ay yorumu olanları göster
     .sort((a: any, b: any) => {
-      const getMonthly = (v: any) =>
-        v.monthly_review_count ?? v.reviews_this_month ?? v.review_count ?? 0;
-      return getMonthly(b) - getMonthly(a);
+      const getMonthlyCount = (v: any) => v.monthly_review_count ?? 0;
+      return getMonthlyCount(b) - getMonthlyCount(a);
     })
     .slice(0, 6);
 
@@ -214,13 +204,13 @@ export default function HizmetlerPage() {
         const res = await api.getProfile('client');
         const data = res?.data || {};
         if (!mounted) return;
-        const first = data.first_name || data.firstName || '';
-        const last = data.last_name || data.lastName || '';
-        const display = data.display_name || data.displayName || `${first} ${last}`.trim();
+        const first = data.first_name || '';
+        const last = data.last_name || '';
+        const display = `${first} ${last}`.trim();
         const email = data.email || '';
         const finalName = (display && display.trim().length > 0) ? display : (email || 'Kullanıcı');
         setUserName(finalName);
-        const avatar = data.avatar || data.photo || data.photoUrl || null;
+        const avatar = data.avatar || null;
         if (avatar) setAvatarUrl(avatar);
       } catch (e) {
         // Sessizce geç: token yoksa ya da misafir ise
@@ -301,7 +291,7 @@ export default function HizmetlerPage() {
           </div>
         </div>
           
-        {/* En Çok Yorum Alan Esnaflar */}
+        {/* Bu Ay En Çok Yorum Alan Esnaflar */}
         <section className="musteri-vendors-section" style={{ margin: '0', padding: '20px 0 0 0'  }}>
           <h2>Bu Ay En Çok Yorum Alan Esnaflar</h2>
           <div className="musteri-vendors-grid">
@@ -310,29 +300,31 @@ export default function HizmetlerPage() {
                 <VendorCardSkeleton key={`mv-skel-${index}`} />
               ))
             ) : error ? (
-              mockVendors.slice(0, 6).map((v) => (
-                <VendorCard key={v.name} {...v} />
-              ))
-            ) : (
-              topVendors.map((vendor: any, index: number) => {
-                // Backend'de avatar user.avatar olarak geliyor
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#666' }}>
+                Esnaf verileri yüklenirken bir hata oluştu.
+              </div>
+            ) : topVendors.length > 0 ? (
+              topVendors.map((vendor: any) => {
                 const avatarField = vendor.user?.avatar || null;
                 const vendorData = {
-                  name: vendor.display_name || vendor.company_title || vendor.name || 'Esnaf',
-                  experience: `${Math.floor(Math.random() * 10) + 1}+ yıl deneyim`,
-                  type: vendor.service_areas?.[0]?.name || vendor.type || 'Hizmet',
+                  name: vendor.display_name || vendor.company_title || 'Esnaf',
+                  experience: '',
+                  type: vendor.service_areas?.[0]?.name || 'Hizmet',
                   city: vendor.city || '',
                   img: avatarField,
                   slug: vendor.slug,
                   rating: vendor.rating || 0,
-                  reviewCount: vendor.monthly_review_count || vendor.reviews_this_month || vendor.review_count || 0,
+                  reviewCount: vendor.monthly_review_count || 0,
                   about: vendor.about,
                   serviceAreas: vendor.service_areas,
                   categories: vendor.categories
                 };
-                const key = vendor.id || index;
-                return <VendorCard key={key} {...vendorData} />;
+                return <VendorCard key={vendor.id} {...vendorData} />;
               })
+            ) : (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#666' }}>
+                Henüz esnaf yok.
+              </div>
             )}
           </div>
         </section>
