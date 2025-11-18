@@ -23,6 +23,7 @@ class AdminUser(models.Model):
     email = models.EmailField(unique=True, db_index=True)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
+    phone_number = models.CharField(max_length=20, null=True, blank=True, db_index=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, db_index=True)
     is_superuser = models.BooleanField(default=False, db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)

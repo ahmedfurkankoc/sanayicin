@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
+import axios from 'axios'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/admin'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -12,7 +14,12 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   
-  const { login } = useAuth()
+  // SMS OTP state
+  const [requiresSmsVerification, setRequiresSmsVerification] = useState(false)
+  const [smsToken, setSmsToken] = useState('')
+  const [phoneLast4, setPhoneLast4] = useState('')
+  const [smsCode, setSmsCode] = useState(['', '', '', '', '', ''])
+  const [smsCodeInputs] = useState<Array<HTMLInputElement | null>>([null, null, null, null, null, null])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,18 +27,91 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const success = await login(email, password)
+      // Eğer SMS doğrulaması gerekiyorsa, SMS kodunu gönder
+      if (requiresSmsVerification && smsToken) {
+        const code = smsCode.join('')
+        if (code.length !== 6) {
+          setError('Lütfen 6 haneli SMS kodunu girin')
+          setIsLoading(false)
+          return
+        }
+
+        const response = await axios.post(`${API_BASE_URL}/auth/login/`, {
+          token: smsToken,
+          sms_code: code
+        }, {
+          withCredentials: true
+        })
       
-      if (success) {
-        // Hard redirect kullan (cookie cross-domain sorunu için)
+        if (response.data.user) {
+          // Login başarılı - HttpOnly cookie set edildi
+          // Sayfayı yenile ki AuthContext initializeAuth çalışsın
+          window.location.href = '/'
+        } else {
+          setError('Geçersiz SMS kodu')
+        }
+        setIsLoading(false)
+        return
+      }
+
+      // İlk aşama: email/password gönder
+      const response = await axios.post(`${API_BASE_URL}/auth/login/`, {
+        email,
+        password
+      }, {
+        withCredentials: true
+      })
+
+      if (response.data.requires_sms_verification) {
+        // SMS doğrulaması gerekiyor
+        setRequiresSmsVerification(true)
+        setSmsToken(response.data.token)
+        setPhoneLast4(response.data.phone_last_4 || '')
+        setError('')
+      } else if (response.data.user) {
+        // Direkt login başarılı (SMS kapalıysa)
         window.location.href = '/'
       } else {
         setError('Geçersiz kimlik bilgileri veya admin erişim yetkisi yok')
       }
-    } catch {
-      setError('Giriş yapılırken bir hata oluştu')
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string } } }
+      setError(error.response?.data?.error || 'Giriş yapılırken bir hata oluştu')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSmsCodeChange = (index: number, value: string) => {
+    // Sadece rakam kabul et
+    if (value && !/^\d$/.test(value)) return
+
+    const newCode = [...smsCode]
+    newCode[index] = value
+    setSmsCode(newCode)
+
+    // Otomatik sonraki input'a geç
+    if (value && index < 5) {
+      smsCodeInputs[index + 1]?.focus()
+    }
+  }
+
+  const handleSmsCodeKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Backspace ile önceki input'a geç
+    if (e.key === 'Backspace' && !smsCode[index] && index > 0) {
+      smsCodeInputs[index - 1]?.focus()
+    }
+  }
+
+  const handleSmsCodePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData('text').slice(0, 6)
+    if (/^\d{1,6}$/.test(pastedData)) {
+      const newCode = pastedData.split('').concat(Array(6 - pastedData.length).fill(''))
+      setSmsCode(newCode)
+      // Son dolu input'a focus
+      const lastIndex = Math.min(pastedData.length - 1, 5)
+      smsCodeInputs[lastIndex]?.focus()
     }
   }
 
@@ -66,8 +146,14 @@ export default function LoginPage() {
 
           {/* Title */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Giriş Yap</h1>
-            <p className="text-gray-600">Admin paneline giriş yapın</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {requiresSmsVerification ? 'SMS Doğrulama' : 'Giriş Yap'}
+            </h1>
+            <p className="text-gray-600">
+              {requiresSmsVerification 
+                ? `Telefon numaranızın son 4 hanesi (****${phoneLast4}) numarasına gönderilen kodu girin`
+                : 'Admin paneline giriş yapın'}
+            </p>
           </div>
 
           {/* Login Form */}
@@ -83,6 +169,8 @@ export default function LoginPage() {
               </div>
             )}
 
+            {!requiresSmsVerification ? (
+              <>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 E-posta Adresi *
@@ -139,6 +227,47 @@ export default function LoginPage() {
                 </div>
               </div>
             </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-4 text-center">
+                  SMS Doğrulama Kodu
+                </label>
+                <div className="flex justify-center gap-2">
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <input
+                      key={index}
+                      ref={(el) => {
+                        smsCodeInputs[index] = el
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={smsCode[index]}
+                      onChange={(e) => handleSmsCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleSmsCodeKeyDown(index, e)}
+                      onPaste={handleSmsCodePaste}
+                      className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      autoFocus={index === 0}
+                    />
+                  ))}
+                </div>
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRequiresSmsVerification(false)
+                      setSmsToken('')
+                      setSmsCode(['', '', '', '', '', ''])
+                      setError('')
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    Geri dön
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div>
               <button

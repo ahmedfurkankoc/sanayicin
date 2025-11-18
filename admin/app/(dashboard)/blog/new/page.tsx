@@ -554,8 +554,8 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
         },
+        credentials: 'include', // HttpOnly cookie gönder
         body: JSON.stringify({ name, slug: apiGenerateSlug(name) }),
       })
       if (!response.ok) {
@@ -977,15 +977,13 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                       return <div className="text-sm text-red-500 p-2 bg-red-50 rounded">Görsel URL&#39;i geçersiz: {formData.featured_image}</div>
                     }
                     return (
-                      <img 
+                      <Image 
                         src={imageUrl} 
                         alt={formData.title || 'Kapak görseli'} 
+                        width={400}
+                        height={160}
                         className="w-full h-40 object-cover rounded-lg border"
-                        onError={(e) => {
-                          console.error('Featured image load error:', imageUrl, 'Original:', formData.featured_image)
-                          e.currentTarget.outerHTML = `<div class="text-sm text-red-500 p-2 bg-red-50 rounded">Görsel yüklenemedi: ${imageUrl}</div>`
-                        }}
-                        onLoad={() => console.log('Featured image loaded successfully:', imageUrl)}
+                        unoptimized
                       />
                     )
                   })()}
@@ -1273,15 +1271,13 @@ export default function BlogEditor({ params }: { params: { id?: string } }) {
                           return <div className="text-sm text-gray-500">Görsel URL&#39;i boş</div>
                         }
                         return (
-                          <img 
+                          <Image 
                             src={imageUrl} 
                             alt={formData.title || 'OG görseli'} 
+                            width={400}
+                            height={160}
                             className="w-full h-40 object-cover rounded-lg border"
-                            onError={(e) => {
-                              console.error('OG image load error:', imageUrl)
-                              e.currentTarget.style.display = 'none'
-                            }}
-                            onLoad={() => console.log('OG image loaded:', imageUrl)}
+                            unoptimized
                           />
                         )
                       })()}

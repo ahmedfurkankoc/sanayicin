@@ -10,9 +10,14 @@ class IletiMerkeziSMS:
     """İletiMerkezi SMS API entegrasyonu"""
     
     def __init__(self):
-        self.api_name = "sanayicin"
-        self.api_key = "711e51aeadb744a450ce26ce9818fb25"
-        self.hash = "5d06d66f0bc1735de773131daec43808f34d5523a9ef56ecce64d6c19eab33af"
+        self.api_name = getattr(settings, 'ILETIMERKEZI_API_NAME', 'sanayicin')
+        self.api_key = getattr(settings, 'ILETIMERKEZI_API_KEY', None)
+        self.hash = getattr(settings, 'ILETIMERKEZI_API_HASH', None)
+        self.sender = getattr(settings, 'ILETIMERKEZI_SENDER', 'Sanayicin')
+        self.base_url = "https://api.iletimerkezi.com/v1"
+        
+        if not self.api_key or not self.hash:
+            logger.warning("İletiMerkezi API key veya hash tanımlı değil. SMS gönderimi çalışmayabilir.")
     
     def format_phone_number(self, phone: str) -> str:
         """Telefon numarasını formatla"""
@@ -55,7 +60,7 @@ class IletiMerkeziSMS:
                         "hash": self.hash
                     },
                     "order": {
-                        "sender": "APITEST",
+                        "sender": self.sender,
                         "iys": "1",
                         "iysList": "BIREYSEL",
                         "message": {
@@ -71,7 +76,7 @@ class IletiMerkeziSMS:
             logger.info(f"Sending SMS to {formatted_phone} with payload: {payload}")
             
             response = requests.post(
-                "https://api.iletimerkezi.com/v1/send-sms/json",
+                f"{self.base_url}/send-sms/json",
                 json=payload,
                 timeout=30
             )
@@ -109,7 +114,7 @@ class IletiMerkeziSMS:
                         "hash": self.hash
                     },
                     "order": {
-                        "sender": "APITEST",
+                        "sender": self.sender,
                         "iys": "1",
                         "iysList": "BIREYSEL",
                         "message": {
@@ -123,7 +128,7 @@ class IletiMerkeziSMS:
             }
             
             response = requests.post(
-                "https://api.iletimerkezi.com/v1/send-sms/json",
+                f"{self.base_url}/send-sms/json",
                 json=payload,
                 timeout=30
             )
@@ -151,7 +156,7 @@ class IletiMerkeziSMS:
                         "hash": self.hash
                     },
                     "order": {
-                        "sender": "APITEST",
+                        "sender": self.sender,
                         "iys": "1",
                         "iysList": "BIREYSEL",
                         "message": {
@@ -165,7 +170,7 @@ class IletiMerkeziSMS:
             }
             
             response = requests.post(
-                "https://api.iletimerkezi.com/v1/send-sms/json",
+                f"{self.base_url}/send-sms/json",
                 json=payload,
                 timeout=30
             )
@@ -193,7 +198,7 @@ class IletiMerkeziSMS:
             }
             
             response = requests.post(
-                "https://api.iletimerkezi.com/v1/get-balance/json",
+                f"{self.base_url}/get-balance/json",
                 json=payload,
                 timeout=30
             )
@@ -212,24 +217,127 @@ class IletiMerkeziSMS:
         """SMS raporlarını al"""
         try:
             payload = {
-                "api_name": self.api_name,
-                "api_key": self.api_key,
-                "hash": self.hash,
+                "request": {
+                    "authentication": {
+                        "key": self.api_key,
+                        "hash": self.hash
+                    },
                 "start_date": start_date,
                 "end_date": end_date
+                }
             }
             
             response = requests.post(
-                f"{self.base_url}/get-reports",
+                f"{self.base_url}/get-reports/json",
                 json=payload,
                 timeout=30
             )
             
             if response.status_code == 200:
-                return response.json()
+                result = response.json()
+                if result.get('response', {}).get('status', {}).get('code') == '200':
+                    return result
+                else:
+                    logger.error(f"SMS reports API error: {result}")
+                    return None
             else:
+                logger.error(f"SMS reports HTTP error: {response.status_code}")
                 return None
                 
         except Exception as e:
             logger.error(f"Reports fetch failed: {str(e)}")
             return None 
+    
+    def send_otp_code(self, phone: str, code: str, purpose: str = "verification") -> bool:
+        """OTP kodu gönder (login, password reset, two_factor vb. için)"""
+        try:
+            formatted_phone = self.format_phone_number(phone)
+            
+            if not self.validate_phone_number(formatted_phone):
+                logger.error(f"Invalid phone number: {phone}")
+                return False
+            
+            # Purpose'a göre mesaj belirle
+            messages = {
+                # Admin paneli
+                "two_factor": f"Sanayicin admin paneli giriş kodunuz: {code}",
+                
+                # Kullanıcı kayıt ve doğrulama
+                "registration": f"Sanayicin:\nHesabını doğrulamak için kodun: {code}",
+                "verification": f"Sanayicin:\nHesabını doğrulamak için kodun: {code}",
+                
+                # Kullanıcı giriş ve şifre
+                "login": f"Sanayicin giriş kodunuz: {code}",
+                "password_reset": f"Sanayicin şifre sıfırlama kodunuz: {code}",
+                
+                # Bilgi güncelleme onayları
+                "phone_update": f"Telefon numarası değişikliğini onaylamak için kodun: {code}",
+                "email_update": f"E-posta adresi değişikliğini onaylamak için kodun: {code}",
+                "password_update": f"Şifre değişikliğini onaylamak için kodun: {code}",
+                "profile_update": f"Bilgilerinizi güncellemek için kodun: {code}",
+            }
+            
+            message = messages.get(purpose, f"Sanayicin kodunuz: {code}")
+            
+            payload = {
+                "request": {
+                    "authentication": {
+                        "key": self.api_key,
+                        "hash": self.hash
+                    },
+                    "order": {
+                        "sender": self.sender,
+                        "iys": "1",
+                        "iysList": "BIREYSEL",
+                        "message": {
+                            "text": message,
+                            "receipents": {
+                                "number": [formatted_phone]
+                            }
+                        }
+                    }
+                }
+            }
+            
+            logger.info(f"Sending OTP SMS to {formatted_phone} for purpose: {purpose}")
+            
+            response = requests.post(
+                f"{self.base_url}/send-sms/json",
+                json=payload,
+                timeout=30
+            )
+            
+            logger.info(f"SMS API response status: {response.status_code}")
+            logger.info(f"SMS API response content: {response.text}")
+            
+            if response.status_code == 200:
+                result = response.json()
+                status_code = result.get('response', {}).get('status', {}).get('code')
+                status_message = result.get('response', {}).get('status', {}).get('message', '')
+                
+                # Status code'u string'e çevir ve kontrol et (hem '200' hem 200 için çalışır)
+                status_code_str = str(status_code)
+                if status_code_str == '200':
+                    logger.info(f"OTP SMS sent successfully to {formatted_phone}")
+                    return True
+                else:
+                    logger.error(f"SMS API error - Code: {status_code}, Message: {status_message}, Full response: {result}")
+                    # Özel hata mesajları
+                    if status_code_str == '401' or '401' in status_code_str:
+                        logger.error("İletiMerkezi API: Üyelik bilgileri hatalı veya API kullanım izni verilmemiş. Lütfen panel.iletimerkezi.com'da 'API kullanımına izin ver' seçeneğini aktifleştirin.")
+                    elif status_code_str == '450' or '450' in status_code_str:
+                        logger.error(f"İletiMerkezi API: Gönderilen başlık ({self.sender}) kullanıma uygun değil. Lütfen İletiMerkezi panelinde bu başlığın onaylandığından ve doğru yazıldığından emin olun.")
+                    return False
+            else:
+                logger.error(f"SMS API HTTP error: {response.status_code}")
+                logger.error(f"SMS API response: {response.text}")
+                # Özel hata mesajları
+                if response.status_code == 401:
+                    logger.error("İletiMerkezi API: 401 Unauthorized - API key/hash hatalı veya API kullanım izni verilmemiş.")
+                elif response.status_code == 450:
+                    logger.error(f"İletiMerkezi API: 450 - Gönderilen başlık ({self.sender}) kullanıma uygun değil. Lütfen İletiMerkezi panelinde bu başlığın onaylandığından emin olun.")
+                return False
+                
+        except Exception as e:
+            logger.error(f"OTP SMS sending failed: {str(e)}")
+            return False 

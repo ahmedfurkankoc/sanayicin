@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import EsnafPanelLayout from "../../components/EsnafPanelLayout";
 import { useEsnaf } from "../../context/EsnafContext";
-import { api } from "@/app/utils/api";
+import { api, resolveMediaUrl } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import LocationPicker from "@/app/components/LocationPicker";
@@ -83,8 +83,28 @@ export default function EsnafProfilDuzenlePage() {
         sunday: { closed: true, open: "09:00", close: "18:00" }
       };
 
+      // Telefon numarasını formatla (varsa)
+      let formattedPhone = user.phone || '';
+      if (formattedPhone) {
+        // Sadece rakamları al
+        formattedPhone = formattedPhone.replace(/\D/g, '');
+        // +90 ile başlıyorsa kaldır
+        if (formattedPhone.startsWith('90')) {
+          formattedPhone = formattedPhone.substring(2);
+        }
+        // Başında 0 varsa kaldır
+        if (formattedPhone.startsWith('0')) {
+          formattedPhone = formattedPhone.substring(1);
+        }
+        // Maksimum 10 haneli
+        if (formattedPhone.length > 10) {
+          formattedPhone = formattedPhone.substring(0, 10);
+        }
+      }
+
       setProfile({
         ...user,
+        phone: formattedPhone,
         social_media: user.social_media || {},
         working_hours: user.working_hours && Object.keys(user.working_hours).length > 0 
           ? user.working_hours 
@@ -222,11 +242,16 @@ export default function EsnafProfilDuzenlePage() {
         const response = await api.uploadAvatar(formData, 'vendor');
         
         if (response.data.avatar_url) {
+          // Profile'ı güncelle - hem avatar hem user.avatar olarak
           setProfile((prev: any) => ({
             ...prev,
-            avatar: response.data.avatar_url
+            avatar: response.data.avatar_url,
+            user: {
+              ...prev.user,
+              avatar: response.data.avatar_url
+            }
           }));
-          toast.success('Avatar başarıyla yüklendi!');
+          toast.success('Avatar başarıyla yüklendi! Eski avatar silindi.');
           
           // Context'i güncelle
           await refreshUser();
@@ -235,6 +260,8 @@ export default function EsnafProfilDuzenlePage() {
         toast.error('Avatar yüklenirken hata oluştu!');
       }
     }
+    // Input'u temizle
+    e.target.value = '';
   };
 
   const handleGalleryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -526,21 +553,76 @@ export default function EsnafProfilDuzenlePage() {
                 
                 <div className="esnaf-form-group">
                   <label>Profil Fotoğrafı</label>
-                  <div className="esnaf-photo-upload">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                      className="esnaf-file-input"
-                    />
-                    {profile.avatar && (
-                      <img 
-                        src={profile.avatar} 
-                        alt="Profil" 
-                        className="esnaf-photo-preview"
-                        style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
-                      />
+                  <div className="esnaf-photo-upload" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {(profile.avatar || profile.user?.avatar) && (
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img 
+                          src={resolveMediaUrl(profile.avatar || profile.user?.avatar)} 
+                          alt="Mevcut Profil Fotoğrafı" 
+                          className="esnaf-photo-preview"
+                          style={{ 
+                            width: '150px', 
+                            height: '150px', 
+                            objectFit: 'cover', 
+                            borderRadius: '8px',
+                            border: '2px solid #ddd',
+                            display: 'block'
+                          }}
+                        />
+                        <div style={{
+                          marginTop: '8px',
+                          fontSize: '12px',
+                          color: '#666',
+                          textAlign: 'center'
+                        }}>
+                          Mevcut profil fotoğrafı
+                        </div>
+                      </div>
                     )}
+                    <div style={{
+                      border: '2px dashed #ddd',
+                      borderRadius: '8px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      backgroundColor: (profile.avatar || profile.user?.avatar) ? '#fafafa' : '#fff',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--primary)';
+                      e.currentTarget.style.backgroundColor = '#fffef5';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#ddd';
+                      e.currentTarget.style.backgroundColor = (profile.avatar || profile.user?.avatar) ? '#fafafa' : '#fff';
+                    }}
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="esnaf-file-input"
+                        id="avatar-upload"
+                        style={{ display: 'none' }}
+                      />
+                      <label
+                        htmlFor="avatar-upload"
+                        style={{
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <span style={{ color: '#666', fontSize: '14px' }}>
+                          {(profile.avatar || profile.user?.avatar) ? 'Profil fotoğrafını değiştir' : 'Profil fotoğrafı seç'}
+                        </span>
+                        <span style={{ color: '#999', fontSize: '12px' }}>
+                          Maksimum 5MB, JPG, PNG
+                        </span>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -568,13 +650,57 @@ export default function EsnafProfilDuzenlePage() {
 
                 <div className="esnaf-form-group">
                   <label>Telefon</label>
-                  <input
-                    type="tel"
-                    value={profile.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    placeholder="0555 123 45 67"
-                    className="esnaf-input"
-                  />
+                  <div style={{ 
+                    width: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    border: '1px solid #e2e8f0', 
+                    borderRadius: 8, 
+                    padding: '0 12px', 
+                    background: '#fff',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                  >
+                    <span style={{ color: '#64748b', fontWeight: 600, marginRight: 8, userSelect: 'none' }}>+90</span>
+                    <input
+                      type="tel"
+                      value={profile.phone || ''}
+                      onChange={(e) => {
+                        // Sadece rakamları al, başında 0 varsa kaldır
+                        let value = e.target.value.replace(/\D/g, '');
+                        // Başında 0 varsa kaldır
+                        if (value.startsWith('0')) {
+                          value = value.substring(1);
+                        }
+                        // Maksimum 10 haneli
+                        if (value.length > 10) {
+                          value = value.substring(0, 10);
+                        }
+                        handleInputChange("phone", value);
+                      }}
+                      placeholder="5552223333"
+                      className="esnaf-input"
+                      style={{ 
+                        flex: 1, 
+                        border: 'none', 
+                        outline: 'none', 
+                        padding: '12px 0', 
+                        background: 'transparent',
+                        fontSize: 'inherit'
+                      }}
+                      maxLength={10}
+                    />
+                  </div>
+                  <small style={{ 
+                    display: 'block', 
+                    marginTop: '4px', 
+                    color: '#64748b', 
+                    fontSize: '12px' 
+                  }}>
+                    Başında 0 olmadan, boşluksuz 10 haneli numara girin (örn: 5552223333)
+                  </small>
                 </div>
               </div>
 
@@ -1050,7 +1176,7 @@ export default function EsnafProfilDuzenlePage() {
                           }}
                         >
                           <img
-                            src={img.image_url || img.image}
+                            src={resolveMediaUrl(img.image_url || img.image)}
                             alt={img.description || 'Galeri görseli'}
                             style={{
                               width: '100%',

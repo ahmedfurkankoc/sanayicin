@@ -139,9 +139,7 @@ export default function ContentManagementPage() {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/admin'}/car-brands/${brandId}/upload_logo/`, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-        }
+        credentials: 'include', // HttpOnly cookie gönder
       })
       
       if (response.ok) {

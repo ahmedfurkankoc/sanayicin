@@ -237,7 +237,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
             <span>
               {selectedCarBrand 
                 ? carBrands.find(brand => brand.id.toString() === selectedCarBrand)?.name 
-                : "Araba markası"
+                : "Araç markası"
               }
             </span>
             <ChevronDown className="custom-select-arrow" size={16} />

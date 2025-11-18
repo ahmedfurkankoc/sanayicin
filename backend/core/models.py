@@ -46,9 +46,8 @@ class CustomUser(AbstractUser):
     # ClientProfile'dan taşınan alanlar
     about = models.TextField(blank=True)  # Hakkında bilgisi
     
-    # SMS doğrulama
-    sms_verification_code = models.CharField(max_length=6, null=True, blank=True)
-    sms_code_expires_at = models.DateTimeField(null=True, blank=True)
+    # SMS doğrulama kaldırıldı - Redis kullanılıyor (OTPService)
+    # sms_verification_code ve sms_code_expires_at kaldırıldı
     
     REQUIRED_FIELDS = ["email"]
 
@@ -221,82 +220,7 @@ class CustomUser(AbstractUser):
             print(f"Exception in send_verification_email: {e}")
             return False
     
-    def create_sms_verification(self) -> 'SMSVerification':
-        """SMS verification kodu oluştur"""
-        # Eski kodları temizle
-        SMSVerification.objects.filter(user=self).delete()
-        
-        # 6 haneli kod oluştur
-        import random
-        code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-        
-        # 5 dakika geçerli
-        expires_at = timezone.now() + timedelta(minutes=5)
-        
-        return SMSVerification.objects.create(
-            user=self,
-            code=code,
-            expires_at=expires_at
-        )
-    
-    def send_sms_verification(self) -> bool:
-        """SMS doğrulama kodu gönder"""
-        try:
-            from .utils.sms_service import IletiMerkeziSMS
-            
-            if not self.phone_number:
-                return False
-            
-            # Verification kodu oluştur
-            verification = self.create_sms_verification()
-            
-            # SMS gönder
-            sms_service = IletiMerkeziSMS()
-            sms_sent = sms_service.send_verification_code(
-                self.phone_number, 
-                verification.code
-            )
-            
-            if sms_sent:
-                # User model'ini güncelle
-                self.sms_verification_code = verification.code
-                self.sms_code_expires_at = verification.expires_at
-                self.save()
-            
-            return sms_sent
-            
-        except Exception as e:
-            print(f"SMS verification hatası: {e}")
-            return False
-    
-    def verify_sms_code(self, code: str) -> bool:
-        """SMS kodunu doğrula"""
-        try:
-            verification = SMSVerification.objects.filter(
-                user=self,
-                code=code,
-                is_used=False
-            ).first()
-            
-            if verification and verification.is_valid:
-                # Kodu kullanıldı olarak işaretle
-                verification.is_used = True
-                verification.save()
-                
-                # Kullanıcıyı doğrula
-                self.is_verified = True
-                self.verification_method = 'sms'
-                self.sms_verification_code = None
-                self.sms_code_expires_at = None
-                self.save()
-                
-                return True
-            
-            return False
-            
-        except Exception as e:
-            print(f"SMS doğrulama hatası: {e}")
-            return False
+    # Eski SMS verification metodları kaldırıldı - Redis OTPService kullanılıyor
 
 class EmailVerification(models.Model):
     """Email verification token'ları için model"""
@@ -322,27 +246,6 @@ class EmailVerification(models.Model):
         """Token geçerli mi?"""
         return not self.is_expired and not self.is_used
 
-class SMSVerification(models.Model):
-    """SMS verification token'ları için model"""
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sms_verifications')
-    code = models.CharField(max_length=6)  # 6 haneli kod
-    created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()  # 5 dakika geçerli
-    is_used = models.BooleanField(default=False)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.user.email} - {self.code}"
-    
-    @property
-    def is_expired(self) -> bool:
-        return timezone.now() > self.expires_at
-    
-    @property
-    def is_valid(self) -> bool:
-        return not self.is_expired and not self.is_used
 
 class ServiceArea(models.Model):
     name = models.CharField(max_length=100, unique=True)

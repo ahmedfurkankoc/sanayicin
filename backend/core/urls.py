@@ -11,6 +11,8 @@ from .views import (
     resend_verification_email,
     send_sms_verification,
     verify_sms_code,
+    send_password_reset_otp,
+    verify_password_reset_otp,
     check_verification_status,
     forgot_password,
     reset_password,
@@ -24,6 +26,7 @@ from .views import (
     remove_favorite,
     check_favorite,
     client_register,
+    verify_registration_otp,
     client_profile,
     client_set_password,
     refresh_access_token,
@@ -50,6 +53,9 @@ urlpatterns = [
     path('auth/send-sms-verification/', send_sms_verification, name='send_sms_verification'),
     path('auth/verify-sms-code/', verify_sms_code, name='verify_sms_code'),
     path('auth/check-verification-status/', check_verification_status, name='check_verification_status'),
+    # OTP endpoints (login OTP kaldırıldı - maliyet nedeniyle)
+    path('auth/send-password-reset-otp/', send_password_reset_otp, name='send_password_reset_otp'),
+    path('auth/verify-password-reset-otp/', verify_password_reset_otp, name='verify_password_reset_otp'),
     path('auth/forgot-password/', forgot_password, name='forgot_password'),
     path('auth/reset-password/', reset_password, name='reset_password'),
     path('auth/reset-password-confirm/<str:uidb64>/<str:token>/', reset_password, name='reset_password_confirm'),
@@ -77,6 +83,7 @@ urlpatterns = [
     
     # Client endpoints (ClientProfile yerine CustomUser kullanıyor)
     path('clients/register/', client_register, name='client-register'),
+    path('clients/verify-registration-otp/', verify_registration_otp, name='verify-registration-otp'),
     path('clients/profile/', client_profile, name='client-profile'),
     path('clients/set-password/', client_set_password, name='client-set-password'),
     

@@ -269,7 +269,7 @@ export default function VendorsPage() {
                   İletişim
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  İş Türü
+                  İş Türü & Konum
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Durum
@@ -286,7 +286,10 @@ export default function VendorsPage() {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[color:var(--yellow)] mr-3"></div>
                     Yükleniyor...
+                    </div>
                   </td>
                 </tr>
               ) : vendors.length === 0 ? (
@@ -297,27 +300,39 @@ export default function VendorsPage() {
                 </tr>
               ) : (
                 vendors.map((vendor) => (
-                  <tr key={vendor.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
                           <span className="text-sm font-medium text-gray-700">
-                            {vendor.display_name.split(' ').map(n => n[0]).join('')}
+                            {vendor.display_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                           </span>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{vendor.display_name}</div>
-                          <div className="text-sm text-gray-500">{vendor.company_title}</div>
+                        <div className="ml-4 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{vendor.display_name}</div>
+                          <div className="text-sm text-gray-500 truncate">{vendor.company_title}</div>
+                          {vendor.slug && (
+                            <div className="text-xs text-gray-400 font-mono truncate">{vendor.slug}</div>
+                          )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{vendor.user_email}</div>
-                      <div className="text-sm text-gray-500">{vendor.business_phone}</div>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 truncate">{vendor.user_email}</div>
+                      <div className="text-sm text-gray-500">{vendor.business_phone || '-'}</div>
+                      {vendor.user_name && (
+                        <div className="text-xs text-gray-400 mt-1">Yönetici: {vendor.user_name}</div>
+                      )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">{getBusinessTypeText(vendor.business_type)}</div>
-                      <div className="text-sm text-gray-500">{vendor.city}, {vendor.district}</div>
+                      <div className="text-sm text-gray-500">
+                        {vendor.city}{vendor.district ? `, ${vendor.district}` : ''}
+                        {vendor.subdistrict ? `, ${vendor.subdistrict}` : ''}
+                      </div>
+                      {vendor.tax_no && (
+                        <div className="text-xs text-gray-400 font-mono mt-1">Vergi No: {vendor.tax_no}</div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(vendor.user_is_verified)}`}>
@@ -325,21 +340,32 @@ export default function VendorsPage() {
                         <span className="ml-1">{getStatusText(vendor.user_is_verified)}</span>
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(vendor.created_at).toLocaleDateString('tr-TR')}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="text-gray-900">
+                        {new Date(vendor.created_at).toLocaleDateString('tr-TR', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(vendor.updated_at).toLocaleDateString('tr-TR') !== new Date(vendor.created_at).toLocaleDateString('tr-TR') && (
+                          <span>Güncellendi: {new Date(vendor.updated_at).toLocaleDateString('tr-TR')}</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <button 
-                          className="text-[color:var(--black)] hover:text-black"
-                          title="Görüntüle"
+                          className="text-[color:var(--black)] hover:text-black transition-colors"
+                          title="Detaylı Görüntüle"
                           onClick={() => router.push(`/vendors/${vendor.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button 
                           onClick={() => router.push(`/vendors/${vendor.id}/edit`)}
-                          className="text-gray-600 hover:text-gray-900"
+                          className="text-gray-600 hover:text-gray-900 transition-colors"
                           title="Düzenle"
                         >
                           <Edit className="h-4 w-4" />
@@ -348,7 +374,7 @@ export default function VendorsPage() {
                           <>
                             {!vendor.user_is_verified && (
                               <button 
-                                className="text-green-600 hover:text-green-900"
+                                className="text-green-600 hover:text-green-900 transition-colors"
                                 title="Doğrula"
                                 onClick={() => handleVerify(vendor.id)}
                               >
@@ -357,7 +383,7 @@ export default function VendorsPage() {
                             )}
                             {vendor.user_is_verified && (
                               <button 
-                                className="text-yellow-600 hover:text-yellow-900"
+                                className="text-yellow-600 hover:text-yellow-900 transition-colors"
                                 title="Doğrulamayı Kaldır"
                                 onClick={() => handleUnverify(vendor.id)}
                               >
@@ -365,7 +391,7 @@ export default function VendorsPage() {
                               </button>
                             )}
                             <button 
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 hover:text-red-900 transition-colors"
                               title="Sil"
                               onClick={() => handleDeleteClick(vendor)}
                             >

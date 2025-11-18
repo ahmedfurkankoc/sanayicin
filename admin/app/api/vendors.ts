@@ -114,4 +114,96 @@ export async function createVendor(data: {
   return resp.data
 }
 
+export interface VendorDetailedStats {
+  vendor: VendorProfile
+  statistics: {
+    total_requests: number
+    pending_requests: number
+    responded_requests: number
+    completed_requests: number
+    cancelled_requests: number
+    quotes: number
+    total_appointments: number
+    pending_appointments: number
+    confirmed_appointments: number
+    completed_appointments: number
+    cancelled_appointments: number
+    total_reviews: number
+    average_rating: number
+  }
+  service_requests: Array<{
+    id: number
+    title: string
+    description: string
+    request_type: string
+    status: string
+    status_code: string
+    client_name: string
+    client_email: string
+    client_phone: string
+    service: string | null
+    vehicle_info: string
+    last_offered_price: number | null
+    last_offered_days: number | null
+    cancellation_reason: string
+    created_at: string
+    updated_at: string
+  }>
+  appointments: Array<{
+    id: number
+    client_name: string
+    client_phone: string
+    client_email: string
+    service_description: string
+    appointment_date: string
+    appointment_time: string
+    status: string
+    status_code: string
+    notes: string
+    created_at: string
+    updated_at: string
+  }>
+  reviews: Array<{
+    id: number
+    user_name: string
+    user_email: string
+    service: string | null
+    rating: number
+    comment: string
+    service_date: string | null
+    is_read: boolean
+    created_at: string
+  }>
+  cancelled_requests: Array<{
+    id: number
+    title: string
+    description: string
+    request_type: string
+    client_name: string
+    client_email: string
+    cancellation_reason: string
+    created_at: string
+    cancelled_at: string
+  }>
+  quotes: Array<{
+    id: number
+    title: string
+    description: string
+    status: string
+    status_code: string
+    client_name: string
+    client_email: string
+    service: string | null
+    last_offered_price: number | null
+    last_offered_days: number | null
+    created_at: string
+    updated_at: string
+  }>
+}
+
+export async function getVendorDetailedStats(id: number): Promise<VendorDetailedStats> {
+  const resp = await apiClient.get<VendorDetailedStats>(`/vendors/${id}/detailed-stats/`)
+  return resp.data
+}
+
 

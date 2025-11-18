@@ -137,11 +137,13 @@ DATABASES = {
     }
 }
 
-# Cache Configuration - Development (LocalMemCache)
+# Cache Configuration - Development (Redis)
+# Local'de de Redis kullanmak daha tutarlı ve production'a yakın test sağlar
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_URL,
     }
 }
 
@@ -157,6 +159,21 @@ CHANNEL_LAYERS = {
 EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES = int(os.environ.get('EMAIL_VERIFICATION_CODE_EXPIRY_MINUTES', '15'))
 EMAIL_VERIFICATION_MAX_ATTEMPTS = int(os.environ.get('EMAIL_VERIFICATION_MAX_ATTEMPTS', '3'))
 EMAIL_VERIFICATION_MAX_VERIFY_ATTEMPTS = int(os.environ.get('EMAIL_VERIFICATION_MAX_VERIFY_ATTEMPTS', '5'))
+
+# SMS/OTP Settings - İletiMerkezi
+ILETIMERKEZI_API_NAME = os.environ.get('ILETIMERKEZI_API_NAME', 'sanayicin')
+ILETIMERKEZI_API_KEY = os.environ.get('ILETIMERKEZI_API_KEY')
+ILETIMERKEZI_API_HASH = os.environ.get('ILETIMERKEZI_API_HASH')
+ILETIMERKEZI_SENDER = os.environ.get('ILETIMERKEZI_SENDER', 'APITEST')
+
+# SMS Verification Settings
+SMS_VERIFICATION_CODE_EXPIRY_MINUTES = int(os.environ.get('SMS_VERIFICATION_CODE_EXPIRY_MINUTES', '5'))
+SMS_VERIFICATION_MAX_ATTEMPTS = int(os.environ.get('SMS_VERIFICATION_MAX_ATTEMPTS', '3'))
+SMS_VERIFICATION_MAX_VERIFY_ATTEMPTS = int(os.environ.get('SMS_VERIFICATION_MAX_VERIFY_ATTEMPTS', '5'))
+
+# OTP Settings
+OTP_CODE_EXPIRY_MINUTES = int(os.environ.get('OTP_CODE_EXPIRY_MINUTES', '5'))
+OTP_MAX_ATTEMPTS = int(os.environ.get('OTP_MAX_ATTEMPTS', '3'))
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -221,7 +238,11 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': f"{os.environ.get('RATE_LIMIT_ANON', '1000')}/hour",
         'user': f"{os.environ.get('RATE_LIMIT_USER', '10000')}/hour"
-    }
+    },
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 } 
 
 # Logging - Development (console)
