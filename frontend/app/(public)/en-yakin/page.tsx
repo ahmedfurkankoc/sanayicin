@@ -2,7 +2,6 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
 import Icon from "@/app/components/ui/Icon";
-import Banner from "../components/Banner";
 import Link from "next/link";
 import SearchBar from "../components/SearchBar";
 
@@ -10,21 +9,23 @@ const EnYakinPage = () => {
   return (
     <>
       <div className="en-yakin-page">
-        <Banner
-          title="Size En Yakın Ustaları Bulun"
-          description="Konumunuza en yakın, güvenilir ve kaliteli ustalara anında ulaşın. Hızlı, güvenli ve uygun fiyatlı hizmet alın."
-        />
-
-        {/* Hızlı Arama */}
-        <section className="location-section">
+        {/* Hero Section */}
+        <section className="hero-section">
           <div className="container">
-            <div className="location-content">
-              <h2 className="section-title">Hızlı Arama</h2>
-              <p className="section-subtitle">İl, ilçe, hizmet ve marka seçerek anında sonuçlara gidin</p>
-              <div className="location-options">
-                <div className="location-option">
-                  <SearchBar variant="stacked" />
-                </div>
+            <div className="hero-content">
+              <div className="hero-text">
+                <h1 className="hero-title">
+                  Size En Yakın Ustaları Bulun
+                </h1>
+                <p className="hero-description">
+                  Konumunuza en yakın, güvenilir ve kaliteli ustalara anında ulaşın. Hızlı, güvenli ve uygun fiyatlı hizmet alın.
+                </p>
+              </div>
+              <div className="hero-image">
+                <img src="/images/banner/en-yakin-usta.png" alt="En Yakın Usta" />
+              </div>
+              <div className="hero-search">
+                <SearchBar />
               </div>
             </div>
           </div>

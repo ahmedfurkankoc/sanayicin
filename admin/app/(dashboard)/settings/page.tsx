@@ -22,10 +22,13 @@ import {
   Trash2,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  Mail
 } from 'lucide-react'
+import { getSMSBalance, type SMSBalance } from '../../api/admin'
 
-type SettingsTab = 'server' | 'domain' | 'profile' | 'security'
+type SettingsTab = 'server' | 'domain' | 'profile' | 'security' | 'sms' | 'email'
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -61,10 +64,15 @@ export default function SettingsPage() {
     expired: 0
   })
 
+  // SMS states
+  const [smsBalance, setSmsBalance] = useState<number | null>(null)
+  const [smsLoading, setSmsLoading] = useState(false)
+  const [smsError, setSmsError] = useState<string | null>(null)
+
   // URL parametresinden tab'ı belirle
   useEffect(() => {
     const tab = searchParams.get('tab') as SettingsTab
-    if (tab && ['server', 'domain', 'profile', 'security'].includes(tab)) {
+    if (tab && ['server', 'domain', 'profile', 'security', 'sms', 'email'].includes(tab)) {
       setActiveTab(tab)
     }
   }, [searchParams])
@@ -74,7 +82,52 @@ export default function SettingsPage() {
     { id: 'domain' as SettingsTab, name: 'Domain Bilgileri', icon: Globe },
     { id: 'profile' as SettingsTab, name: 'Profil', icon: User },
     { id: 'security' as SettingsTab, name: 'Güvenlik', icon: Shield },
+    { id: 'sms' as SettingsTab, name: 'SMS', icon: MessageSquare },
+    { id: 'email' as SettingsTab, name: 'Email', icon: Mail },
   ]
+
+  // Load SMS balance
+  const loadSMSBalance = async () => {
+    setSmsLoading(true)
+    setSmsError(null)
+    
+    try {
+      const response = await getSMSBalance()
+      
+      // Backend artık her zaman number veya null döndürüyor
+      if (response.balance !== null && response.balance !== undefined) {
+        const balance = typeof response.balance === 'number' 
+          ? response.balance 
+          : parseFloat(String(response.balance))
+        
+        if (!isNaN(balance)) {
+          setSmsBalance(balance)
+          if (response.error) {
+            setSmsError(response.error)
+          }
+        } else {
+          setSmsError(response.error || 'Bakiye bilgisi alınamadı')
+          setSmsBalance(null)
+        }
+      } else {
+        setSmsError(response.error || 'Bakiye bilgisi alınamadı')
+        setSmsBalance(null)
+      }
+    } catch (error: unknown) {
+      const errorMessage = (error as any)?.response?.data?.error || 'SMS bakiyesi yüklenemedi'
+      setSmsError(errorMessage)
+      setSmsBalance(null)
+    } finally {
+      setSmsLoading(false)
+    }
+  }
+
+  // Load SMS balance when SMS tab is active
+  useEffect(() => {
+    if (activeTab === 'sms') {
+      loadSMSBalance()
+    }
+  }, [activeTab])
 
   const handleProfileSave = async () => {
     if (!user) return
@@ -776,6 +829,102 @@ export default function SettingsPage() {
                   <h2 className="text-2xl font-semibold text-gray-900 mb-4">Güvenlik Ayarları</h2>
                   <p className="text-lg text-gray-600 mb-2">İçerik güncellenecek</p>
                   <p className="text-gray-500">Yakında...</p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'sms' && (
+              <div className="space-y-6">
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">SMS Ayarları</h2>
+                      <p className="text-gray-600">İletiMerkezi kalan SMS bakiyesini görüntüleyin</p>
+                    </div>
+                    <button
+                      onClick={loadSMSBalance}
+                      disabled={smsLoading}
+                      className="mt-2 sm:mt-0 flex items-center gap-2 px-4 py-2 text-black rounded-lg transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: 'var(--yellow)' }}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${smsLoading ? 'animate-spin' : ''}`} />
+                      Yenile
+                    </button>
+                  </div>
+
+                  {/* SMS Balance Card */}
+                  <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">Kalan SMS</h3>
+                        {smsLoading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                            <span className="text-gray-600">Yükleniyor...</span>
+                          </div>
+                        ) : smsError ? (
+                          <div className="flex items-center gap-2 text-red-600">
+                            <AlertCircle className="h-5 w-5" />
+                            <span>{smsError}</span>
+                          </div>
+                        ) : smsBalance !== null && typeof smsBalance === 'number' ? (
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-gray-900">{smsBalance.toLocaleString('tr-TR')}</span>
+                            <span className="text-lg text-gray-600">SMS</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-600">Bakiye bilgisi alınamadı</span>
+                        )}
+                      </div>
+                      <div className="p-4 bg-blue-50 rounded-full">
+                        <MessageSquare className="h-8 w-8 text-blue-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SMS Info */}
+                  <div className="bg-gray-50 rounded-lg p-6 mt-6">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">SMS Servisi Bilgileri</h3>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p>• SMS gönderimi İletiMerkezi API üzerinden yapılmaktadır</p>
+                      <p>• Kalan SMS bakiyesi gerçek zamanlı olarak güncellenmektedir</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'email' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Email Ayarları</h2>
+                  <p className="text-gray-600 mb-6">Email servisi yapılandırması ve ayarları</p>
+
+                  {/* Email Info */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Email Servisi Bilgileri</h3>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p>• Email gönderimi Django SMTP servisi üzerinden yapılmaktadır</p>
+                      <p>• Doğrulama email'leri ve bildirimler otomatik olarak gönderilir</p>
+                      <p>• Email servisi ayarları backend yapılandırmasından yönetilir</p>
+                    </div>
+                  </div>
+
+                  {/* Email Status */}
+                  <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500 mt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">Email Servisi Durumu</h3>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <span className="text-lg font-semibold text-gray-900">Aktif</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-green-50 rounded-full">
+                        <Mail className="h-8 w-8 text-green-600" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

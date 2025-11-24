@@ -143,7 +143,7 @@ class PublicBlogPostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = BlogPost
         fields = (
-            'id', 'title', 'slug', 'excerpt', 'cover_image', 'cover_image_alt', 'category_name', 'category_slug', 'author_name', 'published_at'
+            'id', 'title', 'slug', 'excerpt', 'cover_image', 'cover_image_alt', 'category_name', 'category_slug', 'author_name', 'published_at', 'is_featured'
         )
     
     def get_author_name(self, obj):

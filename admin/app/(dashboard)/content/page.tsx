@@ -24,7 +24,10 @@ import Image from 'next/image'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 import { 
   Upload,
-  X
+  X,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from 'lucide-react'
 
 export default function ContentManagementPage() {
@@ -71,6 +74,14 @@ export default function ContentManagementPage() {
   const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'created_desc' | 'created_asc'>('name_asc')
   const [serviceAreaFilter, setServiceAreaFilter] = useState<number | ''>('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  
+  // Sorting state for each table
+  const [saSortField, setSaSortField] = useState<'name' | 'description' | null>(null)
+  const [saSortDirection, setSaSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [catSortField, setCatSortField] = useState<'name' | 'service_area' | 'description' | null>(null)
+  const [catSortDirection, setCatSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [brandSortField, setBrandSortField] = useState<'name' | 'is_active' | 'description' | null>(null)
+  const [brandSortDirection, setBrandSortDirection] = useState<'asc' | 'desc'>('asc')
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteModalType, setDeleteModalType] = useState<'service_area' | 'category' | 'brand'>('service_area')
   const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string } | null>(null)
@@ -80,6 +91,44 @@ export default function ContentManagementPage() {
     for (const s of serviceAreas) m.set(s.id, s)
     return m
   }, [serviceAreas])
+
+  // Sort handler functions
+  const handleSaSort = (field: 'name' | 'description') => {
+    if (saSortField === field) {
+      setSaSortDirection(saSortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSaSortField(field)
+      setSaSortDirection('asc')
+    }
+  }
+
+  const handleCatSort = (field: 'name' | 'service_area' | 'description') => {
+    if (catSortField === field) {
+      setCatSortDirection(catSortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setCatSortField(field)
+      setCatSortDirection('asc')
+    }
+  }
+
+  const handleBrandSort = (field: 'name' | 'is_active' | 'description') => {
+    if (brandSortField === field) {
+      setBrandSortDirection(brandSortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setBrandSortField(field)
+      setBrandSortDirection('asc')
+    }
+  }
+
+  // Sort icon helper
+  const getSortIcon = (currentField: string | null, sortField: string | null, sortDirection: 'asc' | 'desc') => {
+    if (currentField !== sortField) {
+      return <ArrowUpDown className="h-4 w-4 inline-block ml-1 text-gray-400" />
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-4 w-4 inline-block ml-1 text-gray-600" />
+      : <ArrowDown className="h-4 w-4 inline-block ml-1 text-gray-600" />
+  }
 
   const handleDelete = (type: 'service_area' | 'category' | 'brand', id: number, name: string) => {
     setItemToDelete({ id, name })
@@ -116,18 +165,88 @@ export default function ContentManagementPage() {
     setItemToDelete(null)
   }
 
-  // Visible slices for pagination after global sorting/filtering
+  // Sortable data for each table
+  const sortedServiceAreas = useMemo(() => {
+    if (!saSortField) return serviceAreas
+    const sorted = [...serviceAreas].sort((a, b) => {
+      let aVal: string | number = ''
+      let bVal: string | number = ''
+      
+      if (saSortField === 'name') {
+        aVal = a.name.toLowerCase()
+        bVal = b.name.toLowerCase()
+      } else if (saSortField === 'description') {
+        aVal = (a.description || '').toLowerCase()
+        bVal = (b.description || '').toLowerCase()
+      }
+      
+      if (aVal < bVal) return saSortDirection === 'asc' ? -1 : 1
+      if (aVal > bVal) return saSortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+    return sorted
+  }, [serviceAreas, saSortField, saSortDirection])
+
+  const sortedCategories = useMemo(() => {
+    if (!catSortField) return categories
+    const sorted = [...categories].sort((a, b) => {
+      let aVal: string | number = ''
+      let bVal: string | number = ''
+      
+      if (catSortField === 'name') {
+        aVal = a.name.toLowerCase()
+        bVal = b.name.toLowerCase()
+      } else if (catSortField === 'service_area') {
+        aVal = serviceAreaMap.get(a.service_area)?.name || ''
+        bVal = serviceAreaMap.get(b.service_area)?.name || ''
+      } else if (catSortField === 'description') {
+        aVal = (a.description || '').toLowerCase()
+        bVal = (b.description || '').toLowerCase()
+      }
+      
+      if (aVal < bVal) return catSortDirection === 'asc' ? -1 : 1
+      if (aVal > bVal) return catSortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+    return sorted
+  }, [categories, catSortField, catSortDirection, serviceAreaMap])
+
+  const sortedBrands = useMemo(() => {
+    if (!brandSortField) return carBrands
+    const sorted = [...carBrands].sort((a, b) => {
+      let aVal: string | number | boolean = ''
+      let bVal: string | number | boolean = ''
+      
+      if (brandSortField === 'name') {
+        aVal = a.name.toLowerCase()
+        bVal = b.name.toLowerCase()
+      } else if (brandSortField === 'is_active') {
+        aVal = a.is_active ? 1 : 0
+        bVal = b.is_active ? 1 : 0
+      } else if (brandSortField === 'description') {
+        aVal = (a.description || '').toLowerCase()
+        bVal = (b.description || '').toLowerCase()
+      }
+      
+      if (aVal < bVal) return brandSortDirection === 'asc' ? -1 : 1
+      if (aVal > bVal) return brandSortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+    return sorted
+  }, [carBrands, brandSortField, brandSortDirection])
+
+  // Visible slices for pagination after sorting
   const visibleCategories = useMemo(() => {
     const start = (catPage - 1) * catPageSize
     const end = start + catPageSize
-    return categories.slice(start, end)
-  }, [categories, catPage, catPageSize])
+    return sortedCategories.slice(start, end)
+  }, [sortedCategories, catPage, catPageSize])
 
   const visibleBrands = useMemo(() => {
     const start = (brandPage - 1) * brandPageSize
     const end = start + brandPageSize
-    return carBrands.slice(start, end)
-  }, [carBrands, brandPage, brandPageSize])
+    return sortedBrands.slice(start, end)
+  }, [sortedBrands, brandPage, brandPageSize])
 
   const handleLogoUpload = async (brandId: number, file: File) => {
     try {
@@ -319,13 +438,29 @@ export default function ContentManagementPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
+                <th 
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleSaSort('name')}
+                >
+                  <div className="flex items-center">
+                    Ad
+                    {getSortIcon('name', saSortField, saSortDirection)}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleSaSort('description')}
+                >
+                  <div className="flex items-center">
+                    Açıklama
+                    {getSortIcon('description', saSortField, saSortDirection)}
+                  </div>
+                </th>
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {serviceAreas.map((sa) => (
+              {sortedServiceAreas.map((sa) => (
                 <tr key={sa.id}>
                   <td className="px-4 py-2 text-sm text-gray-900">
                     {editingServiceArea?.id === sa.id ? (
@@ -388,7 +523,7 @@ export default function ContentManagementPage() {
                   </td>
                 </tr>
               ))}
-              {serviceAreas.length === 0 && (
+              {sortedServiceAreas.length === 0 && (
                 <tr>
                   <td colSpan={3} className="px-4 py-6 text-center text-sm text-gray-500">Kayıt yok</td>
                 </tr>
@@ -496,9 +631,33 @@ export default function ContentManagementPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hizmet Alanı</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
+                <th 
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleCatSort('name')}
+                >
+                  <div className="flex items-center">
+                    Ad
+                    {getSortIcon('name', catSortField, catSortDirection)}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleCatSort('service_area')}
+                >
+                  <div className="flex items-center">
+                    Hizmet Alanı
+                    {getSortIcon('service_area', catSortField, catSortDirection)}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleCatSort('description')}
+                >
+                  <div className="flex items-center">
+                    Açıklama
+                    {getSortIcon('description', catSortField, catSortDirection)}
+                  </div>
+                </th>
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
@@ -577,7 +736,7 @@ export default function ContentManagementPage() {
                   </td>
                 </tr>
               ))}
-              {categories.length === 0 && (
+              {sortedCategories.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-6 text-center text-sm text-gray-500">Kayıt yok</td>
                 </tr>
@@ -741,9 +900,33 @@ export default function ContentManagementPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logo</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
+                <th 
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleBrandSort('name')}
+                >
+                  <div className="flex items-center">
+                    Ad
+                    {getSortIcon('name', brandSortField, brandSortDirection)}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleBrandSort('is_active')}
+                >
+                  <div className="flex items-center">
+                    Durum
+                    {getSortIcon('is_active', brandSortField, brandSortDirection)}
+                  </div>
+                </th>
+                <th 
+                  className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                  onClick={() => handleBrandSort('description')}
+                >
+                  <div className="flex items-center">
+                    Açıklama
+                    {getSortIcon('description', brandSortField, brandSortDirection)}
+                  </div>
+                </th>
                 <th className="px-4 py-2"></th>
               </tr>
             </thead>
@@ -881,7 +1064,7 @@ export default function ContentManagementPage() {
                   </td>
                 </tr>
               ))}
-              {carBrands.length === 0 && (
+              {sortedBrands.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-center text-sm text-gray-500">Kayıt yok</td>
                 </tr>

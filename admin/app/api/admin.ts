@@ -650,3 +650,17 @@ export async function getHostingerSubscriptionDetail(subscriptionId: string): Pr
   const resp = await apiClient.get<{ subscription: HostingerSubscription; timestamp: string }>(`/subscriptions/${subscriptionId}/`)
   return resp.data
 }
+
+// ========== SMS Balance ==========
+
+export interface SMSBalance {
+  balance: number | null
+  unit: string
+  timestamp: string
+  error?: string
+}
+
+export async function getSMSBalance(): Promise<SMSBalance> {
+  const resp = await apiClient.get<SMSBalance>('/sms-balance/')
+  return resp.data
+}
