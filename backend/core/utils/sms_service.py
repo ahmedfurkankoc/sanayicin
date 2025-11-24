@@ -205,8 +205,37 @@ class IletiMerkeziSMS:
             
             if response.status_code == 200:
                 result = response.json()
-                return result.get('response', {}).get('balance', 0)
+                
+                # İletiMerkezi API yanıt formatı:
+                # {"response": {"status": {"code": 200, "message": "..."}, "balance": {"amount": 0, "sms": 487}}}
+                
+                try:
+                    response_obj = result.get('response', {})
+                    
+                    # Status kontrolü
+                    status = response_obj.get('status', {})
+                    if isinstance(status, dict):
+                        status_code = status.get('code')
+                        if status_code != 200:
+                            error_msg = status.get('message', 'Unknown error')
+                            logger.error(f"API returned error status: {status_code}, message: {error_msg}")
+                            return None
+                    
+                    # Balance objesinden 'sms' değerini al
+                    balance = response_obj.get('balance', {})
+                    if isinstance(balance, dict):
+                        sms_balance = balance.get('sms')
+                        if sms_balance is not None:
+                            return int(sms_balance)
+                    
+                    logger.warning(f"Could not extract SMS balance from response: {result}")
+                    return 0
+                    
+                except (KeyError, TypeError, ValueError) as e:
+                    logger.error(f"Error parsing balance response: {e}, response: {result}")
+                    return None
             else:
+                logger.error(f"Balance API returned status {response.status_code}: {response.text}")
                 return None
                 
         except Exception as e:

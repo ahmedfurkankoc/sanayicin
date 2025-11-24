@@ -13,13 +13,18 @@ const UstaAriyorumPage = () => {
       <section className="hero-section">
         <div className="container">
           <div className="hero-content">
-            <h1 className="hero-title">
-              Size En Yakın Ustayı Hemen Bulun
-            </h1>
-            <p className="hero-description">
-              Türkiye'nin her yerinden güvenilir ve kaliteli oto sanayi ustalarına kolayca ulaşın. 
-              Aracınızın her türlü bakım ve onarım ihtiyacı için profesyonel çözümler.
-            </p>
+            <div className="hero-text">
+              <h1 className="hero-title">
+                Size En Yakın Ustayı Hemen Bulun
+              </h1>
+              <p className="hero-description">
+                Türkiye'nin her yerinden güvenilir ve kaliteli oto sanayi ustalarına kolayca ulaşın. 
+                Aracınızın her türlü bakım ve onarım ihtiyacı için profesyonel çözümler.
+              </p>
+            </div>
+            <div className="hero-image">
+              <img src="/images/banner/en-yakin-usta.png" alt="En Yakın Usta" />
+            </div>
             <div className="hero-search">
               <SearchBar />
             </div>

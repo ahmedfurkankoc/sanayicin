@@ -46,6 +46,9 @@ urlpatterns = [
     path('subscriptions/', HostingerSubscriptionsView.as_view(), name='hostinger-subscriptions'),
     path('subscriptions/<str:subscription_id>/', HostingerSubscriptionDetailView.as_view(), name='hostinger-subscription-detail'),
     
+    # SMS Balance
+    path('sms-balance/', SMSBalanceView.as_view(), name='sms-balance'),
+    
     # API endpoints
     path('', include(router.urls)),
 ]

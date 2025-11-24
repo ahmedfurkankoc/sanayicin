@@ -14,6 +14,7 @@ interface PublicBlogPost {
   category_name?: string
   category_slug?: string
   published_at?: string
+  is_featured?: boolean
 }
 
 interface BlogCategory {
@@ -141,44 +142,55 @@ export default function PublicBlogListPage() {
     }
   }, [items])
 
+  // Featured posts: is_featured=true olanlar, en fazla 2 tane, published_at'e göre sıralı
+  const featuredPosts = items
+    .filter(post => post.is_featured === true)
+    .sort((a, b) => {
+      const dateA = a.published_at ? new Date(a.published_at).getTime() : 0
+      const dateB = b.published_at ? new Date(b.published_at).getTime() : 0
+      return dateB - dateA // En yeni önce
+    })
+    .slice(0, 2)
+
   return (
     <>
-    <Banner title="Blog" description="Sanayicin'den ipuçları, rehberler ve haberler" backgroundColor="var(--gray)" />
+    <Banner 
+      title="Blog" 
+      description="Sanayicin'den ipuçları, rehberler ve haberler" 
+      backgroundColor="var(--black)"
+      textColor="var(--white)"
+      backgroundImageUrl="/images/banner/hakkimizda.jpg"
+    />
     <section className="blog-page" itemScope itemType="https://schema.org/CollectionPage">
       <div className="container">
-        {/* Kategori Tab'ları */}
-        <div className="blog-category-tabs">
-          <button
-            className={`blog-category-tab ${!selectedCategory ? 'active' : ''}`}
-            onClick={() => {
-              setSelectedCategory(null)
-              setPage(1)
-            }}
-          >
-            Tümü
-          </button>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              className={`blog-category-tab ${selectedCategory === category.slug ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedCategory(category.slug)
-                setPage(1)
-              }}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-
         {error && <div className="alert-error">{error}</div>}
 
         {loading ? (
-          <div className="blog-grid">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="blog-card blog-card--skeleton" />
-            ))}
-          </div>
+          <>
+            {!selectedCategory && (
+              <>
+                <div className="blog-section-header">
+                  <h2 className="blog-section-title">Son Yazılar</h2>
+                </div>
+                <div className="blog-featured-grid">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="blog-featured-card blog-card--skeleton" />
+                  ))}
+                </div>
+              </>
+            )}
+            <div className="blog-section-header">
+              <h2 className="blog-section-title">Tüm Yazılar</h2>
+            </div>
+            <div className="blog-category-tabs">
+              <button className="blog-category-tab active">Tümü</button>
+            </div>
+            <div className="blog-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="blog-card blog-card--skeleton" />
+              ))}
+            </div>
+          </>
         ) : items.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px 16px', color: '#666' }}>
             <p style={{ fontSize: '16px', marginBottom: '8px' }}>
@@ -186,42 +198,120 @@ export default function PublicBlogListPage() {
             </p>
           </div>
         ) : (
-          <div className="blog-grid">
-            {items.map((post) => (
-              <article key={post.id} itemScope itemType="https://schema.org/BlogPosting" className="blog-card">
-                <Link 
-                  href={`/blog/${post.category_slug || 'rehber'}/${post.slug}`} 
-                  style={{ textDecoration: 'none', display: 'block', height: '100%' }}
+          <>
+            {/* Featured Articles */}
+            {featuredPosts.length > 0 && !selectedCategory && (
+              <div className="blog-featured-section">
+                <div className="blog-section-header">
+                  <h2 className="blog-section-title">Son Yazılar</h2>
+                </div>
+                <div className="blog-featured-grid">
+                  {featuredPosts.map((post) => (
+                    <article key={post.id} itemScope itemType="https://schema.org/BlogPosting" className="blog-featured-card">
+                      <Link 
+                        href={`/blog/${post.category_slug || 'rehber'}/${post.slug}`} 
+                        style={{ textDecoration: 'none', display: 'block', height: '100%' }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {post.cover_image ? (
+                          <img
+                            src={resolveMediaUrl(post.cover_image)}
+                            alt={post.title}
+                            className="blog-featured-img"
+                            itemProp="image"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="blog-featured-img" style={{ background: 'linear-gradient(135deg, var(--black) 0%, #2a2a2a 100%)' }} />
+                        )}
+                        <div className="blog-featured-body">
+                          {post.category_name && (
+                            <span className="blog-featured-badge">{post.category_name}</span>
+                          )}
+                          <h2 className="blog-featured-title" itemProp="headline">
+                            {post.title}
+                          </h2>
+                          {post.excerpt && (
+                            <p className="blog-featured-excerpt" itemProp="description">
+                              {post.excerpt}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* All Articles Section */}
+            <div className="blog-section-header">
+              <h2 className="blog-section-title">Tüm Yazılar</h2>
+            </div>
+
+            {/* Kategori Tab'ları */}
+            <div className="blog-category-tabs">
+              <button
+                className={`blog-category-tab ${!selectedCategory ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedCategory(null)
+                  setPage(1)
+                }}
+              >
+                Tümü
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  className={`blog-category-tab ${selectedCategory === category.slug ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedCategory(category.slug)
+                    setPage(1)
+                  }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {post.cover_image ? (
-                    <img
-                      src={resolveMediaUrl(post.cover_image)}
-                      alt={post.title}
-                      className="blog-card-img"
-                      itemProp="image"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="blog-card-img" style={{ background: 'linear-gradient(135deg, var(--black) 0%, #2a2a2a 100%)' }} />
-                  )}
-                  <div className="blog-card-body">
-                    <h2 className="blog-card-title" itemProp="headline">
-                      {post.title}
-                    </h2>
-                    {post.excerpt && (
-                      <p className="blog-card-excerpt" itemProp="description">
-                        {post.excerpt}
-                      </p>
+                  {category.name}
+                </button>
+              ))}
+            </div>
+
+            {/* All Posts Grid */}
+            <div className="blog-grid">
+              {items.map((post) => (
+                <article key={post.id} itemScope itemType="https://schema.org/BlogPosting" className="blog-card">
+                  <Link 
+                    href={`/blog/${post.category_slug || 'rehber'}/${post.slug}`} 
+                    style={{ textDecoration: 'none', display: 'block', height: '100%' }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {post.cover_image ? (
+                      <img
+                        src={resolveMediaUrl(post.cover_image)}
+                        alt={post.title}
+                        className="blog-card-img"
+                        itemProp="image"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="blog-card-img" style={{ background: 'linear-gradient(135deg, var(--black) 0%, #2a2a2a 100%)' }} />
                     )}
-                    <div className="blog-card-cta">
-                      Devamını oku <span className="blog-card-cta-icon">→</span>
+                    <div className="blog-card-body">
+                      <h2 className="blog-card-title" itemProp="headline">
+                        {post.title}
+                      </h2>
+                      {post.excerpt && (
+                        <p className="blog-card-excerpt" itemProp="description">
+                          {post.excerpt}
+                        </p>
+                      )}
+                      <div className="blog-card-cta">
+                        Devamını oku <span className="blog-card-cta-icon">→</span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </article>
-            ))}
-          </div>
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </>
         )}
 
         <div className="blog-pagination">

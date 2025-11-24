@@ -52,6 +52,7 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = ["email"]
 
     class Meta:
+        db_table = 'CustomUser'
         ordering = ['-date_joined']  # En yeni kullanıcılar önce
         indexes = [
             models.Index(fields=['role']),
@@ -231,6 +232,7 @@ class EmailVerification(models.Model):
     is_used = models.BooleanField(default=False)  # Kullanıldı mı?
     
     class Meta:
+        db_table = 'EmailVerification'
         ordering = ['-created_at']
     
     def __str__(self):
@@ -255,6 +257,7 @@ class ServiceArea(models.Model):
         return self.name
 
     class Meta:
+        db_table = 'ServiceArea'
         indexes = [
             models.Index(fields=['name']),
         ]
@@ -268,6 +271,7 @@ class Category(models.Model):
         return f"{self.name} ({self.service_area.name})"
 
     class Meta:
+        db_table = 'Category'
         indexes = [
             models.Index(fields=['name']),
             models.Index(fields=['service_area']),
@@ -283,6 +287,7 @@ class CarBrand(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'CarBrand'
         ordering = ['name']
         indexes = [
             models.Index(fields=['is_active']),
@@ -352,6 +357,7 @@ class VendorUpgradeRequest(models.Model):
     unavailable_dates = models.JSONField(default=list, blank=True)
     
     class Meta:
+        db_table = 'VendorUpgradeRequest'
         verbose_name = "Esnaf Yükseltme Talebi"
         verbose_name_plural = "Esnaf Yükseltme Talepleri"
         ordering = ['-requested_at']
@@ -439,6 +445,7 @@ class Favorite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
+        db_table = 'Favorite'
         unique_together = ('user', 'vendor')  # Aynı esnaf bir kullanıcı tarafından sadece bir kez favoriye eklenebilir
         ordering = ['-created_at']
         verbose_name = "Favori"
@@ -490,6 +497,7 @@ class Vehicle(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'Vehicle'
         ordering = ['-updated_at']
         indexes = [
             models.Index(fields=['user', 'brand']),
@@ -552,6 +560,7 @@ class SupportTicket(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'SupportTicket'
         ordering = ['-created_at']
         verbose_name = 'Destek Talebi'
         verbose_name_plural = 'Destek Talepleri'
@@ -580,6 +589,7 @@ class SupportMessage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'SupportMessage'
         ordering = ['created_at']
         verbose_name = 'Destek Mesajı'
         verbose_name_plural = 'Destek Mesajları'

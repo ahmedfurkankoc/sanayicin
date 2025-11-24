@@ -637,15 +637,15 @@ class AdminAuthLogsView(APIView):
 
 # ViewSets
 class UserViewSet(viewsets.ModelViewSet):
-    """Kullanıcı yönetimi"""
-    queryset = CustomUser.objects.exclude(role='vendor')  # Vendor'ları hariç tut, sadece client'ları getir
+    """Kullanıcı yönetimi - Sadece client kullanıcıları"""
+    queryset = CustomUser.objects.filter(role='client')  # Sadece client kullanıcıları
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
     
     @admin_permission_required('users', 'read')
     def list(self, request, *args, **kwargs):
-        # Vendor'lar zaten queryset'te exclude edilmiş
+        # get_queryset() zaten sadece client'ları getiriyor
         queryset = self.get_queryset()
         
         # Search functionality
@@ -673,35 +673,40 @@ class UserViewSet(viewsets.ModelViewSet):
     @admin_permission_required('users', 'read')
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Vendor kontrolü
-        if instance.role == 'vendor':
-            return Response({'error': 'Vendor kullanıcıları bu endpoint üzerinden erişilemez'}, status=status.HTTP_404_NOT_FOUND)
+        # Sadece client kullanıcıları erişilebilir
+        if instance.role != 'client':
+            return Response({'error': 'Sadece client kullanıcıları bu endpoint üzerinden erişilebilir'}, status=status.HTTP_404_NOT_FOUND)
         return super().retrieve(request, *args, **kwargs)
     
     @admin_permission_required('users', 'write')
     def create(self, request, *args, **kwargs):
-        # Vendor oluşturmayı engelle
+        # Sadece client kullanıcıları oluşturulabilir
         if request.data.get('role') == 'vendor':
             return Response({'error': 'Vendor kullanıcıları bu endpoint üzerinden oluşturulamaz'}, status=status.HTTP_400_BAD_REQUEST)
+        # Role'ü client olarak sabitle
+        request.data['role'] = 'client'
         return super().create(request, *args, **kwargs)
     
     @admin_permission_required('users', 'write')
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Vendor kontrolü
-        if instance.role == 'vendor':
-            return Response({'error': 'Vendor kullanıcıları bu endpoint üzerinden güncellenemez'}, status=status.HTTP_404_NOT_FOUND)
+        # Sadece client kullanıcıları güncellenebilir
+        if instance.role != 'client':
+            return Response({'error': 'Sadece client kullanıcıları bu endpoint üzerinden güncellenebilir'}, status=status.HTTP_404_NOT_FOUND)
         # Vendor role'üne değiştirmeyi engelle
         if request.data.get('role') == 'vendor':
             return Response({'error': 'Kullanıcı vendor role\'üne değiştirilemez'}, status=status.HTTP_400_BAD_REQUEST)
+        # Role'ü client olarak sabitle
+        if 'role' in request.data and request.data.get('role') != 'client':
+            request.data['role'] = 'client'
         return super().update(request, *args, **kwargs)
     
     @admin_permission_required('users', 'delete')
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Vendor kontrolü
-        if instance.role == 'vendor':
-            return Response({'error': 'Vendor kullanıcıları bu endpoint üzerinden silinemez'}, status=status.HTTP_404_NOT_FOUND)
+        # Sadece client kullanıcıları silinebilir
+        if instance.role != 'client':
+            return Response({'error': 'Sadece client kullanıcıları bu endpoint üzerinden silinebilir'}, status=status.HTTP_404_NOT_FOUND)
         return super().destroy(request, *args, **kwargs)
 
 class VendorProfileViewSet(viewsets.ModelViewSet):
@@ -2057,6 +2062,46 @@ class AdminRoleManagementView(APIView):
         return Response({'message': 'Rol tanımları güncellendi'}, status=status.HTTP_200_OK)
 
 # ========== Server Monitoring Views ==========
+class SMSBalanceView(APIView):
+    """SMS kontör bakiyesi API'si"""
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [AdminTokenAuthentication]
+
+    @admin_permission_required('settings', 'read')
+    def get(self, request):
+        """İletiMerkezi SMS kontör bakiyesini getir"""
+        try:
+            sms_service = IletiMerkeziSMS()
+            balance = sms_service.check_balance()
+            
+            if balance is None:
+                return Response({
+                    'error': 'SMS bakiyesi alınamadı',
+                    'balance': None
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # check_balance() artık her zaman int veya None döndürüyor
+            # Ama yine de güvenlik için kontrol edelim
+            if isinstance(balance, (int, float)):
+                balance_value = int(balance)
+            else:
+                logger.warning(f"Unexpected balance type: {type(balance)}, value: {balance}")
+                balance_value = 0
+            
+            return Response({
+                'balance': balance_value,
+                'unit': 'kontör',
+                'timestamp': timezone.now().isoformat()
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"SMS balance check error: {e}")
+            return Response({
+                'error': 'SMS bakiyesi kontrol edilemedi',
+                'details': str(e),
+                'balance': None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ServerMonitoringView(APIView):
     """Sunucu monitoring API'si"""
     permission_classes = []  # Geçici olarak devre dışı

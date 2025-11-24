@@ -31,6 +31,7 @@ class AdminUser(models.Model):
     date_joined = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'AdminUser'
         verbose_name = 'Admin Kullanıcı'
         verbose_name_plural = 'Admin Kullanıcılar'
         indexes = [
@@ -92,6 +93,7 @@ class AdminPermission(models.Model):
     can_delete = models.BooleanField(default=False, db_index=True)
     
     class Meta:
+        db_table = 'AdminPermission'
         verbose_name = "Admin İzni"
         verbose_name_plural = "Admin İzinleri"
         unique_together = ['role', 'permission']
@@ -141,6 +143,7 @@ class BlogCategory(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Güncellenme Tarihi")
 
     class Meta:
+        db_table = 'BlogCategory'
         verbose_name = "Blog Kategorisi"
         verbose_name_plural = "Blog Kategorileri"
         ordering = ['name']
@@ -215,6 +218,7 @@ class BlogPost(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Güncellenme Tarihi")
 
     class Meta:
+        db_table = 'BlogPost'
         verbose_name = "Blog Yazısı"
         verbose_name_plural = "Blog Yazıları"
         ordering = ['-created_at']
@@ -353,6 +357,7 @@ class SystemLog(models.Model):
     activity_data = models.JSONField(default=dict, blank=True, verbose_name="Aktivite Verisi")
 
     class Meta:
+        db_table = 'SystemLog'
         verbose_name = "Sistem Logu"
         verbose_name_plural = "Sistem Logları"
         ordering = ['-created_at']
@@ -389,6 +394,7 @@ class AdminNotification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Oluşturulma Tarihi")
 
     class Meta:
+        db_table = 'AdminNotification'
         verbose_name = "Admin Bildirimi"
         verbose_name_plural = "Admin Bildirimleri"
         ordering = ['-created_at']
@@ -409,6 +415,7 @@ class AdminSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Güncellenme Tarihi")
 
     class Meta:
+        db_table = 'AdminSettings'
         verbose_name = "Admin Ayarı"
         verbose_name_plural = "Admin Ayarları"
     def __str__(self):
@@ -438,6 +445,7 @@ class Domain(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Güncellenme Tarihi")
 
     class Meta:
+        db_table = 'Domain'
         verbose_name = "Domain"
         verbose_name_plural = "Domainler"
         ordering = ['name']

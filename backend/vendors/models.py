@@ -76,6 +76,9 @@ class VendorProfile(models.Model):
 
 	# Kaldırıldı: save_store_logo. Avatar yönetimi CustomUser.avatar üzerinden yapılır.
 
+	class Meta:
+		db_table = 'VendorProfile'
+	
 	def save(self, *args, **kwargs):
 		if not self.slug:
 			# Benzersiz slug oluştur
@@ -99,6 +102,7 @@ class VendorImage(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
+		db_table = 'VendorImage'
 		ordering = ['order', '-created_at']
 		verbose_name = "Esnaf Görseli"
 		verbose_name_plural = "Esnaf Görselleri"
@@ -129,6 +133,7 @@ class Appointment(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 	
 	class Meta:
+		db_table = 'Appointment'
 		ordering = ['-created_at']
 	
 	def __str__(self):
@@ -205,6 +210,7 @@ class Review(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
+		db_table = 'Review'
 		ordering = ['-created_at']
 		indexes = [
 			models.Index(fields=['vendor', 'is_read']),  # Okunmamış yorumları hızlı bulmak için
@@ -248,6 +254,9 @@ class ServiceRequest(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 
+	class Meta:
+		db_table = 'ServiceRequest'
+
 
 # ========== Analytics Models ==========
 class VendorView(models.Model):
@@ -260,6 +269,7 @@ class VendorView(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'VendorView'
         indexes = [
             models.Index(fields=['vendor', 'month_bucket']),
             models.Index(fields=['vendor', 'created_at']),
@@ -279,6 +289,7 @@ class VendorCall(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'VendorCall'
         indexes = [
             models.Index(fields=['vendor', 'month_bucket']),
             models.Index(fields=['vendor', 'created_at']),

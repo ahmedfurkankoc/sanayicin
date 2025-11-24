@@ -40,6 +40,7 @@ class Conversation(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'Conversation'
         constraints = [
             # Aynı iki kullanıcı arasında tek konuşma
             # user1 ve user2 sıralı olarak saklanır (küçük ID önce)
@@ -118,6 +119,7 @@ class Message(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'Message'
         indexes = [
             models.Index(fields=['conversation', 'created_at']),
         ]
