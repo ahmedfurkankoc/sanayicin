@@ -26,9 +26,23 @@ import {
   MessageSquare,
   Mail
 } from 'lucide-react'
-import { getSMSBalance, type SMSBalance } from '../../api/admin'
+import { getSMSBalance } from '../../api/admin'
 
 type SettingsTab = 'server' | 'domain' | 'profile' | 'security' | 'sms' | 'email'
+
+type ApiErrorShape = {
+  response?: {
+    data?: {
+      error?: string
+    }
+  }
+}
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  const apiError = error as ApiErrorShape
+  const message = apiError?.response?.data?.error
+  return typeof message === 'string' ? message : fallback
+}
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -114,7 +128,7 @@ export default function SettingsPage() {
         setSmsBalance(null)
       }
     } catch (error: unknown) {
-      const errorMessage = (error as any)?.response?.data?.error || 'SMS bakiyesi yüklenemedi'
+      const errorMessage = getApiErrorMessage(error, 'SMS bakiyesi yüklenemedi')
       setSmsError(errorMessage)
       setSmsBalance(null)
     } finally {
@@ -143,8 +157,7 @@ export default function SettingsPage() {
       setSaveMsg('Profil başarıyla güncellendi')
       setEditMode(false)
     } catch (error: unknown) {
-      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Profil güncellenirken hata oluştu'
-      setSaveMsg(errorMessage)
+      setSaveMsg(getApiErrorMessage(error, 'Profil güncellenirken hata oluştu'))
     } finally {
       setSaving(false)
     }
@@ -162,8 +175,7 @@ export default function SettingsPage() {
       setCurrPwd('')
       setNewPwd('')
     } catch (error: unknown) {
-      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Şifre değiştirilirken hata oluştu'
-      setPwdMsg(errorMessage)
+      setPwdMsg(getApiErrorMessage(error, 'Şifre değiştirilirken hata oluştu'))
     } finally {
       setPwdSaving(false)
     }
@@ -184,8 +196,7 @@ export default function SettingsPage() {
         expired: response.expired
       })
     } catch (error: unknown) {
-      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain listesi yüklenemedi'
-      setDomainsError(errorMessage)
+      setDomainsError(getApiErrorMessage(error, 'Domain listesi yüklenemedi'))
     } finally {
       setDomainsLoading(false)
     }
@@ -210,8 +221,7 @@ export default function SettingsPage() {
       setShowAddDomain(false)
       await loadDomains() // Refresh list
     } catch (error: unknown) {
-      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain eklenemedi'
-      setDomainsError(errorMessage)
+      setDomainsError(getApiErrorMessage(error, 'Domain eklenemedi'))
     } finally {
       setDomainsLoading(false)
     }
@@ -234,8 +244,7 @@ export default function SettingsPage() {
       setDeleteModalOpen(false)
       setDomainToDelete(null)
     } catch (error: unknown) {
-      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain silinemedi'
-      setDomainsError(errorMessage)
+      setDomainsError(getApiErrorMessage(error, 'Domain silinemedi'))
     } finally {
       setDomainsLoading(false)
     }
@@ -254,8 +263,7 @@ export default function SettingsPage() {
       await refreshDomain(id)
       await loadDomains() // Refresh list
     } catch (error: unknown) {
-      const errorMessage = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && error.response.data && typeof error.response.data === 'object' && 'error' in error.response.data ? String(error.response.data.error) : 'Domain bilgileri yenilenemedi'
-      setDomainsError(errorMessage)
+      setDomainsError(getApiErrorMessage(error, 'Domain bilgileri yenilenemedi'))
     } finally {
       setDomainsLoading(false)
     }
@@ -905,7 +913,7 @@ export default function SettingsPage() {
                     <h3 className="text-sm font-semibold text-gray-900 mb-3">Email Servisi Bilgileri</h3>
                     <div className="space-y-2 text-sm text-gray-600">
                       <p>• Email gönderimi Django SMTP servisi üzerinden yapılmaktadır</p>
-                      <p>• Doğrulama email'leri ve bildirimler otomatik olarak gönderilir</p>
+                      <p>• Doğrulama email&apos;leri ve bildirimler otomatik olarak gönderilir</p>
                       <p>• Email servisi ayarları backend yapılandırmasından yönetilir</p>
                     </div>
                   </div>
