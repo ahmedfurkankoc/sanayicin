@@ -1,7 +1,26 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
 import Banner from "../components/Banner";
+
+export const metadata: Metadata = {
+  title: "İletişim",
+  description: "Sanayicin ile iletişime geçin. Sorularınız, önerileriniz veya destek talepleriniz için bize ulaşın. Size en kısa sürede dönüş yapacağız.",
+  keywords: [
+    "sanayicin iletişim", "destek", "müşteri hizmetleri", "iletişim formu",
+    "oto sanayi destek", "yardım", "iletişim"
+  ],
+  openGraph: {
+    title: "İletişim | Sanayicin",
+    description: "Sanayicin ile iletişime geçin. Sorularınız, önerileriniz veya destek talepleriniz için bize ulaşın.",
+    url: "https://sanayicin.com/iletisim",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/iletisim",
+  },
+};
 
 export default function ContactPage() {
   return (

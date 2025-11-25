@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import React from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
@@ -5,6 +6,24 @@ import Footer from "../../components/Footer";
 import Banner from "../components/Banner";
 import PlatformFeatures from "../components/PlatformFeatures";
 import SuccessStories from "../components/SuccessStories";
+
+export const metadata: Metadata = {
+  title: "Neden Sanayicin'de Esnaf Olmalısınız? - Avantajlar ve Fırsatlar",
+  description: "Türkiye'nin en büyük otomotiv hizmet platformunda yerinizi alın. Daha fazla müşteri, daha fazla kazanç ve daha fazla başarı. İlk 500 esnaf 6 ay ücretsiz.",
+  keywords: [
+    "neden esnaf ol", "esnaf avantajları", "oto sanayi platform", "esnaf fırsatları",
+    "müşteri artır", "gelir artır", "esnaf başarı", "oto tamirci platform"
+  ],
+  openGraph: {
+    title: "Neden Sanayicin'de Esnaf Olmalısınız? - Avantajlar ve Fırsatlar",
+    description: "Türkiye'nin en büyük otomotiv hizmet platformunda yerinizi alın. Daha fazla müşteri, daha fazla kazanç.",
+    url: "https://sanayicin.com/neden-esnaf-olmaliyim",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/neden-esnaf-olmaliyim",
+  },
+};
 
 const NedenEsnafPage = () => {
   return (

@@ -1,25 +1,9 @@
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /musteri/
+Disallow: /esnaf/
+Disallow: /admin/
+Disallow: /api/
 
-# Tüm arama motorlarını engelle
-User-agent: Googlebot
-Disallow: /
-
-User-agent: Bingbot
-Disallow: /
-
-User-agent: Slurp
-Disallow: /
-
-User-agent: DuckDuckBot
-Disallow: /
-
-User-agent: Baiduspider
-Disallow: /
-
-User-agent: YandexBot
-Disallow: /
-
-# Sitemap'i de engelle
-Disallow: /sitemap.xml
-Disallow: /sitemap_index.xml 
+# Sitemap
+Sitemap: https://sanayicin.com/sitemap.xml

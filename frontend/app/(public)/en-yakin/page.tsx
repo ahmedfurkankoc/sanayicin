@@ -1,9 +1,36 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
 import Icon from "@/app/components/ui/Icon";
 import Link from "next/link";
 import SearchBar from "../components/SearchBar";
+
+export const metadata: Metadata = {
+  title: "En Yakın Usta - Konumunuza En Yakın Oto Sanayi Ustalarını Bulun",
+  description: "Konumunuza en yakın, güvenilir ve kaliteli ustalara anında ulaşın. İstanbul, Ankara, İzmir ve Türkiye'nin tüm şehirlerinde oto sanayi ustalarını bulun.",
+  keywords: [
+    "en yakın usta", "konuma göre usta", "yakın oto sanayi", "şehir bazlı usta",
+    "istanbul oto sanayi", "ankara oto sanayi", "izmir oto sanayi", "oto tamirci yakın"
+  ],
+  openGraph: {
+    title: "En Yakın Usta - Konumunuza En Yakın Oto Sanayi Ustalarını Bulun | Sanayicin",
+    description: "Konumunuza en yakın, güvenilir ve kaliteli ustalara anında ulaşın.",
+    url: "https://sanayicin.com/en-yakin",
+    type: "website",
+    images: [
+      {
+        url: "/images/banner/en-yakin-usta.png",
+        width: 1200,
+        height: 630,
+        alt: "En Yakın Usta - Sanayicin",
+      },
+    ],
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/en-yakin",
+  },
+};
 
 const EnYakinPage = () => {
   return (

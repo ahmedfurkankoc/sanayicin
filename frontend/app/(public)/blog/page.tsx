@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Banner from '../components/Banner'
 import { api, resolveMediaUrl } from '../../utils/api'
+import type { Metadata } from 'next'
 
 interface PublicBlogPost {
   id: number

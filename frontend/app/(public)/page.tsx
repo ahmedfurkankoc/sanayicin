@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import SearchBar from "./components/SearchBar";
 import VendorCard from "./components/VendorCard";
@@ -29,6 +30,75 @@ export default function Home() {
 
   // Gerçek veri varsa onu kullan, yoksa mock data
   const displayVendors = vendors.length > 0 ? vendors : mockVendors;
+
+  // SEO Structured Data
+  useEffect(() => {
+    const organizationSchema = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Sanayicin",
+      "url": "https://sanayicin.com",
+      "logo": "https://sanayicin.com/sanayicin-logo.png",
+      "description": "Türkiye'nin en büyük oto sanayi platformu. Size en yakın, güvenilir ve kaliteli otomotiv ustalarını bulun.",
+      "sameAs": [
+        // Sosyal medya linkleri buraya eklenebilir
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Müşteri Hizmetleri",
+        "url": "https://sanayicin.com/iletisim"
+      }
+    };
+
+    const websiteSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Sanayicin",
+      "url": "https://sanayicin.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://sanayicin.com/musteri/esnaflar?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    };
+
+    const serviceSchema = {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "serviceType": "Oto Sanayi Hizmetleri",
+      "provider": {
+        "@type": "Organization",
+        "name": "Sanayicin"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Türkiye"
+      },
+      "description": "Mekanik, elektrik, kaporta, boya ve daha fazlası için profesyonel oto sanayi hizmetleri"
+    };
+
+    // Mevcut schema script'lerini temizle
+    const existingScripts = document.querySelectorAll('script[type="application/ld+json"][data-homepage]');
+    existingScripts.forEach(script => script.remove());
+
+    // Yeni schema script'lerini ekle
+    [organizationSchema, websiteSchema, serviceSchema].forEach((schema, index) => {
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.setAttribute('data-homepage', 'true');
+      script.textContent = JSON.stringify(schema);
+      document.head.appendChild(script);
+    });
+
+    return () => {
+      const scripts = document.querySelectorAll('script[type="application/ld+json"][data-homepage]');
+      scripts.forEach(script => script.remove());
+    };
+  }, []);
+
   return (
     <>
 

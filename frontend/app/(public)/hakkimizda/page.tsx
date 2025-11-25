@@ -1,7 +1,34 @@
+import type { Metadata } from "next";
 import Navbar from "../components/Navbar";
 import Banner from "../components/Banner";
 import Footer from "../../components/Footer";
 import { Backpack } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Hakkımızda",
+  description: "Sanayicin olarak misyonumuz, vizyonumuz ve kuruluş hikayemiz hakkında bilgi edinin. Türkiye'nin en büyük oto sanayi platformu olma yolundaki hikayemiz.",
+  keywords: [
+    "sanayicin hakkında", "oto sanayi platformu", "misyon", "vizyon", "kuruluş hikayesi",
+    "otomotiv platform", "güvenilir usta", "oto tamir platformu"
+  ],
+  openGraph: {
+    title: "Hakkımızda | Sanayicin",
+    description: "Sanayicin olarak misyonumuz, vizyonumuz ve kuruluş hikayemiz hakkında bilgi edinin.",
+    url: "https://sanayicin.com/hakkimizda",
+    type: "website",
+    images: [
+      {
+        url: "/images/banner/hakkimizda.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Sanayicin Hakkımızda",
+      },
+    ],
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/hakkimizda",
+  },
+};
 
 export default function AboutPage() {
   return (
