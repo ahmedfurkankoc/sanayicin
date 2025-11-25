@@ -1,8 +1,27 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
 import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
+
+export const metadata: Metadata = {
+  title: "Çerez Aydınlatma Metni",
+  description: "Sanayicin çerez aydınlatma metni. Çerez türleri, kullanım amaçları ve çerez yönetimi hakkında bilgi.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "Çerez Aydınlatma Metni | Sanayicin",
+    description: "Sanayicin çerez aydınlatma metni ve çerez politikası.",
+    url: "https://sanayicin.com/cerez-aydinlatma-metni",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/cerez-aydinlatma-metni",
+  },
+};
 
 function CerezAydinlatmaPage() {
   return (

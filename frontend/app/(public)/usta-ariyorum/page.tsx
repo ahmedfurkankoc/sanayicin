@@ -1,9 +1,37 @@
+import type { Metadata } from "next";
 import React from "react";
 import SearchBar from "../components/SearchBar";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
 import VideoBanner from "../../components/VideoBanner";
 import Icon from "@/app/components/ui/Icon";
+
+export const metadata: Metadata = {
+  title: "Usta Arıyorum - Size En Yakın Oto Sanayi Ustasını Bulun",
+  description: "Aracınızda bir sorun mu var? Elektrik, elektronik, mekanik veya kaporta boya işleriniz için güvenilir ustalar mı arıyorsunuz? Sanayicin ile size en yakın, deneyimli ve güvenilir otomotiv ustalarını bulun.",
+  keywords: [
+    "usta arıyorum", "oto sanayi usta", "en yakın usta", "güvenilir usta",
+    "mekanik usta", "elektrik usta", "kaporta boya usta", "oto tamirci",
+    "araba tamiri", "oto servis", "oto bakım"
+  ],
+  openGraph: {
+    title: "Usta Arıyorum - Size En Yakın Oto Sanayi Ustasını Bulun | Sanayicin",
+    description: "Aracınızda bir sorun mu var? Size en yakın, deneyimli ve güvenilir otomotiv ustalarını bulun.",
+    url: "https://sanayicin.com/usta-ariyorum",
+    type: "website",
+    images: [
+      {
+        url: "/images/banner/en-yakin-usta.png",
+        width: 1200,
+        height: 630,
+        alt: "Usta Arıyorum - Sanayicin",
+      },
+    ],
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/usta-ariyorum",
+  },
+};
 
 const UstaAriyorumPage = () => {
   return (

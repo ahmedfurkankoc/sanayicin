@@ -1,8 +1,27 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
 import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
+
+export const metadata: Metadata = {
+  title: "Kullanım Koşulları",
+  description: "Sanayicin platform kullanım koşulları. Platform kullanımı, hesap güvenliği, kullanıcı yükümlülükleri ve hizmet şartları hakkında bilgi.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "Kullanım Koşulları | Sanayicin",
+    description: "Sanayicin platform kullanım koşulları ve hizmet şartları.",
+    url: "https://sanayicin.com/kullanim-kosullari",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/kullanim-kosullari",
+  },
+};
 
 function KullanimKosullariPage() {
   return (

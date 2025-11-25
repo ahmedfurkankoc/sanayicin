@@ -1,8 +1,27 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
 import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
+
+export const metadata: Metadata = {
+  title: "KVKK Aydınlatma Metni",
+  description: "Sanayicin KVKK aydınlatma metni. Kişisel verilerin işlenmesi, saklanması, paylaşılması ve veri güvenliği hakkında bilgi.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "KVKK Aydınlatma Metni | Sanayicin",
+    description: "Sanayicin KVKK aydınlatma metni ve kişisel veri koruma politikası.",
+    url: "https://sanayicin.com/kvkk-aydinlatma-metni",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/kvkk-aydinlatma-metni",
+  },
+};
 
 function KvkkAydinlatmaPage() {
   return (

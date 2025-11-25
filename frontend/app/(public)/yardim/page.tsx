@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Icon from "@/app/components/ui/Icon";
 import { iconMapping } from "@/app/utils/iconMapping";
 import SupportTicketCTA from "../components/SupportTicketCTA";
@@ -10,6 +10,37 @@ import { useRouter } from "next/navigation";
 export default function HelpPage() {
   const router = useRouter();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  // SEO Metadata
+  useEffect(() => {
+    document.title = "Yardım ve Destek - Sanayicin | SSS ve Destek Merkezi";
+    
+    const updateMetaTag = (name: string, content: string, isProperty = false) => {
+      const attribute = isProperty ? 'property' : 'name';
+      let tag = document.querySelector(`meta[${attribute}="${name}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute(attribute, name);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    }
+    
+    updateMetaTag('description', 'Sanayicin yardım ve destek merkezi. Sık sorulan sorular, kullanım rehberleri ve teknik destek için yardım sayfası.');
+    updateMetaTag('og:title', 'Yardım ve Destek - Sanayicin | SSS ve Destek Merkezi', true);
+    updateMetaTag('og:description', 'Sanayicin yardım ve destek merkezi. Sık sorulan sorular, kullanım rehberleri ve teknik destek için yardım sayfası.', true);
+    updateMetaTag('og:url', 'https://sanayicin.com/yardim', true);
+    updateMetaTag('og:type', 'website', true);
+    
+    // Canonical link
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', 'https://sanayicin.com/yardim');
+  }, []);
 
   return (
     <>

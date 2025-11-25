@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
@@ -5,6 +6,32 @@ import Banner from "../components/Banner";
 import PlatformFeatures from "../components/PlatformFeatures";
 import SuccessStories from "../components/SuccessStories";
 import { iconMapping } from "../../utils/iconMapping";
+
+export const metadata: Metadata = {
+  title: "Hizmet Vermek İstiyorum - Sanayicin'de Esnaf Olun",
+  description: "Uzmanlığınızı paraya çevirin! Sanayicin platformunda esnaf olarak yer alın, daha fazla müşteriye ulaşın ve gelirinizi artırın. İlk 500 esnaf 6 ay ücretsiz.",
+  keywords: [
+    "esnaf ol", "hizmet ver", "oto sanayi esnaf", "platforma katıl",
+    "müşteri bul", "gelir artır", "esnaf kayıt", "oto tamirci kayıt"
+  ],
+  openGraph: {
+    title: "Hizmet Vermek İstiyorum - Sanayicin'de Esnaf Olun",
+    description: "Uzmanlığınızı paraya çevirin! Sanayicin platformunda esnaf olarak yer alın, daha fazla müşteriye ulaşın.",
+    url: "https://sanayicin.com/hizmet-vermek-istiyorum",
+    type: "website",
+    images: [
+      {
+        url: "/images/hizmet-ver.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Hizmet Vermek İstiyorum - Sanayicin",
+      },
+    ],
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/hizmet-vermek-istiyorum",
+  },
+};
 
 const HizmetVermekPage = () => {
   return (

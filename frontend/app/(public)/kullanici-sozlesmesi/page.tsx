@@ -1,8 +1,27 @@
+import type { Metadata } from "next";
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../../components/Footer";
 import PolicyLayout from "../components/PolicyLayout";
 import PolicySection from "../components/PolicySection";
+
+export const metadata: Metadata = {
+  title: "Kullanıcı Sözleşmesi",
+  description: "Sanayicin kullanıcı sözleşmesi. Platform kullanımı, tarafların hak ve yükümlülükleri, hesap yönetimi ve hizmet şartları.",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "Kullanıcı Sözleşmesi | Sanayicin",
+    description: "Sanayicin kullanıcı sözleşmesi ve platform kullanım şartları.",
+    url: "https://sanayicin.com/kullanici-sozlesmesi",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://sanayicin.com/kullanici-sozlesmesi",
+  },
+};
 
 function KullaniciSozlesmesiPage() {
   return (

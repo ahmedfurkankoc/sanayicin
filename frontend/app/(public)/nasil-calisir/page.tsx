@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Banner from "../components/Banner";
 import Icon from "@/app/components/ui/Icon";
@@ -10,6 +10,37 @@ export default function HowItWorksPage() {
   const router = useRouter();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [activeStep, setActiveStep] = useState<number | null>(0);
+
+  // SEO Metadata
+  useEffect(() => {
+    document.title = "Nasıl Çalışır? - Sanayicin Kullanım Rehberi | Sanayicin";
+    
+    const updateMetaTag = (name: string, content: string, isProperty = false) => {
+      const attribute = isProperty ? 'property' : 'name';
+      let tag = document.querySelector(`meta[${attribute}="${name}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute(attribute, name);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    }
+    
+    updateMetaTag('description', 'Sanayicin platformunu nasıl kullanacağınızı öğrenin. Müşteri ve esnaf olarak platformu nasıl kullanacağınız, nasıl usta bulacağınız ve nasıl hizmet vereceğiniz hakkında detaylı bilgi.');
+    updateMetaTag('og:title', 'Nasıl Çalışır? - Sanayicin Kullanım Rehberi', true);
+    updateMetaTag('og:description', 'Sanayicin platformunu nasıl kullanacağınızı öğrenin. Müşteri ve esnaf olarak platformu nasıl kullanacağınız hakkında detaylı bilgi.', true);
+    updateMetaTag('og:url', 'https://sanayicin.com/nasil-calisir', true);
+    updateMetaTag('og:type', 'website', true);
+    
+    // Canonical link
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute('href', 'https://sanayicin.com/nasil-calisir');
+  }, []);
 
   return (
     <div className="nasil-calisir-page">

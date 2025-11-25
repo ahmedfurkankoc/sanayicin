@@ -96,27 +96,31 @@ export default function CategoryBlogListPage() {
     if (category) {
       document.title = `${category.name} | Blog | Sanayicin`
       
-      // Meta description
-      const metaDescription = document.querySelector('meta[name="description"]')
-      if (metaDescription) {
-        metaDescription.setAttribute('content', category.description || `${category.name} kategorisindeki blog yazıları`)
-      } else {
-      const metaDesc = document.createElement('meta')
-      metaDesc.name = 'description'
-      metaDesc.content = category.description || `${category.name} kategorisindeki blog yazıları`
-      document.head.appendChild(metaDesc)
+      const updateMetaTag = (name: string, content: string, isProperty = false) => {
+        const attribute = isProperty ? 'property' : 'name';
+        let tag = document.querySelector(`meta[${attribute}="${name}"]`);
+        if (!tag) {
+          tag = document.createElement('meta');
+          tag.setAttribute(attribute, name);
+          document.head.appendChild(tag);
+        }
+        tag.setAttribute('content', content);
       }
-
-      // Open Graph
-      const ogTitle = document.querySelector('meta[property="og:title"]')
-      if (ogTitle) {
-        ogTitle.setAttribute('content', `${category.name} | Blog | Sanayicin`)
-      } else {
-      const metaOG = document.createElement('meta')
-      metaOG.setAttribute('property', 'og:title')
-      metaOG.content = `${category.name} | Blog | Sanayicin`
-      document.head.appendChild(metaOG)
+      
+      updateMetaTag('description', category.description || `${category.name} kategorisindeki blog yazıları`);
+      updateMetaTag('og:title', `${category.name} | Blog | Sanayicin`, true);
+      updateMetaTag('og:description', category.description || `${category.name} kategorisindeki blog yazıları`, true);
+      updateMetaTag('og:url', typeof window !== 'undefined' ? window.location.href : `https://sanayicin.com/blog/${category.slug}`, true);
+      updateMetaTag('og:type', 'website', true);
+      
+      // Canonical link
+      let canonical = document.querySelector('link[rel="canonical"]');
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonical);
       }
+      canonical.setAttribute('href', `https://sanayicin.com/blog/${category.slug}`);
     }
   }, [category])
 
