@@ -29,7 +29,7 @@ const AppBanner = () => (
             </div>
           </div>
           <div className="appBannerImg">
-            <img src="/images/app.jpg" alt="Mobil uygulama mockup" />
+            <img src="/images/app.png" alt="Mobil uygulama mockup" />
           </div>
       </div>
     </div>

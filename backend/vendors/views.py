@@ -430,6 +430,80 @@ class VendorRegisterView(generics.CreateAPIView):
                 "detail": f"Registration failed: {str(e)}"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+class ClientToVendorUpgradeView(APIView):
+    """Client'tan vendor'a yükseltme - direkt VendorProfile oluştur ve SMS OTP gönder"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # Kullanıcı sadece client olabilir
+            if request.user.role != 'client':
+                return Response({
+                    "detail": "Sadece müşteriler esnafa yükseltilebilir."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Zaten vendor profile var mı kontrol et
+            if hasattr(request.user, 'vendor_profile'):
+                return Response({
+                    "detail": "Zaten bir esnaf profiliniz bulunuyor."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Kullanıcı doğrulanmış olmalı
+            if not request.user.is_verified:
+                return Response({
+                    "detail": "Esnaf olmak için önce hesabınızı doğrulamanız gerekiyor."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Serializer ile validate et
+            serializer = ClientToVendorUpgradeSerializer(data=request.data, context={'request': request})
+            if not serializer.is_valid():
+                return Response({
+                    "detail": "Validation error",
+                    "errors": serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # VendorProfile oluştur
+            profile = serializer.save()
+            
+            # SMS OTP gönder (telefon numarası CustomUser'da var)
+            from core.utils.sms_service import IletiMerkeziSMS
+            from core.utils.otp_service import OTPService
+            from core.tasks import send_otp_sms_async
+            
+            sms_service = IletiMerkeziSMS()
+            formatted_phone = sms_service.format_phone_number(request.user.phone_number)
+            
+            otp_service = OTPService()
+            otp_service.clear_all_otps(formatted_phone)
+            
+            success, code, error_message = otp_service.send_otp(
+                phone_number=formatted_phone,
+                purpose='verification',
+                user_id=request.user.id
+            )
+            
+            if not success:
+                # Profile'ı sil
+                profile.delete()
+                return Response({
+                    "detail": error_message or "OTP kodu gönderilemedi. Lütfen tekrar deneyin."
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # SMS gönder (async - Celery)
+            send_otp_sms_async.delay(formatted_phone, code, 'verification')
+            
+            return Response({
+                "detail": "Esnaf profili oluşturuldu. SMS doğrulama kodu gönderildi.",
+                "email": request.user.email,
+                "requires_sms_verification": True
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Client to vendor upgrade error: {e}")
+            return Response({
+                "detail": f"Yükseltme sırasında hata oluştu: {str(e)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
 class SetVendorPasswordView(APIView):
     permission_classes = [AllowAny]
 

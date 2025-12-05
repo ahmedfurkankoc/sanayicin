@@ -74,7 +74,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
       .catch(() => setServices([]));
   }, []);
 
-  // Araba markalarını çek
+  // Araç markalarını çek
   useEffect(() => {
     api.getCarBrands()
       .then(res => setCarBrands(res.data))
@@ -118,7 +118,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
     if (!selectedCity && !selectedDistrict && !selectedService && !selectedCarBrand) {
       setHasValidationError(true);
       toast.error("Lütfen en az bir filtre seçiniz", {
-        description: "Şehir, ilçe, hizmet alanı veya araba markası seçerek arama yapabilirsiniz."
+        description: "Şehir, ilçe, hizmet alanı veya araç markası seçerek arama yapabilirsiniz."
       });
       return;
     }
@@ -140,7 +140,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
       }
     }
     
-    // Araba markası seçilmişse ekle
+    // Araç markası seçilmişse ekle
     if (selectedCarBrand) {
       params.append('carBrand', selectedCarBrand);
     }
@@ -220,7 +220,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
           </div>
         </div>
 
-        {/* Araba Markası Seçimi */}
+        {/* Araç Markası Seçimi */}
         <div className={`custom-select ${openDropdown === 'carBrand' ? 'open' : ''} ${hasValidationError && !selectedCity && !selectedDistrict && !selectedService && !selectedCarBrand ? 'error' : ''}`} ref={carBrandRef}>
           <div 
             className="custom-select-trigger"
@@ -237,7 +237,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
             <span>
               {selectedCarBrand 
                 ? carBrands.find(brand => brand.id.toString() === selectedCarBrand)?.name 
-                : "Araba markası"
+                : "Araç markası"
               }
             </span>
             <ChevronDown className="custom-select-arrow" size={16} />
@@ -320,7 +320,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ variant = 'default' }) => {
                       setDropdownPosition(null);
                     }}
                   >
-                    <span>Araba markası</span>
+                    <span>Araç markası</span>
                   </div>
                   {carBrands.map(brand => (
                     <div 

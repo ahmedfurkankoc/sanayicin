@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, EmailVerification, ServiceArea, Category, CarBrand, VendorUpgradeRequest, Favorite
+from .models import CustomUser, EmailVerification, ServiceArea, Category, CarBrand, Favorite
 from django.utils import timezone
 
 class CustomUserAdmin(UserAdmin):
@@ -56,65 +56,6 @@ class CarBrandAdmin(admin.ModelAdmin):
     ordering = ('name',)
     readonly_fields = ('created_at', 'updated_at')
 
-class VendorUpgradeRequestAdmin(admin.ModelAdmin):
-    list_display = ('user', 'business_type', 'company_title', 'status', 'requested_at', 'processed_at')
-    list_filter = ('status', 'business_type', 'requested_at')
-    search_fields = ('user__email', 'company_title', 'display_name')
-    readonly_fields = ('user', 'requested_at')
-    ordering = ('-requested_at',)
-    
-    fieldsets = (
-        ('Temel Bilgiler', {
-            'fields': ('user', 'status', 'requested_at', 'processed_at', 'admin_notes')
-        }),
-        ('İşletme Bilgileri', {
-            'fields': ('business_type', 'company_title', 'tax_office', 'tax_no', 'display_name')
-        }),
-        ('Hizmet Bilgileri', {
-            'fields': ('service_areas', 'categories', 'car_brands')
-        }),
-        ('Konum Bilgileri', {
-            'fields': ('address', 'city', 'district', 'subdistrict')
-        }),
-        ('İletişim Bilgileri', {
-            'fields': ('business_phone',)
-        }),
-        ('İşletme Açıklaması', {
-            'fields': ('about',)
-        }),
-        ('Yönetici Bilgileri', {
-            'fields': ('manager_birthdate', 'manager_tc')
-        }),
-        ('Belgeler', {
-            'fields': ('business_license', 'tax_certificate', 'identity_document')
-        }),
-        ('Ek Bilgiler', {
-            'fields': ('social_media', 'working_hours', 'unavailable_dates')
-        }),
-    )
-    
-    actions = ['approve_requests', 'reject_requests']
-    
-    def approve_requests(self, request, queryset):
-        """Seçili talepleri onayla"""
-        approved_count = 0
-        for upgrade_request in queryset.filter(status='pending'):
-            try:
-                upgrade_request.approve(request.user)
-                approved_count += 1
-            except Exception as e:
-                self.message_user(request, f'Hata: {upgrade_request.user.email} - {str(e)}', level='ERROR')
-        
-        self.message_user(request, f'{approved_count} talep onaylandı.')
-    approve_requests.short_description = "Seçili talepleri onayla"
-    
-    def reject_requests(self, request, queryset):
-        """Seçili talepleri reddet"""
-        updated = queryset.filter(status='pending').update(status='rejected', processed_at=timezone.now())
-        self.message_user(request, f'{updated} talep reddedildi.')
-    reject_requests.short_description = "Seçili talepleri reddet"
-
-
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('user', 'vendor', 'created_at')
     list_filter = ('created_at',)
@@ -131,5 +72,4 @@ admin.site.register(EmailVerification, EmailVerificationAdmin)
 admin.site.register(ServiceArea, ServiceAreaAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(CarBrand, CarBrandAdmin)
-admin.site.register(VendorUpgradeRequest, VendorUpgradeRequestAdmin)
 admin.site.register(Favorite, FavoriteAdmin)

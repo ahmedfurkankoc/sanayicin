@@ -827,7 +827,7 @@ section[aria-label="Notifications alt+T"] {
 }
 
 .appBannerImg img {
-  max-width: 480px;
+  max-width: 650px;
   height: auto;
 }
 
@@ -1350,12 +1350,41 @@ section[aria-label="Notifications alt+T"] {
 .serviceImg { width: 100%; object-fit: cover; }
 
 /* Service image responsive heights */
-@media (max-width: 768px) { .serviceImgContainer { height: 100px; } }
+@media (max-width: 768px) { 
+  .serviceImgContainer { height: 100px; }
+  /* En Yakın - Popular Cities tablet görünümü: 2 kolon */
+  .en-yakin-page .cities-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
 @media (max-width: 480px) { 
   .serviceImgContainer { height: 90px; }
-  
+  /* En Yakın - Popular Cities mobil görünümü: 2 kolon (50% genişlik) */
   .en-yakin-page .cities-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+    margin-top: 30px;
+  }
+  
+  .en-yakin-page .city-card {
+    padding: 20px 12px;
+    margin-bottom: 0;
+  }
+  
+  .en-yakin-page .city-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+  }
+  
+  .en-yakin-page .city-icon {
+    margin-bottom: 8px;
+  }
+  
+  .en-yakin-page .city-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    width: 100%;
   }
 }
 
@@ -2372,7 +2401,7 @@ footer {
 .modernSearchBar {
   display: flex;
   width: 100%;
-  max-width: 540px;
+  max-width: 800px;
   margin: 0 auto 24px auto;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -2850,7 +2879,7 @@ footer {
   max-width: 1100px;
 }
 .advantage-card {
-  background: var(--black);
+  background: var(--white);
   border-radius: 20px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.07);
   padding: 38px 22px 32px 22px;
@@ -2878,7 +2907,7 @@ footer {
   font-size: 1.18rem;
   font-weight: 700;
   margin-bottom: 10px;
-  color: var(--white);
+  color: var(--black);
 }
 .advantage-desc {
   font-size: 1.04rem;
@@ -3255,7 +3284,7 @@ footer {
   background-size: 140%;
   background-repeat: no-repeat;
   background-position: center;
-  opacity: 1;
+  opacity: 0.70;
   z-index: 1;
 }
 
@@ -3268,23 +3297,17 @@ footer {
   font-size: 2.2rem;
   font-weight: 700;
   margin-bottom: 16px;
-  text-shadow: 0 2px 8px rgba(255, 255, 255, 0.9), 0 0 12px rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.7);
-  padding: 12px 24px;
-  border-radius: 8px;
-  display: inline-block;
+  color: var(--black);
+  text-shadow: none;
 }
 .cityVendorsSection .sectionDescription {
   font-size: 1.15rem;
-  color: #444;
+  color: var(--black);
   margin-bottom: 32px;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.6);
-  padding: 16px 24px;
-  border-radius: 8px;
+  text-shadow: none;
 }
 .citySelectBtn {
   background: var(--black);
@@ -3519,34 +3542,24 @@ footer {
   text-align: center;
 }
 
+.usta-ariyorum-page .hero-section.hero-with-bg {
+  background-image: url("/images/banner/en-yakin-usta.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 .usta-ariyorum-page .hero-section .hero-content {
   position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
 }
 
 .usta-ariyorum-page .hero-section .hero-text {
   width: 100%;
-}
-
-.usta-ariyorum-page .hero-section .hero-image {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.usta-ariyorum-page .hero-section .hero-image img {
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  display: block;
+  margin-bottom: 0;
 }
 
 .usta-ariyorum-page .hero-title {
@@ -3575,7 +3588,7 @@ footer {
 }
 
 .usta-ariyorum-page .hero-search .modernSearchBar {
-  max-width: 750px;
+  max-width: 800px;
   gap: 12px;
   padding: 12px;
   background: var(--white);
@@ -3797,6 +3810,10 @@ footer {
     gap: 0;
   }
   
+  .usta-ariyorum-page .hero-section.hero-with-bg {
+    background-size: contain;
+  }
+  
   .usta-ariyorum-page .hero-title {
     font-size: 2.5rem;
     margin-bottom: 20px;
@@ -3810,12 +3827,20 @@ footer {
   .usta-ariyorum-page .hero-search {
     padding-top: 0;
     margin-top: 0px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
   }
   
   .usta-ariyorum-page .hero-search .modernSearchBar {
     flex-direction: column;
     gap: 10px;
     max-width: 100%;
+    width: 100%;
+    margin-top: 20px;
   }
   
   .usta-ariyorum-page .hero-search .custom-select {
@@ -3831,6 +3856,10 @@ footer {
 @media (max-width: 480px) {
   .usta-ariyorum-page .hero-section {
     padding: 30px 0 40px 0;
+  }
+  
+  .usta-ariyorum-page .hero-section.hero-with-bg {
+    background-size: contain;
   }
   
   .usta-ariyorum-page .hero-section .hero-content {
@@ -3851,10 +3880,19 @@ footer {
   .usta-ariyorum-page .hero-search {
     padding-top: 0;
     margin-top: -20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
   }
   
   .usta-ariyorum-page .hero-search .modernSearchBar {
     max-width: 100%;
+    margin-top: 20px;
+    width: 100%;
+    margin: 0 auto;
   }
   
   .usta-ariyorum-page .service-card {
@@ -5322,34 +5360,24 @@ footer {
   text-align: center;
 }
 
+.en-yakin-page .hero-section.hero-with-bg {
+  background-image: url("/images/banner/en-yakin-usta.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 .en-yakin-page .hero-section .hero-content {
   position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
 }
 
 .en-yakin-page .hero-section .hero-text {
   width: 100%;
-}
-
-.en-yakin-page .hero-section .hero-image {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.en-yakin-page .hero-section .hero-image img {
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  display: block;
+  margin-bottom: 0;
 }
 
 .en-yakin-page .hero-title {
@@ -5689,6 +5717,10 @@ footer {
     padding: 40px 0 50px 0;
   }
   
+  .en-yakin-page .hero-section.hero-with-bg {
+    background-size: contain;
+  }
+  
   .en-yakin-page .hero-section .hero-content {
     gap: 0;
   }
@@ -5706,12 +5738,20 @@ footer {
   .en-yakin-page .hero-search {
     padding-top: 0;
     margin-top: 0px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
   }
   
   .en-yakin-page .hero-search .modernSearchBar {
     flex-direction: column;
     gap: 10px;
     max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
   }
   
   .en-yakin-page .hero-search .custom-select {
@@ -5727,6 +5767,10 @@ footer {
 @media (max-width: 480px) {
   .en-yakin-page .hero-section {
     padding: 30px 0 40px 0;
+  }
+  
+  .en-yakin-page .hero-section.hero-with-bg {
+    background-size: contain;
   }
   
   .en-yakin-page .hero-section .hero-content {
@@ -5746,11 +5790,19 @@ footer {
   
   .en-yakin-page .hero-search {
     padding-top: 0;
-    margin-top: -20px;
+    margin-top: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
   }
   
   .en-yakin-page .hero-search .modernSearchBar {
     max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
   }
 
   .en-yakin-page .cta-content h2 {

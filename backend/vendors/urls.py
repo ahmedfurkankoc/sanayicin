@@ -12,6 +12,7 @@ urlpatterns = [
     path('profile/images/', VendorImageListView.as_view(), name='vendor-images-list'),
     path('profile/images/<int:pk>/', VendorImageDetailView.as_view(), name='vendor-image-detail'),
     path('register/', VendorRegisterView.as_view(), name='vendor-register'),
+    path('client-upgrade/', ClientToVendorUpgradeView.as_view(), name='client-to-vendor-upgrade'),
     path('set-password/', SetVendorPasswordView.as_view(), name='vendor-set-password'),
     path('search/', VendorSearchView.as_view(), name='vendor-search'),
     path('car-brands/', CarBrandListView.as_view(), name='car-brands'),

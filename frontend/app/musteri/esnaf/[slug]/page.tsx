@@ -524,11 +524,11 @@ function VendorDetailContent() {
             </div>
           )}
 
-            {/* Araba Markaları */}
+            {/* Araç Markaları */}
             {vendor.car_brands && vendor.car_brands.length > 0 && (
               <div className="m-vendor-card">
               <h3 className="m-vendor-section-title">
-                  Araba Markaları
+                  Araç Markaları
               </h3>
                 <div className="m-car-brands-grid">
                   {vendor.car_brands.map((brand: any) => (

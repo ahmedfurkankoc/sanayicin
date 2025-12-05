@@ -188,7 +188,8 @@ class VendorRegisterSerializer(serializers.ModelSerializer):
             password=password,
             role="vendor",
             phone_number=phone_number,  # Telefon numarasını kaydet
-            is_verified=False  # Verification sonrası true olacak
+            is_verified=False,  # SMS verification sonrası true olacak
+            is_active=False  # SMS verification sonrası true olacak
         )
         
         # CustomUser'a profil bilgilerini kaydet
@@ -462,6 +463,136 @@ class ReviewSerializer(serializers.ModelSerializer):
         validated_data['user'] = request.user
         validated_data['is_read'] = False
         return super().create(validated_data)
+
+
+class ClientToVendorUpgradeSerializer(serializers.ModelSerializer):
+    """Client'tan vendor'a yükseltme için serializer (mevcut user için)"""
+    business_type = serializers.ChoiceField(choices=VendorProfile.BUSINESS_TYPE_CHOICES)
+    service_area = serializers.PrimaryKeyRelatedField(queryset=ServiceArea.objects.all())
+    categories = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), many=True)
+    car_brands = serializers.PrimaryKeyRelatedField(queryset=CarBrand.objects.filter(is_active=True), many=True, required=False)
+
+    company_title = serializers.CharField()
+    tax_office = serializers.CharField()
+    tax_no = serializers.CharField()
+    display_name = serializers.CharField()
+    about = serializers.CharField(allow_blank=True, required=False)
+    avatar = serializers.ImageField(required=False, allow_null=True)
+    business_phone = serializers.CharField(required=True)
+    city = serializers.CharField()
+    district = serializers.CharField()
+    subdistrict = serializers.CharField()
+    address = serializers.CharField()
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True)
+    manager_birthdate = serializers.DateField()
+    manager_tc = serializers.CharField()
+
+    class Meta:
+        model = VendorProfile
+        fields = (
+            'business_type', 'service_area', 'categories', 'car_brands',
+            'company_title', 'tax_office', 'tax_no', 'display_name', 'about', 'avatar',
+            'business_phone', 'city', 'district', 'subdistrict', 'address',
+            'latitude', 'longitude',
+            'manager_birthdate', 'manager_tc'
+        )
+
+    def validate_manager_tc(self, value):
+        if not value.isdigit() or len(value) != 11:
+            raise serializers.ValidationError("TC kimlik numarası 11 haneli olmalıdır.")
+        return value
+
+    def validate_business_type(self, value):
+        valid_types = [choice[0] for choice in VendorProfile.BUSINESS_TYPE_CHOICES]
+        if value not in valid_types:
+            raise serializers.ValidationError("Geçersiz işletme türü.")
+        return value
+
+    def validate_service_area(self, value):
+        if not ServiceArea.objects.filter(id=value.id).exists():
+            raise serializers.ValidationError("Geçersiz hizmet alanı seçildi.")
+        return value
+
+    def validate_categories(self, value):
+        for category in value:
+            if not Category.objects.filter(id=category.id).exists():
+                raise serializers.ValidationError("Geçersiz kategori seçildi.")
+        return value
+
+    def validate_company_title(self, value):
+        import re
+        dangerous_patterns = [
+            r'<script.*?>.*?</script>',
+            r'javascript:',
+            r'on\w+\s*=',
+            r'<iframe.*?>',
+        ]
+        for pattern in dangerous_patterns:
+            if re.search(pattern, value, re.IGNORECASE):
+                raise serializers.ValidationError("Şirket adında geçersiz karakterler bulunuyor.")
+        return value.strip()
+
+    def validate_display_name(self, value):
+        import re
+        dangerous_patterns = [
+            r'<script.*?>.*?</script>',
+            r'javascript:',
+            r'on\w+\s*=',
+            r'<iframe.*?>',
+        ]
+        for pattern in dangerous_patterns:
+            if re.search(pattern, value, re.IGNORECASE):
+                raise serializers.ValidationError("Görünen adda geçersiz karakterler bulunuyor.")
+        return value.strip()
+
+    def create(self, validated_data):
+        # Mevcut user'ı al (request'ten)
+        user = self.context['request'].user
+        
+        # Kullanıcı sadece client olabilir
+        if user.role != 'client':
+            raise serializers.ValidationError("Sadece müşteriler esnafa yükseltilebilir.")
+        
+        # Zaten vendor profile var mı kontrol et
+        if hasattr(user, 'vendor_profile'):
+            raise serializers.ValidationError("Zaten bir esnaf profiliniz bulunuyor.")
+        
+        # Service area ve categories'i çıkar
+        service_area = validated_data.pop('service_area')
+        categories = validated_data.pop('categories')
+        car_brands = validated_data.pop('car_brands', [])
+        
+        # Avatar'ı çıkar (varsa)
+        avatar = validated_data.pop('avatar', None)
+        
+        # CustomUser'a avatar'ı kaydet (varsa)
+        if avatar:
+            success = user.save_avatar(avatar)
+            if success:
+                user.save()
+        
+        # VendorProfile oluştur
+        profile = VendorProfile.objects.create(user=user, **validated_data)
+        profile.categories.set(categories)
+        profile.service_areas.set([service_area])
+        if car_brands:
+            profile.car_brands.set(car_brands)
+        
+        # Activity log
+        from admin_panel.activity_logger import log_vendor_activity
+        log_vendor_activity(
+            f'Müşteri esnafa yükseltildi: {profile.display_name}',
+            {
+                'vendor_id': profile.id,
+                'display_name': profile.display_name,
+                'city': profile.city,
+                'business_type': profile.business_type,
+                'user_email': user.email
+            }
+        )
+        
+        return profile
 
 
 class ServiceRequestSerializer(serializers.ModelSerializer):

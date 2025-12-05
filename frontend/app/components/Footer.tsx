@@ -51,11 +51,11 @@ const Footer = () => (
         <a href="#" aria-label="Instagram" className="footer-social-link">
           <Icon name="instagram" size={22} color="#111" />
         </a>
-        <a href="#" aria-label="X" className="footer-social-link">
-          <Icon name="x-social" size={22} color="#111" />
+        <a href="#" aria-label="TikTok" className="footer-social-link">
+          <Icon name="tiktok" size={22} color="#111" />
         </a>
-        <a href="#" aria-label="YouTube" className="footer-social-link">
-          <Icon name="youtube" size={22} color="#111" />
+        <a href="#" aria-label="Next Sosyal" className="footer-social-link">
+          <Icon name="next-sosyal" size={22} color="#111" />
         </a>
         <a href="#" aria-label="Facebook" className="footer-social-link">
           <Icon name="facebook" size={22} color="#111" />

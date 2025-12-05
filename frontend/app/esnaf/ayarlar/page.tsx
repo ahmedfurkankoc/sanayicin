@@ -77,7 +77,7 @@ export default function EsnafAyarlarPage() {
                   <div className="esnaf-ayarlar-item-content">
                     <h3 className="esnaf-ayarlar-item-title">Hizmetlerim</h3>
                     <p className="esnaf-ayarlar-item-description">
-                      Hizmet alanlarını ve hizmet verdiğiniz araba markalarını seçin
+                      Hizmet alanlarını ve hizmet verdiğiniz araç markalarını seçin
                     </p>
                   </div>
                   <div className="esnaf-ayarlar-item-arrow">→</div>

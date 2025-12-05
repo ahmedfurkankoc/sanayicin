@@ -2597,6 +2597,9 @@
   max-width: 620px;
   position: relative;
   animation: modalSlideIn 0.3s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .m-quote-modal-close {
@@ -2776,6 +2779,61 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+}
+
+/* Mobil için Quote Modal Scroll Desteği */
+@media (max-width: 768px) {
+  .m-quote-modal-overlay {
+    align-items: flex-start;
+    padding: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .m-quote-modal {
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    padding: 20px;
+    margin: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .m-quote-modal-overlay {
+    padding: 0;
+  }
+  
+  .m-quote-modal {
+    padding: 16px;
+    padding-bottom: 24px;
+  }
+  
+  .m-quote-modal-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  
+  .m-quote-form-group {
+    margin-bottom: 14px;
+  }
+  
+  .m-quote-form-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding-top: 16px;
+    margin-top: 8px;
+  }
+  
+  .m-quote-btn {
+    width: 100%;
+  }
 }
 
 /* Mesaj Badge */
@@ -4652,7 +4710,7 @@
 .otp-resend-btn {
   background: none;
   border: none;
-  color: var(--yellow);
+  color: var(--black);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;

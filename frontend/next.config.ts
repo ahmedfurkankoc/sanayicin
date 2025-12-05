@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // SSR için output mode (varsayılan olarak SSR aktif)
+  // Next.js 13+ App Router varsayılan olarak SSR kullanır
+  // Static generation için generateStaticParams kullanılabilir
 };
 
 export default nextConfig;

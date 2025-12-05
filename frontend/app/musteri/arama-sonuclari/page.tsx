@@ -519,7 +519,7 @@ function AramaSonuclariContent() {
           return;
         }
         
-        // Hizmet ve araba markası birlikte seçildiyse, sadece o kombinasyonu ara
+        // Hizmet ve araç markası birlikte seçildiyse, sadece o kombinasyonu ara
         const searchParams: any = {
           city: validatedParams.city,
           district: validatedParams.district,
@@ -533,7 +533,7 @@ function AramaSonuclariContent() {
           searchParams.q = normalizeSearchInput(searchQuery);
         }
         
-        // Araba markası seçildiyse ekle
+        // Araç markası seçildiyse ekle
         if (validatedParams.carBrand) {
           searchParams.carBrand = validatedParams.carBrand;
         }
@@ -571,7 +571,7 @@ function AramaSonuclariContent() {
       }
     };
 
-    // Hizmet veya araba markası seçildiyse arama yap
+    // Hizmet veya araç markası seçildiyse arama yap
     if (debouncedCity || debouncedDistrict || debouncedService || debouncedCategory || debouncedCarBrand || searchQuery) {
       searchVendors();
     }
@@ -833,7 +833,7 @@ function AramaSonuclariContent() {
             />
 
             <FilterSelect
-              label="Araba Markası"
+              label="Araç Markası"
               value={selectedCarBrand}
               onChange={(value) => handleFilterChange('carBrand', value)}
               options={carBrandOptions}
@@ -992,7 +992,7 @@ function AramaSonuclariContent() {
                 />
 
                 <FilterSelect
-                  label="Araba Markası"
+                  label="Araç Markası"
                   value={selectedCarBrand}
                   onChange={(value) => setSelectedCarBrand(value)}
                   options={carBrandOptions}

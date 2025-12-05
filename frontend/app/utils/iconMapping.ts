@@ -125,6 +125,22 @@ export const iconMapping = {
   
   // Sosyal medya ikonları
   'instagram': Instagram,
+  'next-sosyal': ((props: { size?: string | number; color?: string }) => {
+    const size = typeof props.size === 'string' ? parseInt(props.size) : (props.size || 22);
+    const color = props.color || '#111';
+    return React.createElement('img', {
+      src: '/icons/nsosyal.svg',
+      alt: 'Next Sosyal',
+      width: size,
+      height: size,
+      style: {
+        width: size,
+        height: size,
+        display: 'block',
+        filter: color === '#111' ? 'brightness(0)' : undefined,
+      },
+    });
+  }),
   'twitter-x': ((props: { size?: string | number; color?: string }) => {
     const size = typeof props.size === 'string' ? parseInt(props.size) : (props.size || 20);
     const color = props.color || '#111';

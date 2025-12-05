@@ -216,7 +216,7 @@ export default function HizmetlerimPage() {
           <div>
             <h1 className="esnaf-page-title">Hizmetlerim</h1>
             <p className="esnaf-page-subtitle">
-              Hizmet kategorilerinizi ve hizmet verdiğiniz araba markalarını seçin
+              Hizmet kategorilerinizi ve hizmet verdiğiniz araç markalarını seçin
             </p>
           </div>
         </div>
@@ -446,7 +446,7 @@ export default function HizmetlerimPage() {
           </div>
         </div>
 
-        {/* Araba Markaları Bölümü - Dropdown */}
+        {/* Araç Markaları Bölümü - Dropdown */}
         <div style={{ marginBottom: 48 }}>
           <h2 style={{ 
             fontSize: 20, 
@@ -454,14 +454,14 @@ export default function HizmetlerimPage() {
             color: '#111', 
             marginBottom: 16 
           }}>
-            Hizmet Verilen Araba Markaları
+            Hizmet Verilen Araç Markaları
           </h2>
           <p style={{ 
             color: '#666', 
             fontSize: 14, 
             marginBottom: 16 
           }}>
-            Hangi araba markaları için hizmet veriyorsunuz?
+            Hangi araç markaları için hizmet veriyorsunuz?
           </p>
 
           <div className="esnaf-multi-select-container">
@@ -472,7 +472,7 @@ export default function HizmetlerimPage() {
               <span className="esnaf-multi-select-placeholder">
                 {selectedCarBrands.length > 0 
                   ? `${selectedCarBrands.length} marka seçildi` 
-                  : "Araba markaları seçin"}
+                  : "Araç markaları seçin"}
               </span>
               <svg 
                 className={`esnaf-multi-select-arrow ${carBrandsDropdownOpen ? 'open' : ''}`}

@@ -37,7 +37,7 @@ const EnYakinPage = () => {
     <>
       <div className="en-yakin-page">
         {/* Hero Section */}
-        <section className="hero-section">
+        <section className="hero-section hero-with-bg">
           <div className="container">
             <div className="hero-content">
               <div className="hero-text">
@@ -47,9 +47,6 @@ const EnYakinPage = () => {
                 <p className="hero-description">
                   Konumunuza en yakın, güvenilir ve kaliteli ustalara anında ulaşın. Hızlı, güvenli ve uygun fiyatlı hizmet alın.
                 </p>
-              </div>
-              <div className="hero-image">
-                <img src="/images/banner/en-yakin-usta.png" alt="En Yakın Usta" />
               </div>
               <div className="hero-search">
                 <SearchBar />

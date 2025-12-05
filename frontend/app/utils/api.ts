@@ -344,7 +344,7 @@ export const api = {
   getCategoriesByServiceArea: (serviceAreaId: string) => 
     apiClient.get(`/categories/?service_area=${serviceAreaId}`),
   
-  // Araba markaları
+  // Araç markaları
   getCarBrands: () => apiClient.get('/car-brands/'),
   
   // Vendor arama sonuçları
@@ -538,6 +538,12 @@ export const api = {
   }) => apiClient.post(`/vendors/${vendorSlug}/reviews/`, data),
   getUnreadReviewCount: () => apiClient.get('/vendors/reviews/unread_count/'),
   markReviewAsRead: (reviewId: number) => apiClient.post(`/vendors/reviews/${reviewId}/mark_as_read/`),
+
+  // Client to Vendor Upgrade
+  clientToVendorUpgrade: (data: FormData) => 
+    apiClient.post('/vendors/client-upgrade/', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
 
   // Service Requests (Teklif/Talep)
   createServiceRequest: (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -60,6 +60,10 @@ export default function MusteriKayitPage() {
     phone_number: ""
   });
   
+  // Avatar state
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  
   // Verification state
   const [verificationMethod, setVerificationMethod] = useState<'email' | 'sms'>('email');
   const [verificationError, setVerificationError] = useState("");
@@ -74,6 +78,15 @@ export default function MusteriKayitPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Avatar preview cleanup
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
 
   // Konum bilgileri kayıt aşamasında alınmıyor
 
@@ -95,6 +108,23 @@ export default function MusteriKayitPage() {
       return;
     }
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      // Önizleme için URL oluştur
+      const previewUrl = URL.createObjectURL(file);
+      setAvatar(file);
+      setAvatarPreview(previewUrl);
+    } else {
+      // Eski preview URL'ini temizle
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+      setAvatar(null);
+      setAvatarPreview(null);
+    }
   };
 
 
@@ -199,9 +229,21 @@ export default function MusteriKayitPage() {
     setLoading(true);
 
     try {
-      // Backend'e +90 prefix ile gönder
-      const payload = { ...formData, phone_number: `+90${phoneDigits}` };
-      const response = await api.register(payload, 'client');
+      // FormData oluştur (avatar için)
+      const formDataToSend = new FormData();
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('password', formData.password);
+      formDataToSend.append('password2', formData.password2);
+      formDataToSend.append('first_name', formData.first_name);
+      formDataToSend.append('last_name', formData.last_name);
+      formDataToSend.append('phone_number', `+90${phoneDigits}`);
+      
+      // Avatar varsa ekle
+      if (avatar) {
+        formDataToSend.append('avatar', avatar);
+      }
+      
+      const response = await api.register(formDataToSend, 'client');
       
       // OTP gerekiyorsa modal aç
       if (response.data?.requires_sms_verification && response.data?.token) {
@@ -246,9 +288,25 @@ export default function MusteriKayitPage() {
           <div className="musteri-auth-container">
             <div className="musteri-auth-card">
               <div className="musteri-success-message">
-                <h2>Kayıt Başarılı!</h2>
-                <p>Hesabınız başarıyla oluşturuldu. Email doğrulama kodu gönderildi.</p>
-                <p>Giriş sayfasına yönlendiriliyorsunuz...</p>
+                <div style={{ fontSize: '64px', marginBottom: '24px' }}>✅</div>
+                <h2 style={{ color: '#111111', marginBottom: '16px', fontSize: '28px' }}>Kayıt Başarılı!</h2>
+                <p style={{ color: '#666', lineHeight: '1.6', marginBottom: '12px', fontSize: '16px' }}>
+                  Hesabınız başarıyla oluşturuldu ve doğrulandı.
+                </p>
+                <p style={{ color: '#666', lineHeight: '1.6', marginBottom: '24px', fontSize: '14px' }}>
+                  Müşteri paneline yönlendiriliyorsunuz...
+                </p>
+                <div style={{ 
+                  marginTop: '32px',
+                  padding: '16px',
+                  backgroundColor: '#f0f9ff',
+                  borderRadius: '8px',
+                  border: '1px solid #0ea5e9'
+                }}>
+                  <p style={{ color: '#0369a1', fontSize: '14px', margin: 0, textAlign: 'center' }}>
+                    🎉 Artık Sanayicin'de hizmet alabilir, esnaflarla iletişime geçebilir ve randevu oluşturabilirsiniz!
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -313,9 +371,9 @@ export default function MusteriKayitPage() {
 
           <div className="musteri-auth-container musteri-register-right">
             <div className="musteri-auth-card">
-              <h1 className="musteri-auth-title">Ücretsiz Sanayicin hesabınızı hemen oluşturun</h1>
+              <h1 className="musteri-auth-title">Sanayicin'e Ücretsiz Üye Olun</h1>
               <p className="musteri-auth-subtitle">
-                Hızlıca hesap oluşturun ve hizmet almaya başlayın
+                Aracınız için güvenilir ustaları bulun ve hizmet almaya başlayın
               </p>
 
             {/* Step 1: Form */}
@@ -415,6 +473,59 @@ export default function MusteriKayitPage() {
                 {/* Adres alanı kaldırıldı */}
 
                 {/* Hakkımda alanı kaldırıldı */}
+
+                {/* Profil Fotoğrafı */}
+                <div className="musteri-form-group">
+                  <label htmlFor="avatar" className="musteri-form-label">
+                    Profil Fotoğrafı (Opsiyonel)
+                  </label>
+                  <input
+                    type="file"
+                    id="avatar"
+                    name="avatar"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="musteri-form-input"
+                    style={{ padding: '8px' }}
+                  />
+                  {avatarPreview && (
+                    <div style={{
+                      marginTop: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <img
+                        src={avatarPreview}
+                        alt="Profil fotoğrafı önizleme"
+                        style={{
+                          width: '150px',
+                          height: '150px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '2px solid #e2e8f0',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}
+                      />
+                      <div style={{
+                        fontSize: '0.875rem',
+                        color: '#6b7280',
+                        textAlign: 'center'
+                      }}>
+                        {avatar?.name}
+                      </div>
+                    </div>
+                  )}
+                  <small style={{ 
+                    display: 'block', 
+                    marginTop: '4px', 
+                    color: '#64748b', 
+                    fontSize: '12px' 
+                  }}>
+                    Maksimum 5MB, JPG, PNG
+                  </small>
+                </div>
 
                 <div className="musteri-form-group">
                     <label htmlFor="password" className="musteri-form-label">

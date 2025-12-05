@@ -17,8 +17,6 @@ from .views import (
     forgot_password,
     reset_password,
     upload_avatar,
-    request_vendor_upgrade,
-    check_vendor_upgrade_status,
     get_profile,
     update_profile,
     FavoriteListView,
@@ -70,10 +68,6 @@ urlpatterns = [
     path('blog/posts/<slug:slug>/', public_blog_detail, name='public-blog-detail'),
     path('blog/posts/<slug:slug>/related/', public_blog_related, name='public-blog-related'),
     path('blog/categories/', public_blog_categories, name='public-blog-categories'),
-    
-    # Vendor upgrade endpoints
-    path('vendor/upgrade/', request_vendor_upgrade, name='request_vendor_upgrade'),
-    path('vendor/upgrade/status/', check_vendor_upgrade_status, name='check_vendor_upgrade_status'),
     
     # Favorite endpoints
     path('favorites/', FavoriteListView.as_view(), name='favorite-list'),

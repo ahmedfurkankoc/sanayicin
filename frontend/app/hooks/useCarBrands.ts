@@ -26,8 +26,8 @@ export const useCarBrands = () => {
       const activeBrands = brands.filter((brand: CarBrand) => brand.is_active);
       setCarBrands(activeBrands);
     } catch (err) {
-      console.error('Araba markaları yüklenemedi:', err);
-      setError('Araba markaları yüklenirken bir hata oluştu');
+      console.error('Araç markaları yüklenemedi:', err);
+      setError('Araç markaları yüklenirken bir hata oluştu');
       setCarBrands([]);
     } finally {
       setLoading(false);

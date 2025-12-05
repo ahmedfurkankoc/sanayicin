@@ -38,7 +38,7 @@ const UstaAriyorumPage = () => {
     <>
     <div className="usta-ariyorum-page">
       {/* Hero Section */}
-      <section className="hero-section">
+      <section className="hero-section hero-with-bg">
         <div className="container">
           <div className="hero-content">
             <div className="hero-text">
@@ -49,9 +49,6 @@ const UstaAriyorumPage = () => {
                 Türkiye'nin her yerinden güvenilir ve kaliteli oto sanayi ustalarına kolayca ulaşın. 
                 Aracınızın her türlü bakım ve onarım ihtiyacı için profesyonel çözümler.
               </p>
-            </div>
-            <div className="hero-image">
-              <img src="/images/banner/en-yakin-usta.png" alt="En Yakın Usta" />
             </div>
             <div className="hero-search">
               <SearchBar />

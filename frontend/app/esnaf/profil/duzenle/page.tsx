@@ -30,6 +30,8 @@ export default function EsnafProfilDuzenlePage() {
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [previewImages, setPreviewImages] = useState<Array<{ file: File; preview: string; id: string }>>([]);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Turkey data (city/district/neighbourhood)
   const { cities, loadTurkeyData, getDistricts, getNeighbourhoods } = useTurkeyData();
@@ -153,6 +155,15 @@ export default function EsnafProfilDuzenlePage() {
     };
   }, [previewImages]);
 
+  // Avatar preview cleanup
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
   // When profile.city changes, populate districts
   useEffect(() => {
     if (!profile?.city) {
@@ -235,6 +246,11 @@ export default function EsnafProfilDuzenlePage() {
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Önce önizleme göster
+      const previewUrl = URL.createObjectURL(file);
+      setAvatarPreview(previewUrl);
+      setUploadingAvatar(true);
+      
       try {
         const formData = new FormData();
         formData.append('avatar', file);
@@ -242,6 +258,11 @@ export default function EsnafProfilDuzenlePage() {
         const response = await api.uploadAvatar(formData, 'vendor');
         
         if (response.data.avatar_url) {
+          // Eski preview URL'ini temizle
+          if (avatarPreview) {
+            URL.revokeObjectURL(avatarPreview);
+          }
+          
           // Profile'ı güncelle - hem avatar hem user.avatar olarak
           setProfile((prev: any) => ({
             ...prev,
@@ -251,13 +272,23 @@ export default function EsnafProfilDuzenlePage() {
               avatar: response.data.avatar_url
             }
           }));
+          
+          // Preview'ı temizle (artık gerçek URL var)
+          setAvatarPreview(null);
           toast.success('Avatar başarıyla yüklendi! Eski avatar silindi.');
           
           // Context'i güncelle
           await refreshUser();
         }
       } catch (error: any) {
-        toast.error('Avatar yüklenirken hata oluştu!');
+        // Hata durumunda preview'ı temizle
+        if (avatarPreview) {
+          URL.revokeObjectURL(avatarPreview);
+        }
+        setAvatarPreview(null);
+        toast.error(error.response?.data?.error || 'Avatar yüklenirken hata oluştu!');
+      } finally {
+        setUploadingAvatar(false);
       }
     }
     // Input'u temizle
@@ -554,11 +585,11 @@ export default function EsnafProfilDuzenlePage() {
                 <div className="esnaf-form-group">
                   <label>Profil Fotoğrafı</label>
                   <div className="esnaf-photo-upload" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {(profile.avatar || profile.user?.avatar) && (
+                    {(avatarPreview || profile.avatar || profile.user?.avatar) && (
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img 
-                          src={resolveMediaUrl(profile.avatar || profile.user?.avatar)} 
-                          alt="Mevcut Profil Fotoğrafı" 
+                          src={avatarPreview || resolveMediaUrl(profile.avatar || profile.user?.avatar)} 
+                          alt={avatarPreview ? "Yeni Profil Fotoğrafı Önizleme" : "Mevcut Profil Fotoğrafı"} 
                           className="esnaf-photo-preview"
                           style={{ 
                             width: '150px', 
@@ -566,16 +597,32 @@ export default function EsnafProfilDuzenlePage() {
                             objectFit: 'cover', 
                             borderRadius: '8px',
                             border: '2px solid #ddd',
-                            display: 'block'
+                            display: 'block',
+                            opacity: uploadingAvatar ? 0.6 : 1
                           }}
                         />
+                        {uploadingAvatar && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            background: 'rgba(0,0,0,0.7)',
+                            color: 'white',
+                            padding: '8px 16px',
+                            borderRadius: '4px',
+                            fontSize: '12px'
+                          }}>
+                            Yükleniyor...
+                          </div>
+                        )}
                         <div style={{
                           marginTop: '8px',
                           fontSize: '12px',
                           color: '#666',
                           textAlign: 'center'
                         }}>
-                          Mevcut profil fotoğrafı
+                          {avatarPreview ? 'Yeni profil fotoğrafı önizleme' : 'Mevcut profil fotoğrafı'}
                         </div>
                       </div>
                     )}
@@ -604,23 +651,27 @@ export default function EsnafProfilDuzenlePage() {
                         className="esnaf-file-input"
                         id="avatar-upload"
                         style={{ display: 'none' }}
+                        disabled={uploadingAvatar}
                       />
                       <label
                         htmlFor="avatar-upload"
                         style={{
-                          cursor: 'pointer',
+                          cursor: uploadingAvatar ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          gap: '8px'
+                          gap: '8px',
+                          opacity: uploadingAvatar ? 0.6 : 1
                         }}
                       >
                         <span style={{ color: '#666', fontSize: '14px' }}>
-                          {(profile.avatar || profile.user?.avatar) ? 'Profil fotoğrafını değiştir' : 'Profil fotoğrafı seç'}
+                          {uploadingAvatar ? 'Yükleniyor...' : ((profile.avatar || profile.user?.avatar) ? 'Profil fotoğrafını değiştir' : 'Profil fotoğrafı seç')}
                         </span>
-                        <span style={{ color: '#999', fontSize: '12px' }}>
-                          Maksimum 5MB, JPG, PNG
-                        </span>
+                        {!uploadingAvatar && (
+                          <span style={{ color: '#999', fontSize: '12px' }}>
+                            Maksimum 5MB, JPG, PNG
+                          </span>
+                        )}
                       </label>
                     </div>
                   </div>
@@ -908,13 +959,13 @@ export default function EsnafProfilDuzenlePage() {
                 </div>
 
                 <div className="esnaf-form-group">
-                  <label>Hizmet Verilen Araba Markaları</label>
+                  <label>Hizmet Verilen Araç Markaları</label>
                   <div className="esnaf-multi-select-container">
                     <div className="esnaf-multi-select-header" onClick={() => setCarBrandsDropdownOpen(!carBrandsDropdownOpen)}>
                       <span className="esnaf-multi-select-placeholder">
                         {profile.car_brands && profile.car_brands.length > 0 
                           ? `${profile.car_brands.length} marka seçildi` 
-                          : "Araba markaları seçin"}
+                          : "Araç markaları seçin"}
                       </span>
                       <svg 
                         className={`esnaf-multi-select-arrow ${carBrandsDropdownOpen ? 'open' : ''}`}

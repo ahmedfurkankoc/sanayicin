@@ -254,7 +254,7 @@ export default function EsnafProfilPage() {
 
             {/* Car Brands */}
             <div className="esnaf-profile-card">
-              <h3 className="esnaf-card-title">Araba Markaları</h3>
+              <h3 className="esnaf-card-title">Araç Markaları</h3>
               <div className="esnaf-skills-container">
                 {user.car_brands && user.car_brands.length > 0 ? (
                   user.car_brands.map((brand: any, index: number) => (
