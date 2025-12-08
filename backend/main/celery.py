@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from celery import Celery
+from celery.schedules import crontab
 
 # Load environment variables from .env file
 load_dotenv()
@@ -63,11 +64,7 @@ app.conf.update(
 app.conf.beat_schedule = {
     'refresh-all-domains-daily-0001-tr': {
         'task': 'admin_panel.refresh_all_domains',
-        'schedule': {
-            'type': 'crontab',
-            'minute': 1,
-            'hour': 0,
-        },
+        'schedule': crontab(minute=1, hour=0),  # Her gün saat 00:01'de çalışır
         'options': {
             'queue': 'default',
         },
