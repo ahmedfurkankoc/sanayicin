@@ -6,10 +6,12 @@ After=network.target redis-server.service
 Type=simple
 User=sanayicin
 Group=www-data
-WorkingDirectory=/var/www/sanayicin/backend
-Environment="PATH=/var/www/sanayicin/backend/venv/bin"
+WorkingDirectory=/home/sanayicin/sanayicin-app/backend
+Environment="PATH=/home/sanayicin/sanayicin-app/backend/venv/bin"
 Environment="DJANGO_SETTINGS_MODULE=main.settings_production"
-ExecStart=/var/www/sanayicin/backend/venv/bin/celery -A main worker -l info --concurrency=2
+EnvironmentFile=/home/sanayicin/sanayicin-app/backend/.env
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/home/sanayicin/sanayicin-app/backend/venv/bin/celery -A main worker -l info --concurrency=2
 Restart=always
 
 [Install]

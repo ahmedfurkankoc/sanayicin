@@ -5,7 +5,8 @@ from channels.auth import AuthMiddlewareStack
 from django.urls import re_path
 
 # Django ayarlarını importlardan önce set et
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "main.settings")
+# Production'da environment variable'dan alınır, yoksa settings kullanılır
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", os.environ.get("DJANGO_SETTINGS_MODULE", "main.settings"))
 
 # Django'yu başlat
 django_asgi_app = get_asgi_application()

@@ -17,7 +17,7 @@ const PERMISSION_MATRIX: { [key: string]: string[] } = {
   '/logs': ['logs'],
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   
   // SEO engelleme header'ları ekle
@@ -31,8 +31,8 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  // Middleware'i devre dışı bırak - localStorage kontrolü client-side'da yapılıyor
-  // Cross-domain cookie sorunu nedeniyle middleware cookie kontrolü yapamıyor
+  // Proxy'yi devre dışı bırak - localStorage kontrolü client-side'da yapılıyor
+  // Cross-domain cookie sorunu nedeniyle proxy cookie kontrolü yapamıyor
   return response
 }
 
@@ -71,3 +71,4 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
+

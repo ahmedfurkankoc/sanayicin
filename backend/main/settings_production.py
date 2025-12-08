@@ -35,6 +35,8 @@ ALLOWED_HOSTS = [
     'www.sanayicin.com',
     'esnaf.sanayicin.com',
     'api.sanayicin.com',
+    'localhost',
+    '127.0.0.1',
 ]
 
 # Security Headers - Production
