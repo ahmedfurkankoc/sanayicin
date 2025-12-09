@@ -29,9 +29,7 @@ export default function EsnafGirisPage() {
     setLoading(true);
     try {
       // Tek endpoint ile giriş yap
-      const apiUrl = typeof window !== 'undefined' && window.location.hostname === 'test.sanayicin.com' 
-        ? 'https://test.sanayicin.com/api' 
-        : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
       
       const res = await axios.post(`${apiUrl}/auth/login/`, {
         email,

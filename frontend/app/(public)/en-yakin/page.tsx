@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import React from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../../components/Footer";
+import Navbar from "@/app/components/public/Navbar";
+import Footer from "@/app/components/Footer";
 import Icon from "@/app/components/ui/Icon";
 import Link from "next/link";
-import SearchBar from "../components/SearchBar";
+import SearchBar from "@/app/components/public/SearchBar";
 
 export const metadata: Metadata = {
   title: "En Yakın Usta - Konumunuza En Yakın Oto Sanayi Ustalarını Bulun",

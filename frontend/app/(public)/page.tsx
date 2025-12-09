@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import HomeClient from "./components/HomeClient";
+import HomeContent from "@/app/components/public/HomeContent";
 
 export const metadata: Metadata = {
   title: "Sanayicin - Size En Yakın Oto Sanayi Ustasını Hemen Bulun",
@@ -38,6 +38,10 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <HomeClient />;
+  return (
+    <>
+      <HomeContent />
+    </>
+  );
 }
  

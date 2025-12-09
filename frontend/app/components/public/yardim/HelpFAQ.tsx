@@ -1,0 +1,90 @@
+'use client';
+
+import { useState } from "react";
+import { iconMapping } from "@/app/utils/iconMapping";
+
+export default function HelpFAQ() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <div className="help-faq-section">
+      <div className="faq-header">
+        <h2 className="faq-main-title">Merak edilen sorular?</h2>
+        <p className="faq-subtitle">En çok sorduğun konuları bir araya topladık. 😇</p>
+      </div>
+      <div className="faq-grid">
+        <div className="faq-category">
+          <h3 className="faq-category-title">Kullanıcı SSS</h3>
+          <div className="faq-list">
+            {[
+              { q: "Nasıl usta bulurum?", a: "Anasayfadaki arama bölümünden ihtiyacın olan hizmeti ve konumu seçerek arama yapabilirsin." },
+              { q: "Teklif nasıl isterim?", a: "İlgilendiğin usta/esnaf profiline girip 'Teklif İste' butonuna tıklayarak talebini detaylandır." },
+              { q: "Rezervasyon yapabilir miyim?", a: "Usta uygunluk sağlıyorsa profil üzerinden rezervasyon istek formunu doldurarak randevu talep edebilirsin." },
+              { q: "Hesap oluşturmak zorunlu mu?", a: "Teklif istemek ve mesajlaşmak için ücretsiz bir müşteri hesabı gereklidir." },
+              { q: "Usta ile nasıl mesajlaşırım?", a: "Teklif isteği sonrasında sohbet ekranı açılır. 'Mesajlarım' üzerinden görüşmeyi sürdürebilirsin." }
+            ].map((item, idx) => {
+              const isOpen = openIndex === idx;
+              const PlusIcon = iconMapping['plus'];
+              const MinusIcon = iconMapping['minus'];
+              return (
+                <div key={idx} className={`faq-item ${isOpen ? "active" : ""}`}>
+                  <button
+                    type="button"
+                    className="faq-question"
+                    onClick={() => setOpenIndex(isOpen ? null : idx)}
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${idx}`}
+                  >
+                    <span>{item.q}</span>
+                    <span className="faq-icon">
+                      {isOpen ? <MinusIcon size={16} /> : <PlusIcon size={16} />}
+                    </span>
+                  </button>
+                  <div id={`faq-answer-${idx}`} className="faq-answer">
+                    <p>{item.a}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="faq-category">
+          <h3 className="faq-category-title">Esnaf SSS</h3>
+          <div className="faq-list">
+            {[
+              { q: "Esnaf hesabı nasıl oluştururum?", a: "'Hizmet Vermek' sayfasından başvuru formunu doldurup gerekli belgeleri yükleyerek hesap oluşturabilirsin." },
+              { q: "Profilimi nasıl doğrularım?", a: "Kimlik belgesi, vergi levhası ve mesleki sertifikalarını yükleyerek profil doğrulamasını tamamlayabilirsin." },
+              { q: "Gelen talepleri nasıl yanıtlarım?", a: "Esnaf panelindeki 'Talepler' bölümünden gelen teklifleri görüntüleyip detaylı yanıt verebilirsin." },
+              { q: "Profilimi nasıl güncellerim?", a: "Esnaf panelindeki 'Profil Ayarları' bölümünden kişisel bilgilerini, hizmet alanlarını ve iletişim bilgilerini güncelleyebilirsin." },
+              { q: "Müşterilerle nasıl mesajlaşırım?", a: "Teklif yanıtladıktan sonra sohbet ekranı açılır. 'Mesajlarım' bölümünden tüm görüşmeleri takip edebilirsin." }
+            ].map((item, idx) => {
+              const isOpen = openIndex === (idx + 5);
+              const PlusIcon = iconMapping['plus'];
+              const MinusIcon = iconMapping['minus'];
+              return (
+                <div key={idx} className={`faq-item ${isOpen ? "active" : ""}`}>
+                  <button
+                    type="button"
+                    className="faq-question"
+                    onClick={() => setOpenIndex(isOpen ? null : (idx + 5))}
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${idx + 5}`}
+                  >
+                    <span>{item.q}</span>
+                    <span className="faq-icon">
+                      {isOpen ? <MinusIcon size={16} /> : <PlusIcon size={16} />}
+                    </span>
+                  </button>
+                  <div id={`faq-answer-${idx + 5}`} className="faq-answer">
+                    <p>{item.a}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

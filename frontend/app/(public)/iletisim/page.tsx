@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import React from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../../components/Footer";
-import Banner from "../components/Banner";
+import Navbar from "@/app/components/public/Navbar";
+import Footer from "@/app/components/Footer";
+import Banner from "@/app/components/public/Banner";
 
 export const metadata: Metadata = {
   title: "İletişim",

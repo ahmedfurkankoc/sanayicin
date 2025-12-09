@@ -1,6 +1,15 @@
 import axios from 'axios';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
+// API URL'i .env'den al, yoksa next.config.ts'den, yoksa localhost
+// Eğer /api yoksa ekle
+let apiUrl = process.env.NEXT_PUBLIC_API_URL;
+if (!apiUrl) {
+  apiUrl = "http://localhost:8000/api";
+} else if (!apiUrl.includes('/api')) {
+  // Eğer /api yoksa ekle
+  const baseUrl = apiUrl.replace(/\/$/, ''); // Trailing slash'i kaldır
+  apiUrl = `${baseUrl}/api`;
+}
 
 // Media base URL (strip trailing /api for static/media files)
 export const mediaBaseUrl = (() => {

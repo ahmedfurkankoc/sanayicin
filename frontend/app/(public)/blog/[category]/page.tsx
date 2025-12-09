@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Banner from '../../components/Banner'
+import Banner from '@/app/components/public/Banner'
 import { api, resolveMediaUrl } from '../../../utils/api'
 
 interface PublicBlogPost {

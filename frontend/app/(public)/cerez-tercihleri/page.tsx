@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import React from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../../components/Footer";
-import PolicyLayout from "../components/PolicyLayout";
-import PolicySection from "../components/PolicySection";
+import Navbar from "@/app/components/public/Navbar";
+import Footer from "@/app/components/Footer";
+import PolicyLayout from "@/app/components/public/PolicyLayout";
+import PolicySection from "@/app/components/public/PolicySection";
 
 export const metadata: Metadata = {
   title: "Çerez Tercihleri",
   description: "Sanayicin çerez tercihleri yönetim sayfası. Analitik ve pazarlama çerezleri için tercihlerinizi yönetin.",
-  robots: {
-    index: false,
-    follow: true,
-  },
   openGraph: {
     title: "Çerez Tercihleri | Sanayicin",
     description: "Sanayicin çerez tercihleri yönetim sayfası.",

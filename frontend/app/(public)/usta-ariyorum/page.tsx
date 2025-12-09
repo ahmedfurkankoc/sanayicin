@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import React from "react";
-import SearchBar from "../components/SearchBar";
-import Navbar from "../components/Navbar";
-import Footer from "../../components/Footer";
-import VideoBanner from "../../components/VideoBanner";
+import SearchBar from "@/app/components/public/SearchBar";
+import Navbar from "@/app/components/public/Navbar";
+import Footer from "@/app/components/Footer";
+import VideoBanner from "@/app/components/VideoBanner";
 import Icon from "@/app/components/ui/Icon";
 
 export const metadata: Metadata = {

@@ -29,7 +29,6 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 # Security Settings - Production
 ALLOWED_HOSTS = [
-    'test.sanayicin.com',
     'admin.sanayicin.com',
     'sanayicin.com',
     'www.sanayicin.com',
@@ -97,9 +96,7 @@ MIDDLEWARE = [
 
 # CORS Security - Production
 CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False').lower() == 'true'
-CORS_ALLOWED_ORIGINS = [
-    "https://test.sanayicin.com",
-    "http://test.sanayicin.com",
+CORS_ALLOWED_ORIGINS = 
     "https://admin.sanayicin.com",
     "http://admin.sanayicin.com",
     "https://sanayicin.com",
@@ -148,11 +145,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'main.wsgi.application'
 
-# Database - Production (SQLite)
+# Database - Production (PostgreSQL)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'sanayicin'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+        'OPTIONS': {
+            'connect_timeout': 10,
+            'options': '-c statement_timeout=30000',  # 30 saniye query timeout
+        },
+        # Connection pooling - Yüksek trafik için
+        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '600')),  # 10 dakika
+        'ATOMIC_REQUESTS': True,  # Her request transaction içinde
     }
 }
 

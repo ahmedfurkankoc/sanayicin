@@ -50,7 +50,7 @@ export default function MusteriHeader() {
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 
         (process.env.NEXT_PUBLIC_API_URL ? 
           process.env.NEXT_PUBLIC_API_URL.replace('https://', 'wss://').replace('http://', 'ws://').replace('/api', '') : 
-          'wss://test.sanayicin.com'
+          'ws://localhost:8000'
         );
       
       const ws = new WebSocket(`${wsUrl}/ws/chat/global/?token=${encodeURIComponent(currentToken)}`);

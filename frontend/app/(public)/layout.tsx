@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "../styles/styles.css";
 import { Toaster } from "@/app/components/ui/sonner";
-import Navbar from "./components/Navbar";
-import Footer from "../components/Footer";
-import MobileBottomNav from "../components/MobileBottomNav";
+import Navbar from "@/app/components/public/Navbar";
+import Footer from "@/app/components/Footer";
+import MobileBottomNav from "@/app/components/MobileBottomNav";
 
 export const metadata: Metadata = {
   title: {

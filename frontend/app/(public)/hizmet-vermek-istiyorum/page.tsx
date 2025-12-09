@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import React from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../../components/Footer";
-import Banner from "../components/Banner";
-import PlatformFeatures from "../components/PlatformFeatures";
-import SuccessStories from "../components/SuccessStories";
+import Navbar from "@/app/components/public/Navbar";
+import Footer from "@/app/components/Footer";
+import Banner from "@/app/components/public/Banner";
+import PlatformFeatures from "@/app/components/public/PlatformFeatures";
+import SuccessStories from "@/app/components/public/SuccessStories";
 import { iconMapping } from "../../utils/iconMapping";
 
 export const metadata: Metadata = {

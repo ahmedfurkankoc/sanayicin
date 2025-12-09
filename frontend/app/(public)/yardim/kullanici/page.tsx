@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import Banner from "../../components/Banner";
+import Banner from "@/app/components/public/Banner";
 import { iconMapping } from "../../../utils/iconMapping";
-import SupportTicketCTA from "../../components/SupportTicketCTA";
+import SupportTicketCTA from "@/app/components/public/SupportTicketCTA";
 
 export default function MusteriYardimPage() {
   const faqCategories = [

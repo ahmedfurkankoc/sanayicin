@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import React from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../../components/Footer";
-import PolicyLayout from "../components/PolicyLayout";
-import PolicySection from "../components/PolicySection";
+import Navbar from "@/app/components/public/Navbar";
+import Footer from "@/app/components/Footer";
+import PolicyLayout from "@/app/components/public/PolicyLayout";
+import PolicySection from "@/app/components/public/PolicySection";
 
 export const metadata: Metadata = {
   title: "Esnaf Sözleşmesi",
   description: "Sanayicin esnaf sözleşmesi. Esnaf hak ve yükümlülükleri, hizmet sunumu, komisyon ve platform kullanım şartları.",
-  robots: {
-    index: true,
-    follow: true,
-  },
   openGraph: {
     title: "Esnaf Sözleşmesi | Sanayicin",
     description: "Sanayicin esnaf sözleşmesi ve platform kullanım şartları.",

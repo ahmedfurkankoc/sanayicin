@@ -1,5 +1,5 @@
    import React from "react";
-   import { iconMapping, iconSizes, iconColors } from "../../utils/iconMapping";
+import { iconMapping, iconSizes, iconColors } from "@/app/utils/iconMapping";
 
 const advantages = [
   {

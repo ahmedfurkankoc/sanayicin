@@ -3,15 +3,15 @@
 import { useEffect } from "react";
 import SearchBar from "./SearchBar";
 import VendorCard from "./VendorCard";
-import VendorCardSkeleton from "../../components/VendorCardSkeleton";
+import VendorCardSkeleton from "@/app/components/VendorCardSkeleton";
 import AppBanner from "./AppBanner";
 import CTASection from "./CTASection";
 import PlatformAdvantages from "./PlatformAdvantages";
 import HowItWorks from "./HowItWorks";
 import CityVendorsSection from "./CityVendorsSection";
 import ServicesSection from "./ServicesSection";
-import { useMobileVendors } from "../../hooks/useMobileVendors";
-import { useServices } from "../../hooks/useServices";
+import { useMobileVendors } from "@/app/hooks/useMobileVendors";
+import { useServices } from "@/app/hooks/useServices";
 
 export default function HomeClient() {
   const { vendors, loading, error } = useMobileVendors();

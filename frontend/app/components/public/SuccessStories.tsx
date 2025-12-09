@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { iconMapping } from "../../utils/iconMapping";
+import { iconMapping } from "@/app/utils/iconMapping";
 
 const SuccessStories = () => {
   const [currentSlide, setCurrentSlide] = useState(0);

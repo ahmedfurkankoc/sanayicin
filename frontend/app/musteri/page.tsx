@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { iconMapping } from '@/app/utils/iconMapping';
 import Sidebar from './components/Sidebar';
 import Image from 'next/image';
-import VendorCard from '@/app/(public)/components/VendorCard';
+import VendorCard from '@/app/components/public/VendorCard';
 import VendorCardSkeleton from '@/app/components/VendorCardSkeleton';
 import { useMobileVendors } from '@/app/hooks/useMobileVendors';
 import { api } from '@/app/utils/api';

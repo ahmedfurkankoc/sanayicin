@@ -1,5 +1,5 @@
 import React from "react";
-import { iconMapping } from "../../utils/iconMapping";
+import { iconMapping } from "@/app/utils/iconMapping";
 
 const PlatformFeatures = () => {
   return (

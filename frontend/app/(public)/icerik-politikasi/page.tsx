@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import React from "react";
-import Navbar from "../components/Navbar";
-import Footer from "../../components/Footer";
-import PolicyLayout from "../components/PolicyLayout";
-import PolicySection from "../components/PolicySection";
+import Navbar from "@/app/components/public/Navbar";
+import Footer from "@/app/components/Footer";
+import PolicyLayout from "@/app/components/public/PolicyLayout";
+import PolicySection from "@/app/components/public/PolicySection";
 
 export const metadata: Metadata = {
   title: "İçerik Politikası",
   description: "Sanayicin içerik politikası. Kabul edilebilir kullanım, yasak içerikler, bildirim ve kaldırma süreçleri hakkında bilgi.",
-  robots: {
-    index: true,
-    follow: true,
-  },
   openGraph: {
     title: "İçerik Politikası | Sanayicin",
     description: "Sanayicin içerik politikası ve kullanım kuralları.",

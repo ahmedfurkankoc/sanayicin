@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Navbar from "../components/Navbar";
-import Banner from "../components/Banner";
-import Footer from "../../components/Footer";
+import Navbar from "@/app/components/public/Navbar";
+import Banner from "@/app/components/public/Banner";
+import Footer from "@/app/components/Footer";
 import { Backpack } from "lucide-react";
 
 export const metadata: Metadata = {
