@@ -265,7 +265,7 @@ class VendorView(models.Model):
     viewer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True, related_name='vendor_views')
     ip_hash = models.CharField(max_length=64, blank=True)
     ua_hash = models.CharField(max_length=64, blank=True)
-    month_bucket = models.CharField(max_length=7, help_text="YYYY-MM")
+    month_bucket = models.CharField(max_length=10, help_text="YYYY-MM-DD (günlük bazlı kayıt)")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -285,7 +285,7 @@ class VendorCall(models.Model):
     viewer = models.ForeignKey(get_user_model(), on_delete=models.SET_NULL, null=True, blank=True, related_name='vendor_calls')
     phone = models.CharField(max_length=32, blank=True)
     ip_hash = models.CharField(max_length=64, blank=True)
-    month_bucket = models.CharField(max_length=7, help_text="YYYY-MM")
+    month_bucket = models.CharField(max_length=10, help_text="YYYY-MM-DD (günlük bazlı kayıt)")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

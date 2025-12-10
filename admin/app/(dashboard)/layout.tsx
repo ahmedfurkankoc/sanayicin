@@ -332,7 +332,12 @@ function StatusChips() {
 
   const checkApi = useCallback(async () => {
     try {
-      const resp = await fetch((process.env.NEXT_PUBLIC_API_URL || '/api/admin') + '/auth/user/', { credentials: 'include' })
+      // API URL'i doğru şekilde oluştur (versioning: /api/v1/admin/)
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || '/api/v1/admin'
+      // URL'in sonunda / varsa kaldır, yoksa ekle
+      const cleanBaseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl
+      const apiUrl = `${cleanBaseUrl}/auth/user/`
+      const resp = await fetch(apiUrl, { credentials: 'include' })
       setApiOk(resp.ok)
     } catch {
       setApiOk(false)
@@ -342,13 +347,46 @@ function StatusChips() {
   const checkWs = useCallback(() => {
     try {
       const wsUrl = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_WS_URL || '')) || ''
-      if (!wsUrl) { setWsOk(false); return }
+      // WS URL yoksa pasif göster (normal durum, opsiyonel)
+      if (!wsUrl || wsUrl.trim() === '') { 
+        setWsOk(null) // null = bilinmiyor/opsiyonel
+        return 
+      }
+      
+      // WebSocket bağlantısını test et
       const ws = new WebSocket(wsUrl)
       let settled = false
-      ws.onopen = () => { settled = true; setWsOk(true); ws.close() }
-      ws.onerror = () => { if (!settled) setWsOk(false) }
+      let timeoutId: NodeJS.Timeout | null = null
+      
+      ws.onopen = () => { 
+        settled = true
+        setWsOk(true)
+        if (timeoutId) clearTimeout(timeoutId)
+        ws.close()
+      }
+      
+      ws.onerror = () => { 
+        if (!settled) {
+          setWsOk(false)
+          if (timeoutId) clearTimeout(timeoutId)
+        }
+      }
+      
+      ws.onclose = () => {
+        if (timeoutId) clearTimeout(timeoutId)
+      }
+      
       // Safety close after 3s
-      setTimeout(() => { try { ws.close() } catch {} }, 3000)
+      timeoutId = setTimeout(() => { 
+        try { 
+          if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+            ws.close()
+          }
+          if (!settled) {
+            setWsOk(false)
+          }
+        } catch {} 
+      }, 3000)
     } catch {
       setWsOk(false)
     }
@@ -361,15 +399,28 @@ function StatusChips() {
     return () => clearInterval(t)
   }, [checkApi, checkWs])
 
-  const chip = (label: string, state: boolean | null, title: string) => (
-    <span title={title} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
-      state ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-600 border-gray-200'
-    }`}>
-      <span className={`mr-2 h-2 w-2 rounded-full ${state ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-      {label}
-      <span className="ml-1">{state ? ':aktif' : ':pasif'}</span>
-    </span>
-  )
+  const chip = (label: string, state: boolean | null, title: string) => {
+    // state === null ise "bilinmiyor/opsiyonel" durumu (WS için)
+    if (state === null) {
+      return (
+        <span title={title} className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-gray-50 text-gray-500 border-gray-200">
+          <span className="mr-2 h-2 w-2 rounded-full bg-gray-300"></span>
+          {label}
+          <span className="ml-1">:yapılandırılmamış</span>
+        </span>
+      )
+    }
+    
+    return (
+      <span title={title} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+        state ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
+      }`}>
+        <span className={`mr-2 h-2 w-2 rounded-full ${state ? 'bg-green-500' : 'bg-red-500'}`}></span>
+        {label}
+        <span className="ml-1">{state ? ':aktif' : ':pasif'}</span>
+      </span>
+    )
+  }
 
   return (
     <div className="hidden lg:flex items-center gap-2 mx-4">

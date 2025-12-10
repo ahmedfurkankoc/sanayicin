@@ -3,8 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
-import { api, setAuthToken, setAuthEmail } from "@/app/utils/api";
+import { api, setAuthEmail, setCsrfToken } from "@/app/utils/api";
 import { useMusteri } from "../context/MusteriContext";
 
 function MusteriGirisContent() {
@@ -30,41 +29,49 @@ function MusteriGirisContent() {
     setError("");
     setLoading(true);
     try {
-      // Esnaf giriş akışına benzer: direkt login endpoint'ine isteği gönder
+      // Session Authentication: HttpOnly cookie'ler backend tarafından set edilir
       const res = await api.login({ email, password });
-      if (res.status === 200 && res.data.access) {
-        const { access, role, is_verified } = res.data;
+      
+      if (res.status === 200 && res.data.role) {
+        const { role, is_verified, csrf_token } = res.data;
 
-        // Hem client hem vendor kullanıcıları müşteri panelini kullanabilir
-        const tokenRole = role === 'vendor' || role === 'admin' ? 'vendor' : 'client';
-        setAuthToken(tokenRole, access);
-        setAuthEmail(tokenRole, email);
+        // CSRF token'ı kaydet
+        if (csrf_token) {
+          setCsrfToken(csrf_token);
+        }
+        
+        // Email'i localStorage'a kaydet (session cookie HttpOnly)
+        setAuthEmail(role === 'vendor' ? 'vendor' : 'client', email);
 
         // Doğrulanmamışsa müşteri email doğrulama sayfasına yönlendir
         if (!is_verified) {
           router.push(`/musteri/email-dogrula?email=${encodeURIComponent(email)}`);
+          setLoading(false);
           return;
         }
 
-        // Kullanıcı bilgisini yenile ve yönlendir
-        await refreshUser();
+        // Context'i arka planda yenile (yönlendirme beklemeden)
+        refreshUser().catch((refreshError) => {
+          console.error("Kullanıcı bilgileri yüklenirken hata:", refreshError);
+        });
+        
+        // Direkt müşteri sayfasına yönlendir (session cookie var, refreshUser arka planda çalışacak)
         const next = searchParams?.get('next');
-        // Güvenlik: sadece site içi relatif yolları kabul et
         const target = next && next.startsWith('/') ? next : '/musteri';
-        // Tam sayfa geçiş yaparak middleware'in cookie'yi görmesini garanti edelim
+        
+        // Cookie'nin set edilmesi için kısa bir gecikme ekle
         setTimeout(() => {
           if (typeof window !== 'undefined') {
-            window.location.assign(target);
-          } else {
-            router.push(target);
+            window.location.href = target;
           }
-        }, 50);
+        }, 100);
       } else {
         setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
+        setLoading(false);
       }
     } catch (err: any) {
-      setError(err?.response?.data?.error || "Giriş başarısız. Bilgilerinizi kontrol edin.");
-    } finally {
+      console.error("Login error:", err);
+      setError(err.response?.data?.error || "Giriş başarısız. Bilgilerinizi kontrol edin.");
       setLoading(false);
     }
   };

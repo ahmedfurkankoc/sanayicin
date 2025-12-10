@@ -60,13 +60,19 @@ export function proxy(request: NextRequest) {
     return NextResponse.next()
   }
   
-  // Token kontrolü
+  // Session cookie kontrolü (Session Authentication kullanıyoruz)
+  // Session cookie adı 'sa_rdx' (veya env'den gelen değer)
+  const sessionCookieName = 'sa_rdx'; // Backend'deki SESSION_COOKIE_NAME ile eşleşmeli
+  const hasSessionCookie = request.cookies.has(sessionCookieName)
+  
+  // Eski JWT token cookie'leri (geriye uyumluluk için)
   const clientToken = request.cookies.get('client_token')?.value
   const vendorToken = request.cookies.get('vendor_token')?.value
+  const hasAnyAuth = hasSessionCookie || clientToken || vendorToken
 
   // Yardım destek sayfası koruması: müşteri veya esnaf girişli olmalı
   if (pathname.startsWith('/yardim/destek')) {
-    if (!clientToken && !vendorToken) {
+    if (!hasAnyAuth) {
       const redirectUrl = new URL('/musteri/giris', request.url)
       // Tüm yolu ve varsa query'i geri dönmek için next paramı olarak ilet
       redirectUrl.searchParams.set('next', pathname + (request.nextUrl.search || ''))
@@ -80,15 +86,17 @@ export function proxy(request: NextRequest) {
     // Auth sayfaları hariç
     if (authPaths.some(path => pathname.startsWith(path))) {
       // Eğer zaten giriş yapmışsa ana sayfaya yönlendir
-      if (clientToken || vendorToken) {
+      if (hasAnyAuth) {
         const redirectUrl = new URL('/musteri', request.url)
         return NextResponse.redirect(redirectUrl)
       }
       return NextResponse.next()
     }
     
-    // Müşteri sayfaları için token kontrolü
-    if (!clientToken && !vendorToken) {
+    // Müşteri sayfaları için auth kontrolü
+    // Backend'den 401/403 gelirse API interceptor yönlendirecek
+    // Burada sadece cookie varlığını kontrol ediyoruz
+    if (!hasAnyAuth) {
       const redirectUrl = new URL('/musteri/giris', request.url)
       redirectUrl.searchParams.set('next', pathname)
       return NextResponse.redirect(redirectUrl)
@@ -99,16 +107,18 @@ export function proxy(request: NextRequest) {
   if (esnafPaths.some(path => pathname.startsWith(path))) {
     // Auth sayfaları hariç
     if (authPaths.some(path => pathname.startsWith(path))) {
-      // Eğer zaten giriş yapmışsa ana sayfaya yönlendir
-      if (vendorToken) {
+      // Eğer zaten giriş yapmışsa panel'e yönlendir
+      if (hasSessionCookie || vendorToken) {
         const redirectUrl = new URL('/esnaf/panel', request.url)
         return NextResponse.redirect(redirectUrl)
       }
       return NextResponse.next()
     }
     
-    // Esnaf sayfaları için vendor token kontrolü
-    if (!vendorToken) {
+    // Esnaf sayfaları için auth kontrolü
+    // Backend'den 401/403 gelirse API interceptor yönlendirecek
+    // Burada sadece cookie varlığını kontrol ediyoruz
+    if (!hasSessionCookie && !vendorToken) {
       const redirectUrl = new URL('/esnaf/giris', request.url)
       redirectUrl.searchParams.set('next', pathname)
       return NextResponse.redirect(redirectUrl)

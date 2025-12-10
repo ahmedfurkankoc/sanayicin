@@ -2,14 +2,14 @@ import type { NextConfig } from "next";
 
 // Base URL'i .env'den al
 // NEXT_PUBLIC_BASE_URL varsa onu kullan
-// Yoksa NEXT_PUBLIC_API_URL'den /api/admin veya /api kısmını kaldırarak al
+// Yoksa NEXT_PUBLIC_API_URL'den /api/v1/admin veya /api/admin veya /api kısmını kaldırarak al
 // Yoksa localhost
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/admin\/?$/, '').replace(/\/api\/?$/, '')) || 
+  (process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/admin\/?$/, '').replace(/\/api\/admin\/?$/, '').replace(/\/api\/?$/, '')) || 
   'http://localhost:8000';
 
-// API URL'i oluştur - .env'de NEXT_PUBLIC_API_URL varsa onu kullan, yoksa baseUrl'den oluştur
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || `${baseUrl}/api/admin`;
+// API URL'i oluştur - .env'de NEXT_PUBLIC_API_URL varsa onu kullan, yoksa baseUrl'den oluştur (versioning: /api/v1/admin)
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || `${baseUrl}/api/v1/admin`;
 
 const nextConfig: NextConfig = {
   // Admin paneli için güvenlik ayarları
@@ -24,8 +24,13 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        source: '/api/v1/admin/:path*',
+        destination: `${baseUrl}/api/v1/admin/:path*`,
+      },
+      // Backward compatibility için eski /api/admin/ endpoint'lerini de destekle
+      {
         source: '/api/admin/:path*',
-        destination: `${baseUrl}/api/admin/:path*`,
+        destination: `${baseUrl}/api/v1/admin/:path*`,
       },
     ]
   },

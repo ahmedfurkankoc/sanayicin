@@ -36,7 +36,7 @@ export default function EsnafSidebar({
   }
 }: EsnafSidebarProps) {
   const router = useRouter();
-  const { user: contextUser, email: contextEmail, loading } = useEsnaf();
+  const { user: contextUser, email: contextEmail, loading, handleLogout: contextHandleLogout } = useEsnaf();
 
   // Context'ten gelen verileri öncelikle kullan, props'ları fallback olarak kullan
   const currentUser = contextUser || user;
@@ -47,14 +47,14 @@ export default function EsnafSidebar({
     return activePage === page ? "active" : "";
   };
 
-  const handleLogout = () => {
-    // Direkt logout işlemini yap
+  // Logout fonksiyonu: context'ten gelen handleLogout'u kullan, yoksa props'tan, yoksa fallback
+  const handleLogout = onLogout || contextHandleLogout || (() => {
+    // Fallback: sadece frontend state'i temizle ve sayfayı yenile
     clearAuthTokens("vendor");
-    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
     setTimeout(() => {
-      window.location.reload();
+      window.location.href = '/esnaf/giris';
     }, 200);
-  };
+  });
 
   // Kullanıcı adının ilk harfini al
   const getUserInitial = () => {

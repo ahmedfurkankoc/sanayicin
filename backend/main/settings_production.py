@@ -23,6 +23,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY environment variable is required in production!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
@@ -32,7 +34,6 @@ ALLOWED_HOSTS = [
     'admin.sanayicin.com',
     'sanayicin.com',
     'www.sanayicin.com',
-    'esnaf.sanayicin.com',
     'api.sanayicin.com',
     'localhost',
     '127.0.0.1',
@@ -45,6 +46,9 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+
+# Additional Security Headers (middleware ile eklenecek)
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # SSL/HTTPS Settings - Production'da aktif
 SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
@@ -79,6 +83,7 @@ INSTALLED_APPS = [
     'vendors',
     'chat',
     'admin_panel',
+    'auditlog',  # Audit Log app
 ]
 
 MIDDLEWARE = [
@@ -92,11 +97,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',  # Güvenlik başlıkları için
 ]
 
 # CORS Security - Production
 CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'False').lower() == 'true'
-CORS_ALLOWED_ORIGINS = 
+CORS_ALLOWED_ORIGINS = [
     "https://admin.sanayicin.com",
     "http://admin.sanayicin.com",
     "https://sanayicin.com",
@@ -229,9 +235,9 @@ AUTHENTICATION_BACKENDS = [
     'core.backends.EmailBackend',
 ]
 
-# JWT Settings - Production (uzun süreler)
-JWT_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_HOURS', '168'))  # 7 gün (168 saat)
-JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
+# JWT Settings - Production (güvenli süreler)
+JWT_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_HOURS', '1'))  # 1 saat (güvenlik için kısaltıldı)
+JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '7'))  # 7 gün (30 günden düşürüldü)
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=JWT_ACCESS_TOKEN_LIFETIME_HOURS),
@@ -251,10 +257,13 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 }
 
-# REST Framework - Production (düşük rate limits)
+# REST Framework - Production (Session Authentication - en güvenli)
+# Yüksek trafik için optimize edilmiş rate limits
+# Binlerce eş zamanlı kullanıcı için tasarlandı
+# Rate limitler güvenlik ve performans dengesi gözetilerek ayarlandı
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',  # Session Authentication (en güvenli - tarayıcı tabanlı)
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -262,12 +271,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.DefaultPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
+        'rest_framework.throttling.AnonRateThrottle',  # Anonymous kullanıcılar için (güvenlik)
+        'rest_framework.throttling.UserRateThrottle'  # Authenticated kullanıcılar için (yüksek trafik)
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': f"{os.environ.get('RATE_LIMIT_ANON', '100')}/hour",
-        'user': f"{os.environ.get('RATE_LIMIT_USER', '1000')}/hour"
+        # Production - Yüksek trafik için optimize edilmiş limitler
+        # Binlerce eş zamanlı kullanıcı için tasarlandı
+        # Limitler güvenlik ve performans dengesi gözetilerek ayarlandı
+        'anon': '5000/hour',  # ~1.4 req/s - Public sayfalar ve CSRF token için yeterli
+        'user': '20000/hour',  # ~5.5 req/s - Aktif kullanıcılar için yeterli (dashboard, mesajlaşma vb.)
     },
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -275,29 +287,98 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 } 
 
-# Logging - Production (file)
+# Logging - Production (file-based technical logs)
+# Tarih bilgisi tüm loglarda mevcut (asctime formatında)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
+            'format': '%(asctime)s | %(levelname)-8s | %(name)s | %(pathname)s:%(lineno)d | %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'detailed': {
+            'format': '%(asctime)s | %(levelname)-8s | %(name)s | %(pathname)s:%(lineno)d | %(funcName)s | %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },
     'handlers': {
-        'file': {
+        # Application Info Logları
+        'info_file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django_info.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 5,
             'formatter': 'verbose',
+        },
+        # Warning Logları
+        'warning_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django_warning.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        # Error Logları
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django_error.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 10,  # Error logları daha uzun saklanır
+            'formatter': 'detailed',
+        },
+        # Security Logları (teknik seviyede)
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django_security.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 10,
+            'formatter': 'detailed',
         },
     },
     'loggers': {
+        # Django framework logları
         'django': {
-            'handlers': ['file'],
+            'handlers': ['info_file', 'warning_file', 'error_file'],
             'level': 'INFO',
-            'propagate': True,
+            'propagate': False,
+        },
+        # Security logları
+        'django.security': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # CSRF failures
+        'django.security.csrf': {
+            'handlers': ['security_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # Application logları
+        'core': {
+            'handlers': ['info_file', 'warning_file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'vendors': {
+            'handlers': ['info_file', 'warning_file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'admin_panel': {
+            'handlers': ['info_file', 'warning_file', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Root logger
+        '': {
+            'handlers': ['info_file', 'warning_file', 'error_file'],
+            'level': 'INFO',
         },
     },
 }
@@ -361,6 +442,10 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Session Settings
+# Cookie isimleri: sabit ve anlamı belirsiz (obfuscation)
+SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME', "sa_rdx")
+CSRF_COOKIE_NAME = os.environ.get('CSRF_COOKIE_NAME', "sa_cx")
+
 SESSION_COOKIE_AGE = 86400  # 24 hours
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
@@ -368,4 +453,4 @@ SESSION_SAVE_EVERY_REQUEST = True
 # CSRF Settings
 CSRF_COOKIE_AGE = 86400  # 24 hours
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax' 
+CSRF_COOKIE_SAMESITE = 'Strict'  # Güvenlik için Strict yapıldı (cross-site request'leri engeller) 

@@ -21,8 +21,11 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('core.urls')),
-    path('api/vendors/', include('vendors.urls')),
-    path('api/chat/', include('chat.urls')),
-    path('api/admin/', include('admin_panel.urls')),
+    # API v1 - Versioned API endpoints
+    path('api/v1/', include('core.urls')),
+    path('api/v1/vendors/', include('vendors.urls')),
+    path('api/v1/chat/', include('chat.urls')),
+    path('api/v1/admin/', include('admin_panel.urls')),
+    # Backward compatibility: Redirect old /api/ to /api/v1/ (optional, can be removed later)
+    # path('api/', include('core.urls')),  # Uncomment if you want to keep old endpoints temporarily
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

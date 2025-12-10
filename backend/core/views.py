@@ -2,6 +2,10 @@ from rest_framework import generics, permissions, status, serializers
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.utils.decorators import method_decorator
+from rest_framework.views import APIView
+from rest_framework.authentication import SessionAuthentication
 from django.core.cache import cache
 from django.core.paginator import Paginator, EmptyPage
 from django.utils import timezone
@@ -28,6 +32,7 @@ import json
 from django.urls import reverse
 import os
 from django.contrib.auth.tokens import default_token_generator
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -333,191 +338,197 @@ def check_sms_rate_limit(phone: str, action: str, max_attempts: int, window_minu
     cache.set(cache_key, attempts + 1, window_minutes * 60)
     return True
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def login(request):
-    """Email ve şifre ile giriş yap"""
-    try:
-        email = request.data.get('email')
-        password = request.data.get('password')
-        
-        if not email or not password:
-            return Response(
-                {'error': 'Email ve şifre gerekli'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Kullanıcıyı bul
+class LoginView(APIView):
+    """Login endpoint - CSRF koruması olmadan (ilk istekte CSRF token yok)"""
+    permission_classes = [AllowAny]
+    authentication_classes = []  # CSRF korumasını bypass etmek için authentication'ı kaldır
+    
+    def post(self, request):
+        """Email ve şifre ile giriş yap"""
         try:
-            user = CustomUser.objects.get(email=email)
-        except CustomUser.DoesNotExist:
-            return Response(
-                {'error': 'Geçersiz email veya şifre'}, 
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        
-        # Şifreyi kontrol et
-        if not user.check_password(password):
-            return Response(
-                {'error': 'Geçersiz email veya şifre'}, 
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-        
-        # JWT token oluştur
-        
-        # Custom token oluştur - role bilgisini ekle
-        refresh = RefreshToken.for_user(user)
-        
-        # Token'a custom claims ekle
-        refresh['role'] = user.role
-        refresh['email'] = user.email
-        refresh['is_verified'] = user.is_verified
-        refresh['user_id'] = user.id
-        
-        # Access token'a da aynı bilgileri ekle
-        access_token = refresh.access_token
-        access_token['role'] = user.role
-        access_token['email'] = user.email
-        access_token['is_verified'] = user.is_verified
-        access_token['user_id'] = user.id
-        
-        # Kullanıcının hangi profil tipine sahip olduğunu kontrol et
-        has_vendor_profile = False
-        
-        if user.role == 'vendor':
-            # VendorProfile var mı kontrol et
+            email = request.data.get('email')
+            password = request.data.get('password')
+            
+            if not email or not password:
+                return Response(
+                    {'error': 'Giriş bilgileri hatalı.'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Kullanıcıyı bul ve şifreyi kontrol et
+            # Güvenlik: Hatalı girişte fazla bilgi verme
+            from auditlog.utils import log_login_failed, log_login_success
+            
             try:
-                VendorProfile.objects.get(user=user)
-                has_vendor_profile = True
-            except VendorProfile.DoesNotExist:
-                has_vendor_profile = False
-        
-        # Artık tüm kullanıcı bilgileri CustomUser'da
-        effective_role = user.role
-        
-        # HttpOnly refresh cookie ayarla
-        response = Response({
-            'access': str(refresh.access_token),
-            'email': user.email,
-            'is_verified': user.is_verified_user,
-            'verification_status': user.verification_status,
-            'role': effective_role,
-            'user_role': user.role,
-            'has_vendor_profile': has_vendor_profile,
-        })
-
-        # Cookie ayarları
-        secure_cookie = True
-        samesite_policy = 'None'
-        cookie_domain = os.environ.get('REFRESH_COOKIE_DOMAIN') or None
-        cookie_path = '/api/auth/'
-
-        # Rotation açık olduğu için yeni refresh'i cookie'ye yaz
-        response.set_cookie(
-            key='refresh_token',
-            value=str(refresh),
-            httponly=True,
-            secure=secure_cookie,
-            samesite=samesite_policy,
-            domain=cookie_domain,
-            path=cookie_path,
-            max_age=60 * 60 * 24 * int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
-        )
-
-        return response
-
-    except Exception as e:
-        logger.error(f"Login error: {e}")
-        return Response(
-            {'error': 'Giriş yapılırken hata oluştu'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def refresh_access_token(request):
-    """HttpOnly refresh cookie'den yeni access token üretir ve refresh cookie'yi döndürür."""
-    try:
-        refresh_cookie = request.COOKIES.get('refresh_token')
-        if not refresh_cookie:
-            return Response({'error': 'Refresh token bulunamadı'}, status=status.HTTP_401_UNAUTHORIZED)
-
-        # Refresh token doğrula ve access üret
-        refresh = RefreshToken(refresh_cookie)
-        access_token = refresh.access_token
-
-        # Custom claim'leri koru
-        user_id = refresh.get('user_id')
-        role = refresh.get('role')
-        email = refresh.get('email')
-        is_verified = refresh.get('is_verified')
-
-        if role is not None:
-            access_token['role'] = role
-        if email is not None:
-            access_token['email'] = email
-        if is_verified is not None:
-            access_token['is_verified'] = is_verified
-        if user_id is not None:
-            access_token['user_id'] = user_id
-
-        # Token rotasyonu açıksa yeni refresh üret ve cookie'ye yaz
-        new_refresh = None
-        try:
-            # .rotate() yok, for_user alternatifi yerine jti yenilemek için yeni RefreshToken oluşturulamaz
-            # simplejwt, RefreshToken(refresh).blacklist() + new RefreshToken.for_user ile yapılabilir.
-            if getattr(sj_settings, 'ROTATE_REFRESH_TOKENS', False):
-                # Eski refresh'i blacklist'e al (opsiyonel, blacklist yüklü ise)
+                user = CustomUser.objects.get(email=email)
+                if not user.check_password(password):
+                    # Şifre hatalı - genel mesaj ve audit log
+                    log_login_failed(request, email=email, metadata={'reason': 'invalid_password'})
+                    return Response(
+                        {'error': 'Giriş bilgileri hatalı.'}, 
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+            except CustomUser.DoesNotExist:
+                # Kullanıcı bulunamadı - genel mesaj (aynı mesaj, timing attack koruması için) ve audit log
+                log_login_failed(request, email=email, metadata={'reason': 'user_not_found'})
+                return Response(
+                    {'error': 'Giriş bilgileri hatalı.'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # Kullanıcının hangi profil tipine sahip olduğunu kontrol et
+            has_vendor_profile = False
+            
+            if user.role == 'vendor':
+                # VendorProfile var mı kontrol et
                 try:
-                    BlacklistedToken.objects.get_or_create(token=refresh)
-                except Exception:
-                    pass
-                # Kullanıcıyı bulup yeni refresh üret
-                user = CustomUser.objects.get(id=user_id)
-                new_refresh = RefreshToken.for_user(user)
-                # Custom claim'leri yeni refresh'e de yaz
-                new_refresh['role'] = role
-                new_refresh['email'] = email
-                new_refresh['is_verified'] = is_verified
-                new_refresh['user_id'] = user_id
-        except Exception:
-            new_refresh = None
-
-        response = Response({'access': str(access_token)})
-
-        # Cookie ayarları
-        secure_cookie = True
-        samesite_policy = 'None'
-        cookie_domain = os.environ.get('REFRESH_COOKIE_DOMAIN') or None
-        cookie_path = '/api/auth/'
-
-        if new_refresh is not None:
+                    VendorProfile.objects.get(user=user)
+                    has_vendor_profile = True
+                except VendorProfile.DoesNotExist:
+                    has_vendor_profile = False
+            
+            # Artık tüm kullanıcı bilgileri CustomUser'da
+            effective_role = user.role
+            
+            # Django Session Authentication kullan (en güvenli)
+            # Session cookie otomatik olarak HttpOnly, Secure, SameSite ayarlarıyla set edilir
+            from django.contrib.auth import login as django_login
+            from django.conf import settings
+            django_login(request, user)
+            
+            # Debug: Session cookie'nin set edilip edilmediğini kontrol et
+            logger.info(f"Login successful for {user.email}. Session key: {request.session.session_key}")
+            
+            # CSRF token'ı response'a ekle (frontend için)
+            from django.middleware.csrf import get_token
+            csrf_token = get_token(request)
+            
+            # Başarılı giriş audit log
+            log_login_success(
+                request, 
+                user=user,
+                metadata={
+                    'role': effective_role,
+                    'has_vendor_profile': has_vendor_profile,
+                    'is_verified': user.is_verified_user
+                }
+            )
+            
+            response = Response({
+                'email': user.email,
+                'is_verified': user.is_verified_user,
+                'verification_status': user.verification_status,
+                'role': effective_role,
+                'user_role': user.role,
+                'has_vendor_profile': has_vendor_profile,
+                'message': 'Login successful',
+                'csrf_token': csrf_token  # Frontend için CSRF token
+            })
+            
+            # Django REST Framework Response kullanıldığında session cookie otomatik eklenmez
+            # Manuel olarak session cookie'yi response'a eklemeliyiz
+            session_cookie_name = getattr(settings, 'SESSION_COOKIE_NAME', 'sessionid')
+            session_cookie_age = getattr(settings, 'SESSION_COOKIE_AGE', 86400 * 7)
+            session_cookie_secure = getattr(settings, 'SESSION_COOKIE_SECURE', False)
+            session_cookie_httponly = getattr(settings, 'SESSION_COOKIE_HTTPONLY', True)
+            session_cookie_samesite = getattr(settings, 'SESSION_COOKIE_SAMESITE', 'Lax')
+            
             response.set_cookie(
-                key='refresh_token',
-                value=str(new_refresh),
-                httponly=True,
-                secure=secure_cookie,
-                samesite=samesite_policy,
-                domain=cookie_domain,
-                path=cookie_path,
-                max_age=60 * 60 * 24 * int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
+                key=session_cookie_name,
+                value=request.session.session_key,
+                max_age=session_cookie_age,
+                secure=session_cookie_secure,
+                httponly=session_cookie_httponly,
+                samesite=session_cookie_samesite,
+                path='/',
+                domain=None  # None = current domain
+            )
+            
+            # Debug: Response header'larını kontrol et
+            logger.info(f"Login response headers: {dict(response.items())}")
+            logger.info(f"Session cookie set: {session_cookie_name}={request.session.session_key}")
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Login error: {e}")
+            return Response(
+                {'error': 'Giriş yapılırken hata oluştu'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        return response
-    except Exception as e:
-        logger.error(f"Refresh error: {e}")
-        return Response({'error': 'Token yenileme başarısız'}, status=status.HTTP_401_UNAUTHORIZED)
 
+# Refresh endpoint kaldırıldı - Session Authentication'da refresh token'a gerek yok
+# Session otomatik olarak yenilenir (SESSION_SAVE_EVERY_REQUEST = True)
 
-@api_view(['POST'])
+class CsrfTokenView(APIView):
+    """CSRF token endpoint - Rate limit'ten muaf (güvenlik için gerekli)"""
+    permission_classes = [AllowAny]
+    throttle_classes = []  # Rate limit'ten muaf
+    
+    def get(self, request):
+        from django.middleware.csrf import get_token
+        csrf_token = get_token(request)
+        return Response({'csrf_token': csrf_token})
+
+# Backward compatibility için function view
+@api_view(['GET'])
 @permission_classes([AllowAny])
-def logout(request):
-    """Refresh cookie'yi temizler."""
-    response = Response({'detail': 'Logged out'})
-    cookie_domain = os.environ.get('REFRESH_COOKIE_DOMAIN') or None
-    response.delete_cookie('refresh_token', path='/api/auth/', domain=cookie_domain)
-    return response
+def get_csrf_token(request):
+    """CSRF token'ı döndür (frontend için) - Deprecated, CsrfTokenView kullan"""
+    from django.middleware.csrf import get_token
+    csrf_token = get_token(request)
+    return Response({'csrf_token': csrf_token})
+
+
+@method_decorator(csrf_exempt, name='dispatch')  # CSRF'yi tamamen kapat (logout için)
+class LogoutView(APIView):
+    """Logout endpoint - CSRF koruması olmadan (Login ile aynı mantık)"""
+    permission_classes = [AllowAny]
+    authentication_classes = []  # CSRF korumasını bypass etmek için authentication'ı kaldır
+    
+    def post(self, request):
+        """Session'ı temizler (Django session authentication)."""
+        from django.contrib.auth import logout as django_logout
+        from auditlog.utils import log_logout
+        from django.conf import settings
+        
+        # Logout audit log (user bilgisi varsa)
+        if request.user.is_authenticated:
+            log_logout(request, request.user)
+        
+        django_logout(request)
+
+        # Session ve CSRF cookie'lerini temizle (legacy isimler dahil)
+        session_cookie_name = getattr(settings, 'SESSION_COOKIE_NAME', 'sa_rdx')
+        csrf_cookie_name = getattr(settings, 'CSRF_COOKIE_NAME', 'sa_cx')
+        session_cookie_samesite = getattr(settings, 'SESSION_COOKIE_SAMESITE', 'Lax')
+        csrf_cookie_samesite = getattr(settings, 'CSRF_COOKIE_SAMESITE', 'Lax')
+
+        response = Response({'detail': 'Logged out'})
+        # Yeni isimler
+        response.delete_cookie(
+            key=session_cookie_name,
+            path='/',
+            domain=None,
+            samesite=session_cookie_samesite,
+        )
+        response.delete_cookie(
+            key=csrf_cookie_name,
+            path='/',
+            domain=None,
+            samesite=csrf_cookie_samesite,
+        )
+        # Eski random isimler (geri uyumluluk)
+        for cookie_name in request.COOKIES.keys():
+            if cookie_name.startswith('sa_sess_') or cookie_name.startswith('sa_csrf_'):
+                response.delete_cookie(
+                    key=cookie_name,
+                    path='/',
+                    domain=None,
+                )
+
+        return response
 
 
 @api_view(['POST'])
@@ -560,18 +571,18 @@ def upload_avatar(request):
         
         avatar_file = request.FILES['avatar']
         
-        # Dosya boyutu kontrolü (5MB)
-        if avatar_file.size > 5 * 1024 * 1024:
-            return Response(
-                {'error': 'Dosya boyutu 5MB\'dan küçük olmalı'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Güvenli dosya doğrulama (magic bytes ile)
+        from core.utils.file_validation import validate_image_upload
+        is_valid, error_message = validate_image_upload(
+            avatar_file,
+            max_size=5 * 1024 * 1024,  # 5MB
+            allowed_types=['image/jpeg', 'image/jpg', 'image/png'],
+            strict_validation=True  # Magic bytes kontrolü aktif
+        )
         
-        # Dosya tipi kontrolü
-        allowed_types = ['image/jpeg', 'image/jpg', 'image/png']
-        if avatar_file.content_type not in allowed_types:
+        if not is_valid:
             return Response(
-                {'error': 'Sadece JPEG ve PNG dosyaları kabul edilir'}, 
+                {'error': error_message}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -715,19 +726,13 @@ def verify_email(request):
         
         # Otomatik vendor upgrade artık yok - client-to-vendor upgrade direkt VendorProfile oluşturarak yapılıyor
         
-        # Doğrulama sonrası otomatik login için JWT üret
-        refresh = RefreshToken.for_user(user)
-        # Custom claims
-        refresh['role'] = user.role
-        refresh['email'] = user.email
-        refresh['is_verified'] = user.is_verified
-        refresh['user_id'] = user.id
-
-        access_token = refresh.access_token
-        access_token['role'] = user.role
-        access_token['email'] = user.email
-        access_token['is_verified'] = user.is_verified
-        access_token['user_id'] = user.id
+        # Doğrulama sonrası otomatik login için Session Authentication kullan
+        from django.contrib.auth import login as django_login
+        django_login(request, user)
+        
+        # CSRF token'ı response'a ekle (frontend için)
+        from django.middleware.csrf import get_token
+        csrf_token = get_token(request)
 
         response = Response({
             'message': f'Email başarıyla doğrulandı{upgrade_message}',
@@ -735,25 +740,11 @@ def verify_email(request):
             'is_verified': True,
             'role': user.role,
             'auto_upgraded': user.role == 'vendor',
-            'access': str(access_token),
+            'csrf_token': csrf_token  # Frontend için CSRF token
         })
-
-        # Refresh cookie ayarla (HttpOnly)
-        secure_cookie = True
-        samesite_policy = 'None'
-        cookie_domain = os.environ.get('REFRESH_COOKIE_DOMAIN') or None
-        cookie_path = '/api/auth/'
-
-        response.set_cookie(
-            key='refresh_token',
-            value=str(refresh),
-            httponly=True,
-            secure=secure_cookie,
-            samesite=samesite_policy,
-            domain=cookie_domain,
-            path=cookie_path,
-            max_age=60 * 60 * 24 * int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
-        )
+        
+        # Session cookie otomatik olarak Django tarafından set edilir
+        # Manuel olarak session cookie'yi set etmeye gerek yok
 
         return response
         
@@ -1679,20 +1670,22 @@ def client_register(request):
         
         # Avatar varsa kaydet (200x200 boyutunda işle)
         if 'avatar' in request.FILES:
-            avatar_file = request.FILES['avatar']
-            # Dosya boyutu kontrolü (5MB)
-            if avatar_file.size > 5 * 1024 * 1024:
-                user.delete()
-                return Response({
-                    'error': 'Avatar dosyası 5MB\'dan küçük olmalı'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            from core.utils.file_validation import validate_image_upload
             
-            # Dosya tipi kontrolü
-            allowed_types = ['image/jpeg', 'image/jpg', 'image/png']
-            if avatar_file.content_type not in allowed_types:
+            avatar_file = request.FILES['avatar']
+            
+            # Güvenli dosya doğrulama (magic bytes ile)
+            is_valid, error_message = validate_image_upload(
+                avatar_file,
+                max_size=5 * 1024 * 1024,  # 5MB
+                allowed_types=['image/jpeg', 'image/jpg', 'image/png'],
+                strict_validation=True  # Magic bytes kontrolü aktif
+            )
+            
+            if not is_valid:
                 user.delete()
                 return Response({
-                    'error': 'Sadece JPEG ve PNG dosyaları kabul edilir'
+                    'error': error_message
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Avatar'ı 200x200 boyutunda kaydet
@@ -1824,20 +1817,15 @@ def verify_registration_otp(request):
             }
         )
         
-        # JWT token oluştur
-        refresh = RefreshToken.for_user(user)
-        refresh['role'] = user.role
-        refresh['email'] = user.email
-        refresh['is_verified'] = user.is_verified
-        refresh['user_id'] = user.id
+        # Doğrulama sonrası otomatik login için Session Authentication kullan
+        from django.contrib.auth import login as django_login
+        django_login(request, user)
         
-        access_token = refresh.access_token
-        access_token['role'] = user.role
-        access_token['email'] = user.email
-        access_token['is_verified'] = user.is_verified
-        access_token['user_id'] = user.id
+        # CSRF token'ı response'a ekle (frontend için)
+        from django.middleware.csrf import get_token
+        csrf_token = get_token(request)
         
-        return Response({
+        response = Response({
             'message': 'Hesabınız başarıyla doğrulandı ve aktif edildi.',
             'user': {
                 'id': user.id,
@@ -1847,11 +1835,13 @@ def verify_registration_otp(request):
                 'phone_number': user.phone_number,
                 'is_verified': user.is_verified
             },
-            'tokens': {
-                'refresh': str(refresh),
-                'access': str(access_token)
-            }
+            'csrf_token': csrf_token  # Frontend için CSRF token
         }, status=status.HTTP_200_OK)
+        
+        # Session cookie otomatik olarak Django tarafından set edilir
+        # Manuel olarak session cookie'yi set etmeye gerek yok
+        
+        return response
         
     except Exception as e:
         logger.error(f"Verify registration OTP error: {e}")

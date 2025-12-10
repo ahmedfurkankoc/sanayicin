@@ -1,20 +1,44 @@
 import axios from 'axios';
 
 // API URL'i .env'den al, yoksa next.config.ts'den, yoksa localhost
-// Eğer /api yoksa ekle
+// API v1 versiyonlaması: /api/v1/ yapısı kullanılıyor
 let apiUrl = process.env.NEXT_PUBLIC_API_URL;
 if (!apiUrl) {
-  apiUrl = "http://localhost:8000/api";
-} else if (!apiUrl.includes('/api')) {
-  // Eğer /api yoksa ekle
+  // Development için localhost (v1 versiyonu)
+  apiUrl = "http://localhost:8000/api/v1";
+} else {
+  // API URL'inde /v1/ var mı kontrol et
+  if (!apiUrl.includes('/v1')) {
+    // /v1/ yoksa ekle (hem /api hem /v1 kontrolü)
   const baseUrl = apiUrl.replace(/\/$/, ''); // Trailing slash'i kaldır
-  apiUrl = `${baseUrl}/api`;
+    if (baseUrl.includes('/api')) {
+      // /api varsa /v1 ekle: /api -> /api/v1
+      apiUrl = baseUrl.replace(/\/api\/?$/, '/api/v1');
+    } else {
+      // /api yoksa hem /api hem /v1 ekle
+      apiUrl = `${baseUrl}/api/v1`;
+    }
+  }
 }
 
-// Media base URL (strip trailing /api for static/media files)
+// Production'da HTTPS kontrolü (güvenlik)
+if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+  // Frontend HTTPS üzerindeyse, API de HTTPS olmalı
+  if (apiUrl.startsWith('http://') && !apiUrl.includes('localhost')) {
+    // Production'da console'a yazma (güvenlik)
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Güvenlik Uyarısı: Frontend HTTPS üzerinde ama API HTTP kullanıyor!');
+    }
+    // Production'da HTTP'yi HTTPS'ye çevir
+    apiUrl = apiUrl.replace('http://', 'https://');
+  }
+}
+
+// Media base URL (strip trailing /api/v1 for static/media files)
 export const mediaBaseUrl = (() => {
   try {
-    return apiUrl.replace(/\/?api\/?$/, '');
+    // /api/v1 veya /api kısmını kaldır
+    return apiUrl.replace(/\/api\/v1\/?$/, '').replace(/\/api\/?$/, '');
   } catch {
     return apiUrl;
   }
@@ -49,18 +73,38 @@ const getEmailKey = (role: 'vendor' | 'client' = 'vendor') => {
   return role === 'vendor' ? 'esnaf_email' : 'client_email';
 };
 
-// Token'dan role bilgisini al
+// Token'dan role bilgisini al (XSS korumalı)
 export const getTokenRole = (token: string): string | null => {
   try {
-    const tokenParts = token.split('.');
-    if (tokenParts.length === 3) {
-      const payload = JSON.parse(atob(tokenParts[1]));
-      return payload.role || null;
+    // Token format kontrolü
+    if (!token || typeof token !== 'string') {
+      return null;
     }
+    
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      return null;
+    }
+    
+    // Base64 decode (güvenli)
+      const payload = JSON.parse(atob(tokenParts[1]));
+    
+    // Role validation (sadece geçerli roller)
+    const validRoles = ['vendor', 'client', 'admin'];
+    const role = payload.role;
+    
+    if (role && validRoles.includes(role)) {
+      return role;
+    }
+    
+    return null;
   } catch (e) {
+    // Hata durumunda loglama (production'da console.error kullanmayın)
+    if (process.env.NODE_ENV === 'development') {
     console.error('Token decode error:', e);
   }
   return null;
+  }
 };
 
 // Token'ın geçerli role için olup olmadığını kontrol et
@@ -74,49 +118,57 @@ export const isTokenValidForRole = (token: string, expectedRole: 'vendor' | 'cli
   return tokenRole === expectedRole;
 };
 
-// Auth token'ı al - sadece cookie'den
+// Auth token kontrolü - Session Authentication'da HttpOnly cookie'ler JavaScript ile okunamaz
+// Bu fonksiyonlar geriye uyumluluk için bırakıldı ama her zaman null/false döner
+// Session durumunu kontrol etmek için context veya API çağrısı kullanın
+
 export const getAuthToken = (role: 'vendor' | 'client' = 'vendor'): string | null => {
-  if (typeof window === "undefined") return null;
-  
-  // Sadece cookie'den kontrol et
-  const cookieName = role === 'vendor' ? 'vendor_token' : 'client_token';
-  const cookieValue = document.cookie
-    .split('; ')
-    .find(row => row.startsWith(`${cookieName}=`))
-    ?.split('=')[1];
-  
-  return cookieValue || null;
+  // Session Authentication: HttpOnly cookie'ler JavaScript ile okunamaz
+  // Bu fonksiyon geriye uyumluluk için bırakıldı
+  // Session durumunu kontrol etmek için context veya API çağrısı kullanın
+  return null;
 };
 
-// Auth header'ı oluştur
+export const hasAuthToken = (role: 'vendor' | 'client' = 'vendor'): boolean => {
+  // Session Authentication: HttpOnly cookie'ler JavaScript ile okunamaz
+  // Bu fonksiyon geriye uyumluluk için bırakıldı
+  // Session durumunu kontrol etmek için context veya API çağrısı kullanın
+  return false;
+};
+
+// Auth header oluşturma artık gerekli değil
+// Backend CookieJWTAuthentication cookie'den token'ı okuyacak
 export const getAuthHeaders = (role: 'vendor' | 'client' = 'vendor') => {
-  const token = getAuthToken(role);
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  // HttpOnly cookie'ler otomatik gönderilir (withCredentials: true sayesinde)
+  // Manuel header eklemeye gerek yok
+  return {};
 };
 
-// Token'ı kaydet - sadece cookie'ye
+// Token kaydetme artık gerekli değil
+// Backend login/refresh endpoint'leri token'ı HttpOnly cookie'ye yazıyor
 export const setAuthToken = (role: 'vendor' | 'client', token: string) => {
-  if (typeof window === "undefined") return;
-  
-  // Cookie'ye kaydet (7 gün geçerli)
-  const cookieName = role === 'vendor' ? 'vendor_token' : 'client_token';
-  const expires = new Date();
-  expires.setDate(expires.getDate() + 7);
-  document.cookie = `${cookieName}=${token}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
+  // Artık token'ı frontend'de saklamıyoruz
+  // Backend HttpOnly cookie'ye yazıyor
+  // Bu fonksiyon geriye uyumluluk için boş bırakıldı
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('setAuthToken is deprecated - tokens are now stored in HttpOnly cookies by backend');
+  }
 };
 
 // Refresh token'ı kaydet - sadece cookie'ye
 // Refresh token'ı JS tarafında saklamıyoruz (HttpOnly cookie server set edecek)
 
-// Email'i kaydet - sadece cookie'ye
+// Email'i kaydet - localStorage'a (cookie'ye hassas bilgi yazmıyoruz)
 export const setAuthEmail = (role: 'vendor' | 'client', email: string) => {
   if (typeof window === "undefined") return;
   
-  // Cookie'ye kaydet (7 gün geçerli)
-  const cookieName = role === 'vendor' ? 'esnaf_email' : 'client_email';
-  const expires = new Date();
-  expires.setDate(expires.getDate() + 7);
-  document.cookie = `${cookieName}=${email}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
+  // Email'i localStorage'a kaydet (cookie'ye hassas bilgi yazmıyoruz)
+  const storageKey = role === 'vendor' ? 'esnaf_email' : 'client_email';
+  try {
+    localStorage.setItem(storageKey, email);
+  } catch (e) {
+    // localStorage kullanılamıyorsa sessizce geç
+  }
 };
 
 // Token'ları sil - sadece cookie'den
@@ -222,102 +274,143 @@ const validateRegisterData = (data: any, role: 'vendor' | 'client' = 'vendor'): 
   };
 };
 
-// API instance oluştur
+// API instance oluştur - Session Authentication için
 export const apiClient = axios.create({
   baseURL: apiUrl,
-  withCredentials: true, // refresh cookie gönderilsin
+  withCredentials: true, // Session cookie gönderilsin (HttpOnly, Secure)
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Request interceptor - her istekte token ekle
-apiClient.interceptors.request.use((config) => {
-  // Arama endpoint'leri herkese açık olmalı - token kontrolü yapma
-  const isPublicEndpoint = config.url?.includes('/vendors/search/') || 
-                          config.url?.includes('/vendors/') && config.url?.includes('/slug/') ||
-                          config.url?.includes('/services/') ||
-                          config.url?.includes('/categories/') ||
-                          config.url?.includes('/car-brands/');
-  
-  if (isPublicEndpoint) {
-    return config; // Token ekleme, herkese açık
+// CSRF token yönetimi - Django CSRF token'ı al
+let csrfToken: string | null = null;
+let csrfTokenTimestamp: number = 0;
+const CSRF_TOKEN_CACHE_DURATION = 30 * 60 * 1000; // 30 dakika cache (CSRF token genelde uzun süre geçerli)
+
+export const getCsrfToken = async (): Promise<string | null> => {
+  // Cache'deki token hala geçerliyse kullan
+  const now = Date.now();
+  if (csrfToken && (now - csrfTokenTimestamp) < CSRF_TOKEN_CACHE_DURATION) {
+    return csrfToken;
   }
   
-  // Müşteri panelinde isek client token'ı kullan
-  const isMusteriContext = typeof window !== 'undefined' && window.location?.pathname?.startsWith('/musteri');
-  
-  // Role'e göre geçerli token'ı bul (cookie tabanlı)
-  let token: string | null = null;
-  
-  // Cookie'den token alma fonksiyonu
-  const getCookieValue = (name: string): string | null => {
-    if (typeof document === 'undefined') return null;
-    const value = document.cookie
-      .split('; ')
-      .find(row => row.startsWith(`${name}=`))
-      ?.split('=')[1];
-    return value || null;
-  };
-  
-  if (isMusteriContext) {
-    // Önce client token'ı dene
-    const clientToken = getCookieValue('client_token');
-    if (clientToken) {
-      token = clientToken;
-    } else {
-      // Client token yoksa vendor token'ı dene
-      const vendorToken = getCookieValue('vendor_token');
-      if (vendorToken) {
-        token = vendorToken;
-      }
+  try {
+    // CSRF token'ı backend'den al
+    const response = await axios.get(`${apiUrl}/auth/csrf/`, { withCredentials: true });
+    if (response.data.csrf_token) {
+      csrfToken = response.data.csrf_token;
+      csrfTokenTimestamp = now;
+      return csrfToken;
     }
-  } else {
-    // Diğer durumlarda vendor token'ı kullan
-    const vendorToken = getCookieValue('vendor_token');
-    if (vendorToken) {
-      token = vendorToken;
+  } catch (e) {
+    // CSRF token alınamadı - rate limit veya network hatası
+    // Cache'deki eski token'ı kullan (eğer varsa)
+    if (csrfToken) {
+      return csrfToken;
     }
   }
+  return null;
+};
+
+// CSRF token'ı set et (login response'undan)
+export const setCsrfToken = (token: string | null) => {
+  csrfToken = token;
+  csrfTokenTimestamp = token ? Date.now() : 0; // Token set edildiğinde timestamp'i güncelle
+};
+
+// Request interceptor - CSRF token ve HttpOnly cookie'ler
+apiClient.interceptors.request.use(async (config) => {
+  // withCredentials: true zaten apiClient'da set edildi
+  // Bu sayede HttpOnly cookie'ler otomatik gönderilir
   
-  // Geçerli token varsa header'a ekle
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // Public endpoint'ler için CSRF token gerekli değil (login, register, analytics gibi)
+  const publicEndpoints = [
+    '/auth/login/', 
+    '/auth/register/', 
+    '/auth/logout/', 
+    '/clients/register/', 
+    '/vendors/register/',
+    '/analytics/view/',
+    '/analytics/call/'
+  ];
+  const isPublicEndpoint = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
+  
+  // Public endpoint değilse CSRF token ekle (GET dahil - Django REST Framework Session Auth için gerekli olabilir)
+  if (!isPublicEndpoint) {
+    // CSRF token yoksa veya cache süresi dolmuşsa al
+    const now = Date.now();
+    if (!csrfToken || (now - csrfTokenTimestamp) >= CSRF_TOKEN_CACHE_DURATION) {
+      csrfToken = await getCsrfToken();
+  }
+  
+    // CSRF token'ı header'a ekle (GET istekleri için de - Django REST Framework Session Auth için)
+    if (csrfToken) {
+      config.headers['X-CSRFToken'] = csrfToken;
+    }
   }
 
   return config;
 });
 
 // Response interceptor - 401 hatası durumunda logout
+// Session Authentication'da refresh token yok, session otomatik yenilenir
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const status = error.response?.status;
+    
+    // 401/403 hataları normal (session yok) - sessizce handle et
+    // Sadece authenticated istekler için 401 durumunda logout yap
+    if (status === 401 && !originalRequest._retry) {
+      // Public endpoint'ler için 401 normal - sessizce reject et
+      const publicEndpoints = ['/auth/login/', '/auth/register/', '/auth/logout/', '/clients/register/', '/vendors/register/'];
+      const isPublicEndpoint = publicEndpoints.some(endpoint => originalRequest.url?.includes(endpoint));
+      
+      if (!isPublicEndpoint) {
       originalRequest._retry = true;
-      try {
-        // HttpOnly refresh cookie ile access token'ı yenile
-        const refreshRes = await axios.post(`${apiUrl}/auth/token/refresh/`, {}, { withCredentials: true });
-        if (refreshRes.status === 200 && refreshRes.data.access) {
-          const newAccess: string = refreshRes.data.access;
-          // Access token'dan role'u al ve doğru cookie'ye yaz
-          const tokenRole = ((): 'vendor' | 'client' => {
-            const role = getTokenRole(newAccess);
-            if (role === 'vendor' || role === 'admin') return 'vendor';
-            return 'client';
-          })();
-          setAuthToken(tokenRole, newAccess);
-
-          // Orijinal isteği yeni header ile tekrar dene
-          originalRequest.headers = originalRequest.headers || {};
-          originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
-          return apiClient(originalRequest);
+        // Session Authentication'da 401 hatası = session süresi dolmuş veya geçersiz
+        // Logout yap ve login sayfasına yönlendir
+        try {
+          await axios.post(`${apiUrl}/auth/logout/`, {}, { withCredentials: true });
+        } catch (logoutError) {
+          // Logout hatası önemsiz - sessizce handle et
         }
-      } catch (e) {
-        // Refresh başarısız, tokenları temizle
+        // Frontend'de sayfayı yenile veya login sayfasına yönlendir
         if (typeof window !== 'undefined') {
-          document.cookie = 'vendor_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'client_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          window.location.href = '/esnaf/giris';
         }
       }
     }
+    
+    // 429 hatası - Rate limit aşıldı
+    if (status === 429) {
+      // Retry-After header'ından bekleme süresini al (saniye cinsinden)
+      // Header case-insensitive olabilir, bu yüzden hem küçük hem büyük harf kontrol et
+      const retryAfterHeader = error.response?.headers?.['retry-after'] 
+        || error.response?.headers?.['Retry-After']
+        || error.response?.headers?.get?.('retry-after');
+      
+      const retryAfter = retryAfterHeader 
+        ? parseInt(String(retryAfterHeader), 10) 
+        : 3600; // Varsayılan: 1 saat (3600 saniye)
+      
+      // Rate limit error sayfasına yönlendir
+      if (typeof window !== 'undefined') {
+        // URL'e retry-after parametresi ekle (saniye cinsinden)
+        window.location.href = `/hata/rate-limit?retry=${retryAfter}`;
+        return Promise.reject(error);
+      }
+    }
+    
+    // 403 hatası normal (session yok veya yetki yok) - sessizce reject et
+    // Production'da console'a yazma
+    if (status === 403 && process.env.NODE_ENV === 'development') {
+      // Sadece development'ta log (debug için)
+      // Production'da sessizce handle et
+    }
+    
     return Promise.reject(error);
   }
 );

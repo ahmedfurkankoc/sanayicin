@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getAuthToken, clearAuthTokens } from '@/app/utils/api';
+import { api, clearAllAuthData } from '@/app/utils/api';
 import NotificationBell from '@/app/components/NotificationBell';
 import { iconMapping } from '@/app/utils/iconMapping';
 
@@ -50,49 +50,101 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // Kullanıcı tipini kontrol et - sadece UI için, yönlendirme yapma
+  // Kullanıcı tipini kontrol et - Session Authentication: HttpOnly cookie'ler okunamaz
+  // Backend'den profil bilgisi çekerek authentication durumunu kontrol et
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const vendorToken = getAuthToken('vendor');
-    const clientToken = getAuthToken('client');
-    
-    // Vendor token varsa hem vendor hem client olarak davran
-    if (vendorToken) {
-      setUserType('vendor');
-    } else if (clientToken) {
-      setUserType('client');
-    } else {
-      setUserType(null);
-    }
+    const checkAuthStatus = async () => {
+      setIsCheckingAuth(true);
+      try {
+        // Vendor profilini dene
+        try {
+          const vendorResponse = await api.getProfile('vendor');
+          if (vendorResponse.status === 200) {
+            setUserType('vendor');
+            setIsCheckingAuth(false);
+            return;
+          }
+        } catch (e: any) {
+          // 401/403 normal (session yok) - sessizce handle et
+          const status = e.response?.status;
+          if (status !== 401 && status !== 403 && e.code !== 'ERR_NETWORK') {
+            // Beklenmeyen hata - sadece development'ta console'a yaz
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Vendor profil kontrolü hatası:', e);
+            }
+          }
+        }
+
+        // Client profilini dene
+        try {
+          const clientResponse = await api.getProfile('client');
+          if (clientResponse.status === 200) {
+            setUserType('client');
+            setIsCheckingAuth(false);
+            return;
+          }
+        } catch (e2: any) {
+          // 401/403 normal (session yok) - sessizce handle et
+          const status2 = e2.response?.status;
+          if (status2 !== 401 && status2 !== 403 && e2.code !== 'ERR_NETWORK') {
+            // Beklenmeyen hata - sadece development'ta console'a yaz
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Client profil kontrolü hatası:', e2);
+            }
+          }
+        }
+        
+        // Her iki profil de yoksa authenticated değil
+        setUserType(null);
+      } catch (error: any) {
+        // Network hatası veya beklenmeyen hata
+        const status = error.response?.status;
+        if (status !== 401 && status !== 403 && error.code !== 'ERR_NETWORK') {
+          // Beklenmeyen hata - sadece development'ta console'a yaz
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Auth kontrolü hatası:', error);
+          }
+        }
+        setUserType(null);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuthStatus();
   }, []);
 
   const handleEsnafGiris = (e: React.MouseEvent) => {
     e.preventDefault();
-    
-    // Token kontrolü - sadece UI için
-    const token = getAuthToken("vendor");
-    
-    if (token) {
-      // Token varsa direkt panel'e yönlendir
-      setIsCheckingAuth(true);
+    // Eğer zaten vendor ise panel'e yönlendir
+    if (userType === 'vendor') {
       router.push("/esnaf/panel");
     } else {
-      // Token yoksa giriş sayfasına yönlendir
       router.push("/esnaf/giris");
     }
   };
 
-  // Çıkış fonksiyonu
-  const handleLogout = (e: React.MouseEvent) => {
+  // Çıkış fonksiyonu - backend logout endpoint'ini çağır
+  const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (userType === 'vendor') {
-      clearAuthTokens('vendor');
-    } else if (userType === 'client') {
-      clearAuthTokens('client');
+    try {
+      // Backend logout endpoint'ini çağır (session ve cookie'leri temizler)
+      await api.logout();
+    } catch (error) {
+      // Logout hatası önemsiz - sessizce handle et
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Logout hatası:", error);
+      }
+    } finally {
+      // State'i temizle
+      clearAllAuthData();
+      setUserType(null);
+      
+      // Hard redirect to ensure full state reset and proper cookie handling
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
     }
-    setUserType(null);
-    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
-    setTimeout(() => window.location.reload(), 200);
   };
 
   // Panel veya hesabım butonu

@@ -51,6 +51,7 @@ class AdminLoginView(APIView):
     """Admin paneli login API'si"""
     permission_classes = [permissions.AllowAny]
     authentication_classes = []  # Authentication'ı tamamen devre dışı bırak
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     def post(self, request):
         serializer = AdminLoginSerializer(data=request.data)
@@ -419,6 +420,7 @@ class AdminLogoutView(APIView):
     """Admin paneli logout API'si"""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     def post(self, request):
         # Cookie'den token'ı al ve cache'den temizle
@@ -448,6 +450,7 @@ class AdminUserInfoView(APIView):
     """Admin kullanıcı bilgileri"""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     def get(self, request):
         user = getattr(request, 'user', None)
@@ -506,6 +509,7 @@ class DashboardStatsView(APIView):
     """Dashboard istatistikleri"""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('dashboard')
     def get(self, request):
@@ -570,6 +574,7 @@ class AdminAuthLogsView(APIView):
     """List recent admin auth logs (success/failure)."""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     @admin_permission_required('logs', 'read')
     def get(self, request):
@@ -642,6 +647,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('users', 'read')
     def list(self, request, *args, **kwargs):
@@ -715,6 +721,7 @@ class VendorProfileViewSet(viewsets.ModelViewSet):
     serializer_class = VendorProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     pagination_class = None  # We'll handle pagination manually
     
     @admin_permission_required('vendors', 'read')
@@ -977,6 +984,7 @@ class BlogCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = BlogCategorySerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('blog', 'read')
     def list(self, request, *args, **kwargs):
@@ -1000,7 +1008,9 @@ class BlogPostViewSet(viewsets.ModelViewSet):
     serializer_class = BlogPostSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     pagination_class = None  # Manual pagination
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('blog', 'read')
     def list(self, request, *args, **kwargs):
@@ -1406,6 +1416,7 @@ class BlogCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = BlogCategorySerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('blog', 'read')
     def list(self, request, *args, **kwargs):
@@ -1427,6 +1438,7 @@ class ImageUploadView(APIView):
     """Görsel yükleme - Blog için resimleri 1200x630px boyutunda üretir"""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('blog', 'write')
     def post(self, request):
@@ -1435,14 +1447,17 @@ class ImageUploadView(APIView):
         
         image_file = request.FILES['image']
         
-        # Validate file type
-        allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        if image_file.content_type not in allowed_types:
-            return Response({'error': 'Geçersiz dosya türü'}, status=status.HTTP_400_BAD_REQUEST)
+        # Güvenli dosya doğrulama (magic bytes ile)
+        from core.utils.file_validation import validate_image_upload
+        is_valid, error_message = validate_image_upload(
+            image_file,
+            max_size=5 * 1024 * 1024,  # 5MB
+            allowed_types=['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+            strict_validation=True  # Magic bytes kontrolü aktif
+        )
         
-        # Validate file size (max 5MB)
-        if image_file.size > 5 * 1024 * 1024:
-            return Response({'error': 'Dosya boyutu 5MB\'dan büyük olamaz'}, status=status.HTTP_400_BAD_REQUEST)
+        if not is_valid:
+            return Response({'error': error_message}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             from core.utils.image_processing import process_image_to_jpeg
@@ -1486,6 +1501,7 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
     serializer_class = SupportTicketSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('support', 'read')
     def list(self, request, *args, **kwargs):
@@ -1541,6 +1557,7 @@ class SupportMessageViewSet(viewsets.ModelViewSet):
     serializer_class = SupportMessageSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('support', 'read')
     def list(self, request, *args, **kwargs):
@@ -1576,6 +1593,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('vendors', 'read')
     def list(self, request, *args, **kwargs):
@@ -1651,6 +1669,7 @@ class ServiceAreaViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceAreaSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('content', 'read')
     def list(self, request, *args, **kwargs):
@@ -1681,6 +1700,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('content', 'read')
     def list(self, request, *args, **kwargs):
@@ -1714,6 +1734,7 @@ class CarBrandViewSet(viewsets.ModelViewSet):
     serializer_class = CarBrandSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('content', 'read')
     def list(self, request, *args, **kwargs):
@@ -1756,17 +1777,18 @@ class CarBrandViewSet(viewsets.ModelViewSet):
                     'error': 'Logo dosyası bulunamadı'
                 }, status=status.HTTP_400_BAD_REQUEST)
             
-            # Dosya boyutunu kontrol et (5MB max)
-            if logo_file.size > 5 * 1024 * 1024:
-                return Response({
-                    'error': 'Logo dosyası çok büyük (max 5MB)'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # Güvenli dosya doğrulama (magic bytes ile)
+            from core.utils.file_validation import validate_image_upload
+            is_valid, error_message = validate_image_upload(
+                logo_file,
+                max_size=5 * 1024 * 1024,  # 5MB
+                allowed_types=['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+                strict_validation=True  # Magic bytes kontrolü aktif
+            )
             
-            # Dosya tipini kontrol et
-            allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-            if logo_file.content_type not in allowed_types:
+            if not is_valid:
                 return Response({
-                    'error': 'Geçersiz dosya tipi. Sadece JPEG, PNG, GIF ve WebP desteklenir'
+                    'error': error_message
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             # Logo dosyasını kaydet
@@ -1800,6 +1822,7 @@ class SystemLogViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = SystemLogSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('logs', 'read')
     def list(self, request, *args, **kwargs):
@@ -1809,6 +1832,7 @@ class RecentActivitiesView(APIView):
     """Son aktiviteler - optimize edilmiş cache-based"""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('dashboard', 'read')
     def get(self, request):
@@ -1888,6 +1912,7 @@ class AdminNotificationViewSet(viewsets.ModelViewSet):
     serializer_class = AdminNotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('dashboard', 'read')
     def list(self, request, *args, **kwargs):
@@ -1911,6 +1936,7 @@ class AdminSettingsViewSet(viewsets.ModelViewSet):
     serializer_class = AdminSettingsSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     @admin_permission_required('settings', 'read')
     def list(self, request, *args, **kwargs):
@@ -1982,6 +2008,7 @@ class AdminPermissionViewSet(viewsets.ModelViewSet):
     serializer_class = AdminPermissionSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     @admin_permission_required('settings', 'read')
     def list(self, request, *args, **kwargs):
@@ -2003,6 +2030,7 @@ class AdminRoleManagementView(APIView):
     """Admin rol tanımları yönetimi"""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     @admin_permission_required('settings', 'read')
     def get(self, request):
@@ -2066,6 +2094,7 @@ class SMSBalanceView(APIView):
     """SMS kontör bakiyesi API'si"""
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [AdminTokenAuthentication]
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     @admin_permission_required('settings', 'read')
     def get(self, request):
@@ -2106,6 +2135,7 @@ class ServerMonitoringView(APIView):
     """Sunucu monitoring API'si"""
     permission_classes = []  # Geçici olarak devre dışı
     authentication_classes = []
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     def get(self, request):
         """Tüm sunucuların monitoring verilerini getir"""
@@ -2133,6 +2163,7 @@ class ServerDetailView(APIView):
     """Belirli bir sunucunun detaylı bilgileri"""
     permission_classes = []  # Geçici olarak devre dışı
     authentication_classes = []
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     def get(self, request, server_id):
         """Sunucu detaylarını getir"""
@@ -2187,6 +2218,7 @@ class ServerActionView(APIView):
     """Sunucu aksiyonları (restart, etc.)"""
     permission_classes = []  # Geçici olarak devre dışı
     authentication_classes = []
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     def post(self, request, server_id):
         """Sunucu aksiyonu gerçekleştir"""
@@ -2231,6 +2263,7 @@ class DomainViewSet(viewsets.ModelViewSet):
     serializer_class = DomainSerializer
     permission_classes = []  # Geçici olarak devre dışı
     authentication_classes = []
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -2413,6 +2446,7 @@ class HostingerSubscriptionsView(APIView):
     """Hostinger subscriptions API'si"""
     permission_classes = []  # Geçici olarak devre dışı
     authentication_classes = []
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     def get(self, request):
         """Tüm subscriptions'ları getir"""
@@ -2437,6 +2471,7 @@ class HostingerSubscriptionDetailView(APIView):
     """Belirli bir subscription'ın detayları"""
     permission_classes = []
     authentication_classes = []
+    throttle_classes = []  # Rate limit devre dışı (admin paneli için)
 
     def get(self, request, subscription_id):
         """Belirli bir subscription'ın detaylarını getir"""

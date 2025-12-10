@@ -23,8 +23,10 @@ from django.http import Http404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -35,13 +37,23 @@ logger = logging.getLogger(__name__)
 # Permission class'ları
 class IsVendor(permissions.BasePermission):
     def has_permission(self, request, view):
+        # Debug: Authentication durumunu kontrol et
+        if not request.user.is_authenticated:
+            logger.warning(f"IsVendor permission: User not authenticated. Session cookies: {list(request.COOKIES.keys())}")
+            return False
+        
         # Vendor, admin role veya superuser olabilir
-        return request.user.is_authenticated and (
+        is_vendor = (
             request.user.role == "vendor" or 
             request.user.role == "admin" or
             request.user.is_staff or 
             request.user.is_superuser
         )
+        
+        if not is_vendor:
+            logger.warning(f"IsVendor permission: User {request.user.email} (role: {request.user.role}) is not vendor/admin")
+        
+        return is_vendor
 
 # Pagination sınıfı
 class VendorSearchPagination(PageNumberPagination):
@@ -322,60 +334,132 @@ class VendorDashboardSummaryView(APIView):
         return Response(data)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class VendorAnalyticsViewEvent(APIView):
+    """Vendor profil görüntüleme analytics - Public endpoint, CSRF exempt"""
     permission_classes = [AllowAny]
+    authentication_classes = []  # CSRF exemption için authentication'ı devre dışı bırak
+    
+    def enforce_csrf(self, request):
+        """DRF CSRF kontrolünü bypass et (public analytics endpoint için)"""
+        return  # CSRF kontrolü yapma
+    
+    def get_user_from_session(self, request):
+        """Session'dan user'ı manuel olarak al (authentication_classes = [] olduğu için)"""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        # Session'dan user_id'yi al
+        user_id = request.session.get('_auth_user_id')
+        if user_id:
+            try:
+                return User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                return None
+        return None
 
     def post(self, request, slug):
         try:
             vendor = VendorProfile.objects.get(slug=slug, user__is_active=True)
         except VendorProfile.DoesNotExist:
             return Response({"detail": "Vendor bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
-        viewer = request.user if request.user.is_authenticated else None
+        
+        # Session'dan user'ı manuel olarak al (authentication_classes = [] olduğu için)
+        viewer = self.get_user_from_session(request)
+        
+        # Debug log
+        logger.debug(f"Analytics view event - slug: {slug}, viewer: {viewer.email if viewer else None}, session_key: {request.session.session_key}")
+        
         if viewer and viewer == vendor.user:
             return Response({"status": "ignored"})
         ip = request.META.get('REMOTE_ADDR', '')
         ua = request.META.get('HTTP_USER_AGENT', '')
         ip_hash = hashlib.sha256(ip.encode()).hexdigest() if ip else ''
         ua_hash = hashlib.sha256(ua.encode()).hexdigest() if ua else ''
-        month_bucket = timezone.now().strftime('%Y-%m')
-        # get_or_create kullanarak duplicate kayıtları önle
-        VendorView.objects.get_or_create(
+        # Günlük bazlı kayıt (ay bazlı yerine) - her gün için ayrı kayıt
+        day_bucket = timezone.now().strftime('%Y-%m-%d')
+        # get_or_create kullanarak aynı gün içinde duplicate kayıtları önle
+        view_obj, created = VendorView.objects.get_or_create(
             vendor=vendor,
             ip_hash=ip_hash,
             ua_hash=ua_hash,
-            month_bucket=month_bucket,
+            month_bucket=day_bucket,  # month_bucket field'ını günlük format için kullanıyoruz
             defaults={'viewer': viewer}
         )
-        return Response({"status": "ok"})
+        
+        # Eğer kayıt zaten varsa ve viewer boşsa, viewer'ı güncelle
+        if not created and not view_obj.viewer and viewer:
+            view_obj.viewer = viewer
+            view_obj.save()
+            logger.debug(f"Updated existing VendorView with viewer: {viewer.email}")
+        
+        return Response({"status": "ok", "viewer_id": viewer.id if viewer else None})
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class VendorAnalyticsCallEvent(APIView):
+    """Vendor telefon arama analytics - Public endpoint, CSRF exempt"""
     permission_classes = [AllowAny]
+    authentication_classes = []  # CSRF exemption için authentication'ı devre dışı bırak
+    
+    def enforce_csrf(self, request):
+        """DRF CSRF kontrolünü bypass et (public analytics endpoint için)"""
+        return  # CSRF kontrolü yapma
+    
+    def get_user_from_session(self, request):
+        """Session'dan user'ı manuel olarak al (authentication_classes = [] olduğu için)"""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        # Session'dan user_id'yi al
+        user_id = request.session.get('_auth_user_id')
+        if user_id:
+            try:
+                return User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                return None
+        return None
 
     def post(self, request, slug):
         try:
             vendor = VendorProfile.objects.get(slug=slug, user__is_active=True)
         except VendorProfile.DoesNotExist:
             return Response({"detail": "Vendor bulunamadı"}, status=status.HTTP_404_NOT_FOUND)
-        viewer = request.user if request.user.is_authenticated else None
+        
+        # Session'dan user'ı manuel olarak al (authentication_classes = [] olduğu için)
+        viewer = self.get_user_from_session(request)
         ip = request.META.get('REMOTE_ADDR', '')
         phone = request.data.get('phone', '')
         ip_hash = hashlib.sha256(ip.encode()).hexdigest() if ip else ''
-        month_bucket = timezone.now().strftime('%Y-%m')
-        # get_or_create kullanarak duplicate kayıtları önle
-        VendorCall.objects.get_or_create(
+        # Günlük bazlı kayıt (ay bazlı yerine) - her gün için ayrı kayıt
+        day_bucket = timezone.now().strftime('%Y-%m-%d')
+        # get_or_create kullanarak aynı gün içinde duplicate kayıtları önle
+        call_obj, created = VendorCall.objects.get_or_create(
             vendor=vendor,
             ip_hash=ip_hash,
-            month_bucket=month_bucket,
+            month_bucket=day_bucket,  # month_bucket field'ını günlük format için kullanıyoruz
             defaults={'viewer': viewer, 'phone': phone}
         )
-        return Response({"status": "ok"})
+        
+        # Eğer kayıt zaten varsa ve viewer boşsa, viewer'ı güncelle
+        if not created and not call_obj.viewer and viewer:
+            call_obj.viewer = viewer
+            call_obj.save()
+            logger.debug(f"Updated existing VendorCall with viewer: {viewer.email}")
+        
+        return Response({"status": "ok", "viewer_id": viewer.id if viewer else None})
 
 class VendorProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = VendorProfileSerializer
     permission_classes = [IsVendor]
 
     def get_object(self):
+        # Debug: Authentication durumunu kontrol et
+        if not self.request.user.is_authenticated:
+            logger.warning(f"VendorProfileView: User not authenticated. Session cookie: {self.request.COOKIES}")
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Oturum açmanız gerekiyor.")
+        
         # VendorProfile'ı döndür, CustomUser'ı değil
         try:
             return VendorProfile.objects.prefetch_related('gallery_images').get(user=self.request.user)
@@ -391,11 +475,17 @@ class VendorProfileView(generics.RetrieveUpdateAPIView):
         return context
 
     def get(self, request, *args, **kwargs):
+        # Debug: Authentication durumunu kontrol et
+        if not request.user.is_authenticated:
+            logger.warning(f"VendorProfileView GET: User not authenticated. Session cookies: {list(request.COOKIES.keys())}")
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Oturum açmanız gerekiyor.")
+        
+        logger.info(f"VendorProfileView GET: User authenticated - {request.user.email}, Role: {request.user.role}")
+        
         try:
             return super().get(request, *args, **kwargs)
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.error(f"VendorProfileView error: {str(e)}")
             return Response({"detail": "Profile bilgileri alınamadı."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -504,8 +594,11 @@ class ClientToVendorUpgradeView(APIView):
                 "detail": f"Yükseltme sırasında hata oluştu: {str(e)}"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class SetVendorPasswordView(APIView):
+    """Vendor şifre belirleme - Public endpoint, CSRF exempt"""
     permission_classes = [AllowAny]
+    authentication_classes = [SessionAuthentication]  # Session Authentication aktif (opsiyonel user bilgisi için)
 
     def post(self, request):
         email = request.data.get("email")
@@ -814,8 +907,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(f"Async cancellation email gönderme hatası: {e}")
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ClientAppointmentView(APIView):
+    """Müşteri randevu talebi oluştur - Public endpoint, CSRF exempt"""
     permission_classes = [AllowAny]
+    authentication_classes = [SessionAuthentication]  # Session Authentication aktif (opsiyonel user bilgisi için)
     
     def post(self, request, slug):
         """Müşteri randevu talebi oluşturur"""
@@ -902,10 +998,12 @@ class CarBrandListView(APIView):
         return Response(serializer.data)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ReviewViewSet(viewsets.ModelViewSet):
-    """Değerlendirme işlemleri için ViewSet"""
+    """Değerlendirme işlemleri için ViewSet - CSRF exempt (public create için)"""
     serializer_class = ReviewSerializer
-    permission_classes = [AllowAny]  # GET için public, POST için authentication kontrolü create'de yapılacak
+    permission_classes = [AllowAny]  # GET için public, POST için authentication kontrolü serializer'da yapılacak
+    authentication_classes = [SessionAuthentication]  # Session Authentication aktif (review create için user bilgisi gerekli)
     
     def get_queryset(self):
         vendor_slug = self.kwargs.get('vendor_slug')
@@ -1371,9 +1469,24 @@ class VendorImageListView(generics.ListCreateAPIView):
             # Görseli al ve optimize et
             if 'image' in self.request.FILES:
                 from core.utils.image_processing import optimize_image_to_webp
+                from core.utils.file_validation import validate_image_upload
                 from django.core.files.uploadedfile import InMemoryUploadedFile
+                from rest_framework.exceptions import ValidationError
                 
                 original_file = self.request.FILES['image']
+                
+                # Güvenli dosya doğrulama (magic bytes ile)
+                # Sadece WebP, JPG, JPEG, PNG kabul edilir - WebP'ye dönüştürülecek
+                # Not: image/jpg standart değil, tarayıcılar image/jpeg gönderir
+                is_valid, error_message = validate_image_upload(
+                    original_file,
+                    max_size=5 * 1024 * 1024,  # 5MB (tüm görseller için standart limit)
+                    allowed_types=['image/jpeg', 'image/png', 'image/webp'],  # image/jpg kaldırıldı (standart değil)
+                    strict_validation=True  # Magic bytes kontrolü aktif
+                )
+                
+                if not is_valid:
+                    raise ValidationError(error_message)
                 
                 # Görseli WebP'ye dönüştür ve optimize et
                 optimized_file = optimize_image_to_webp(
@@ -1411,21 +1524,12 @@ class VendorImageListView(generics.ListCreateAPIView):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("Vendor profili bulunamadı.")
         except ValueError as e:
-            # Görsel işleme hatası - orijinal dosyayı kaydet (fallback)
+            # Görsel işleme hatası - orijinal dosya kaydedilmez, hata döndürülür
             import logging
             logger = logging.getLogger(__name__)
-            logger.warning(f"Görsel optimize edilemedi, orijinal format kaydediliyor: {str(e)}")
-            try:
-                vendor = self.request.user.vendor_profile
-                # Orijinal dosyayı tekrar yükle
-                original_file = self.request.FILES.get('image')
-                if original_file:
-                    original_file.seek(0)  # Reset file pointer
-                serializer.save(vendor=vendor)
-            except Exception as fallback_error:
-                logger.error(f"Fallback görsel kaydetme hatası: {str(fallback_error)}")
-                from rest_framework.exceptions import ValidationError
-                raise ValidationError("Görsel yüklenirken hata oluştu.")
+            logger.error(f"Görsel WebP'ye dönüştürülemedi: {str(e)}")
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Görsel işlenirken hata oluştu. Lütfen geçerli bir görsel dosyası yükleyin.")
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
@@ -1458,9 +1562,24 @@ class VendorImageDetailView(generics.RetrieveUpdateDestroyAPIView):
             # Görsel güncelleniyorsa optimize et
             if 'image' in self.request.FILES:
                 from core.utils.image_processing import optimize_image_to_webp
+                from core.utils.file_validation import validate_image_upload
                 from django.core.files.uploadedfile import InMemoryUploadedFile
+                from rest_framework.exceptions import ValidationError
                 
                 original_file = self.request.FILES['image']
+                
+                # Güvenli dosya doğrulama (magic bytes ile)
+                # Sadece WebP, JPG, JPEG, PNG kabul edilir - WebP'ye dönüştürülecek
+                # Not: image/jpg standart değil, tarayıcılar image/jpeg gönderir
+                is_valid, error_message = validate_image_upload(
+                    original_file,
+                    max_size=5 * 1024 * 1024,  # 5MB (tüm görseller için standart limit)
+                    allowed_types=['image/jpeg', 'image/png', 'image/webp'],  # image/jpg kaldırıldı (standart değil)
+                    strict_validation=True  # Magic bytes kontrolü aktif
+                )
+                
+                if not is_valid:
+                    raise ValidationError(error_message)
                 
                 # Görseli WebP'ye dönüştür ve optimize et
                 optimized_file = optimize_image_to_webp(
@@ -1497,15 +1616,12 @@ class VendorImageDetailView(generics.RetrieveUpdateDestroyAPIView):
                 serializer.save()
                 
         except ValueError as e:
-            # Görsel işleme hatası - orijinal dosyayı kaydet (fallback)
+            # Görsel işleme hatası - orijinal dosya kaydedilmez, hata döndürülür
             import logging
             logger = logging.getLogger(__name__)
-            logger.warning(f"Görsel optimize edilemedi, orijinal format kaydediliyor: {str(e)}")
-            # Orijinal dosyayı tekrar yükle
-            original_file = self.request.FILES.get('image')
-            if original_file:
-                original_file.seek(0)  # Reset file pointer
-            serializer.save()
+            logger.error(f"Görsel WebP'ye dönüştürülemedi: {str(e)}")
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Görsel işlenirken hata oluştu. Lütfen geçerli bir görsel dosyası yükleyin.")
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)

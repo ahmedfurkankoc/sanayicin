@@ -3,10 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import axios from "axios";
 import AuthHeader from "../../components/AuthHeader";
 import { useEsnaf } from "../context/EsnafContext";
-import { setAuthToken, setAuthEmail } from '@/app/utils/api';
+import { api, setAuthEmail, setCsrfToken } from '@/app/utils/api';
 
 export default function EsnafGirisPage() {
   const [email, setEmail] = useState("");
@@ -16,73 +15,78 @@ export default function EsnafGirisPage() {
   const router = useRouter();
   const { isAuthenticated, refreshUser } = useEsnaf();
 
-  // Eğer kullanıcı zaten giriş yapmışsa panel'e yönlendir
+  // Eğer kullanıcı zaten giriş yapmışsa panel'e yönlendir (sadece bir kez)
+  const hasRedirectedRef = React.useRef(false);
+  
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/esnaf/panel");
+    if (isAuthenticated && !loading && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+      // Hard redirect kullan (daha güvenilir)
+      if (typeof window !== 'undefined') {
+        window.location.href = "/esnaf/panel";
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      // Tek endpoint ile giriş yap
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      // apiClient kullan (CSRF token otomatik eklenir)
+      const res = await api.login({ email, password });
       
-      const res = await axios.post(`${apiUrl}/auth/login/`, {
-        email,
-        password,
-      }, { withCredentials: true });
-      
-      if (res.status === 200 && res.data.access) {
-        const { access, role, is_verified } = res.data;
+      if (res.status === 200 && res.data.role) {
+        const { role, is_verified, csrf_token } = res.data;
         
         // Sadece vendor'lar esnaf paneline girebilir
         if (role === 'vendor' || role === 'admin') {
-          // Vendor token'larını kaydet
-          setAuthToken("vendor", access);
-          // Refresh token HttpOnly cookie olarak server tarafından set edilir
+          // Session cookie HttpOnly olarak backend tarafından set edildi
+          // CSRF token'ı kaydet
+          if (csrf_token) {
+            setCsrfToken(csrf_token);
+          }
           setAuthEmail("vendor", email);
-          
-          // Eski localStorage kullanımını kaldırdık (cookie tabanlı token yönetimi)
           
           // Doğrulanmamışsa email verification sayfasına yönlendir
           if (!is_verified) {
             router.push(`/esnaf/email-dogrula?email=${email}`);
+            setLoading(false);
             return;
           }
           
-          // Context'i yenile
-          await refreshUser();
+          // Session cookie'nin set edilmesi için kısa bir bekleme
+          // Django session cookie response header'ında gelir, tarayıcı otomatik set eder
+          await new Promise(resolve => setTimeout(resolve, 100));
           
-          // State güncellenmesini bekle
-          setTimeout(() => {
-            router.push("/esnaf/panel");
-          }, 100);
+          // Context'i arka planda yenile (yönlendirme beklemeden)
+          refreshUser().catch((refreshError) => {
+            console.error("Kullanıcı bilgileri yüklenirken hata:", refreshError);
+          });
+          
+          // Direkt panel'e yönlendir (session cookie var, refreshUser arka planda çalışacak)
+          router.push("/esnaf/panel");
         } else if (role === 'client') {
           // Client hesabı varsa vendor'a upgrade et
           setError("Bu hesap müşteri hesabı. Esnaf olmak için lütfen yeni hesap açın veya mevcut hesabınızı yükseltin.");
-          
-          // Cookie tabanlı yönetimde localStorage temizliği gereksiz
+          setLoading(false);
         } else {
           setError("Bu hesap esnaf hesabı değil.");
-          
-          // Cookie tabanlı yönetimde localStorage temizliği gereksiz
+          setLoading(false);
         }
       } else {
         setError("Giriş başarısız. Bilgilerinizi kontrol edin.");
+        setLoading(false);
       }
     } catch (err: any) {
+      console.error("Login error:", err);
       setError(err.response?.data?.error || "Giriş başarısız. Bilgilerinizi kontrol edin.");
-    } finally {
       setLoading(false);
     }
   };
 
-  // Eğer giriş yapılmışsa loading göster
-  if (isAuthenticated) {
+  // Eğer giriş yapılmışsa ve loading bitmişse yönlendir
+  if (isAuthenticated && !loading) {
     return (
       <>
       <AuthHeader currentPage="login" />

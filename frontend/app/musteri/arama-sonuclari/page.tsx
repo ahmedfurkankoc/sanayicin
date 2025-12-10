@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, Suspense, useCallback, useMemo, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { api, getAuthToken } from "@/app/utils/api";
+import { api } from "@/app/utils/api";
 import { useTurkeyData } from "@/app/hooks/useTurkeyData";
 import { useCarBrands } from "@/app/hooks/useCarBrands";
 import { useServices } from "@/app/hooks/useServices";
@@ -94,13 +94,8 @@ const VendorCard = React.memo(({ vendor }: { vendor: Vendor }) => {
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   
   const handleVendorClick = () => {
-    // Hem vendor hem client token'ları kontrol et
-    const vendorToken = getAuthToken('vendor');
-    const clientToken = getAuthToken('client');
-    
-    // Herhangi bir token varsa authenticated kabul et
-    const isAuthenticated = vendorToken || clientToken;
-    
+    // Session Authentication: useMusteri context'inden isAuthenticated kullan
+    // getAuthToken artık çalışmıyor (HttpOnly cookie'ler JavaScript ile okunamaz)
     if (!isAuthenticated) {
       setShowAuthModal(true);
       return;

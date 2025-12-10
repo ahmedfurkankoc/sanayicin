@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { api, getAuthToken, setAuthToken, setAuthEmail, clearAuthTokens, clearAllAuthData } from '@/app/utils/api';
+import { api, setAuthEmail, clearAllAuthData } from '@/app/utils/api';
 
 interface MusteriContextType {
   isAuthenticated: boolean;
@@ -48,27 +48,51 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  // Token kontrolü - role göre kontrol (cookie tabanlı)
-  const checkAuth = (): { isAuthenticated: boolean; role: 'client' | 'vendor' | null } => {
+  // Token kontrolü - HttpOnly cookie'ler JavaScript ile okunamaz
+  // Backend'den profil bilgisi çekerek authentication durumunu kontrol et
+  const checkAuth = async (): Promise<{ isAuthenticated: boolean; role: 'client' | 'vendor' | null }> => {
     if (!mounted) return { isAuthenticated: false, role: null };
     
-    // Cookie'den token kontrolü
-    const getCookieValue = (name: string): string | null => {
-      if (typeof document === 'undefined') return null;
-      const value = document.cookie
-        .split('; ')
-        .find(row => row.startsWith(`${name}=`))
-        ?.split('=')[1];
-      return value || null;
-    };
-    
-    const vendorToken = getCookieValue('vendor_token');
-    const clientToken = getCookieValue('client_token');
-    
-    if (vendorToken) {
-      return { isAuthenticated: true, role: 'vendor' };
-    } else if (clientToken) {
-      return { isAuthenticated: true, role: 'client' };
+    try {
+      // Backend'den profil bilgisi çek (HttpOnly cookie otomatik gönderilir)
+      // Vendor profilini dene
+      try {
+        const vendorResponse = await api.getProfile('vendor');
+        if (vendorResponse.status === 200) {
+          return { isAuthenticated: true, role: 'vendor' };
+        }
+      } catch (e: any) {
+        // 401/403 normal (session yok) - sessizce handle et
+        const status = e.response?.status;
+        if (status !== 401 && status !== 403 && e.code !== 'ERR_NETWORK') {
+          // Beklenmeyen hata - console'a yaz
+          console.error('Vendor profil kontrolü hatası:', e);
+        }
+        // Vendor profil yoksa client profilini dene
+        try {
+          const clientResponse = await api.getProfile('client');
+          if (clientResponse.status === 200) {
+            return { isAuthenticated: true, role: 'client' };
+          }
+        } catch (e2: any) {
+          // 401/403 normal (session yok) - sessizce handle et
+          const status2 = e2.response?.status;
+          if (status2 !== 401 && status2 !== 403 && e2.code !== 'ERR_NETWORK') {
+            // Beklenmeyen hata - console'a yaz
+            console.error('Client profil kontrolü hatası:', e2);
+          }
+          // Her iki profil de yoksa authenticated değil
+          return { isAuthenticated: false, role: null };
+        }
+      }
+    } catch (e: any) {
+      // Network hatası veya beklenmeyen hata
+      const status = e.response?.status;
+      if (status !== 401 && status !== 403 && e.code !== 'ERR_NETWORK') {
+        console.error('Auth kontrolü hatası:', e);
+      }
+      // Hata durumunda authenticated değil
+      return { isAuthenticated: false, role: null };
     }
     
     return { isAuthenticated: false, role: null };
@@ -88,7 +112,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
   const refreshUser = async () => {
     try {
       setLoading(true);
-      const authCheck = checkAuth();
+      const authCheck = await checkAuth();
       
       if (!authCheck.isAuthenticated) {
         setIsAuthenticated(false);
@@ -109,11 +133,32 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
         setRole(authCheck.role);
         setUserPermissions(authCheck.role);
       } else {
-        logout();
+        setIsAuthenticated(false);
+        setUser(null);
+        setRole(null);
+        setUserPermissions(null);
       }
-    } catch (error) {
-      console.error('Profil yüklenirken hata:', error);
-      logout();
+    } catch (error: any) {
+      // Network hatası (backend çalışmıyor) veya 401/403 hatası = session yok veya geçersiz
+      // Bu hatalar normal (kullanıcı giriş yapmamış olabilir) - sessizce handle et
+      const status = error.response?.status;
+      const isAuthError = status === 401 || status === 403;
+      const isNetworkError = error.code === 'ERR_NETWORK' || error.message?.includes('Network Error');
+      
+      if (isNetworkError || isAuthError) {
+        // Backend çalışmıyor veya kullanıcı giriş yapmamış - sessizce state'i temizle, console'a yazma
+        setIsAuthenticated(false);
+        setUser(null);
+        setRole(null);
+        setUserPermissions(null);
+      } else {
+        // Beklenmeyen hata - console'a yaz
+        console.error('Profil yüklenirken beklenmeyen hata:', error);
+        setIsAuthenticated(false);
+        setUser(null);
+        setRole(null);
+        setUserPermissions(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -125,13 +170,16 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
       setLoading(true);
       const response = await api.login({ email, password });
       
-      if (response.status === 200 && response.data.access) {
-        const { access, role: userRole } = response.data;
+      if (response.status === 200 && response.data.role) {
+        const { role: userRole, csrf_token } = response.data;
         
-        // Role göre token ayarla
+        // Session cookie HttpOnly olarak backend tarafından set edildi
+        // CSRF token'ı kaydet
+        if (csrf_token) {
+          const { setCsrfToken } = await import('@/app/utils/api');
+          setCsrfToken(csrf_token);
+        }
         const tokenRole = userRole === 'vendor' ? 'vendor' : 'client';
-        setAuthToken(tokenRole, access);
-        // Refresh token HttpOnly cookie olarak server tarafından set edildi
         setAuthEmail(tokenRole, email);
         
         setRole(userRole);
@@ -151,17 +199,26 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     }
   };
 
-  // Çıkış yap - basitleştirilmiş versiyon
-  const logout = () => {
-    clearAllAuthData();
-    
-    setIsAuthenticated(false);
-    setUser(null);
-    setRole(null);
-    setUserPermissions(null);
-    
-    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
-    setTimeout(() => window.location.reload(), 200);
+  // Çıkış yap - backend logout endpoint'ini çağır
+  const logout = async () => {
+    try {
+      // Backend logout endpoint'ini çağır (session ve cookie'leri temizler)
+      await api.logout();
+    } catch (error) {
+      console.error("Logout hatası:", error);
+    } finally {
+      // State'i temizle
+      clearAllAuthData();
+      setIsAuthenticated(false);
+      setUser(null);
+      setRole(null);
+      setUserPermissions(null);
+      
+      // Hard redirect to ensure full state reset and proper cookie handling
+      if (typeof window !== 'undefined') {
+        window.location.href = '/musteri/giris';
+      }
+    }
   };
 
   // Component mount olduktan sonra authentication kontrolü
@@ -174,12 +231,13 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     if (!mounted) return;
     
     setLoading(true);
-    const authCheck = checkAuth();
-    if (authCheck.isAuthenticated) {
-      refreshUser();
-    } else {
-      setLoading(false);
-    }
+    checkAuth().then((authCheck) => {
+      if (authCheck.isAuthenticated) {
+        refreshUser();
+      } else {
+        setLoading(false);
+      }
+    });
   }, [mounted]);
 
   const value: MusteriContextType = {

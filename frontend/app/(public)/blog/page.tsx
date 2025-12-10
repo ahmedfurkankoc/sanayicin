@@ -30,11 +30,20 @@ export const metadata: Metadata = {
 
 async function getBlogData() {
   // API URL'i .env'den al, yoksa next.config.ts'den, yoksa localhost
+  // API v1 versiyonlaması: /api/v1/ yapısı kullanılıyor
   let apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl || !apiUrl.includes('/api')) {
-    // Eğer /api yoksa ekle
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:8000';
-    apiUrl = `${baseUrl}/api`;
+  if (!apiUrl) {
+    apiUrl = "http://localhost:8000/api/v1";
+  } else {
+    // API URL'inde /v1/ var mı kontrol et
+    if (!apiUrl.includes('/v1')) {
+      const baseUrl = apiUrl.replace(/\/$/, '');
+      if (baseUrl.includes('/api')) {
+        apiUrl = baseUrl.replace(/\/api\/?$/, '/api/v1');
+      } else {
+        apiUrl = `${baseUrl}/api/v1`;
+      }
+    }
   }
   
   try {

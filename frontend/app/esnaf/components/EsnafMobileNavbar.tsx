@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { clearAuthTokens } from '@/app/utils/api';
+import { useEsnaf } from '../context/EsnafContext';
 import NotificationBell from '@/app/components/NotificationBell';
 import { iconMapping } from '@/app/utils/iconMapping';
 
 const EsnafMobileNavbar = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { handleLogout: contextHandleLogout } = useEsnaf();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,12 +41,17 @@ const EsnafMobileNavbar = () => {
     router.push("/esnaf/giris");
   };
 
-  // Çıkış fonksiyonu
+  // Çıkış fonksiyonu: context'ten gelen handleLogout'u kullan
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
-    clearAuthTokens('vendor');
-    // Sadece sayfayı yenile - middleware doğru yere yönlendirecek
-    setTimeout(() => window.location.reload(), 200);
+    if (contextHandleLogout) {
+      contextHandleLogout();
+    } else {
+      // Fallback: sadece frontend state'i temizle ve sayfayı yenile
+      setTimeout(() => {
+        window.location.href = '/esnaf/giris';
+      }, 200);
+    }
   };
 
   // Panel veya hesabım butonu

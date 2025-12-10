@@ -2,8 +2,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { iconMapping, iconColors } from "@/app/utils/iconMapping";
-import { getAuthToken } from "@/app/utils/api";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { api } from "@/app/utils/api";
 
 type NavItem = { href: string; label: string; iconKey: keyof typeof iconMapping };
 
@@ -18,13 +18,68 @@ const items: NavItem[] = [
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
-  // Auth kontrolü - client veya vendor token'ı var mı?
-  const isAuthenticated = () => {
-    const clientToken = getAuthToken('client');
-    const vendorToken = getAuthToken('vendor');
-    return !!(clientToken || vendorToken);
-  };
+  // Session authentication kontrolü - backend'den profil bilgisi çek
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Vendor veya client profilini dene
+        try {
+          const vendorResponse = await api.getProfile('vendor');
+          if (vendorResponse.status === 200) {
+            setIsAuthenticated(true);
+            setIsChecking(false);
+            return;
+          }
+        } catch (e: any) {
+          // 401/403 normal (session yok) - sessizce handle et
+          const status = e.response?.status;
+          if (status !== 401 && status !== 403 && e.code !== 'ERR_NETWORK') {
+            // Beklenmeyen hata - sadece development'ta console'a yaz
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Vendor profil kontrolü hatası:', e);
+            }
+          }
+        }
+        
+        try {
+          const clientResponse = await api.getProfile('client');
+          if (clientResponse.status === 200) {
+            setIsAuthenticated(true);
+            setIsChecking(false);
+            return;
+          }
+        } catch (e2: any) {
+          // 401/403 normal (session yok) - sessizce handle et
+          const status2 = e2.response?.status;
+          if (status2 !== 401 && status2 !== 403 && e2.code !== 'ERR_NETWORK') {
+            // Beklenmeyen hata - sadece development'ta console'a yaz
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Client profil kontrolü hatası:', e2);
+            }
+          }
+        }
+        
+        setIsAuthenticated(false);
+        setIsChecking(false);
+      } catch (error: any) {
+        // Network hatası veya beklenmeyen hata
+        const status = error.response?.status;
+        if (status !== 401 && status !== 403 && error.code !== 'ERR_NETWORK') {
+          // Beklenmeyen hata - sadece development'ta console'a yaz
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Auth kontrolü hatası:', error);
+          }
+        }
+        setIsAuthenticated(false);
+        setIsChecking(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   // Link click handler - auth kontrolü yap
   const handleLinkClick = (e: React.MouseEvent, href: string) => {
@@ -33,8 +88,14 @@ export default function MobileBottomNav() {
       return;
     }
 
+    // Hala kontrol ediliyorsa bekle
+    if (isChecking) {
+      e.preventDefault();
+      return;
+    }
+
     // Giriş yapmamışsa giriş sayfasına yönlendir
-    if (!isAuthenticated()) {
+    if (!isAuthenticated) {
       e.preventDefault();
       router.push('/musteri/giris');
     }

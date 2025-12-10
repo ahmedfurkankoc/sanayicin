@@ -5,7 +5,9 @@ from .views import (
     ServiceAreaListView, 
     CategoryListView, 
     CarBrandListView,
-    login,
+    LoginView,
+    LogoutView,
+    CsrfTokenView,
     send_verification_email,
     verify_email,
     resend_verification_email,
@@ -27,8 +29,6 @@ from .views import (
     verify_registration_otp,
     client_profile,
     client_set_password,
-    refresh_access_token,
-    logout,
     clear_notifications,
     create_support_ticket,
     get_support_ticket_status,
@@ -40,10 +40,9 @@ from .views import (
 )
 
 urlpatterns = [
-    path('auth/login/', login, name='login'),
-    # Cookie-based refresh endpoint
-    path('auth/token/refresh/', refresh_access_token, name='token_refresh'),
-    path('auth/logout/', logout, name='logout'),
+    path('auth/login/', LoginView.as_view(), name='login'),
+    path('auth/csrf/', CsrfTokenView.as_view(), name='get_csrf_token'),  # CSRF token endpoint (rate limit'ten muaf)
+    path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('notifications/clear/', clear_notifications, name='clear_notifications'),
     path('auth/send-verification/', send_verification_email, name='send_verification'),
     path('auth/verify-email/', verify_email, name='verify_email'),

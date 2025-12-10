@@ -6,15 +6,30 @@ type Params = { params: Promise<{ category: string; slug: string }> }
 
 async function fetchPost(slug: string) {
   // API URL'i .env'den al, yoksa next.config.ts'den, yoksa localhost
+  // API v1 versiyonlaması: /api/v1/ yapısı kullanılıyor
   let apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl || !apiUrl.includes('/api')) {
-    // Eğer /api yoksa ekle
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:8000';
-    apiUrl = `${baseUrl}/api`;
+  if (!apiUrl) {
+    apiUrl = "http://localhost:8000/api/v1";
+  } else {
+    // API URL'inde /v1/ var mı kontrol et
+    if (!apiUrl.includes('/v1')) {
+      const baseUrl = apiUrl.replace(/\/$/, '');
+      if (baseUrl.includes('/api')) {
+        apiUrl = baseUrl.replace(/\/api\/?$/, '/api/v1');
+      } else {
+        apiUrl = `${baseUrl}/api/v1`;
+      }
+    }
   }
-  const res = await fetch(`${apiUrl}/blog/posts/${slug}/`, { cache: 'no-store' })
-  if (!res.ok) return null
-  return res.json()
+  try {
+    const res = await fetch(`${apiUrl}/blog/posts/${slug}/`, { cache: 'no-store' })
+    if (!res.ok) return null
+    return res.json()
+  } catch (error) {
+    // Backend çalışmıyorsa veya network hatası varsa null döndür
+    console.error('Blog post fetch error:', error)
+    return null
+  }
 }
 
 function stripHtmlAndTruncate(html: string, maxLength: number = 160): string {
@@ -42,14 +57,12 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sanayicin.com'
   
-  // Title: Blog başlığı - Sanayicin (layout template otomatik ekleyecek)
-  const title = post.title || 'Blog Yazısı'
+  // Title: Önce og_title, yoksa title
+  const title = post.og_title || post.title || 'Blog Yazısı'
+  const metaTitle = post.meta_title || post.title || 'Blog Yazısı'
 
-  // Description: Önce meta_description, yoksa excerpt, yoksa içerikten özet çıkar
-  const description = post.meta_description || 
-    post.excerpt || 
-    stripHtmlAndTruncate(post.content || '', 160) ||
-    'Sanayicin blog yazısı'
+  // Description: Sadece modeldeki meta_description kullan (fallback yok)
+  const description = post.meta_description || 'Sanayicin blog yazısı'
 
   // Media URL resolver
   const resolveOg = (val?: string | null): string | null => {
@@ -62,28 +75,39 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     return `${mediaBaseUrl}/media/${rel}`
   }
 
-  const preferred = resolveOg(post.og_image) || resolveOg(post.cover_image)
-  const imageUrl = preferred || `${siteUrl}/opengraph-image.jpg`
-  const canonical = `${siteUrl}/blog/${post.category_slug || category}/${slug}`
+  // OG Image: Önce og_image, yoksa cover_image (featured_image)
+  const ogImage = resolveOg(post.og_image) || resolveOg(post.cover_image)
+  const imageUrl = ogImage || `${siteUrl}/opengraph-image.jpg`
+  
+  // OG Alt: Önce og_alt, yoksa title
+  const ogAlt = post.og_alt || title
+
+  // Canonical URL: Önce canonical_url, yoksa otomatik oluştur
+  const canonical = post.canonical_url || `${siteUrl}/blog/${post.category_slug || category}/${slug}`
+
+  // Keywords
+  const keywords = post.meta_keywords 
+    ? post.meta_keywords.split(',').map((k: string) => k.trim()).filter(Boolean)
+    : undefined
 
   return {
-    title,
+    title: metaTitle,
     description,
-    keywords: post.meta_keywords ? post.meta_keywords.split(',').map((k: string) => k.trim()) : undefined,
+    keywords,
     alternates: {
       canonical,
     },
     openGraph: {
       type: 'article',
       title,
-      description,
+      description, // og:description için meta_description kullan (og_description değil)
       url: canonical,
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: title,
+          alt: ogAlt,
         },
       ],
       publishedTime: post.published_at,
@@ -93,7 +117,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title,
-      description,
+      description, // Twitter description için de meta_description kullan
       images: [imageUrl],
     },
   }

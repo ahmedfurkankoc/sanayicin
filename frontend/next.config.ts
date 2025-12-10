@@ -9,7 +9,19 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ||
   'http://localhost:8000';
 
 // API URL'i oluştur - .env'de NEXT_PUBLIC_API_URL varsa onu kullan, yoksa baseUrl'den oluştur
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || `${baseUrl}/api`;
+// API v1 versiyonlaması: /api/v1/ yapısı kullanılıyor
+let apiUrl = process.env.NEXT_PUBLIC_API_URL;
+if (!apiUrl) {
+  apiUrl = `${baseUrl}/api/v1`;
+} else if (!apiUrl.includes('/v1')) {
+  // /v1/ yoksa ekle
+  const cleanUrl = apiUrl.replace(/\/$/, '');
+  if (cleanUrl.includes('/api')) {
+    apiUrl = cleanUrl.replace(/\/api\/?$/, '/api/v1');
+  } else {
+    apiUrl = `${cleanUrl}/api/v1`;
+  }
+}
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -29,6 +41,10 @@ const nextConfig: NextConfig = {
         destination: `${baseUrl}/media/:path*`,
       },
     ];
+  },
+  // Production'da console.log/error/warn'ları kaldır (güvenlik - API URL'leri ve hatalar görünmemeli)
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? true : false,
   },
   // SSR için output mode (varsayılan olarak SSR aktif)
   // Next.js 13+ App Router varsayılan olarak SSR kullanır

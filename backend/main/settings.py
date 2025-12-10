@@ -35,6 +35,9 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
+# Additional Security Headers (development için esnek)
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
 # SSL/HTTPS Settings - Development'da devre dışı
 SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
 SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
@@ -64,6 +67,7 @@ INSTALLED_APPS = [
     'vendors',
     'chat',
     'admin_panel',
+    'auditlog',  # Audit Log app
 ]
 
 MIDDLEWARE = [
@@ -76,6 +80,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',  # Güvenlik başlıkları için (development için esnek)
 ]
 
 # CORS Security - Development
@@ -197,9 +202,10 @@ AUTHENTICATION_BACKENDS = [
     'core.backends.EmailBackend',
 ]
 
-# JWT Settings - Development (uzun süreler)
-JWT_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_HOURS', '168'))  # 7 gün (168 saat)
-JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '30'))
+# JWT Settings - Development (development için optimize edilmiş süreler)
+# Development'ta biraz daha uzun ama yine de güvenli: 24 saat access, 14 gün refresh
+JWT_ACCESS_TOKEN_LIFETIME_HOURS = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_HOURS', '24'))  # 24 saat (development için)
+JWT_REFRESH_TOKEN_LIFETIME_DAYS = int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', '14'))  # 14 gün (development için)
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=JWT_ACCESS_TOKEN_LIFETIME_HOURS),
@@ -219,44 +225,41 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 }
 
-# REST Framework - Development (yüksek rate limits)
+# REST Framework - Development (Session Authentication - en güvenli)
+# Development ortamında rate limitler yüksek tutulur (test kolaylığı için)
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',  # Session Authentication (en güvenli)
+        'rest_framework.authentication.TokenAuthentication',  # Fallback (opsiyonel)
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.DefaultPagination',
     'PAGE_SIZE': 20,
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': f"{os.environ.get('RATE_LIMIT_ANON', '1000')}/hour",
-        'user': f"{os.environ.get('RATE_LIMIT_USER', '10000')}/hour"
-    },
+    # Development - Rate limiting kapalı (sınırsız)
+    # Test ve geliştirme kolaylığı için throttle'lar devre dışı
+    'DEFAULT_THROTTLE_CLASSES': [],
+    'DEFAULT_THROTTLE_RATES': {},
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 } 
 
-# Logging - Development (console)
+# Logging - Development (console + file for testing)
+# Tarih bilgisi tüm loglarda mevcut (asctime formatında)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+            'format': '%(asctime)s | %(levelname)-8s | %(name)s | %(pathname)s:%(lineno)d | %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
+            'format': '%(asctime)s | %(levelname)-8s | %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },
     'handlers': {
@@ -265,14 +268,21 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+        # Development'ta da dosyaya yaz (test için)
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django_dev.log',
+            'formatter': 'verbose',
+        },
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'file'],
         'level': 'INFO',
     },
            'loggers': {
                'django': {
-                   'handlers': ['console'],
+            'handlers': ['console', 'file'],
                    'level': 'WARNING',  # INFO'dan WARNING'e düşür
                    'propagate': False,
                },
@@ -348,9 +358,17 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Session Settings
-SESSION_COOKIE_AGE = 86400  # 24 hours
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_SAVE_EVERY_REQUEST = True
+# Session Cookie Settings - HttpOnly, Secure, SameSite
+# Cookie isimleri sabit ve anlamı belirsiz olacak şekilde ayarlandı
+SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME', "sa_rdx")  # sabit ve anlamsız isim
+CSRF_COOKIE_NAME = os.environ.get('CSRF_COOKIE_NAME', "sa_cx")        # sabit ve anlamsız isim
+
+SESSION_COOKIE_AGE = 86400 * 7  # 7 gün (session süresi)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Tarayıcı kapandığında session devam etsin
+SESSION_SAVE_EVERY_REQUEST = True  # Her istekte session'ı yenile (güvenlik)
+SESSION_COOKIE_HTTPONLY = True  # HttpOnly cookie (XSS koruması)
+SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False').lower() == 'true'  # HTTPS için
+SESSION_COOKIE_SAMESITE = 'Lax'  # Subdomain'ler için Lax
 
 # CSRF Settings
 CSRF_COOKIE_AGE = 86400  # 24 hours
