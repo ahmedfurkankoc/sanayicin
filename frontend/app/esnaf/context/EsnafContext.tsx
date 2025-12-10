@@ -47,13 +47,13 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
       console.error("Logout hatası:", error);
     } finally {
       // State'i temizle
-      clearAuthTokens('vendor');
-      setIsAuthenticated(false);
-      setUser(null);
-      setEmail('');
-      setIsAdmin(false);
-      setEmailVerified(false);
-      
+    clearAuthTokens('vendor');
+    setIsAuthenticated(false);
+    setUser(null);
+    setEmail('');
+    setIsAdmin(false);
+    setEmailVerified(false);
+    
       // Hard redirect kullan (cookie'lerin temizlenmesi için)
       if (typeof window !== 'undefined') {
         window.location.href = '/esnaf/giris';
@@ -90,10 +90,10 @@ export const EsnafProvider: React.FC<EsnafProviderProps> = ({ children }) => {
         setEmailVerified(userData.is_verified_user || userData.is_verified || false);
         setIsAdmin(userData.is_staff || userData.is_superuser || false);
       } else {
-        setIsAuthenticated(false);
-        setUser(null);
-        setEmail('');
-        setEmailVerified(false);
+      setIsAuthenticated(false);
+      setUser(null);
+      setEmail('');
+      setEmailVerified(false);
         setIsAdmin(false);
       }
     } catch (error: any) {

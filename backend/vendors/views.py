@@ -386,13 +386,13 @@ class VendorAnalyticsViewEvent(APIView):
             month_bucket=day_bucket,  # month_bucket field'ını günlük format için kullanıyoruz
             defaults={'viewer': viewer}
         )
-        
+
         # Eğer kayıt zaten varsa ve viewer boşsa, viewer'ı güncelle
         if not created and not view_obj.viewer and viewer:
             view_obj.viewer = viewer
             view_obj.save()
             logger.debug(f"Updated existing VendorView with viewer: {viewer.email}")
-        
+
         return Response({"status": "ok", "viewer_id": viewer.id if viewer else None})
 
 
@@ -1528,7 +1528,7 @@ class VendorImageListView(generics.ListCreateAPIView):
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Görsel WebP'ye dönüştürülemedi: {str(e)}")
-            from rest_framework.exceptions import ValidationError
+                from rest_framework.exceptions import ValidationError
             raise ValidationError("Görsel işlenirken hata oluştu. Lütfen geçerli bir görsel dosyası yükleyin.")
         except Exception as e:
             import logging

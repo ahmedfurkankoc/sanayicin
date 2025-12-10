@@ -59,7 +59,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
       try {
         const vendorResponse = await api.getProfile('vendor');
         if (vendorResponse.status === 200) {
-          return { isAuthenticated: true, role: 'vendor' };
+      return { isAuthenticated: true, role: 'vendor' };
         }
       } catch (e: any) {
         // 401/403 normal (session yok) - sessizce handle et
@@ -72,7 +72,7 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
         try {
           const clientResponse = await api.getProfile('client');
           if (clientResponse.status === 200) {
-            return { isAuthenticated: true, role: 'client' };
+      return { isAuthenticated: true, role: 'client' };
           }
         } catch (e2: any) {
           // 401/403 normal (session yok) - sessizce handle et
@@ -208,12 +208,12 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
       console.error("Logout hatası:", error);
     } finally {
       // State'i temizle
-      clearAllAuthData();
-      setIsAuthenticated(false);
-      setUser(null);
-      setRole(null);
-      setUserPermissions(null);
-      
+    clearAllAuthData();
+    setIsAuthenticated(false);
+    setUser(null);
+    setRole(null);
+    setUserPermissions(null);
+    
       // Hard redirect to ensure full state reset and proper cookie handling
       if (typeof window !== 'undefined') {
         window.location.href = '/musteri/giris';
@@ -232,11 +232,11 @@ export const MusteriProvider: React.FC<MusteriProviderProps> = ({ children }) =>
     
     setLoading(true);
     checkAuth().then((authCheck) => {
-      if (authCheck.isAuthenticated) {
-        refreshUser();
-      } else {
-        setLoading(false);
-      }
+    if (authCheck.isAuthenticated) {
+      refreshUser();
+    } else {
+      setLoading(false);
+    }
     });
   }, [mounted]);
 

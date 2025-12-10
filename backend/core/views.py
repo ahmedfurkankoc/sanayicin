@@ -344,52 +344,52 @@ class LoginView(APIView):
     authentication_classes = []  # CSRF korumasını bypass etmek için authentication'ı kaldır
     
     def post(self, request):
-        """Email ve şifre ile giriş yap"""
-        try:
-            email = request.data.get('email')
-            password = request.data.get('password')
-            
-            if not email or not password:
-                return Response(
+    """Email ve şifre ile giriş yap"""
+    try:
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        if not email or not password:
+            return Response(
                     {'error': 'Giriş bilgileri hatalı.'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
             # Kullanıcıyı bul ve şifreyi kontrol et
             # Güvenlik: Hatalı girişte fazla bilgi verme
             from auditlog.utils import log_login_failed, log_login_success
             
-            try:
-                user = CustomUser.objects.get(email=email)
+        try:
+            user = CustomUser.objects.get(email=email)
                 if not user.check_password(password):
                     # Şifre hatalı - genel mesaj ve audit log
                     log_login_failed(request, email=email, metadata={'reason': 'invalid_password'})
-                    return Response(
+            return Response(
                         {'error': 'Giriş bilgileri hatalı.'}, 
-                        status=status.HTTP_401_UNAUTHORIZED
-                    )
+                status=status.HTTP_401_UNAUTHORIZED
+            )
             except CustomUser.DoesNotExist:
                 # Kullanıcı bulunamadı - genel mesaj (aynı mesaj, timing attack koruması için) ve audit log
                 log_login_failed(request, email=email, metadata={'reason': 'user_not_found'})
-                return Response(
+            return Response(
                     {'error': 'Giriş bilgileri hatalı.'}, 
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-            
-            # Kullanıcının hangi profil tipine sahip olduğunu kontrol et
-            has_vendor_profile = False
-            
-            if user.role == 'vendor':
-                # VendorProfile var mı kontrol et
-                try:
-                    VendorProfile.objects.get(user=user)
-                    has_vendor_profile = True
-                except VendorProfile.DoesNotExist:
-                    has_vendor_profile = False
-            
-            # Artık tüm kullanıcı bilgileri CustomUser'da
-            effective_role = user.role
-            
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Kullanıcının hangi profil tipine sahip olduğunu kontrol et
+        has_vendor_profile = False
+        
+        if user.role == 'vendor':
+            # VendorProfile var mı kontrol et
+            try:
+                VendorProfile.objects.get(user=user)
+                has_vendor_profile = True
+            except VendorProfile.DoesNotExist:
+                has_vendor_profile = False
+        
+        # Artık tüm kullanıcı bilgileri CustomUser'da
+        effective_role = user.role
+        
             # Django Session Authentication kullan (en güvenli)
             # Session cookie otomatik olarak HttpOnly, Secure, SameSite ayarlarıyla set edilir
             from django.contrib.auth import login as django_login
@@ -414,13 +414,13 @@ class LoginView(APIView):
                 }
             )
             
-            response = Response({
-                'email': user.email,
-                'is_verified': user.is_verified_user,
-                'verification_status': user.verification_status,
-                'role': effective_role,
-                'user_role': user.role,
-                'has_vendor_profile': has_vendor_profile,
+        response = Response({
+            'email': user.email,
+            'is_verified': user.is_verified_user,
+            'verification_status': user.verification_status,
+            'role': effective_role,
+            'user_role': user.role,
+            'has_vendor_profile': has_vendor_profile,
                 'message': 'Login successful',
                 'csrf_token': csrf_token  # Frontend için CSRF token
             })
@@ -433,7 +433,7 @@ class LoginView(APIView):
             session_cookie_httponly = getattr(settings, 'SESSION_COOKIE_HTTPONLY', True)
             session_cookie_samesite = getattr(settings, 'SESSION_COOKIE_SAMESITE', 'Lax')
             
-            response.set_cookie(
+        response.set_cookie(
                 key=session_cookie_name,
                 value=request.session.session_key,
                 max_age=session_cookie_age,
@@ -448,14 +448,14 @@ class LoginView(APIView):
             logger.info(f"Login response headers: {dict(response.items())}")
             logger.info(f"Session cookie set: {session_cookie_name}={request.session.session_key}")
 
-            return response
+        return response
 
-        except Exception as e:
-            logger.error(f"Login error: {e}")
-            return Response(
-                {'error': 'Giriş yapılırken hata oluştu'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+    except Exception as e:
+        logger.error(f"Login error: {e}")
+        return Response(
+            {'error': 'Giriş yapılırken hata oluştu'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 # Refresh endpoint kaldırıldı - Session Authentication'da refresh token'a gerek yok
@@ -505,7 +505,7 @@ class LogoutView(APIView):
         session_cookie_samesite = getattr(settings, 'SESSION_COOKIE_SAMESITE', 'Lax')
         csrf_cookie_samesite = getattr(settings, 'CSRF_COOKIE_SAMESITE', 'Lax')
 
-        response = Response({'detail': 'Logged out'})
+    response = Response({'detail': 'Logged out'})
         # Yeni isimler
         response.delete_cookie(
             key=session_cookie_name,
@@ -528,7 +528,7 @@ class LogoutView(APIView):
                     domain=None,
                 )
 
-        return response
+    return response
 
 
 @api_view(['POST'])

@@ -65,7 +65,7 @@ export default function EsnafGirisPage() {
           });
           
           // Direkt panel'e yönlendir (session cookie var, refreshUser arka planda çalışacak)
-          router.push("/esnaf/panel");
+            router.push("/esnaf/panel");
         } else if (role === 'client') {
           // Client hesabı varsa vendor'a upgrade et
           setError("Bu hesap müşteri hesabı. Esnaf olmak için lütfen yeni hesap açın veya mevcut hesabınızı yükseltin.");

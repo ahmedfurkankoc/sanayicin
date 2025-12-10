@@ -412,14 +412,14 @@ function StatusChips() {
     }
     
     return (
-      <span title={title} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
+    <span title={title} className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
         state ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
-      }`}>
+    }`}>
         <span className={`mr-2 h-2 w-2 rounded-full ${state ? 'bg-green-500' : 'bg-red-500'}`}></span>
-        {label}
-        <span className="ml-1">{state ? ':aktif' : ':pasif'}</span>
-      </span>
-    )
+      {label}
+      <span className="ml-1">{state ? ':aktif' : ':pasif'}</span>
+    </span>
+  )
   }
 
   return (

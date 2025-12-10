@@ -35,9 +35,9 @@ async function getCategory(categorySlug: string) {
   } catch (error) {
     console.error('Category fetch error:', error);
     return null;
-  }
-}
-
+          }
+        }
+        
 // Blog yazılarını al
 async function getBlogPosts(categorySlug: string, page: number = 1) {
   try {
@@ -116,7 +116,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function CategoryBlogListPage({ params }: Params) {
   const { category } = await params;
-  
+      
   // Kategori ve blog yazılarını al
   const [categoryData, blogData] = await Promise.all([
     getCategory(category),

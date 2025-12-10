@@ -18,13 +18,13 @@ async function fetchPost(slug: string) {
         apiUrl = baseUrl.replace(/\/api\/?$/, '/api/v1');
       } else {
         apiUrl = `${baseUrl}/api/v1`;
-      }
+  }
     }
   }
   try {
-    const res = await fetch(`${apiUrl}/blog/posts/${slug}/`, { cache: 'no-store' })
-    if (!res.ok) return null
-    return res.json()
+  const res = await fetch(`${apiUrl}/blog/posts/${slug}/`, { cache: 'no-store' })
+  if (!res.ok) return null
+  return res.json()
   } catch (error) {
     // Backend çalışmıyorsa veya network hatası varsa null döndür
     console.error('Blog post fetch error:', error)
