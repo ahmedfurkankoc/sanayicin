@@ -432,6 +432,7 @@ class LoginView(APIView):
             session_cookie_secure = getattr(settings, 'SESSION_COOKIE_SECURE', False)
             session_cookie_httponly = getattr(settings, 'SESSION_COOKIE_HTTPONLY', True)
             session_cookie_samesite = getattr(settings, 'SESSION_COOKIE_SAMESITE', 'Lax')
+            session_cookie_domain = getattr(settings, 'SESSION_COOKIE_DOMAIN', None)
             
             response.set_cookie(
                 key=session_cookie_name,
@@ -441,7 +442,7 @@ class LoginView(APIView):
                 httponly=session_cookie_httponly,
                 samesite=session_cookie_samesite,
                 path='/',
-                domain=None  # None = current domain
+                domain=session_cookie_domain  # Prod'da .sanayicin.com (subdomain uyumu)
             )
             
             # Debug: Response header'larını kontrol et
@@ -504,19 +505,21 @@ class LogoutView(APIView):
         csrf_cookie_name = getattr(settings, 'CSRF_COOKIE_NAME', 'sa_cx')
         session_cookie_samesite = getattr(settings, 'SESSION_COOKIE_SAMESITE', 'Lax')
         csrf_cookie_samesite = getattr(settings, 'CSRF_COOKIE_SAMESITE', 'Lax')
+        session_cookie_domain = getattr(settings, 'SESSION_COOKIE_DOMAIN', None)
+        csrf_cookie_domain = getattr(settings, 'CSRF_COOKIE_DOMAIN', None)
 
         response = Response({'detail': 'Logged out'})
         # Yeni isimler
         response.delete_cookie(
             key=session_cookie_name,
             path='/',
-            domain=None,
+            domain=session_cookie_domain,
             samesite=session_cookie_samesite,
         )
         response.delete_cookie(
             key=csrf_cookie_name,
             path='/',
-            domain=None,
+            domain=csrf_cookie_domain,
             samesite=csrf_cookie_samesite,
         )
         # Eski random isimler (geri uyumluluk)
@@ -525,7 +528,7 @@ class LogoutView(APIView):
                 response.delete_cookie(
                     key=cookie_name,
                     path='/',
-                    domain=None,
+                    domain=session_cookie_domain,
                 )
 
         return response
