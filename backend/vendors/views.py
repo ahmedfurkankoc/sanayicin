@@ -1528,7 +1528,7 @@ class VendorImageListView(generics.ListCreateAPIView):
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Görsel WebP'ye dönüştürülemedi: {str(e)}")
-                from rest_framework.exceptions import ValidationError
+            from rest_framework.exceptions import ValidationError
             raise ValidationError("Görsel işlenirken hata oluştu. Lütfen geçerli bir görsel dosyası yükleyin.")
         except Exception as e:
             import logging
